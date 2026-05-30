@@ -450,13 +450,26 @@
             .product-list-view table { table-layout: auto; }
             .product-list-view th, .product-list-view td { white-space: nowrap; font-size: 0.7rem; padding: 0.25rem !important; }
             .product-list-view th:nth-child(2), .product-list-view td:nth-child(2) { max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
-            .product-list-view th:last-child, .product-list-view td:last-child { width: auto !important; min-width: 100px; }
+            .product-list-view th:last-child, .product-list-view td:last-child { width: auto !important; min-width: 130px; }
             .product-list-view .action-btn { 
                 padding: 2px 4px !important; 
                 font-size: 12px !important; 
                 margin: 0 !important; 
                 min-width: 24px !important;
                 min-height: 24px !important;
+            }
+        }
+        @media (min-width: 641px) { 
+            .product-list-view { overflow-x: auto; }
+            .product-list-view table { table-layout: auto; }
+            .product-list-view th, .product-list-view td { white-space: nowrap; font-size: 0.75rem; padding: 0.375rem !important; }
+            .product-list-view th:last-child, .product-list-view td:last-child { width: auto !important; min-width: 130px; }
+            .product-list-view .action-btn { 
+                padding: 4px 8px !important; 
+                font-size: 12px !important; 
+                margin: 0 2px !important; 
+                min-width: 28px !important;
+                min-height: 28px !important;
             }
         }
         .product-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; transition: all 0.2s ease; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; min-height: 220px; }
@@ -24393,7 +24406,7 @@ function renderProducts(useSmartResults = false){
             const thCost = isAdmin ? '<th style="padding:0.375rem;text-align:right;width:65px;">成本</th>' : '';
             const thSelling = '<th style="padding:0.375rem;text-align:right;width:70px;">售价</th>';
             const thProfit = isAdmin ? '<th style="padding:0.375rem;text-align:right;width:65px;">利润</th>' : '';
-            return '<table style="width:100%;border-collapse:collapse;font-size:0.75rem;table-layout:fixed;"><thead style="background:#f3f4f6;"><tr><th style="padding:0.375rem;text-align:left;width:35px;">⭐</th><th style="padding:0.375rem;text-align:left;min-width:100px;">产品名称</th><th style="padding:0.375rem;text-align:left;width:80px;">分类</th>' + thCost + thSelling + thProfit + '<th style="padding:0.375rem;text-align:center;width:90px;">操作</th></tr></thead><tbody>' + products.map(p => { 
+            return '<table style="width:100%;border-collapse:collapse;font-size:0.75rem;table-layout:fixed;"><thead style="background:#f3f4f6;"><tr><th style="padding:0.375rem;text-align:left;width:35px;">⭐</th><th style="padding:0.375rem;text-align:left;min-width:100px;">产品名称</th><th style="padding:0.375rem;text-align:left;width:80px;">分类</th>' + thCost + thSelling + thProfit + '<th style="padding:0.375rem;text-align:center;width:130px;">操作</th></tr></thead><tbody>' + products.map(p => { 
                 const sellingPrice = p.sellingPrice !== undefined ? p.sellingPrice : (p.price || 0); 
                 const costPrice = p.costPrice !== undefined ? p.costPrice : (p.cost || 0); 
                 const profit = sellingPrice - costPrice; 
