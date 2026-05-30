@@ -3101,6 +3101,9 @@
         grid-template-columns: repeat(2, 1fr) !important;
     }
 
+}
+
+@media (max-width: 768px) {
     /* 文化墙报价手机端优化 */
     #aiPanelCultureWall {
         padding: 0.5rem !important;
@@ -3152,337 +3155,346 @@
         padding: 0.5rem 0.75rem !important;
         min-height: 36px;
     }
+}
 
+/* ===== 文化墙报价结果明细样式 ===== */
+.culture-result-container {
+    background: white;
+    border-radius: var(--radius);
+    padding: 1rem;
+    box-shadow: var(--shadow-md);
+    width: 100%;
+    box-sizing: border-box;
+}
+.culture-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #fcd34d;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.culture-result-title {
+    font-size: 1rem;
+    color: #92400e;
+    margin: 0;
+}
+.culture-result-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.culture-result-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+.culture-result-card {
+    padding: 0.75rem;
+    border-radius: var(--radius);
+}
+.culture-result-card-info { background: #fef3c7; }
+.culture-result-card-cost { background: #f0fdf4; }
+.culture-result-card-price { background: #eff6ff; }
+.culture-result-card-profit { background: #fdf4ff; }
+.card-label {
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+.culture-result-card-info .card-label { color: #92400e; }
+.culture-result-card-cost .card-label { color: #15803d; }
+.culture-result-card-price .card-label { color: #1e40af; }
+.culture-result-card-profit .card-label { color: #7c3aed; }
+.card-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+.culture-result-card-info .card-value { color: #78350f; }
+.culture-result-card-cost .card-value { color: #166534; }
+.culture-result-card-price .card-value { color: #1d4ed8; }
+.culture-result-card-profit .card-value { color: #6d28d9; }
+.card-sub {
+    font-size: 0.75rem;
+    color: #a16207;
+}
+.culture-result-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    display: block !important;
+    margin: 1rem 0;
+}
+.culture-result-table {
+    width: 100%;
+    display: table !important;
+    table-layout: fixed;
+    border-collapse: collapse;
+    border: 2px solid #fcd34d;
+    font-size: 0.85rem;
+    min-width: 700px;
+}
+.culture-result-table thead {
+    display: table-header-group;
+}
+.culture-result-table thead tr {
+    background: #fef3c7;
+}
+.culture-result-table th {
+    display: table-cell;
+    padding: 0.75rem 0.5rem;
+    text-align: left;
+    border: 1px solid #fcd34d;
+    color: #92400e;
+    white-space: nowrap;
+    font-weight: 600;
+}
+.culture-result-table th:nth-child(1) { width: 20%; }
+.culture-result-table th:nth-child(2) { width: 18%; }
+.culture-result-table th:nth-child(3) { width: 10%; text-align: right !important; }
+.culture-result-table th:nth-child(4) { width: 8%; text-align: center !important; }
+.culture-result-table th:nth-child(5) { width: 12%; text-align: right !important; }
+.culture-result-table th:nth-child(6) { width: 12%; text-align: right !important; }
+.culture-result-table th:nth-child(7) { width: 15%; text-align: right !important; }
+.culture-result-table tbody {
+    display: table-row-group;
+}
+.culture-wall-result-row {
+    display: table-row;
+}
+.culture-wall-result-row td {
+    display: table-cell;
+    padding: 0.75rem 0.5rem;
+    border: 1px solid #e5e7eb;
+    vertical-align: middle;
+}
+.culture-wall-result-name { font-weight: 500; }
+.culture-wall-result-qty { text-align: center; }
+.culture-wall-result-cost, .culture-wall-result-price, .culture-wall-result-total { text-align: right; }
+.culture-detail-section {
+    margin-top: 1rem;
+    display: block;
+}
+.culture-detail-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #92400e;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+.culture-detail-card {
+    margin-bottom: 0.75rem;
+    background: #f8fafc;
+    border-radius: 6px;
+    overflow: hidden;
+    display: block;
+}
+.culture-detail-header {
+    color: white;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+}
+.culture-detail-row td:nth-child(n+2) {
+    text-align: right;
+}
+
+/* 手机端材料卡片样式 - 默认隐藏 */
+.culture-material-cards {
+    display: none !important;
+}
+.culture-material-card {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+}
+.culture-material-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    background: #fef3c7;
+    border-bottom: 1px solid #fcd34d;
+}
+.culture-material-num {
+    width: 20px;
+    height: 20px;
+    background: #92400e;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+.culture-material-name {
+    font-weight: 600;
+    color: #78350f;
+    font-size: 0.875rem;
+}
+.culture-material-card-body {
+    padding: 0.5rem 0.75rem;
+}
+.culture-material-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+    font-size: 0.8125rem;
+}
+.culture-material-row:not(:last-child) {
+    border-bottom: 1px dashed #e5e7eb;
+}
+.culture-material-label {
+    color: #6b7280;
+}
+.culture-material-value {
+    color: #374151;
+    font-weight: 500;
+}
+.culture-material-cost {
+    color: #dc2626;
+}
+.culture-material-total {
+    color: #92400e;
+    font-weight: 700;
+    font-size: 0.9375rem;
+}
+
+@media (max-width: 768px) {
     /* 文化墙报价结果明细手机端优化 */
     .culture-result-container {
-        background: white;
-        border-radius: var(--radius);
-        padding: 1rem;
-        box-shadow: var(--shadow-md);
+        padding: 0.75rem;
     }
     .culture-result-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 2px solid #fcd34d;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-    .culture-result-title {
-        font-size: 1rem;
-        color: #92400e;
-        margin: 0;
+        flex-direction: column;
+        align-items: flex-start;
     }
     .culture-result-actions {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
+        width: 100%;
+    }
+    .culture-result-actions .btn {
+        flex: 1;
+        font-size: 0.8125rem !important;
+        padding: 0.625rem 0.5rem !important;
+        min-height: 40px;
     }
     .culture-result-cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 0.75rem;
-        margin-bottom: 1rem;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
     }
     .culture-result-card {
-        padding: 0.75rem;
-        border-radius: var(--radius);
+        padding: 0.625rem;
     }
-    .culture-result-card-info { background: #fef3c7; }
-    .culture-result-card-cost { background: #f0fdf4; }
-    .culture-result-card-price { background: #eff6ff; }
-    .culture-result-card-profit { background: #fdf4ff; }
     .card-label {
-        font-size: 0.75rem;
-        margin-bottom: 0.25rem;
-    }
-    .culture-result-card-info .card-label { color: #92400e; }
-    .culture-result-card-cost .card-label { color: #15803d; }
-    .culture-result-card-price .card-label { color: #1e40af; }
-    .culture-result-card-profit .card-label { color: #7c3aed; }
-    .card-value {
-        font-size: 0.9rem;
-        font-weight: 600;
-    }
-    .culture-result-card-info .card-value { color: #78350f; }
-    .culture-result-card-cost .card-value { color: #166534; }
-    .culture-result-card-price .card-value { color: #1d4ed8; }
-    .culture-result-card-profit .card-value { color: #6d28d9; }
-    .card-sub {
-        font-size: 0.75rem;
-        color: #a16207;
-    }
-    .culture-result-table-wrapper {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    .culture-result-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.8rem;
-        min-width: 600px;
-    }
-    .culture-result-table thead tr {
-        background: #fef3c7;
-    }
-    .culture-result-table th {
-        padding: 0.5rem;
-        text-align: left;
-        border: 1px solid #fcd34d;
-        color: #92400e;
-        white-space: nowrap;
-    }
-    .culture-result-table th:nth-child(n+3) {
-        text-align: right;
-    }
-    .culture-result-table th:nth-child(4) {
-        text-align: center;
-    }
-    .culture-wall-result-row td {
-        padding: 0.5rem;
-        border: 1px solid #e5e7eb;
-    }
-    .culture-wall-result-name {
-        font-weight: 500;
-    }
-    .culture-wall-result-cost,
-    .culture-wall-result-price,
-    .culture-wall-result-total {
-        text-align: right;
-        font-weight: 600;
-    }
-    .culture-result-footer {
-        margin-top: 1rem;
-        padding-top: 0.75rem;
-        border-top: 2px solid #fcd34d;
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-    .culture-result-footer-info {
-        font-size: 0.8rem;
-        color: #78350f;
-    }
-    .culture-result-footer-info div {
-        margin-bottom: 0.25rem;
-    }
-    .culture-result-footer-totals {
-        text-align: right;
-        font-size: 0.8rem;
-        color: #78350f;
-    }
-    .culture-result-footer-totals div {
-        margin-bottom: 0.25rem;
-    }
-    .culture-result-final-price {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: #92400e;
-    }
-    .culture-detail-section {
-        margin-top: 1rem;
-    }
-    .culture-detail-title {
-        font-size: 0.875rem;
-        color: #92400e;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.375rem;
-    }
-    .culture-detail-card {
-        margin-bottom: 0.75rem;
-        background: #f8fafc;
-        border-radius: 6px;
-        overflow: hidden;
-    }
-    .culture-detail-header {
-        color: white;
-        padding: 0.375rem 0.5rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        display: flex;
-        justify-content: space-between;
-    }
-    .culture-detail-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .culture-detail-table th {
-        padding: 0.25rem 0.375rem;
-        text-align: left;
-        font-size: 0.65rem;
-        color: #64748b;
-        background: #f1f5f9;
-    }
-    .culture-detail-table th:nth-child(n+2) {
-        text-align: right;
-    }
-    .culture-detail-row td {
-        padding: 0.25rem 0.375rem;
-        font-size: 0.7rem;
-    }
-    .culture-detail-row td:nth-child(n+2) {
-        text-align: right;
-    }
-
-    /* 手机端材料卡片样式 */
-    .culture-material-cards {
-        display: none;
-    }
-    .culture-material-card {
-        background: #f9fafb;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        margin-bottom: 0.75rem;
-        overflow: hidden;
-    }
-    .culture-material-card-header {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.625rem 0.75rem;
-        background: #fef3c7;
-        border-bottom: 1px solid #fcd34d;
-    }
-    .culture-material-num {
-        width: 20px;
-        height: 20px;
-        background: #92400e;
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         font-size: 0.6875rem;
-        font-weight: 600;
-        flex-shrink: 0;
     }
-    .culture-material-name {
-        font-weight: 600;
-        color: #78350f;
-        font-size: 0.875rem;
-    }
-    .culture-material-card-body {
-        padding: 0.5rem 0.75rem;
-    }
-    .culture-material-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.25rem 0;
+    .card-value {
         font-size: 0.8125rem;
     }
-    .culture-material-row:not(:last-child) {
-        border-bottom: 1px dashed #e5e7eb;
+    .card-sub {
+        font-size: 0.6875rem;
     }
-    .culture-material-label {
-        color: #6b7280;
+    /* 手机端隐藏表格，显示卡片 */
+    .culture-result-table-wrapper {
+        display: none !important;
     }
-    .culture-material-value {
-        color: #374151;
-        font-weight: 500;
+    .culture-material-cards {
+        display: block !important;
     }
-    .culture-material-cost {
-        color: #dc2626;
+    .culture-material-card {
+        margin-bottom: 0.5rem;
     }
-    .culture-material-total {
-        color: #92400e;
-        font-weight: 700;
-        font-size: 0.9375rem;
+    .culture-material-card-header {
+        padding: 0.5rem 0.625rem;
     }
+    .culture-material-name {
+        font-size: 0.8125rem;
+    }
+    .culture-material-card-body {
+        padding: 0.375rem 0.625rem;
+    }
+    .culture-material-row {
+        font-size: 0.75rem;
+        padding: 0.2rem 0;
+    }
+    .culture-result-footer {
+        flex-direction: column;
+    }
+    .culture-result-footer-totals {
+        text-align: left;
+        width: 100%;
+    }
+    .culture-result-final-price {
+        font-size: 1.125rem;
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid #fcd34d;
+    }
+    .culture-detail-section {
+        margin-top: 0.75rem;
+    }
+    .culture-detail-title {
+        font-size: 0.8125rem;
+    }
+    .culture-detail-card {
+        margin-bottom: 0.5rem;
+    }
+}
 
-    @media (max-width: 640px) {
-        .culture-result-container {
-            padding: 0.75rem;
-        }
-        .culture-result-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .culture-result-actions {
-            width: 100%;
-        }
-        .culture-result-actions .btn {
-            flex: 1;
-            font-size: 0.8125rem !important;
-            padding: 0.625rem 0.5rem !important;
-            min-height: 40px;
-        }
-        .culture-result-cards {
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-        }
-        .culture-result-card {
-            padding: 0.625rem;
-        }
-        .card-label {
-            font-size: 0.6875rem;
-        }
-        .card-value {
-            font-size: 0.8125rem;
-        }
-        .card-sub {
-            font-size: 0.6875rem;
-        }
-        /* 手机端隐藏表格，显示卡片 */
-        .culture-result-table-wrapper {
-            display: none;
-        }
-        .culture-material-cards {
-            display: block;
-        }
-        .culture-material-card {
-            margin-bottom: 0.5rem;
-        }
-        .culture-material-card-header {
-            padding: 0.5rem 0.625rem;
-        }
-        .culture-material-name {
-            font-size: 0.8125rem;
-        }
-        .culture-material-card-body {
-            padding: 0.375rem 0.625rem;
-        }
-        .culture-material-row {
-            font-size: 0.75rem;
-            padding: 0.2rem 0;
-        }
-        .culture-result-footer {
-            flex-direction: column;
-        }
-        .culture-result-footer-totals {
-            text-align: left;
-            width: 100%;
-        }
-        .culture-result-final-price {
-            font-size: 1.125rem;
-            margin-top: 0.5rem;
-            padding-top: 0.5rem;
-            border-top: 1px solid #fcd34d;
-        }
-        .culture-detail-section {
-            margin-top: 0.75rem;
-        }
-        .culture-detail-title {
-            font-size: 0.8125rem;
-        }
-        .culture-detail-card {
-            margin-bottom: 0.5rem;
-        }
+/* 桌面端（宽度 >= 769px）显示表格 */
+@media (min-width: 769px) {
+    .culture-result-table-wrapper {
+        display: block !important;
     }
+    .culture-material-cards {
+        display: none !important;
+    }
+}
 
-    @media (max-width: 480px) {
-        .culture-result-cards {
-            grid-template-columns: 1fr;
-        }
-        .culture-result-title {
-            font-size: 0.9375rem;
-        }
+/* 大屏幕（宽度 >= 1024px）显示4列卡片 */
+@media (min-width: 1024px) {
+    .culture-result-cards {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 0.75rem !important;
+        margin-bottom: 1rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
+    .culture-result-card {
+        display: block !important;
+        width: 100% !important;
+        padding: 0.75rem !important;
+        border-radius: 6px !important;
+    }
+    .culture-result-container .culture-result-cards {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .culture-result-cards {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.5rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .culture-result-cards {
+        grid-template-columns: 1fr !important;
+    }
+}
 
     /* 尺寸输入模态框手机端优化 */
     @media (max-width: 640px) {
@@ -19579,33 +19591,33 @@ function renderCultureWallResult(data) {
         const unitSelling = m.unitSelling !== undefined ? m.unitSelling : Math.ceil((parseFloat(m.unitPrice) || 0) * data.markupMultiplier);
         const totalSelling = m.totalSelling !== undefined ? m.totalSelling : Math.ceil(costEach * data.markupMultiplier);
         return `
-        <tr class="culture-wall-result-row">
-            <td class="culture-wall-result-name">${escapeHtml(m.name)}</td>
-            <td class="culture-wall-result-spec">${escapeHtml(m.spec || '')}</td>
-            <td class="culture-wall-result-qty">${m.qty}</td>
-            <td class="culture-wall-result-unit">${m.unit}</td>
-            <td class="culture-wall-result-cost">¥${costEach}</td>
-            <td class="culture-wall-result-price">¥${unitSelling}</td>
-            <td class="culture-wall-result-total">¥${totalSelling}</td>
+        <tr class="culture-wall-result-row" style="display:table-row;">
+            <td class="culture-wall-result-name" style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #e5e7eb;font-weight:500;vertical-align:middle;">${escapeHtml(m.name)}</td>
+            <td class="culture-wall-result-spec" style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #e5e7eb;vertical-align:middle;">${escapeHtml(m.spec || '')}</td>
+            <td class="culture-wall-result-qty" style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #e5e7eb;text-align:center;vertical-align:middle;">${m.qty}</td>
+            <td class="culture-wall-result-unit" style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #e5e7eb;vertical-align:middle;">${m.unit}</td>
+            <td class="culture-wall-result-cost" style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #e5e7eb;text-align:right;vertical-align:middle;">¥${costEach}</td>
+            <td class="culture-wall-result-price" style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #e5e7eb;text-align:right;vertical-align:middle;">¥${unitSelling}</td>
+            <td class="culture-wall-result-total" style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #e5e7eb;text-align:right;vertical-align:middle;">¥${totalSelling}</td>
         </tr>
     `}).join('');
 
     // 生成材料明细HTML（桌面端表格）
     const materialsTableHTML = `
-        <div class="culture-result-table-wrapper">
-            <table class="culture-result-table">
-                <thead>
-                    <tr>
-                        <th>材料名称</th>
-                        <th>规格</th>
-                        <th>数量</th>
-                        <th>单位</th>
-                        <th>成本</th>
-                        <th>单价</th>
-                        <th>小计</th>
+        <div class="culture-result-table-wrapper" style="display:block;overflow-x:auto;margin:1rem 0;">
+            <table class="culture-result-table" style="display:table;width:100%;table-layout:fixed;border-collapse:collapse;border:2px solid #fcd34d;font-size:0.85rem;min-width:700px;">
+                <thead style="display:table-header-group;">
+                    <tr style="background:#fef3c7;display:table-row;">
+                        <th style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #fcd34d;color:#92400e;font-weight:600;white-space:nowrap;text-align:left;width:20%;">材料名称</th>
+                        <th style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #fcd34d;color:#92400e;font-weight:600;white-space:nowrap;text-align:left;width:18%;">规格</th>
+                        <th style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #fcd34d;color:#92400e;font-weight:600;white-space:nowrap;text-align:right;width:10%;">数量</th>
+                        <th style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #fcd34d;color:#92400e;font-weight:600;white-space:nowrap;text-align:center;width:8%;">单位</th>
+                        <th style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #fcd34d;color:#92400e;font-weight:600;white-space:nowrap;text-align:right;width:12%;">成本</th>
+                        <th style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #fcd34d;color:#92400e;font-weight:600;white-space:nowrap;text-align:right;width:12%;">单价</th>
+                        <th style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #fcd34d;color:#92400e;font-weight:600;white-space:nowrap;text-align:right;width:15%;">小计</th>
                     </tr>
                 </thead>
-                <tbody>${materialsHTML}</tbody>
+                <tbody style="display:table-row-group;">${materialsHTML}</tbody>
             </table>
         </div>
     `;
@@ -19665,10 +19677,10 @@ function renderCultureWallResult(data) {
             if (!catData || catData.items.length === 0) return '';
 
             const itemsHTML = catData.items.map(m => `
-                <tr class="culture-detail-row">
-                    <td>${escapeHtml(m.name)}</td>
-                    <td>${m.qty}${m.unit}</td>
-                    <td>¥${m.total}</td>
+                <tr class="culture-detail-row" style="display:table-row;">
+                    <td style="display:table-cell;padding:0.25rem 0.375rem;border:1px solid #e5e7eb;font-size:0.7rem;text-align:left;">${escapeHtml(m.name)}</td>
+                    <td style="display:table-cell;padding:0.25rem 0.375rem;border:1px solid #e5e7eb;font-size:0.7rem;text-align:right;">${m.qty}${m.unit}</td>
+                    <td style="display:table-cell;padding:0.25rem 0.375rem;border:1px solid #e5e7eb;font-size:0.7rem;text-align:right;">¥${m.total}</td>
                 </tr>
             `).join('');
 
@@ -19678,15 +19690,15 @@ function renderCultureWallResult(data) {
                         <span>${catData.name}</span>
                         <span>¥${catData.subtotal.toLocaleString()}</span>
                     </div>
-                    <table class="culture-detail-table">
+                    <table class="culture-detail-table" style="display:table;width:100%;table-layout:fixed;border-collapse:collapse;font-size:0.75rem;">
                         <thead>
-                            <tr>
-                                <th>材料</th>
-                                <th>数量</th>
-                                <th>小计</th>
+                            <tr style="display:table-row;background:#f1f5f9;">
+                                <th style="display:table-cell;padding:0.375rem;border:1px solid #e5e7eb;text-align:left;font-size:0.65rem;color:#64748b;">材料</th>
+                                <th style="display:table-cell;padding:0.375rem;border:1px solid #e5e7eb;text-align:right;font-size:0.65rem;color:#64748b;">数量</th>
+                                <th style="display:table-cell;padding:0.375rem;border:1px solid #e5e7eb;text-align:right;font-size:0.65rem;color:#64748b;">小计</th>
                             </tr>
                         </thead>
-                        <tbody>${itemsHTML}</tbody>
+                        <tbody style="display:table-row-group;">${itemsHTML}</tbody>
                     </table>
                 </div>
             `;
@@ -19712,44 +19724,42 @@ function renderCultureWallResult(data) {
                 </div>
             </div>
 
-            <div class="culture-result-cards">
-                <div class="culture-result-card culture-result-card-info">
-                    <div class="card-label">📐 规格尺寸</div>
-                    <div class="card-value">${data.areaCount}个区域</div>
-                    <div class="card-sub">总面积：${data.totalArea.toFixed(2)}㎡</div>
+            <div class="culture-result-cards" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1rem;width:100%;box-sizing:border-box;">
+                <div class="culture-result-card culture-result-card-info" style="padding:0.75rem;border-radius:6px;background:#fef3c7;">
+                    <div class="card-label" style="font-size:0.75rem;margin-bottom:0.25rem;color:#92400e;">📐 规格尺寸</div>
+                    <div class="card-value" style="font-size:0.9rem;font-weight:600;color:#78350f;">${data.areaCount}个区域</div>
+                    <div class="card-sub" style="font-size:0.75rem;color:#a16207;">总面积：${data.totalArea.toFixed(2)}㎡</div>
                 </div>
-                <div class="culture-result-card culture-result-card-cost">
-                    <div class="card-label">💰 材料成本</div>
-                    <div class="card-value">¥${data.totalCost.toLocaleString()}</div>
+                <div class="culture-result-card culture-result-card-cost" style="padding:0.75rem;border-radius:6px;background:#f0fdf4;">
+                    <div class="card-label" style="font-size:0.75rem;margin-bottom:0.25rem;color:#15803d;">💰 材料成本</div>
+                    <div class="card-value" style="font-size:0.9rem;font-weight:600;color:#166534;">¥${data.totalCost.toLocaleString()}</div>
                 </div>
-                <div class="culture-result-card culture-result-card-price">
-                    <div class="card-label">💵 报价（${data.priceMode === 'in' ? '含税' : '未税'}）</div>
-                    <div class="card-value">¥${data.finalPrice.toLocaleString()}</div>
+                <div class="culture-result-card culture-result-card-price" style="padding:0.75rem;border-radius:6px;background:#eff6ff;">
+                    <div class="card-label" style="font-size:0.75rem;margin-bottom:0.25rem;color:#1e40af;">💵 报价（${data.priceMode === 'in' ? '含税' : '未税'}）</div>
+                    <div class="card-value" style="font-size:0.9rem;font-weight:600;color:#1d4ed8;">¥${data.finalPrice.toLocaleString()}</div>
                 </div>
-                <div class="culture-result-card culture-result-card-profit">
-                    <div class="card-label">📈 利润/利润率</div>
-                    <div class="card-value">¥${data.profit.toLocaleString()} (${data.profitMargin}%)</div>
+                <div class="culture-result-card culture-result-card-profit" style="padding:0.75rem;border-radius:6px;background:#fdf4ff;">
+                    <div class="card-label" style="font-size:0.75rem;margin-bottom:0.25rem;color:#7c3aed;">📈 利润/利润率</div>
+                    <div class="card-value" style="font-size:0.9rem;font-weight:600;color:#6d28d9;">¥${data.profit.toLocaleString()} (${data.profitMargin}%)</div>
                 </div>
             </div>
 
-            ${detailHTML}
-
-            <!-- 桌面端表格 -->
-            ${materialsTableHTML}
+            <!-- 材料明细表格（当detailHTML有内容时显示分类明细，否则显示普通表格） -->
+            ${detailHTML && detailHTML.trim().length > 0 ? detailHTML : materialsTableHTML}
             
-            <!-- 手机端卡片列表 -->
-            <div class="culture-material-cards">${materialsCardsHTML}</div>
+            <!-- 手机端卡片列表（仅在显示普通表格时隐藏） -->
+            ${detailHTML && detailHTML.trim().length > 0 ? `<div class="culture-material-cards" style="display:none;">${materialsCardsHTML}</div>` : ''}
 
-            <div class="culture-result-footer">
-                <div class="culture-result-footer-info">
-                    <div>📅 预计工期：${data.workDays}个工作日</div>
-                    <div>📋 类型：${cultureWallConfig[data.type]?.name || data.type}</div>
+            <div class="culture-result-footer" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;padding:1rem;background:#fef3c7;border-radius:8px;border:2px solid #fcd34d;">
+                <div class="culture-result-footer-info" style="display:flex;flex-direction:column;gap:0.5rem;">
+                    <div style="font-size:0.8rem;color:#92400e;"><span style="margin-right:0.5rem;">📅</span>预计工期：<strong>${data.workDays}</strong>个工作日</div>
+                    <div style="font-size:0.8rem;color:#92400e;"><span style="margin-right:0.5rem;">📋</span>类型：<strong>${cultureWallConfig[data.type]?.name || data.type}</strong></div>
                 </div>
-                <div class="culture-result-footer-totals">
-                    <div>材料成本：¥${data.totalCost.toLocaleString()}</div>
-                    <div>利润：¥${data.profit.toLocaleString()} (${data.profitMargin}%)</div>
-                    ${data.taxRate > 0 ? `<div>税费(${data.taxRate}%)：¥${data.taxAmount.toLocaleString()}</div>` : ''}
-                    <div class="culture-result-final-price">最终报价：¥${data.finalPrice.toLocaleString()}</div>
+                <div class="culture-result-footer-totals" style="display:flex;flex-direction:column;gap:0.375rem;text-align:right;">
+                    <div style="font-size:0.75rem;color:#92400e;">材料成本：<strong>¥${data.totalCost.toLocaleString()}</strong></div>
+                    <div style="font-size:0.75rem;color:#7c3aed;">利润：<strong>¥${data.profit.toLocaleString()}</strong> <span style="font-size:0.7rem;">(${data.profitMargin}%)</span></div>
+                    ${data.taxRate > 0 ? `<div style="font-size:0.75rem;color:#64748b;">税费(${data.taxRate}%)：<strong>¥${data.taxAmount.toLocaleString()}</strong></div>` : ''}
+                    <div class="culture-result-final-price" style="font-size:1.25rem;font-weight:700;color:#b45309;padding-top:0.5rem;border-top:2px solid #fcd34d;margin-top:0.25rem;">最终报价：¥${data.finalPrice.toLocaleString()}</div>
                 </div>
             </div>
         </div>
