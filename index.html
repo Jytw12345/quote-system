@@ -21715,17 +21715,27 @@ function showBoardPriceCategory(category) {
         'boardTypes': 'btnBoardTypes',
         'backdropTypes': 'btnBackdropTypes'
     };
+    const categoryToColors = {
+        'boardTypes': { background: '#16a34a', color: 'white', borderColor: '#16a34a' },
+        'backdropTypes': { background: '#0891b2', color: 'white', borderColor: '#0891b2' }
+    };
 
     // 更新按钮状态
     document.querySelectorAll('[id^="btnBoard"]').forEach(btn => {
         btn.className = 'btn btn-sm btn-outline';
         btn.style.background = '';
+        btn.style.color = '';
+        btn.style.borderColor = '';
     });
 
     const activeBtnId = categoryToBtnId[category];
     const activeBtn = document.getElementById(activeBtnId);
     if (activeBtn) {
         activeBtn.className = 'btn btn-sm';
+        const colors = categoryToColors[category];
+        activeBtn.style.background = colors.background;
+        activeBtn.style.color = colors.color;
+        activeBtn.style.borderColor = colors.borderColor;
     }
 
     const config = boardPriceConfig[category];
