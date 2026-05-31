@@ -338,9 +338,13 @@
         }
         .top-nav-link:hover { background: var(--gray-100); color: var(--primary); }
         .top-nav-link.active { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; }
+        .storage-stats-grid { grid-template-columns: repeat(4,1fr); }
+        .company-info-grid { grid-template-columns: repeat(3,1fr); }
         @media (max-width: 768px) {
             .top-nav-item { min-width: 70px; }
             .top-nav-link { padding: 0.4rem 0.4rem; font-size: 0.75rem; }
+            .storage-stats-grid { grid-template-columns: repeat(2,1fr) !important; }
+            .company-info-grid { grid-template-columns: repeat(2,1fr) !important; }
         }
         @media (max-width: 768px) {
             .door-header-basic { grid-template-columns: repeat(3, 1fr) !important; }
@@ -781,15 +785,23 @@
         #quotePreview table { width: 100%; min-width: 100%; }
         .loading-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.9); z-index: 9999;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 9999;
             display: flex; align-items: center; justify-content: center;
-            transition: opacity 0.3s ease;
+            flex-direction: column;
+            transition: opacity 0.5s ease;
         }
         .loading-overlay.hidden { opacity: 0; pointer-events: none; }
         .loading-spinner {
-            width: 40px; height: 40px; border: 4px solid var(--gray-200);
-            border-top-color: var(--primary); border-radius: 50%;
+            width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: #fff; border-radius: 50%;
             animation: spin 0.8s linear infinite;
+        }
+        .loading-overlay .loading-text {
+            color: white;
+            margin-top: 1rem;
+            font-size: 1rem;
+            font-weight: 500;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         @media print{
@@ -2617,11 +2629,30 @@
     }
 
     .backup-list .backup-item {
-        padding: 0.625rem 0.5rem;
+        padding: 0.5rem 0.375rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+        align-items: center;
+    }
+
+    .backup-list .backup-info {
+        flex: 1;
+        min-width: 120px;
     }
 
     .backup-list .backup-item-name {
-        font-size: 0.8125rem;
+        font-size: 0.75rem;
+    }
+
+    .backup-list .btn-group {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .backup-list .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.6875rem;
     }
 }
 
@@ -3655,6 +3686,10 @@
                 aria-describedby="login-error"
                 onkeypress="if(event.key==='Enter')handleLogin(event)"
             >
+            <div style="display:flex;align-items:center;justify-content:center;margin:0.5rem 0;gap:0.5rem;">
+                <input type="checkbox" id="loginAutoLogin" style="width:1rem;height:1rem;">
+                <label for="loginAutoLogin" style="font-size:0.8125rem;color:#64748b;cursor:pointer;">3天内自动登录</label>
+            </div>
             <button type="submit" aria-label="登录系统">
                 <span aria-hidden="true">🔑</span> 登录
             </button>
@@ -3671,6 +3706,7 @@
 <!-- 加载动画 -->
 <div id="loadingOverlay" class="loading-overlay">
     <div class="loading-spinner"></div>
+    <div class="loading-text">正在加载...</div>
 </div>
 
 <!-- 自定义弹窗组件 -->
@@ -3712,6 +3748,60 @@
 <!-- Toast 通知容器 -->
 <div class="toast-container" id="toastContainer"></div>
 <script>
+// ===== 全局配置常量 - 字符价格相关 =====
+
+// 材质中文名称映射
+window.MATERIAL_NAMES = {
+    acrylic: '亚克力',
+    stainless: '不锈钢',
+    led: 'LED发光字',
+    resin: '树脂字',
+    metal: '金属烤漆',
+    pvc: 'PVC字',
+    '无边字': '无边字',
+    '迷你字': '迷你字',
+    '水晶背光字': '水晶背光字',
+    '铝板冲孔字': '铝板冲孔字',
+    '外露发光字': '外露发光字',
+    '亚克力发光字': '亚克力发光字',
+    '背发光字': '背发光字',
+    '侧发光字': '侧发光字',
+    '迷你发光字': '迷你发光字',
+    '无边发光字': '无边发光字',
+    '超级字': '超级字',
+    '点阵字': '点阵字',
+    '柔性霓虹字': '柔性霓虹字',
+    '千层镜字': '千层镜字',
+    '背光水晶字': '背光水晶字',
+    '玻璃霓虹字': '玻璃霓虹字',
+    '水晶字': '水晶字',
+    '不锈钢字': '不锈钢字',
+    '精工字': '精工字',
+    '电镀字': '电镀字',
+    '镀锌板烤漆字': '镀锌板烤漆字',
+    '实木字': '实木字',
+    '仿大理石字': '仿大理石字',
+    '液态亚克力字': '液态亚克力字',
+    '钛金字': '钛金字',
+    '玫瑰金字': '玫瑰金字'
+};
+
+// 材质列表
+window.MATERIAL_LIST = [
+    'acrylic', 'stainless', 'led', 'resin', 'metal', 'pvc',
+    '无边字', '迷你字', '水晶背光字', '铝板冲孔字',
+    '外露发光字', '亚克力发光字', '背发光字', '侧发光字',
+    '迷你发光字', '无边发光字', '超级字', '点阵字',
+    '柔性霓虹字', '千层镜字', '背光水晶字', '玻璃霓虹字',
+    '水晶字', '不锈钢字', '精工字', '电镀字',
+    '镀锌板烤漆字', '实木字', '仿大理石字', '液态亚克力字',
+    '钛金字', '玫瑰金字'
+];
+
+// 为了向后兼容，同时创建本地常量
+const MATERIAL_NAMES = window.MATERIAL_NAMES;
+const MATERIAL_LIST = window.MATERIAL_LIST;
+
 // ===== 安全存储 - 修复 localStorage 容量超限问题 =====
 (function(){
     var hideLoader = function() {
@@ -4640,15 +4730,6 @@ var DataManager = {
                             </div>
                             <div style="font-size:0.625rem;color:var(--gray-500);margin-bottom:0.5rem;">💡 支持输入：1.5m / 150cm / 1500mm / 59in</div>
                             <div style="display:flex;gap:0.25rem;margin-bottom:0.5rem;flex-wrap:wrap;">
-                                <button class="btn btn-xs btn-outline" onclick="setQuickSize(1,2)" style="padding:0.2rem 0.4rem;font-size:0.65rem;">1×2m</button>
-                                <button class="btn btn-xs btn-outline" onclick="setQuickSize(2,3)" style="padding:0.2rem 0.4rem;font-size:0.65rem;">2×3m</button>
-                                <button class="btn btn-xs btn-outline" onclick="setQuickSize(3,6)" style="padding:0.2rem 0.4rem;font-size:0.65rem;">3×6m</button>
-                                <button class="btn btn-xs btn-outline" onclick="setQuickSize(4,8)" style="padding:0.2rem 0.4rem;font-size:0.65rem;">4×8m</button>
-                                <button class="btn btn-xs btn-outline" onclick="setQuickSize(5,10)" style="padding:0.2rem 0.4rem;font-size:0.65rem;">5×10m</button>
-                                <button class="btn btn-xs btn-outline" onclick="setQuickSize(0.6,1.6)" style="padding:0.2rem 0.4rem;font-size:0.65rem;">0.6×1.6</button>
-                                <button class="btn btn-xs btn-outline" onclick="setQuickSize(0.8,2)" style="padding:0.2rem 0.4rem;font-size:0.65rem;">0.8×2</button>
-                            </div>
-                            <div style="display:flex;gap:0.25rem;margin-bottom:0.5rem;flex-wrap:wrap;">
                                 <button class="btn btn-xs btn-outline" onclick="applyQuickCalc('周长')" style="padding:0.2rem 0.4rem;font-size:0.65rem;">📐 周长</button>
                                 <button class="btn btn-xs btn-outline" onclick="applyQuickCalc('对角线')" style="padding:0.2rem 0.4rem;font-size:0.65rem;">📐 对角线</button>
                                 <button class="btn btn-xs btn-outline" onclick="applyQuickCalc('半面积')" style="padding:0.2rem 0.4rem;font-size:0.65rem;">📐 半面积</button>
@@ -4731,9 +4812,10 @@ var DataManager = {
                             </div>
                             <div id="favoriteSizes" style="display:flex;gap:0.25rem;flex-wrap:wrap;margin-top:0.25rem;"></div>
                         </div>
-                        <div style="display:flex;gap:0.375rem;">
-                            <button class="btn btn-primary btn-sm" onclick="addCalcToQuote()" style="flex:1;padding:0.375rem;font-size:0.75rem;">➕ 一键插入到报价</button>
-                            <button class="btn btn-outline btn-sm" onclick="clearCalc()" style="padding:0.375rem;font-size:0.75rem;">🗑️ 清空</button>
+                        <div style="display:flex;gap:0.25rem;">
+                            <button class="btn btn-primary btn-sm" onclick="addCalcToQuote()" style="flex:2;padding:0.375rem;font-size:0.75rem;">➕ 插入报价</button>
+                            <button class="btn btn-outline btn-sm" onclick="manualSaveCalcToHistory()" style="flex:1;padding:0.375rem;font-size:0.75rem;">💾 保留</button>
+                            <button class="btn btn-outline btn-sm" onclick="clearCalc()" style="flex:1;padding:0.375rem;font-size:0.75rem;">🗑️ 清空</button>
                         </div>
                     </div>
                 </div>
@@ -5796,28 +5878,57 @@ var DataManager = {
                                     </label>
                                 </div>
                             </div>
-                            <!-- 第二字体（小字）设置 -->
-                            <div style="border-top:1px dashed #fcd34d;padding-top:0.5rem;margin-top:0.25rem;">
-                                <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.375rem;font-weight:600;">📝 第二字体（小字，可选）</div>
-                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.375rem;">
-                                    <div>
-                                        <label style="font-size:0.6875rem;color:#92400e;display:block;margin-bottom:0.125rem;">小字数量</label>
-                                        <input type="number" id="doorHeaderCharCount2" placeholder="例：8" min="0" style="width:100%;padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:var(--radius);">
+                            <!-- 第二字体和第三字体容器 - 电脑端并排显示 -->
+                            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+                                <!-- 第二字体（小字）设置 -->
+                                <div style="flex:1;min-width:280px;border-top:1px dashed #fcd34d;padding-top:0.5rem;margin-top:0.25rem;">
+                                    <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.375rem;font-weight:600;">📝 第二字体（小字，可选）</div>
+                                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.375rem;">
+                                        <div>
+                                            <label style="font-size:0.6875rem;color:#92400e;display:block;margin-bottom:0.125rem;">小字数量</label>
+                                            <input type="number" id="doorHeaderCharCount2" placeholder="例：8" min="0" style="width:100%;padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:var(--radius);">
+                                        </div>
+                                        <div>
+                                            <label style="font-size:0.6875rem;color:#92400e;display:block;margin-bottom:0.125rem;">小字高度(cm)</label>
+                                            <input type="number" id="doorHeaderCharSize2" placeholder="例：20" min="5" style="width:100%;padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:var(--radius);">
+                                        </div>
+                                        <div>
+                                            <label style="font-size:0.6875rem;color:#92400e;display:block;margin-bottom:0.125rem;">小字类型</label>
+                                            <select id="doorHeaderFontType2" style="width:100%;padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:var(--radius);">
+                                                <option value="none">无小字</option>
+                                                <option value="led_channel">亚克力发光字</option>
+                                                <option value="back_lit">背发光字</option>
+                                                <option value="pvc">PVC字</option>
+                                                <option value="crystal">水晶字</option>
+                                                <option value="stainless_steel_font">不锈钢字</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label style="font-size:0.6875rem;color:#92400e;display:block;margin-bottom:0.125rem;">小字高度(cm)</label>
-                                        <input type="number" id="doorHeaderCharSize2" placeholder="例：20" min="5" style="width:100%;padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:var(--radius);">
-                                    </div>
-                                    <div>
-                                        <label style="font-size:0.6875rem;color:#92400e;display:block;margin-bottom:0.125rem;">小字类型</label>
-                                        <select id="doorHeaderFontType2" style="width:100%;padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:var(--radius);">
-                                            <option value="none">无小字</option>
-                                            <option value="led_channel">亚克力发光字</option>
-                                            <option value="back_lit">背发光字</option>
-                                            <option value="pvc">PVC字</option>
-                                            <option value="crystal">水晶字</option>
-                                            <option value="stainless_steel_font">不锈钢字</option>
-                                        </select>
+                                </div>
+                                <!-- 第三字体（辅助字）设置 -->
+                                <div style="flex:1;min-width:280px;border-top:1px dashed #fcd34d;padding-top:0.5rem;margin-top:0.25rem;">
+                                    <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.375rem;font-weight:600;">📝 第三字体（辅助字，可选）</div>
+                                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.375rem;">
+                                        <div>
+                                            <label style="font-size:0.6875rem;color:#92400e;display:block;margin-bottom:0.125rem;">辅助字数量</label>
+                                            <input type="number" id="doorHeaderCharCount3" placeholder="例：12" min="0" style="width:100%;padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:var(--radius);">
+                                        </div>
+                                        <div>
+                                            <label style="font-size:0.6875rem;color:#92400e;display:block;margin-bottom:0.125rem;">辅助字高度(cm)</label>
+                                            <input type="number" id="doorHeaderCharSize3" placeholder="例：10" min="5" style="width:100%;padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:var(--radius);">
+                                        </div>
+                                        <div>
+                                            <label style="font-size:0.6875rem;color:#92400e;display:block;margin-bottom:0.125rem;">辅助字类型</label>
+                                            <select id="doorHeaderFontType3" style="width:100%;padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:var(--radius);">
+                                                <option value="none">无辅助字</option>
+                                                <option value="led_channel">亚克力发光字</option>
+                                                <option value="back_lit">背发光字</option>
+                                                <option value="pvc">PVC字</option>
+                                                <option value="crystal">水晶字</option>
+                                                <option value="stainless_steel_font">不锈钢字</option>
+                                                <option value="metal_painted">金属烤漆字</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -6400,7 +6511,7 @@ var DataManager = {
             <div class="section-title"><span>⚙️ 系统设置</span><button class="btn btn-success" onclick="saveSystemSettings()">💾 保存设置</button></div>
             <div class="settings-section">
                 <h3>🏢 公司信息</h3>
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
+                <div class="company-info-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
                     <div style="display:flex;flex-direction:column;gap:0.125rem;">
                         <label style="font-size:0.75rem;color:var(--gray-600);">公司名称</label>
                         <input type="text" id="companyName" placeholder="公司名称" style="padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid var(--gray-200);border-radius:4px;">
@@ -6428,85 +6539,85 @@ var DataManager = {
                 </div>
             </div>
             <div class="settings-section">
-                <h3>🖨️ 打印样式选择</h3>
-                <div class="style-option" id="printStyleOptions">
-                    <div class="style-card" data-style="classic" onclick="selectPrintStyle('classic')"><div class="style-preview" style="background:linear-gradient(135deg,#2563eb,#0ea5e9);"></div><div style="font-weight:600;">经典蓝色渐变</div><div style="font-size:0.75rem;color:var(--gray-500);">专业商务风格</div></div>
-                    <div class="style-card" data-style="simple" onclick="selectPrintStyle('simple')"><div class="style-preview" style="background:#ffffff;border:1px solid #ccc;"></div><div style="font-weight:600;">简洁黑白</div><div style="font-size:0.75rem;color:var(--gray-500);">节省墨水，更简约</div></div>
-                    <div class="style-card" data-style="modern" onclick="selectPrintStyle('modern')"><div class="style-preview" style="background:linear-gradient(135deg,#1e293b,#334155);"></div><div style="font-weight:600;">现代深灰</div><div style="font-size:0.75rem;color:var(--gray-500);">高端大气风格</div></div>
+                <h3>🖨️ 报价单样式配置</h3>
+                <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:1rem;padding:0.5rem;background:#eff6ff;border-radius:var(--radius);border:1px solid #bfdbfe;">
+                    💡 选择预设样式或自定义主题颜色，打造专属的报价单风格。
                 </div>
-            </div>
-            <div class="settings-section">
-                <h3>📷 报价单识别配置</h3>
-                <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:1rem;padding:0.5rem;background:#dbeafe;border-radius:var(--radius);">
-                    💡 使用 Tesseract.js 本地OCR技术，无需任何API配置，完全在浏览器运行，保护隐私。
-                </div>
-                <div style="display:flex;align-items:center;gap:0.5rem;padding:0.75rem;background:#f0fdf4;border-radius:var(--radius);">
-                    <span style="color:#16a34a;font-size:1.25rem;">✓</span>
-                    <span style="color:#166534;font-size:0.875rem;">已启用本地OCR识别（无需配置）</span>
-                </div>
-            </div>
-            <div class="settings-section">
-                <h3>📷 OCR.Space 配置（报价单识别）</h3>
-                <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:1rem;padding:0.5rem;background:#fef3c7;border-radius:var(--radius);">
-                    💡 配置OCR.Space API后，可实现真实的报价单图片识别功能。未配置时使用模拟数据。<a href="https://ocr.space/ocrapi" target="_blank" style="color:#2563eb;">免费注册获取API Key</a>
-                </div>
-                
+
+                <!-- 预设样式选择 -->
                 <div style="margin-bottom:1rem;">
-                    <div style="font-size:0.7rem;color:#6b7280;margin-bottom:0.5rem;">免费额度：500次/小时，25000次/月 | 不填API Key也可使用（有限制）</div>
-                    <input type="text" id="ocrSpaceApiKey" placeholder="OCR.Space API Key（可选）" style="width:100%;max-width:400px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
-                </div>
-                
-                <div style="display:flex;gap:0.5rem;margin-top:0.75rem;border-top:1px solid var(--gray-200);padding-top:0.75rem;">
-                    <button class="btn btn-primary btn-sm" onclick="testOcrSpace()">🔍 测试连接</button>
-                    <button class="btn btn-outline btn-sm" onclick="saveOcrSpaceConfig()">💾 保存配置</button>
-                </div>
-            </div>
-            <div class="settings-section">
-                <h3>🖼️ 百度AI图像识别配置（产品材质分解）</h3>
-                <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:1rem;padding:0.5rem;background:#fef3c7;border-radius:var(--radius);">
-                    💡 配置百度AI图像识别API后，可实现产品图片识别和材质分解功能。前往 <a href="https://ai.baidu.com/" target="_blank" style="color:#2563eb;">百度AI开放平台</a> 创建应用获取密钥。
-                </div>
-                
-                <div style="margin-bottom:1rem;">
-                    <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-                        <input type="text" id="baiduApiKey" placeholder="百度AI API Key" style="flex:1;min-width:200px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
-                        <input type="text" id="baiduSecretKey" placeholder="百度AI Secret Key" style="flex:1;min-width:200px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
-                    </div>
-                    <div id="baiduStatus" style="margin-top:0.5rem;font-size:0.75rem;"></div>
-                </div>
-                
-                <div style="display:flex;gap:0.5rem;margin-top:0.75rem;border-top:1px solid var(--gray-200);padding-top:0.75rem;">
-                    <button class="btn btn-primary btn-sm" onclick="testBaiduAI()">🔍 测试连接</button>
-                    <button class="btn btn-outline btn-sm" onclick="saveBaiduConfig()">💾 保存配置</button>
-                </div>
-            </div>
-            <div class="settings-section">
-                <h3>🤖 AI智能助手配置</h3>
-                <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:1rem;padding:0.5rem;background:#fef3c7;border-radius:var(--radius);">
-                    💡 配置说明：配置DeepSeek API后即可使用真实的AI能力。未配置时使用模拟模式（功能有限）。
-                </div>
-                
-                <div style="margin-bottom:1rem;">
-                    <div style="font-weight:500;margin-bottom:0.5rem;">🟡 DeepSeek（推荐·免费额度充足）</div>
-                    <div style="font-size:0.7rem;color:#6b7280;margin-bottom:0.5rem;">前往获取API Key | <a href="https://platform.deepseek.com/" target="_blank" style="color:#2563eb;">https://platform.deepseek.com/</a></div>
-                    <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-                        <input type="text" id="deepseekApiKey" placeholder="sk-xxxxxxxxxxxxxxxx" style="flex:1;min-width:280px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
-                        <select id="deepseekModel" style="padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
-                            <option value="deepseek-v4-pro">deepseek-v4-pro（推荐·高性能）</option>
-                            <option value="deepseek-v4-flash">deepseek-v4-flash（快速·低成本）</option>
-                        </select>
-                        <div style="font-size:0.65rem;color:#9ca3af;margin-top:0.25rem;">
-                            💡 当前API仅支持v4系列模型，其他模型已弃用
+                    <div style="font-weight:500;margin-bottom:0.5rem;font-size:0.8125rem;">📋 预设样式</div>
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.375rem;" id="printStyleOptions">
+                        <div class="style-card" data-style="classic" onclick="selectPrintStyle('classic')" style="cursor:pointer;padding:0.375rem;background:#fff;border:2px solid #e5e7eb;border-radius:6px;text-align:center;transition:all 0.2s;">
+                            <div style="width:45px;height:32px;margin:0 auto 0.25rem;background:linear-gradient(135deg,#2563eb,#0ea5e9);border-radius:4px;"></div>
+                            <div style="font-size:0.625rem;font-weight:500;">经典蓝</div>
+                        </div>
+                        <div class="style-card" data-style="simple" onclick="selectPrintStyle('simple')" style="cursor:pointer;padding:0.375rem;background:#fff;border:2px solid #e5e7eb;border-radius:6px;text-align:center;transition:all 0.2s;">
+                            <div style="width:45px;height:32px;margin:0 auto 0.25rem;background:#fff;border:1px solid #ccc;border-radius:4px;"></div>
+                            <div style="font-size:0.625rem;font-weight:500;">简约白</div>
+                        </div>
+                        <div class="style-card" data-style="modern" onclick="selectPrintStyle('modern')" style="cursor:pointer;padding:0.375rem;background:#fff;border:2px solid #e5e7eb;border-radius:6px;text-align:center;transition:all 0.2s;">
+                            <div style="width:45px;height:32px;margin:0 auto 0.25rem;background:linear-gradient(135deg,#1e293b,#334155);border-radius:4px;"></div>
+                            <div style="font-size:0.625rem;font-weight:500;">深灰系</div>
+                        </div>
+                        <div class="style-card" data-style="gradientGreen" onclick="selectPrintStyle('gradientGreen')" style="cursor:pointer;padding:0.375rem;background:#fff;border:2px solid #e5e7eb;border-radius:6px;text-align:center;transition:all 0.2s;">
+                            <div style="width:45px;height:32px;margin:0 auto 0.25rem;background:linear-gradient(135deg,#059669,#10b981);border-radius:4px;"></div>
+                            <div style="font-size:0.625rem;font-weight:500;">商务绿</div>
+                        </div>
+                        <div class="style-card" data-style="gradientPurple" onclick="selectPrintStyle('gradientPurple')" style="cursor:pointer;padding:0.375rem;background:#fff;border:2px solid #e5e7eb;border-radius:6px;text-align:center;transition:all 0.2s;">
+                            <div style="width:45px;height:32px;margin:0 auto 0.25rem;background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:4px;"></div>
+                            <div style="font-size:0.625rem;font-weight:500;">优雅紫</div>
+                        </div>
+                        <div class="style-card" data-style="gradientGold" onclick="selectPrintStyle('gradientGold')" style="cursor:pointer;padding:0.375rem;background:#fff;border:2px solid #e5e7eb;border-radius:6px;text-align:center;transition:all 0.2s;">
+                            <div style="width:45px;height:32px;margin:0 auto 0.25rem;background:linear-gradient(135deg,#d97706,#f59e0b);border-radius:4px;"></div>
+                            <div style="font-size:0.625rem;font-weight:500;">高端金</div>
+                        </div>
+                        <div class="style-card" data-style="warmOrange" onclick="selectPrintStyle('warmOrange')" style="cursor:pointer;padding:0.375rem;background:#fff;border:2px solid #e5e7eb;border-radius:6px;text-align:center;transition:all 0.2s;">
+                            <div style="width:45px;height:32px;margin:0 auto 0.25rem;background:linear-gradient(135deg,#ea580c,#f97316);border-radius:4px;"></div>
+                            <div style="font-size:0.625rem;font-weight:500;">活力橙</div>
+                        </div>
+                        <div class="style-card" data-style="elegantPink" onclick="selectPrintStyle('elegantPink')" style="cursor:pointer;padding:0.375rem;background:#fff;border:2px solid #e5e7eb;border-radius:6px;text-align:center;transition:all 0.2s;">
+                            <div style="width:45px;height:32px;margin:0 auto 0.25rem;background:linear-gradient(135deg,#db2777,#ec4899);border-radius:4px;"></div>
+                            <div style="font-size:0.625rem;font-weight:500;">优雅粉</div>
                         </div>
                     </div>
-                    <div id="deepseekStatus" style="margin-top:0.5rem;font-size:0.75rem;"></div>
                 </div>
-                
-                <div style="display:flex;gap:0.5rem;margin-top:0.75rem;border-top:1px solid var(--gray-200);padding-top:0.75rem;">
-                    <button class="btn btn-primary btn-sm" onclick="testDeepSeekAPI()">🔍 测试连接</button>
-                    <button class="btn btn-outline btn-sm" onclick="saveDeepSeekConfig()">💾 保存配置</button>
+
+                <!-- 自定义主题色 -->
+                <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--gray-200);">
+                    <div style="font-weight:500;margin-bottom:0.5rem;font-size:0.8125rem;">🎨 自定义主题色（可选）</div>
+                    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                        <div style="display:flex;align-items:center;gap:0.5rem;">
+                            <label style="font-size:0.75rem;color:#6b7280;">主色</label>
+                            <input type="color" id="customPrimaryColor" value="#2563eb" onchange="updateCustomTheme()" style="width:40px;height:30px;border:none;cursor:pointer;border-radius:4px;">
+                        </div>
+                        <div style="display:flex;align-items:center;gap:0.5rem;">
+                            <label style="font-size:0.75rem;color:#6b7280;">辅色</label>
+                            <input type="color" id="customSecondaryColor" value="#0ea5e9" onchange="updateCustomTheme()" style="width:40px;height:30px;border:none;cursor:pointer;border-radius:4px;">
+                        </div>
+                        <button class="btn btn-sm btn-outline" onclick="applyCustomTheme()" style="margin-left:auto;">✅ 应用自定义颜色</button>
+                    </div>
+                    <div id="customThemePreview" style="margin-top:0.75rem;padding:0.75rem;background:#fff;border:1px solid #e5e7eb;border-radius:8px;display:none;">
+                        <div style="font-size:0.7rem;color:#6b7280;margin-bottom:0.5rem;">预览效果：</div>
+                        <div id="themePreviewBox" style="height:50px;border-radius:4px;"></div>
+                    </div>
+                </div>
+
+                <!-- Logo上传 -->
+                <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--gray-200);">
+                    <div style="font-weight:500;margin-bottom:0.5rem;font-size:0.8125rem;">🏢 报价单Logo（可选）</div>
+                    <div style="display:flex;gap:0.75rem;align-items:flex-start;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:200px;">
+                            <input type="file" id="quoteLogoUpload" accept="image/*" onchange="previewQuoteLogo(event)" style="font-size:0.8125rem;">
+                        </div>
+                        <div id="quoteLogoPreview" style="width:80px;height:80px;border:2px dashed #d1d5db;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#f9fafb;">
+                            <span style="font-size:0.625rem;color:#9ca3af;text-align:center;">无Logo</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline" onclick="clearQuoteLogo()" style="color:#ef4444;">🗑️ 清除</button>
+                    </div>
                 </div>
             </div>
+<!-- AI服务配置中心之前的印章与签名部分缺少外层div -->
             <div class="settings-section">
                 <h3>🔴 印章与签名</h3>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
@@ -6536,79 +6647,156 @@ var DataManager = {
                     <div style="display:flex;flex-direction:column;gap:0.25rem;"><label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">有效期(天)</label><input type="number" id="quoteValidDays" min="1" value="7" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100px;"></div>
                 </div>
             </div>
+
+            <!-- AI服务配置中心 -->
             <div class="settings-section">
-                <h3>💰 字符计算价格配置（发光字/雕刻字）</h3>
-                <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:1rem;padding:0.5rem;background:var(--gray-50);border-radius:var(--radius);">
-                    💡 配置说明：设置不同材质在不同字高范围内的单价（单位：元/字）。<strong>字高越小，单价越高</strong>，这是行业规则。
+                <h3>🤖 AI服务配置中心</h3>
+                <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.75rem;padding:0.5rem;background:#eff6ff;border-radius:var(--radius);border:1px solid #bfdbfe;">
+                    💡 统一配置所有AI服务API。配置后即可启用对应的AI功能，未配置时使用模拟数据或本地模式。
                 </div>
-                <div style="margin-bottom:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap;" id="charPricingButtons"></div>
-                <div id="charPricingConfig"></div>
-                <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--gray-200);">
-                    <button class="btn btn-outline btn-sm" onclick="loadDefaultCharPricing()">📥 恢复默认价格</button>
-                    <button class="btn btn-primary btn-sm" onclick="applyCharPricing()">✅ 应用价格配置</button>
-                    <button class="btn btn-outline btn-sm" onclick="exportCharPricingXLS()">📊 导出价格表</button>
-                    <label class="btn btn-outline btn-sm">📥 导入价格表<input type="file" id="importCharPricingFile" accept=".xlsx,.xls,.csv" hidden onchange="importCharPricing(event)"></label>
+                <!-- AI服务标签页 -->
+                <div class="ai-config-tabs" style="display:flex;gap:0.25rem;margin-bottom:0.75rem;border-bottom:2px solid #e5e7eb;flex-wrap:wrap;">
+                    <button class="ai-tab-btn active" onclick="switchAIServiceTab('ocr')" id="tabBtnOcr" style="padding:0.5rem 1rem;font-size:0.8125rem;border:none;background:transparent;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;">📷 OCR识别</button>
+                    <button class="ai-tab-btn" onclick="switchAIServiceTab('baidu')" id="tabBtnBaidu" style="padding:0.5rem 1rem;font-size:0.8125rem;border:none;background:transparent;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;">🖼️ 百度AI</button>
+                    <button class="ai-tab-btn" onclick="switchAIServiceTab('deepseek')" id="tabBtnDeepseek" style="padding:0.5rem 1rem;font-size:0.8125rem;border:none;background:transparent;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;">🤖 AI助手</button>
+                </div>
+
+                <!-- OCR识别配置 -->
+                <div id="aiConfigOcr" class="ai-config-content">
+                    <div style="font-size:0.75rem;color:#166534;margin-bottom:1rem;padding:0.5rem;background:#f0fdf4;border-radius:var(--radius);border:1px solid #86efac;">
+                        ✓ <strong>本地OCR已启用</strong> - 使用Tesseract.js技术，完全在浏览器运行，保护隐私，无需任何配置。
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:1rem;padding:0.5rem;background:#fef3c7;border-radius:var(--radius);">
+                        💡 <strong>OCR.Space API（可选）</strong> - 如需更高效的识别能力，可配置云端API。<a href="https://ocr.space/ocrapi" target="_blank" style="color:#2563eb;">免费注册获取API Key</a>
+                        <br>免费额度：500次/小时，25000次/月
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <input type="text" id="ocrSpaceApiKey" placeholder="OCR.Space API Key（可选，不填则使用本地OCR）" style="width:100%;max-width:400px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
+                    </div>
+                    <div style="display:flex;gap:0.5rem;">
+                        <button class="btn btn-primary btn-sm" onclick="testOcrSpace()">🔍 测试连接</button>
+                        <button class="btn btn-outline btn-sm" onclick="saveOcrSpaceConfig()">💾 保存配置</button>
+                    </div>
+                </div>
+
+                <!-- 百度AI配置 -->
+                <div id="aiConfigBaidu" class="ai-config-content" style="display:none;">
+                    <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:1rem;padding:0.5rem;background:#fef3c7;border-radius:var(--radius);">
+                        💡 <strong>百度AI图像识别</strong> - 用于产品图片识别和材质分解。<a href="https://ai.baidu.com/" target="_blank" style="color:#2563eb;">百度AI开放平台</a>
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.5rem;">
+                            <input type="text" id="baiduApiKey" placeholder="百度AI API Key" style="flex:1;min-width:200px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
+                            <input type="text" id="baiduSecretKey" placeholder="百度AI Secret Key" style="flex:1;min-width:200px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
+                        </div>
+                        <div id="baiduStatus" style="font-size:0.75rem;"></div>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;">
+                        <button class="btn btn-primary btn-sm" onclick="testBaiduAI()">🔍 测试连接</button>
+                        <button class="btn btn-outline btn-sm" onclick="saveBaiduConfig()">💾 保存配置</button>
+                    </div>
+                </div>
+
+                <!-- AI助手配置 -->
+                <div id="aiConfigDeepseek" class="ai-config-content" style="display:none;">
+                    <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:1rem;padding:0.5rem;background:#fef3c7;border-radius:var(--radius);">
+                        💡 <strong>DeepSeek AI</strong> - AI智能助手功能。<a href="https://platform.deepseek.com/" target="_blank" style="color:#2563eb;">获取API Key</a>
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.5rem;">
+                            <input type="text" id="deepseekApiKey" placeholder="sk-xxxxxxxxxxxxxxxx" style="flex:1;min-width:280px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
+                            <select id="deepseekModel" style="padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
+                                <option value="deepseek-v4-pro">deepseek-v4-pro（推荐·高性能）</option>
+                                <option value="deepseek-v4-flash">deepseek-v4-flash（快速·低成本）</option>
+                            </select>
+                        </div>
+                        <div style="font-size:0.7rem;color:#9ca3af;margin-bottom:0.5rem;">💡 当前API仅支持v4系列模型</div>
+                        <div id="deepseekStatus" style="font-size:0.75rem;"></div>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;">
+                        <button class="btn btn-primary btn-sm" onclick="testDeepSeekAPI()">🔍 测试连接</button>
+                        <button class="btn btn-outline btn-sm" onclick="saveDeepSeekConfig()">💾 保存配置</button>
+                    </div>
                 </div>
             </div>
+
             <div class="settings-section">
                 <h3>📥📤 数据导入导出</h3>
-                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
-                    <span style="font-size:0.8125rem;color:var(--gray-600);width:100%;margin-bottom:0.25rem;font-weight:500;">💾 全部数据（整站备份）：</span>
-                    <button class="btn btn-primary btn-sm" onclick="exportAllData()">💾 导出全部数据</button>
-                    <label class="btn btn-outline btn-sm">📂 导入数据<input type="file" id="importFile" accept=".json" hidden onchange="importAllData(event)"></label>
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
-                    <span style="font-size:0.8125rem;color:var(--gray-600);width:100%;margin-bottom:0.25rem;font-weight:500;">📦 产品库：</span>
-                    <label class="btn btn-outline btn-sm">🥡 导入JSON<input type="file" id="importProducts" accept=".json" hidden onchange="importProducts(event)"></label>
-                    <label class="btn btn-outline btn-sm">📊 导入XLSX<input type="file" id="importProductsXLSX" accept=".xlsx,.xls" hidden onchange="importProductsXLSX(event)"></label>
-                    <button class="btn btn-success btn-sm" onclick="exportProducts()">📤 导出JSON</button>
-                    <button class="btn btn-success btn-sm" onclick="exportProductsXLSX()">📊 导出XLSX</button>
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
-                    <span style="font-size:0.8125rem;color:var(--gray-600);width:100%;margin-bottom:0.25rem;font-weight:500;">📋 报价模板：</span>
-                    <label class="btn btn-outline btn-sm">🥡 导入JSON<input type="file" id="importTemplates" accept=".json" hidden onchange="importTemplates(event)"></label>
-                    <label class="btn btn-outline btn-sm">📊 导入XLSX<input type="file" id="importTemplatesXLSX" accept=".xlsx,.xls" hidden onchange="importTemplatesXLSX(event)"></label>
-                    <button class="btn btn-success btn-sm" onclick="exportTemplates()">📤 导出JSON</button>
-                    <button class="btn btn-success btn-sm" onclick="exportTemplatesXLSX()">📊 导出XLSX</button>
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
-                    <span style="font-size:0.8125rem;color:var(--gray-600);width:100%;margin-bottom:0.25rem;font-weight:500;">👥 客户管理：</span>
-                    <label class="btn btn-outline btn-sm">🥡 导入JSON<input type="file" id="importCustomers" accept=".json" hidden onchange="importCustomers(event)"></label>
-                    <label class="btn btn-outline btn-sm">📊 导入XLSX<input type="file" id="importCustomersXLSX" accept=".xlsx,.xls" hidden onchange="importCustomersXLSX(event)"></label>
-                    <button class="btn btn-success btn-sm" onclick="exportCustomers()">📤 导出JSON</button>
-                    <button class="btn btn-success btn-sm" onclick="exportCustomersXLSX()">📊 导出XLSX</button>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0.5rem;margin-bottom:0.75rem;">
+                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
+                        <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">💾 全部数据</div>
+                        <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
+                            <button class="btn btn-primary btn-xs" onclick="exportAllData()">💾 导出</button>
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📂 导入<input type="file" id="importFile" accept=".json" hidden onchange="importAllData(event)"></label>
+                        </div>
+                    </div>
+                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
+                        <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">📦 产品库</div>
+                        <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">🥡 JSON<input type="file" id="importProducts" accept=".json" hidden onchange="importProducts(event)"></label>
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📊 XLSX<input type="file" id="importProductsXLSX" accept=".xlsx,.xls" hidden onchange="importProductsXLSX(event)"></label>
+                            <button class="btn btn-success btn-xs" onclick="exportProducts()">📤 JSON</button>
+                            <button class="btn btn-success btn-xs" onclick="exportProductsXLSX()">📊 XLSX</button>
+                        </div>
+                    </div>
+                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
+                        <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">📋 报价模板</div>
+                        <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">🥡 JSON<input type="file" id="importTemplates" accept=".json" hidden onchange="importTemplates(event)"></label>
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📊 XLSX<input type="file" id="importTemplatesXLSX" accept=".xlsx,.xls" hidden onchange="importTemplatesXLSX(event)"></label>
+                            <button class="btn btn-success btn-xs" onclick="exportTemplates()">📤 JSON</button>
+                            <button class="btn btn-success btn-xs" onclick="exportTemplatesXLSX()">📊 XLSX</button>
+                        </div>
+                    </div>
+                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
+                        <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">👥 客户管理</div>
+                        <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">🥡 JSON<input type="file" id="importCustomers" accept=".json" hidden onchange="importCustomers(event)"></label>
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📊 XLSX<input type="file" id="importCustomersXLSX" accept=".xlsx,.xls" hidden onchange="importCustomersXLSX(event)"></label>
+                            <button class="btn btn-success btn-xs" onclick="exportCustomers()">📤 JSON</button>
+                            <button class="btn btn-success btn-xs" onclick="exportCustomersXLSX()">📊 XLSX</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="settings-section">
                 <h3>💾 存储管理</h3>
-                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
-                    <button class="btn btn-outline btn-sm" onclick="checkStorageUsage()">📊 存储统计</button>
+                <div style="display:flex;gap:0.375rem;flex-wrap:wrap;margin-bottom:0.75rem;">
+                    <button class="btn btn-outline btn-sm" onclick="toggleStorageStats()">📊 存储统计</button>
                     <button class="btn btn-outline btn-sm" onclick="createManualBackup()">📸 创建备份</button>
                     <button class="btn btn-outline btn-sm" onclick="cleanAllBackups()">🗑️ 清理备份</button>
                     <button class="btn btn-outline btn-sm" onclick="optimizeStorage()">⚡ 优化存储</button>
                     <button class="btn btn-outline btn-sm" onclick="showIndexedDBStats()">📋 IDB统计</button>
                     <button class="btn btn-danger btn-sm" onclick="clearAllData()">🗑️ 清空全部数据</button>
                 </div>
-                <div id="storageStats" style="padding:0.75rem;background:var(--gray-50);border-radius:var(--radius);font-size:0.8125rem;"></div>
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:0.75rem;margin-top:1rem;">
-                    <div class="stat-card">
-                        <div class="stat-card-value" id="storageTotal">0 MB</div>
-                        <div class="stat-card-label">总存储</div>
+                
+                <!-- 紧凑的统计卡片 -->
+                <div class="storage-stats-grid" style="display:grid;gap:0.375rem;margin-bottom:0.5rem;">
+                    <div style="background:var(--gray-50);border-radius:6px;padding:0.5rem;text-align:center;">
+                        <div style="font-size:1rem;font-weight:600;color:var(--primary);" id="storageTotal">0 MB</div>
+                        <div style="font-size:0.625rem;color:var(--gray-500);margin-top:0.125rem;">总存储</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-card-value" id="storageProducts">0</div>
-                        <div class="stat-card-label">产品数量</div>
+                    <div style="background:var(--gray-50);border-radius:6px;padding:0.5rem;text-align:center;">
+                        <div style="font-size:1rem;font-weight:600;color:#059669;" id="storageProducts">0</div>
+                        <div style="font-size:0.625rem;color:var(--gray-500);margin-top:0.125rem;">产品数量</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-card-value" id="storagePhotos">0</div>
-                        <div class="stat-card-label">照片数量</div>
+                    <div style="background:var(--gray-50);border-radius:6px;padding:0.5rem;text-align:center;">
+                        <div style="font-size:1rem;font-weight:600;color:#7c3aed;" id="storagePhotos">0</div>
+                        <div style="font-size:0.625rem;color:var(--gray-500);margin-top:0.125rem;">照片数量</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-card-value" id="storageBackups">0</div>
-                        <div class="stat-card-label">备份数量</div>
+                    <div style="background:var(--gray-50);border-radius:6px;padding:0.5rem;text-align:center;">
+                        <div style="font-size:1rem;font-weight:600;color:#d97706;" id="storageBackups">0</div>
+                        <div style="font-size:0.625rem;color:var(--gray-500);margin-top:0.125rem;">备份数量</div>
                     </div>
                 </div>
-                <div id="autoBackupList" class="backup-list" style="margin-top:1rem;"></div>
+
+                <!-- 可折叠的详细统计 -->
+                <div id="storageStatsContainer" style="display:none;margin-bottom:0.5rem;">
+                    <div id="storageStats" style="padding:0.5rem;background:var(--gray-50);border-radius:6px;font-size:0.75rem;"></div>
+                </div>
+
+                <!-- 备份列表 -->
+                <div id="autoBackupList" class="backup-list" style="margin-top:0.5rem;"></div>
             </div>
             <div class="settings-section">
                 <h3>☁️ 云同步（GitHub Gist）</h3>
@@ -6687,30 +6875,30 @@ var DataManager = {
                 <!-- 高级同步选项 -->
                 <div style="background: var(--gray-50); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem;">
                     <div style="font-size: 0.8125rem; font-weight: 600; color: var(--gray-700); margin-bottom: 0.5rem;">⚙️ 高级同步选项</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; cursor: pointer;">
-                            <input type="checkbox" id="incrementalSyncEnabled" checked style="width: 1rem; height: 1rem;">
-                            <span>增量同步（节省流量）</span>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.375rem;">
+                        <label style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.6875rem; cursor: pointer;">
+                            <input type="checkbox" id="incrementalSyncEnabled" checked style="width: 0.75rem; height: 0.75rem;">
+                            <span>增量同步</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; cursor: pointer;">
-                            <input type="checkbox" id="autoRetryEnabled" checked style="width: 1rem; height: 1rem;">
-                            <span>失败自动重试（最多3次）</span>
+                        <label style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.6875rem; cursor: pointer;">
+                            <input type="checkbox" id="autoRetryEnabled" checked style="width: 0.75rem; height: 0.75rem;">
+                            <span>失败重试</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; cursor: pointer;">
-                            <input type="checkbox" id="desktopNotificationsEnabled" style="width: 1rem; height: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.6875rem; cursor: pointer;">
+                            <input type="checkbox" id="dataCompressionEnabled" checked style="width: 0.75rem; height: 0.75rem;">
+                            <span>数据压缩</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.6875rem; cursor: pointer;">
+                            <input type="checkbox" id="bandwidthAdaptive" checked style="width: 0.75rem; height: 0.75rem;">
+                            <span>带宽自适应</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.6875rem; cursor: pointer;">
+                            <input type="checkbox" id="desktopNotificationsEnabled" style="width: 0.75rem; height: 0.75rem;">
                             <span>桌面通知</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; cursor: pointer;">
-                            <input type="checkbox" id="dataCompressionEnabled" checked style="width: 1rem; height: 1rem;">
-                            <span>数据压缩（节省流量）</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; cursor: pointer;">
-                            <input type="checkbox" id="batchSyncEnabled" style="width: 1rem; height: 1rem;">
-                            <span>大文件分批同步</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; cursor: pointer;">
-                            <input type="checkbox" id="bandwidthAdaptive" checked style="width: 1rem; height: 1rem;">
-                            <span>带宽自适应</span>
+                        <label style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.6875rem; cursor: pointer;">
+                            <input type="checkbox" id="batchSyncEnabled" style="width: 0.75rem; height: 0.75rem;">
+                            <span>分批同步</span>
                         </label>
                     </div>
                 </div>
@@ -6844,76 +7032,107 @@ var DataManager = {
             <!-- 身份权限管理 -->
             <div class="settings-section">
                 <h3>🔐 身份权限管理</h3>
-                <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.75rem;padding:0.5rem;background:#fee2e2;border-radius:var(--radius);">
-                    ⚠️ 安全提示：高级身份需要管理员密码才能启用，启用后可查看成本、利润等敏感数据。
+                <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.5rem;padding:0.5rem;background:#fee2e2;border-radius:var(--radius);">
+                    ⚠️ 高级身份需要管理员密码才能启用
                 </div>
-                <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.75rem;margin-bottom:0.75rem;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.75rem;margin-bottom:0.5rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
                         <div>
                             <div style="font-size:0.875rem;font-weight:600;color:var(--gray-800);">当前身份</div>
                             <div style="font-size:0.75rem;color:var(--gray-500);" id="currentIdentity">普通用户</div>
                         </div>
-                        <div id="identityBadge" style="padding:0.375rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background:#fee2e2;color:#dc2626;">
+                        <div id="identityBadge" style="padding:0.25rem 0.5rem;border-radius:9999px;font-size:0.6875rem;font-weight:500;background:#fee2e2;color:#dc2626;">
                             🔒 普通身份
                         </div>
                     </div>
-                    <div style="margin-top:1rem;">
-                        <div style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);margin-bottom:0.5rem;">切换到高级身份</div>
-                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                            <input type="password" id="adminPasswordInput" placeholder="请输入管理员密码" style="flex:1;min-width:200px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
-                            <button class="btn btn-primary btn-sm" onclick="verifyAdminPassword()">🔓 验证身份</button>
-                            <button class="btn btn-outline btn-sm" onclick="logoutAdmin()" style="display:none;" id="logoutAdminBtn">🔒 退出高级身份</button>
+                    <div style="margin-top:0.75rem;">
+                        <div style="font-size:0.75rem;font-weight:500;color:var(--gray-700);margin-bottom:0.375rem;">切换到高级身份</div>
+                        <div style="display:flex;gap:0.375rem;flex-wrap:wrap;">
+                            <input type="password" id="adminPasswordInput" placeholder="管理员密码" style="flex:1;min-width:150px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
+                            <button class="btn btn-primary btn-sm" onclick="verifyAdminPassword()">🔓 验证</button>
+                            <button class="btn btn-outline btn-sm" onclick="logoutAdmin()" style="display:none;" id="logoutAdminBtn">🔒 退出</button>
                         </div>
-                        <div id="passwordError" style="display:none;margin-top:0.5rem;font-size:0.75rem;color:#dc2626;">❌ 密码错误，请重试</div>
-                    </div>
-                    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--gray-200);">
-                        <div style="font-size:0.75rem;color:var(--gray-600);">
-                            <span style="color:#f59e0b;">💡 建议首次登录后修改密码</span>
-                        </div>
-                        <div style="margin-top:0.5rem;">
-                            <div style="font-size:0.75rem;font-weight:500;color:var(--gray-700);margin-bottom:0.25rem;">修改管理员密码</div>
-                            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                                <input type="password" id="newAdminPassword" placeholder="新密码" style="flex:1;min-width:150px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
-                                <input type="password" id="confirmAdminPassword" placeholder="确认密码" style="flex:1;min-width:150px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
-                                <button class="btn btn-outline btn-sm" onclick="changeAdminPassword()">💾 修改密码</button>
-                            </div>
-                        </div>
+                        <div id="passwordError" style="display:none;margin-top:0.375rem;font-size:0.6875rem;color:#dc2626;">❌ 密码错误</div>
                     </div>
                 </div>
-                <div style="background:#f0fdf4;border-radius:var(--radius);padding:0.75rem;">
-                    <div style="font-size:0.8125rem;font-weight:600;color:#065f46;margin-bottom:0.5rem;">📊 权限说明</div>
-                    <div style="font-size:0.75rem;color:#064e3b;">
-                        <ul style="margin:0;padding-left:1.25rem;">
-                            <li><strong>普通身份：</strong>隐藏成本、利润、利润率等敏感数据</li>
-                            <li><strong>高级身份：</strong>可查看所有数据，包括成本分析和利润统计</li>
-                        </ul>
-                    </div>
+                <div style="background:#f0fdf4;border-radius:var(--radius);padding:0.5rem;font-size:0.6875rem;color:#064e3b;">
+                    📊 普通身份隐藏成本/利润 | 高级身份显示全部数据
                 </div>
             </div>
-            <!-- 全局价格配置 -->
+            <!-- 更改登录密码 -->
             <div class="settings-section">
-                <h3>💰 全局价格配置中心</h3>
+                <h3>🔑 更改登录密码</h3>
+                <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.75rem;">
+                    <button class="btn btn-primary" onclick="showChangePasswordModal()">修改登录密码</button>
+                    <div style="font-size:0.75rem;color:var(--gray-500);margin-top:0.5rem;">更改进入软件时需要输入的密码</div>
+                </div>
+            </div>
+            <!-- 综合价格配置 -->
+            <div class="settings-section">
+                <h3>💰 综合价格配置中心</h3>
                 <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.75rem;padding:0.5rem;background:#fef3c7;border-radius:var(--radius);">
                     💡 统一配置所有报价模块的基础价格。设置后自动应用于门头报价和文化墙报价。
                 </div>
-                <div id="globalPriceCategoryBtns" style="margin-bottom:0.75rem;display:flex;gap:0.375rem;flex-wrap:wrap;">
-                    <button class="btn btn-sm" onclick="showGlobalPriceCategory('doorFrame')" id="btnDoorFrame" style="background:#92400e;color:white;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">门头骨架</button>
-                    <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('doorBoard')" id="btnDoorBoard" style="color:#92400e;border-color:#92400e;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">门头底板</button>
-                    <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('doorElectric')" id="btnDoorElectric" style="color:#92400e;border-color:#92400e;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">门头电气</button>
-                    <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('doorFont')" id="btnDoorFont" style="color:#92400e;border-color:#92400e;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">门头字体</button>
-                    <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('doorInstall')" id="btnDoorInstall" style="color:#92400e;border-color:#92400e;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">门头安装</button>
-                    <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('cultureBase')" id="btnCultureBase" style="color:#7c3aed;border-color:#7c3aed;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">文化墙基底</button>
-                    <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('cultureSurface')" id="btnCultureSurface" style="color:#7c3aed;border-color:#7c3aed;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">文化墙表面</button>
-                    <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('cultureOther')" id="btnCultureOther" style="color:#7c3aed;border-color:#7c3aed;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">文化墙其他</button>
+                <!-- 价格配置标签页 -->
+                <div class="price-config-tabs" style="display:flex;gap:0.25rem;margin-bottom:0.75rem;border-bottom:2px solid #e5e7eb;flex-wrap:wrap;">
+                    <button class="price-tab-btn active" onclick="switchPriceConfigTab('base')" id="tabBtnBase" style="padding:0.5rem 1rem;font-size:0.8125rem;border:none;background:transparent;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;">🏗️ 基础价格</button>
+                    <button class="price-tab-btn" onclick="switchPriceConfigTab('char')" id="tabBtnChar" style="padding:0.5rem 1rem;font-size:0.8125rem;border:none;background:transparent;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;">🔤 字体价格</button>
+                    <button class="price-tab-btn" onclick="switchPriceConfigTab('board')" id="tabBtnBoard" style="padding:0.5rem 1rem;font-size:0.8125rem;border:none;background:transparent;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;">📋 展板画面</button>
                 </div>
-                <div id="globalPriceConfigFields" style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:0.5rem;margin-bottom:0.75rem;"></div>
-                <div style="display:flex;gap:0.375rem;flex-wrap:wrap;">
-                    <button class="btn btn-sm" onclick="saveGlobalPriceConfig()" style="background:#10b981;color:white;">💾 保存</button>
-                    <button class="btn btn-sm" onclick="resetAllCustomPrices()" style="background:#ef4444;color:white;">🔄 重置</button>
+
+                <!-- 基础价格内容 -->
+                <div id="priceConfigBase" class="price-config-content">
+                    <div style="margin-bottom:0.75rem;display:flex;gap:0.375rem;flex-wrap:wrap;">
+                        <button class="btn btn-sm" onclick="showGlobalPriceCategory('doorFrame')" id="btnDoorFrame" style="background:#92400e;color:white;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">门头骨架</button>
+                        <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('doorBoard')" id="btnDoorBoard" style="color:#92400e;border-color:#92400e;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">门头底板</button>
+                        <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('doorElectric')" id="btnDoorElectric" style="color:#92400e;border-color:#92400e;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">门头电气</button>
+                        <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('doorFont')" id="btnDoorFont" style="color:#92400e;border-color:#92400e;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">门头字体</button>
+                        <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('doorInstall')" id="btnDoorInstall" style="color:#92400e;border-color:#92400e;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">门头安装</button>
+                        <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('cultureBase')" id="btnCultureBase" style="color:#7c3aed;border-color:#7c3aed;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">文化墙基底</button>
+                        <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('cultureSurface')" id="btnCultureSurface" style="color:#7c3aed;border-color:#7c3aed;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">文化墙表面</button>
+                        <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('cultureOther')" id="btnCultureOther" style="color:#7c3aed;border-color:#7c3aed;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">文化墙其他</button>
+                    </div>
+                    <div id="globalPriceConfigFields" style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:0.5rem;margin-bottom:0.75rem;"></div>
+                    <div style="display:flex;gap:0.375rem;flex-wrap:wrap;">
+                        <button class="btn btn-sm" onclick="saveGlobalPriceConfig()" style="background:#10b981;color:white;">💾 保存</button>
+                        <button class="btn btn-sm" onclick="resetAllCustomPrices()" style="background:#ef4444;color:white;">🔄 重置</button>
+                    </div>
                 </div>
+
+                <!-- 字体价格内容 -->
+                <div id="priceConfigChar" class="price-config-content" style="display:none;">
+                    <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:1rem;padding:0.5rem;background:var(--gray-50);border-radius:var(--radius);">
+                        💡 配置说明：设置不同材质在不同字高范围内的单价（单位：元/字）。<strong>字高越小，单价越高</strong>，这是行业规则。
+                    </div>
+                    <div style="margin-bottom:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap;" id="charPricingButtons"></div>
+                    <div id="charPricingConfig"></div>
+                    <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--gray-200);">
+                        <button class="btn btn-outline btn-sm" onclick="loadDefaultCharPricing()">📥 恢复默认价格</button>
+                        <button class="btn btn-primary btn-sm" onclick="applyCharPricing()">✅ 应用价格配置</button>
+                        <button class="btn btn-outline btn-sm" onclick="exportCharPricingXLS()">📊 导出价格表</button>
+                        <label class="btn btn-outline btn-sm">📥 导入价格表<input type="file" id="importCharPricingFile" accept=".xlsx,.xls,.csv" hidden onchange="importCharPricing(event)"></label>
+                    </div>
+                </div>
+
+                <!-- 展板画面价格内容 -->
+                <div id="priceConfigBoard" class="price-config-content" style="display:none;">
+                    <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:1rem;padding:0.5rem;background:var(--gray-50);border-radius:var(--radius);">
+                        💡 配置展板类型和背景画面材质的单价（单位：元/㎡）。这些价格会应用于文化墙报价中的展板和背景画面计算。
+                    </div>
+                    <div style="margin-bottom:0.75rem;display:flex;gap:0.375rem;flex-wrap:wrap;">
+                        <button class="btn btn-sm" onclick="showBoardPriceCategory('boardTypes')" id="btnBoardTypes" style="background:#16a34a;color:white;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">展板类型</button>
+                        <button class="btn btn-sm btn-outline" onclick="showBoardPriceCategory('backdropTypes')" id="btnBackdropTypes" style="color:#0891b2;border-color:#0891b2;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">背景画面</button>
+                    </div>
+                    <div id="boardPriceConfigFields" style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:0.5rem;margin-bottom:0.75rem;"></div>
+                    <div style="display:flex;gap:0.375rem;flex-wrap:wrap;">
+                        <button class="btn btn-sm" onclick="saveBoardPriceConfig()" style="background:#10b981;color:white;">💾 保存</button>
+                        <button class="btn btn-sm" onclick="resetBoardPriceConfig()" style="background:#ef4444;color:white;">🔄 重置</button>
+                    </div>
+                </div>
+
                 <div style="margin-top:1rem;padding:0.75rem;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;">
                     <div style="font-size:0.75rem;color:#1e40af;margin-bottom:0.5rem;font-weight:500;">📦 材料产品库初始化</div>
-                    <div style="font-size:0.6875rem;color:#64748b;margin-bottom:0.75rem;">将门头报价和文化墙报价中的所有原材料添加到产品库，方便直接调用价格</div>
+                    <div style="font-size:0.6875rem;color:#64748b;margin-bottom:0.75rem;">包含门头材料、文化墙展板/表面材料、导视系统、公共辅材等共200+种材料</div>
                     <button class="btn btn-sm" onclick="initMaterialProductLibrary()" style="background:#2563eb;color:white;">🚀 一键初始化材料库</button>
                 </div>
             </div>
@@ -8484,6 +8703,7 @@ function handleLogin(event) {
     
     const password = document.getElementById('login-password').value;
     const errorDiv = document.getElementById('login-error');
+    const autoLoginChecked = document.getElementById('loginAutoLogin').checked;
     
     if (password === getAccessPassword()) {
         const overlay = document.getElementById('login-overlay');
@@ -8492,17 +8712,15 @@ function handleLogin(event) {
             overlay.style.display = 'none';
         }, 300);
         
-        localStorage.setItem('loggedIn', 'true');
-        showToast('登录成功', 'success');
-        
-        // 首次登录提示修改密码
-        if (getAccessPassword() === 'jiayin123') {
-            setTimeout(() => {
-                showConfirmModal('检测到您使用的是默认密码，建议立即修改以保障安全！', function() {
-                    showChangePasswordModal();
-                });
-            }, 1500);
+        if (autoLoginChecked) {
+            const expires = new Date();
+            expires.setDate(expires.getDate() + 3);
+            localStorage.setItem('loggedIn', 'true');
+            localStorage.setItem('loginExpire', expires.getTime());
+        } else {
+            localStorage.setItem('loggedIn', 'true');
         }
+        showToast('登录成功', 'success');
     } else {
         errorDiv.style.display = 'block';
         document.getElementById('login-password').value = '';
@@ -8513,15 +8731,30 @@ function handleLogin(event) {
     }
 }
 
-// 页面加载时检查登录状态
+// 页面加载时检查登录状态 - 每次都需要输入密码
 function checkLoginStatus() {
-    const loggedIn = localStorage.getItem('loggedIn') === 'true';
+    const loggedIn = localStorage.getItem('loggedIn');
+    const loginExpire = localStorage.getItem('loginExpire');
+    const now = new Date().getTime();
     
-    if (loggedIn) {
-        // 已登录，隐藏登录覆盖层
+    if (loggedIn === 'true') {
+        if (loginExpire && now < parseInt(loginExpire)) {
+            const overlay = document.getElementById('login-overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+        } else {
+            localStorage.removeItem('loggedIn');
+            localStorage.removeItem('loginExpire');
+            const overlay = document.getElementById('login-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+            }
+        }
+    } else {
         const overlay = document.getElementById('login-overlay');
         if (overlay) {
-            overlay.style.display = 'none';
+            overlay.style.display = 'flex';
         }
     }
 }
@@ -8529,6 +8762,12 @@ function checkLoginStatus() {
 document.addEventListener('DOMContentLoaded', () => {
     // 检查登录状态
     checkLoginStatus();
+    
+    // 隐藏加载动画
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+        loadingOverlay.classList.add('hidden');
+    }
 
     // 初始化身份权限
     initIdentity();
@@ -9299,7 +9538,27 @@ function initMaterialProductLibrary() {
     addProduct('澳松板', '文化墙材料', '基础', '㎡', 90, 70, '进口密度板');
     addProduct('高密度PVC板', '文化墙材料', '基础', '㎡', 120, 95, '高密度PVC板');
     
+    // ========== 文化墙展板材料 ==========
+    addProduct('KT板(展板)', '文化墙材料', '展板', '㎡', 35, 28, '轻便经济，适合短期展示');
+    addProduct('雪弗板(展板)', '文化墙材料', '展板', '㎡', 45, 35, '较厚耐用，适合长期展示');
+    addProduct('亚克力板(展板)', '文化墙材料', '展板', '㎡', 120, 95, '透明高档，适合精品展示');
+    addProduct('PVC板(展板)', '文化墙材料', '展板', '㎡', 55, 42, '防水防潮，适合户外使用');
+    addProduct('密度板(展板)', '文化墙材料', '展板', '㎡', 65, 50, '木质质感，适合文艺风格');
+    addProduct('铝塑板(展板)', '文化墙材料', '展板', '㎡', 85, 65, '金属质感，适合高端展示');
+    addProduct('瓦楞板(展板)', '文化墙材料', '展板', '㎡', 25, 20, '轻便牢固，适合临时活动');
+    addProduct('磁性展板', '文化墙材料', '展板', '㎡', 95, 75, '可重复使用，适合频繁更换');
+
     // ========== 文化墙表面材料 ==========
+    addProduct('灯箱片', '文化墙材料', '表面', '㎡', 75, 58, '半透明，适合灯箱画面');
+    addProduct('透明贴', '文化墙材料', '表面', '㎡', 55, 42, '玻璃贴/车窗贴');
+    addProduct('油画布', '文化墙材料', '表面', '㎡', 65, 50, '高档艺术风格');
+    addProduct('地板贴', '文化墙材料', '表面', '㎡', 95, 75, '耐磨防滑，适合地面');
+    addProduct('喷砂贴', '文化墙材料', '表面', '㎡', 100, 78, '玻璃磨砂效果');
+    addProduct('车贴/改色膜', '文化墙材料', '表面', '㎡', 150, 120, '车身贴膜');
+    addProduct('壁布软包', '文化墙材料', '表面', '㎡', 110, 85, '软质面料，高档装饰');
+    addProduct('壁布', '文化墙材料', '表面', '㎡', 45, 35, '纺织面料墙纸');
+    addProduct('硬包面板', '文化墙材料', '表面', '㎡', 95, 75, '硬质布艺包装饰');
+    addProduct('软包面板(文化墙)', '文化墙材料', '表面', '㎡', 120, 95, '软质布艺装饰');
     addProduct('车贴/即时贴', '文化墙材料', '表面', '㎡', 45, 35, '车身贴纸/即时贴');
     addProduct('背胶PP', '文化墙材料', '表面', '㎡', 55, 42, '背胶相纸材料');
     addProduct('UV打印(板材)', '文化墙材料', '表面', '㎡', 120, 95, 'UV平板打印');
@@ -9408,7 +9667,7 @@ function initMaterialProductLibrary() {
     
     var materialCategories = [
         { name: '门头材料', subCategories: ['骨架', '底板', '面板', '电气', '字体', '包边', '装饰', '安装', '辅材', '工艺'] },
-        { name: '文化墙材料', subCategories: ['基础', '表面', '装饰', '安装', '辅材', '立体字'] },
+        { name: '文化墙材料', subCategories: ['基础', '展板', '表面', '装饰', '安装', '辅材', '立体字'] },
         { name: '导视系统', subCategories: ['立柱', '指示牌', '支架', '科室牌', '导向', '吊架', '工艺', '基础', '膜', '型材', '板材', '灯箱'] },
         { name: '公共辅材', subCategories: ['紧固件', '粘合剂', '焊接', '打磨', '涂料', '保护', '辅助', '电气', '工具'] }
     ];
@@ -10630,17 +10889,27 @@ function performCalculateTotals(){
         console.error('calculateTotals error:', e);
     }
 }
-function getHeaderGradient(){ 
-    const s=appData.systemSettings.printStyle||'classic'; 
-    switch(s){ 
-        case'classic':return 'linear-gradient(135deg, var(--primary), var(--secondary))'; 
-        case'simple':return '#ffffff'; 
-        case'modern':return 'linear-gradient(135deg, #1e293b, #334155)'; 
-        default:return 'linear-gradient(135deg, var(--primary), var(--secondary))'; 
-    } 
+function getHeaderGradient(){
+    const s = appData.systemSettings.printStyle || 'classic';
+    const customPrimary = appData.systemSettings.customPrimaryColor || '#2563eb';
+    const customSecondary = appData.systemSettings.customSecondaryColor || '#0ea5e9';
+
+    switch(s){
+        case 'classic': return 'linear-gradient(135deg, #2563eb, #0ea5e9)';
+        case 'simple': return '#ffffff';
+        case 'modern': return 'linear-gradient(135deg, #1e293b, #334155)';
+        case 'gradientGreen': return 'linear-gradient(135deg, #059669, #10b981)';
+        case 'gradientPurple': return 'linear-gradient(135deg, #7c3aed, #a855f7)';
+        case 'gradientGold': return 'linear-gradient(135deg, #d97706, #f59e0b)';
+        case 'warmOrange': return 'linear-gradient(135deg, #ea580c, #f97316)';
+        case 'elegantPink': return 'linear-gradient(135deg, #db2777, #ec4899)';
+        case 'custom': return `linear-gradient(135deg, ${customPrimary}, ${customSecondary})`;
+        default: return 'linear-gradient(135deg, #2563eb, #0ea5e9)';
+    }
 }
 function getHeaderTextColor(){
-    return (appData.systemSettings.printStyle||'classic')==='simple'?'#1f2937':'white';
+    const s = appData.systemSettings.printStyle || 'classic';
+    return s === 'simple' ? '#1f2937' : 'white';
 }
 function changeQuoteStyle(style){
     appData.systemSettings.quoteStyle = style;
@@ -10808,13 +11077,16 @@ function generateQuotePreview(){
                 </div>`;
         }).join('');
         
-        headerHtml=`<div style="background:#1e40af;color:white;padding:1.75rem 2rem;border-bottom:3px solid #3b82f6;">
+        headerHtml=`<div style="background:${hg.replace('linear-gradient', 'linear-gradient').split(',')[0] === 'linear-gradient' ? hg : '#1e40af'};color:${hc};padding:1.75rem 2rem;border-bottom:3px solid ${hc === 'white' ? '#3b82f6' : '#ffffff33'};">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:2rem;">
-                <div>
-                    <div style="font-size:0.75rem;opacity:0.85;margin-bottom:0.4rem;letter-spacing:0.1em;">产品报价单</div>
-                    <h1 style="font-size:1.75rem;font-weight:700;margin:0;margin-bottom:0.4rem;">${appData.currentQuote.title || '产品报价单'}</h1>
-                    ${appData.currentQuote.quoteNumber ? `<div style="font-size:0.85rem;opacity:0.9;margin-bottom:0.25rem;">编号：${appData.currentQuote.quoteNumber}</div>` : ''}
-                    <div style="font-size:0.85rem;opacity:0.85;">${ds}</div>
+                <div style="display:flex;align-items:center;gap:1rem;">
+                    ${settings.quoteLogo ? `<img src="${settings.quoteLogo}" style="max-width:80px;max-height:80px;object-fit:contain;border-radius:8px;background:white;padding:4px;">` : ''}
+                    <div>
+                        <div style="font-size:0.75rem;opacity:0.85;margin-bottom:0.4rem;letter-spacing:0.1em;">产品报价单</div>
+                        <h1 style="font-size:1.75rem;font-weight:700;margin:0;margin-bottom:0.4rem;">${appData.currentQuote.title || '产品报价单'}</h1>
+                        ${appData.currentQuote.quoteNumber ? `<div style="font-size:0.85rem;opacity:0.9;margin-bottom:0.25rem;">编号：${appData.currentQuote.quoteNumber}</div>` : ''}
+                        <div style="font-size:0.85rem;opacity:0.85;">${ds}</div>
+                    </div>
                 </div>
                 <div style="text-align:right;">
                     ${settings.companyName ? `<div style="font-size:1.05rem;font-weight:600;margin-bottom:0.25rem;">${settings.companyName}</div>` : ''}
@@ -11228,10 +11500,13 @@ function generateQuotePreview(){
     } else if(quoteStyle === 'standard'){
         headerHtml=`<div style="background:#2c5282;color:white;padding:1.5rem 2rem;border-radius:8px 8px 0 0;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div>
-                    ${settings.companyName?`<div style="font-size:1.25rem;font-weight:600;">${settings.companyName}</div>`:''}
-                    ${settings.companyAddress?`<div style="font-size:0.75rem;opacity:0.8;margin-top:0.25rem;">${settings.companyAddress}</div>`:''}
-                    ${settings.companyPhone?`<div style="font-size:0.75rem;opacity:0.8;">电话：${settings.companyPhone}</div>`:''}
+                <div style="display:flex;align-items:center;gap:1rem;">
+                    ${settings.quoteLogo ? `<img src="${settings.quoteLogo}" style="max-width:70px;max-height:70px;object-fit:contain;border-radius:8px;background:white;padding:4px;">` : ''}
+                    <div>
+                        ${settings.companyName?`<div style="font-size:1.25rem;font-weight:600;">${settings.companyName}</div>`:''}
+                        ${settings.companyAddress?`<div style="font-size:0.75rem;opacity:0.8;margin-top:0.25rem;">${settings.companyAddress}</div>`:''}
+                        ${settings.companyPhone?`<div style="font-size:0.75rem;opacity:0.8;">电话：${settings.companyPhone}</div>`:''}
+                    </div>
                 </div>
                 <div style="text-align:right;">
                     <div style="font-size:1.75rem;font-weight:600;letter-spacing:0.05em;">报价单</div>
@@ -11411,11 +11686,14 @@ function generateQuotePreview(){
         preview.innerHTML=`<div style="background:white;max-width:100%;margin:0 auto;font-family:'Microsoft YaHei','PingFang SC',Arial,sans-serif;overflow:hidden;${innerPadding};">
             <div style="background:${hg};padding:2.5rem 2rem;color:${hc};">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div>
-                        <div style="font-size:0.75rem;opacity:0.8;letter-spacing:0.15em;margin-bottom:0.5rem;">ADVERTISING QUOTATION</div>
-                        <h2 style="font-size:1.75rem;font-weight:700;margin:0 0 0.5rem 0;letter-spacing:0.02em;">${appData.currentQuote.title||'广告报价单'}</h2>
-                        ${appData.currentQuote.quoteNumber?`<div style="font-size:0.8rem;opacity:0.85;margin-bottom:0.25rem;">编号：${appData.currentQuote.quoteNumber}</div>`:''}
-                        <div style="font-size:0.85rem;opacity:0.9;">${ds} ${settings.companyName?'| '+settings.companyName:''}</div>
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        ${settings.quoteLogo ? `<img src="${settings.quoteLogo}" style="max-width:80px;max-height:80px;object-fit:contain;border-radius:8px;background:white;padding:4px;">` : ''}
+                        <div>
+                            <div style="font-size:0.75rem;opacity:0.8;letter-spacing:0.15em;margin-bottom:0.5rem;">ADVERTISING QUOTATION</div>
+                            <h2 style="font-size:1.75rem;font-weight:700;margin:0 0 0.5rem 0;letter-spacing:0.02em;">${appData.currentQuote.title||'广告报价单'}</h2>
+                            ${appData.currentQuote.quoteNumber?`<div style="font-size:0.8rem;opacity:0.85;margin-bottom:0.25rem;">编号：${appData.currentQuote.quoteNumber}</div>`:''}
+                            <div style="font-size:0.85rem;opacity:0.9;">${ds} ${settings.companyName?'| '+settings.companyName:''}</div>
+                        </div>
                     </div>
                     <div style="text-align:right;">
                         ${settings.companyName?`<div style="font-size:1.1rem;font-weight:600;">${settings.companyName}</div>`:''}
@@ -16527,236 +16805,221 @@ function getDynamicCharComplexity(charContent) {
 const fontTypeConfig = {
     led_exposed: {
         name: '外露发光字',
+        material: '铝板冲孔字',
         isLighted: true,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * getCharComplexityFactor();
-            const ledCount = Math.ceil(charArea * 10000 / 25);
-            const unitPrice = Math.ceil(charArea * getDoorHeaderCustomPrice('fontLedExposed', 280));
-            return { unitPrice, ledCount: ledCount * charCount };
+            const unitPrice = getCharUnitPrice(charSize, charSize, '外露发光字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice), ledCount: Math.ceil(charSize * charSize * 0.16) * charCount };
         }
     },
     led_channel: {
         name: '亚克力发光字',
+        material: 'led',
         isLighted: true,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * getCharComplexityFactor();
-            const pricePerChar = Math.ceil(charArea * getDoorHeaderCustomPrice('fontLedChannel', 220));
-            return { unitPrice: pricePerChar };
+            const unitPrice = getCharUnitPrice(charSize, charSize, '亚克力发光字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
         }
     },
     crystal: {
         name: '水晶字',
+        material: '水晶背光字',
         isLighted: false,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * getCharComplexityFactor();
-            const pricePerChar = Math.ceil(charArea * getDoorHeaderCustomPrice('fontCrystal', 200));
-            return { unitPrice: pricePerChar };
+            const unitPrice = getCharUnitPrice(charSize, charSize, '水晶字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
         }
     },
     pvc: {
         name: 'PVC字',
+        material: 'pvc',
         isLighted: false,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * getCharComplexityFactor();
-            const pricePerChar = Math.ceil(charArea * getDoorHeaderCustomPrice('fontPVC', 120));
-            return { unitPrice: pricePerChar };
+            const unitPrice = getCharUnitPrice(charSize, charSize, 'PVC字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
         }
     },
     stainless_steel_font: {
         name: '不锈钢字',
+        material: 'stainless',
         isLighted: false,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * getCharComplexityFactor();
-            const pricePerChar = Math.ceil(charArea * getDoorHeaderCustomPrice('fontStainless', 400));
-            return { unitPrice: pricePerChar };
+            const unitPrice = getCharUnitPrice(charSize, charSize, '不锈钢字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
         }
     },
     resin: {
         name: '树脂字',
+        material: 'resin',
         isLighted: true,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * getCharComplexityFactor();
-            const pricePerChar = Math.ceil(charArea * getDoorHeaderCustomPrice('fontResin', 450));
-            return { unitPrice: pricePerChar };
+            const unitPrice = getCharUnitPrice(charSize, charSize, '树脂字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
         }
     },
     mini_led: {
         name: '迷你发光字',
+        material: '迷你字',
         isLighted: true,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * getCharComplexityFactor();
-            const pricePerChar = Math.ceil(charArea * getDoorHeaderCustomPrice('fontMiniLed', 500));
-            return { unitPrice: pricePerChar };
+            const unitPrice = getCharUnitPrice(charSize, charSize, '迷你发光字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
         }
     },
     back_lit: {
         name: '背发光字',
+        material: 'led',
         isLighted: true,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * getCharComplexityFactor();
-            const pricePerChar = Math.ceil(charArea * getDoorHeaderCustomPrice('fontBackLit', 350));
-            return { unitPrice: pricePerChar };
+            const unitPrice = getCharUnitPrice(charSize, charSize, '背发光字', 'backlit');
+            return { unitPrice: Math.ceil(unitPrice) };
         }
     },
     side_lit: {
         name: '侧发光字',
+        material: 'led',
         isLighted: true,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * getCharComplexityFactor();
-            const pricePerChar = Math.ceil(charArea * getDoorHeaderCustomPrice('fontSideLit', 300));
-            return { unitPrice: pricePerChar };
-        }
-    },
-    precision: {
-        name: '精工字',
-        isLighted: false,
-        calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * 0.7;
-            const pricePerChar = Math.ceil(charArea * getDoorHeaderCustomPrice('fontPrecision', 380));
-            return { unitPrice: pricePerChar };
-        }
-    },
-    electroplated: {
-        name: '电镀字',
-        isLighted: false,
-        calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * 0.7;
-            const pricePerChar = Math.ceil(charArea * getDoorHeaderCustomPrice('fontElectroplated', 500));
-            return { unitPrice: pricePerChar };
-        }
-    },
-    galvanized: {
-        name: '镀锌板烤漆字',
-        isLighted: false,
-        calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * 0.7;
-            const pricePerChar = Math.ceil(charArea * getDoorHeaderCustomPrice('fontGalvanized', 280));
-            return { unitPrice: pricePerChar };
+            const unitPrice = getCharUnitPrice(charSize, charSize, '侧发光字', 'backlit');
+            return { unitPrice: Math.ceil(unitPrice) };
         }
     },
     borderless: {
         name: '无边发光字',
+        material: '无边字',
         isLighted: true,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * 0.7;
-            const pricePerChar = Math.ceil(charArea * getDoorHeaderCustomPrice('fontBorderless', 380));
-            return { unitPrice: pricePerChar };
+            const unitPrice = getCharUnitPrice(charSize, charSize, '无边发光字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
         }
     },
     super_font: {
         name: '超级字',
+        material: 'metal',
         isLighted: true,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * 0.7;
-            const pricePerChar = Math.ceil(charArea * getDoorHeaderCustomPrice('fontSuper', 450));
-            return { unitPrice: pricePerChar };
+            const unitPrice = getCharUnitPrice(charSize, charSize, '超级字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
         }
     },
     dot_matrix: {
         name: '点阵字',
+        material: '铝板冲孔字',
         isLighted: true,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * 0.7;
-            const pricePerChar = Math.ceil(charArea * getDoorHeaderCustomPrice('fontDotMatrix', 250));
-            return { unitPrice: pricePerChar };
+            const unitPrice = getCharUnitPrice(charSize, charSize, '点阵字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice), ledCount: Math.ceil(charSize * charSize * 0.12) * charCount };
         }
     },
     neon: {
         name: '柔性霓虹字',
+        material: 'led',
         isLighted: true,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * 0.7;
-            const pricePerChar = Math.ceil(charArea * getDoorHeaderCustomPrice('fontNeon', 350));
-            return { unitPrice: pricePerChar };
-        }
-    },
-    solid_wood: {
-        name: '实木字',
-        isLighted: false,
-        calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * 0.7;
-            // 原木雕刻，高端质感
-            const pricePerChar = Math.ceil(charArea * 600); // 约600元/㎡
-            return { unitPrice: pricePerChar };
-        }
-    },
-    marble: {
-        name: '仿大理石字',
-        isLighted: false,
-        calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * 0.7;
-            // 高密度板材+大理石纹理转印
-            const pricePerChar = Math.ceil(charArea * 350); // 约350元/㎡
-            return { unitPrice: pricePerChar };
-        }
-    },
-    liquid_acrylic: {
-        name: '液态亚克力字',
-        isLighted: false,
-        calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * 0.7;
-            // 浇注成型，透明度更高
-            const pricePerChar = Math.ceil(charArea * 450); // 约450元/㎡
-            return { unitPrice: pricePerChar };
-        }
-    },
-    titanium: {
-        name: '钛金字',
-        isLighted: false,
-        calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * 0.7;
-            // 钛金电镀工艺
-            const pricePerChar = Math.ceil(charArea * 650); // 约650元/㎡
-            return { unitPrice: pricePerChar };
-        }
-    },
-    rose_gold: {
-        name: '玫瑰金字',
-        isLighted: false,
-        calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * 0.7;
-            // 玫瑰金电镀工艺
-            const pricePerChar = Math.ceil(charArea * 700); // 约700元/㎡
-            return { unitPrice: pricePerChar };
+            const unitPrice = getCharUnitPrice(charSize, charSize, '柔性霓虹字', 'backlit');
+            return { unitPrice: Math.ceil(unitPrice) };
         }
     },
     infinity_mirror: {
         name: '千层镜字',
+        material: 'led',
         isLighted: true,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * 0.7;
-            // 镜面反射效果，有层次感
-            const pricePerChar = Math.ceil(charArea * 580); // 约580元/㎡
-            return { unitPrice: pricePerChar };
+            const unitPrice = getCharUnitPrice(charSize, charSize, '千层镜字', 'backlit');
+            return { unitPrice: Math.ceil(unitPrice) };
         }
     },
     backlit_crystal: {
         name: '背光水晶字',
+        material: '水晶背光字',
         isLighted: true,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * 0.7;
-            // 水晶字+底部背光
-            const pricePerChar = Math.ceil(charArea * 480); // 约480元/㎡
-            return { unitPrice: pricePerChar };
+            const unitPrice = getCharUnitPrice(charSize, charSize, '背光水晶字', 'backlit');
+            return { unitPrice: Math.ceil(unitPrice) };
         }
     },
     glass_neon: {
         name: '玻璃霓虹字',
+        material: 'led',
         isLighted: true,
         calcPrice: function(charCount, charSize) {
-            const charArea = (charSize / 100) * (charSize / 100) * 0.7;
-            // 传统玻璃霓虹管
-            const pricePerChar = Math.ceil(charArea * 520); // 约520元/㎡
-            return { unitPrice: pricePerChar };
+            const unitPrice = getCharUnitPrice(charSize, charSize, '玻璃霓虹字', 'backlit');
+            return { unitPrice: Math.ceil(unitPrice) };
         }
     },
-    none: {
-        name: '无字',
+    precision: {
+        name: '精工字',
+        material: 'stainless',
         isLighted: false,
-        calcPrice: function() { return { unitPrice: 0 }; }
+        calcPrice: function(charCount, charSize) {
+            const unitPrice = getCharUnitPrice(charSize, charSize, '精工字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
+    },
+    electroplated: {
+        name: '电镀字',
+        material: 'metal',
+        isLighted: false,
+        calcPrice: function(charCount, charSize) {
+            const unitPrice = getCharUnitPrice(charSize, charSize, '电镀字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
+    },
+    galvanized: {
+        name: '镀锌板烤漆字',
+        material: 'metal',
+        isLighted: false,
+        calcPrice: function(charCount, charSize) {
+            const unitPrice = getCharUnitPrice(charSize, charSize, '镀锌板烤漆字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
+    },
+    solid_wood: {
+        name: '实木字',
+        material: 'pvc',
+        isLighted: false,
+        calcPrice: function(charCount, charSize) {
+            const unitPrice = getCharUnitPrice(charSize, charSize, '实木字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
+    },
+    marble: {
+        name: '仿大理石字',
+        material: 'pvc',
+        isLighted: false,
+        calcPrice: function(charCount, charSize) {
+            const unitPrice = getCharUnitPrice(charSize, charSize, '仿大理石字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
+    },
+    liquid_acrylic: {
+        name: '液态亚克力字',
+        material: 'acrylic',
+        isLighted: false,
+        calcPrice: function(charCount, charSize) {
+            const unitPrice = getCharUnitPrice(charSize, charSize, '液态亚克力字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
+    },
+    titanium: {
+        name: '钛金字',
+        material: 'metal',
+        isLighted: false,
+        calcPrice: function(charCount, charSize) {
+            const unitPrice = getCharUnitPrice(charSize, charSize, '钛金字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
+    },
+    rose_gold: {
+        name: '玫瑰金字',
+        material: 'metal',
+        isLighted: false,
+        calcPrice: function(charCount, charSize) {
+            const unitPrice = getCharUnitPrice(charSize, charSize, '玫瑰金字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
     }
 };
-
 // 文化墙配置
 const cultureWallConfig = {
     // ========== 企业文化墙 ==========
@@ -17058,14 +17321,109 @@ const cultureWallConfig = {
     }
 };
 
-// 文化墙立体字配置
-const cultureWallCharConfig = {
-    crystal: { name: '水晶字', pricePerSqCm: 0.08 },
-    pvc: { name: 'PVC字', pricePerSqCm: 0.03 },
-    acrylic: { name: '亚克力字', pricePerSqCm: 0.06 },
-    stainless: { name: '不锈钢字', pricePerSqCm: 0.15 },
-    led: { name: 'LED发光字', pricePerSqCm: 0.25 }
+// 获取材质选择选项HTML
+function getMaterialOptions(selectedMaterial) {
+    if (!window.MATERIAL_NAMES || !window.MATERIAL_LIST) {
+        // 如果 MATERIAL_LIST 还未初始化，返回默认选项
+        const defaultMaterials = [
+            { value: 'acrylic', name: '亚克力字' },
+            { value: 'stainless', name: '不锈钢字' },
+            { value: 'led', name: 'LED发光字' },
+            { value: 'resin', name: '树脂字' },
+            { value: 'metal', name: '金属烤漆' },
+            { value: 'pvc', name: 'PVC字' },
+            { value: '无边字', name: '无边字' },
+            { value: '迷你字', name: '迷你字' },
+            { value: '水晶背光字', name: '水晶背光字' },
+            { value: '铝板冲孔字', name: '铝板冲孔字' }
+        ];
+        return defaultMaterials.map(mat => 
+            `<option value="${mat.value}" ${selectedMaterial === mat.value || (!selectedMaterial && mat.value === 'acrylic') ? 'selected' : ''}>${mat.name}</option>`
+        ).join('');
+    }
+    // 使用系统设置中的字符配置
+    return MATERIAL_LIST.map(mat => 
+        `<option value="${mat}" ${selectedMaterial === mat || (!selectedMaterial && mat === 'acrylic') ? 'selected' : ''}>${MATERIAL_NAMES[mat] || mat}</option>`
+    ).join('');
+}
+
+// 展板类型配置
+const BOARD_TYPES = {
+    kt: { name: 'KT板', defaultPrice: 35, description: '轻便经济，适合短期展示' },
+    foam: { name: '雪弗板', defaultPrice: 45, description: '较厚耐用，适合长期展示' },
+    acrylic: { name: '亚克力板', defaultPrice: 120, description: '透明高档，适合精品展示' },
+    pvc: { name: 'PVC板', defaultPrice: 55, description: '防水防潮，适合户外使用' },
+    wood: { name: '密度板', defaultPrice: 65, description: '木质质感，适合文艺风格' },
+    aluminum: { name: '铝塑板', defaultPrice: 85, description: '金属质感，适合高端展示' },
+    corrugated: { name: '瓦楞板', defaultPrice: 25, description: '轻便牢固，适合临时活动' },
+    magnetic: { name: '磁性展板', defaultPrice: 95, description: '可重复使用，适合频繁更换' }
 };
+
+// 获取展板类型选项HTML
+function getBoardTypeOptions(selectedType) {
+    return Object.entries(BOARD_TYPES).map(([key, value]) => 
+        `<option value="${key}" ${selectedType === key || (!selectedType && key === 'kt') ? 'selected' : ''}>${value.name}</option>`
+    ).join('');
+}
+
+// 获取展板配置
+function getBoardConfig(boardType) {
+    return BOARD_TYPES[boardType] || BOARD_TYPES.kt;
+}
+
+// 背景画面材质配置
+const BACKDROP_TYPES = {
+    pvc: { name: 'PVC板+UV', defaultPrice: 60, description: '最常用，适合室内外' },
+    backlit: { name: '灯箱片', defaultPrice: 75, description: '半透明，适合灯箱' },
+    canvas: { name: '油画布', defaultPrice: 65, description: '高档艺术风格' },
+    transparent: { name: '透明贴', defaultPrice: 55, description: '玻璃贴/车窗贴' },
+    wallpaper: { name: '墙纸/壁布', defaultPrice: 45, description: '纺织面料，质感好' },
+    cloth: { name: '彩喷布/旗布', defaultPrice: 35, description: '适合大幅画面' },
+    window: { name: '磨砂窗贴', defaultPrice: 80, description: '隐私装饰，透光不透明' },
+    floor: { name: '地板贴', defaultPrice: 95, description: '耐磨防滑，适合地面' },
+    reflective: { name: '反光贴', defaultPrice: 120, description: '夜间反光效果' },
+    sandblasting: { name: '喷砂贴', defaultPrice: 100, description: '玻璃磨砂效果' },
+    carWrap: { name: '车贴/改色膜', defaultPrice: 150, description: '车身贴膜' },
+    wallCurtain: { name: '壁布软包', defaultPrice: 110, description: '软质面料，高档装饰' }
+};
+
+// 获取背景画面类型选项HTML
+function getBackdropTypeOptions(selectedType) {
+    return Object.entries(BACKDROP_TYPES).map(([key, value]) =>
+        `<option value="${key}" ${selectedType === key || (!selectedType && key === 'pvc') ? 'selected' : ''}>${value.name}</option>`
+    ).join('');
+}
+
+// 获取背景画面配置
+function getBackdropConfig(backdropType) {
+    return BACKDROP_TYPES[backdropType] || BACKDROP_TYPES.pvc;
+}
+
+// 文化墙立体字配置 - 动态获取系统设置的字符配置
+function getCultureWallCharConfig(material) {
+    if (!window.MATERIAL_NAMES || !window.MATERIAL_LIST) {
+        // 如果 MATERIAL_LIST 还未初始化，返回默认值
+        const defaultConfig = {
+            crystal: { name: '水晶字', pricePerSqCm: 0.08 },
+            pvc: { name: 'PVC字', pricePerSqCm: 0.03 },
+            acrylic: { name: '亚克力字', pricePerSqCm: 0.06 },
+            stainless: { name: '不锈钢字', pricePerSqCm: 0.15 },
+            led: { name: 'LED发光字', pricePerSqCm: 0.25 },
+            resin: { name: '树脂字', pricePerSqCm: 0.10 },
+            metal: { name: '金属烤漆', pricePerSqCm: 0.18 },
+            '无边字': { name: '无边字', pricePerSqCm: 0.12 },
+            '迷你字': { name: '迷你字', pricePerSqCm: 0.14 },
+            '水晶背光字': { name: '水晶背光字', pricePerSqCm: 0.20 },
+            '铝板冲孔字': { name: '铝板冲孔字', pricePerSqCm: 0.22 }
+        };
+        return defaultConfig[material] || { name: material, pricePerSqCm: 0.1 };
+    }
+    // 使用系统设置中的字符配置
+    return {
+        name: MATERIAL_NAMES[material] || material,
+        pricePerSqCm: 0.1 // 实际价格由系统设置的字符价格配置决定
+    };
+}
 
 // 文化墙安装费用计算
 function calcCultureWallInstallFee(area, installHeight, surfaceType) {
@@ -17164,6 +17522,18 @@ function generateAreaHTML(areaIndex) {
         { type: 'doorPlate', name: '门牌/科室牌', icon: '🚪', color: '#65a30d', category: '导视' },
         { type: 'parkingSign', name: '停车场导视', icon: '🅿️', color: '#0ea5e9', category: '导视' },
         { type: 'roadSign', name: '道路指示牌', icon: '🛣️', color: '#7c3aed', category: '导视' },
+        { type: 'magnetBoard', name: '磁性展板', icon: '🧲', color: '#9333ea', category: '展示' },
+        { type: 'photoFrame', name: '挂墙相框', icon: '🖼️', color: '#c026d3', category: '展示' },
+        { type: 'acrylicDecor', name: '亚克力装饰', icon: '✨', color: '#06b6d4', category: '装饰' },
+        { type: 'metalDecor', name: '金属装饰', icon: '🔩', color: '#64748b', category: '装饰' },
+        { type: 'lightBox', name: '发光灯箱', icon: '💡', color: '#eab308', category: '灯光' },
+        { type: 'neonSign', name: '霓虹灯装饰', icon: '🌈', color: '#f43f5e', category: '灯光' },
+        { type: 'wallBelt', name: '腰线/分隔条', icon: '➖', color: '#a3e635', category: '装饰' },
+        { type: 'podium', name: '讲台/主持台', icon: '🎤', color: '#7c2d12', category: '家具' },
+        { type: 'awardBoard', name: '荣誉墙/奖牌墙', icon: '🏆', color: '#fbbf24', category: '展示' },
+        { type: 'timeline', name: '时间轴/历程墙', icon: '📅', color: '#3b82f6', category: '展示' },
+        { type: 'culturePillar', name: '文化柱/造型柱', icon: '🏛️', color: '#b45309', category: '装饰' },
+        { type: 'windowDisplay', name: '橱窗展示', icon: '🪟', color: '#db2777', category: '展示' },
         { type: 'buildingNum', name: '楼栋号', icon: '🏢', color: '#dc2626', category: '导视' },
         { type: 'unitPlate', name: '单元牌', icon: '🏠', color: '#059669', category: '导视' },
         { type: 'warningSign', name: '警示牌', icon: '⚠️', color: '#f59e0b', category: '导视' },
@@ -17277,10 +17647,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
                     <div>
                         <label>材质</label>
                         <select id="itemMaterial_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'material', this.value)" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
-                            <option value="pvc" ${item.material === 'pvc' || !item.material ? 'selected' : ''}>PVC板+UV</option>
-                            <option value="backlit" ${item.material === 'backlit' ? 'selected' : ''}>灯箱片</option>
-                            <option value="canvas" ${item.material === 'canvas' ? 'selected' : ''}>油画布</option>
-                            <option value="transparent" ${item.material === 'transparent' ? 'selected' : ''}>透明贴</option>
+                            ${getBackdropTypeOptions(item.material)}
                         </select>
                     </div>
                 </div>
@@ -17300,6 +17667,12 @@ function generateItemParams(areaIndex, itemIndex, item) {
                         <label>数量</label>
                         <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
                     </div>
+                    <div>
+                        <label>类型</label>
+                        <select id="itemBoardType_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'boardType', this.value)" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
+                            ${getBoardTypeOptions(item.boardType)}
+                        </select>
+                    </div>
                 </div>
             `;
         case 'letters': // 立体字
@@ -17316,10 +17689,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
                     <div>
                         <label>材质</label>
                         <select id="itemMaterial_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'material', this.value)" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
-                            <option value="acrylic" ${item.material === 'acrylic' || !item.material ? 'selected' : ''}>亚克力字</option>
-                            <option value="pvc" ${item.material === 'pvc' ? 'selected' : ''}>PVC字</option>
-                            <option value="stainless" ${item.material === 'stainless' ? 'selected' : ''}>不锈钢字</option>
-                            <option value="led" ${item.material === 'led' ? 'selected' : ''}>LED发光字</option>
+                            ${getMaterialOptions(item.material)}
                         </select>
                     </div>
                 </div>
@@ -17745,7 +18115,13 @@ function generateItemParams(areaIndex, itemIndex, item) {
                             <option value="acrylic" ${item.material === 'acrylic' || !item.material ? 'selected' : ''}>亚克力字</option>
                             <option value="stainless" ${item.material === 'stainless' ? 'selected' : ''}>不锈钢字</option>
                             <option value="led" ${item.material === 'led' ? 'selected' : ''}>LED发光字</option>
+                            <option value="resin" ${item.material === 'resin' ? 'selected' : ''}>树脂字</option>
+                            <option value="metal" ${item.material === 'metal' ? 'selected' : ''}>金属烤漆</option>
                             <option value="pvc" ${item.material === 'pvc' ? 'selected' : ''}>PVC字</option>
+                            <option value="无边字" ${item.material === '无边字' ? 'selected' : ''}>无边字</option>
+                            <option value="迷你字" ${item.material === '迷你字' ? 'selected' : ''}>迷你字</option>
+                            <option value="水晶背光字" ${item.material === '水晶背光字' ? 'selected' : ''}>水晶背光字</option>
+                            <option value="铝板冲孔字" ${item.material === '铝板冲孔字' ? 'selected' : ''}>铝板冲孔字</option>
                         </select>
                     </div>
                     <div>
@@ -18663,10 +19039,16 @@ function toggleCultureWallPriceEdit() {
             <div style="background:white;border-radius:6px;padding:0.5rem;margin-bottom:0.375rem;">
                 <div style="font-size:0.75rem;font-weight:600;color:#92400e;margin-bottom:0.25rem;padding-bottom:0.25rem;border-bottom:1px solid #fef3c7;">🔤 立体字 <span style="font-weight:400;color:#9ca3af;font-size:0.625rem;">(元/㎝²)</span></div>
                 <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.25rem;">
-                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">亚克力字</label><input type="number" id="customPrice_charAcrylic" placeholder="0.08" step="0.01" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
-                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">PVC字</label><input type="number" id="customPrice_charPVC" placeholder="0.05" step="0.01" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">亚克力字</label><input type="number" id="customPrice_charAcrylic" placeholder="0.06" step="0.01" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">PVC字</label><input type="number" id="customPrice_charPVC" placeholder="0.03" step="0.01" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
                     <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">不锈钢字</label><input type="number" id="customPrice_charStainless" placeholder="0.15" step="0.01" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
                     <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">LED发光字</label><input type="number" id="customPrice_charLED" placeholder="0.25" step="0.01" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">树脂字</label><input type="number" id="customPrice_charResin" placeholder="0.10" step="0.01" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">金属烤漆</label><input type="number" id="customPrice_charMetal" placeholder="0.18" step="0.01" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">无边字</label><input type="number" id="customPrice_charWubian" placeholder="0.12" step="0.01" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">迷你字</label><input type="number" id="customPrice_charMini" placeholder="0.14" step="0.01" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">水晶背光字</label><input type="number" id="customPrice_charCrystalBacklit" placeholder="0.20" step="0.01" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">铝板冲孔字</label><input type="number" id="customPrice_charAluminumHole" placeholder="0.22" step="0.01" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
                 </div>
             </div>
             
@@ -19038,12 +19420,13 @@ function calculateCultureWallQuote() {
             
             switch(item.type) {
                 case 'backdrop': // 背景画面
-                    const backdropPrice = getCustomPrice('uvPrint', 60);
+                    const backdropConfig = getBackdropConfig(item.material);
+                    const backdropPrice = getCustomPrice('backdrop_' + item.material, backdropConfig.defaultPrice);
                     const backdropQty = itemArea * (1 + wasteRate / 100);
                     const backdropTotal = Math.ceil(backdropQty * backdropPrice);
                     materials.push({
-                        name: areaPrefix + '背景画面',
-                        spec: item.material === 'backlit' ? '灯箱片' : item.material === 'canvas' ? '油画布' : item.material === 'transparent' ? '透明贴' : 'PVC板+UV喷绘',
+                        name: areaPrefix + backdropConfig.name,
+                        spec: `${itemWidth}×${itemHeight}m`,
                         qty: backdropQty.toFixed(2),
                         unit: '㎡',
                         unitPrice: backdropPrice.toFixed(0),
@@ -19053,11 +19436,12 @@ function calculateCultureWallQuote() {
                     break;
                     
                 case 'board': // 展板
-                    const boardBasePrice = getCustomPrice('ktBoard', 35);
+                    const boardConfig = getBoardConfig(item.boardType);
+                    const boardBasePrice = getCustomPrice('board_' + item.boardType, boardConfig.defaultPrice);
                     const boardQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
                     const boardTotal = Math.ceil(boardQty * boardBasePrice);
                     materials.push({
-                        name: areaPrefix + '展板',
+                        name: areaPrefix + boardConfig.name,
                         spec: `${itemWidth}×${itemHeight}m`,
                         qty: boardQty.toFixed(2),
                         unit: '㎡',
@@ -19068,17 +19452,15 @@ function calculateCultureWallQuote() {
                     break;
                     
                 case 'letters': // 立体字
-                    const charPriceKey = item.material === 'pvc' ? 'charPVC' : 
-                                         item.material === 'stainless' ? 'charStainless' : 
-                                         item.material === 'paint' ? 'charPaint' : 
-                                         item.material === 'crystal' ? 'charCrystal' : 
-                                         item.material === 'led' ? 'charLED' : 'charAcrylic';
-                    const charPricePerSqCm = getCustomPrice(charPriceKey, 0.20);
-                    const letterUnitPrice = charPricePerSqCm * (item.size || 40) * (item.size || 40);
+                    const letterMaterial = item.material || 'acrylic';
+                    const letterSize = item.size || 40;
+                    const letterTech = item.tech || 'solid';
+                    const letterUnitPrice = getCharUnitPrice(letterSize, letterSize, letterMaterial, letterTech);
                     const letterTotal = Math.ceil(letterUnitPrice * (item.count || 1));
+                    const sizeLabel = getCharPricingModeName(letterSize, letterSize, letterMaterial);
                     materials.push({
                         name: areaPrefix + '立体字',
-                        spec: cultureWallCharConfig[item.material]?.name || '亚克力字' + ' (' + (item.size || 40) + 'cm)',
+                        spec: getCultureWallCharConfig(item.material)?.name || '亚克力字' + ' (' + letterSize + 'cm ' + sizeLabel + ')',
                         qty: item.count || 1,
                         unit: '个',
                         unitPrice: letterUnitPrice.toFixed(0),
@@ -19988,6 +20370,10 @@ function calculateDoorHeaderQuote() {
     const fontType2 = document.getElementById('doorHeaderFontType2').value;
     const charCount2 = parseInt(document.getElementById('doorHeaderCharCount2').value) || 0;
     const charSize2 = parseFloat(document.getElementById('doorHeaderCharSize2').value) || 0;
+    // 第三字体（辅助字）
+    const fontType3 = document.getElementById('doorHeaderFontType3').value;
+    const charCount3 = parseInt(document.getElementById('doorHeaderCharCount3').value) || 0;
+    const charSize3 = parseFloat(document.getElementById('doorHeaderCharSize3').value) || 0;
     // 材料等级
     const metalGrade = document.getElementById('doorHeaderMetalGrade').value;
     const panelGrade = document.getElementById('doorHeaderPanelGrade').value;
@@ -20218,7 +20604,68 @@ function calculateDoorHeaderQuote() {
         }
     }
 
-    // 2.6 计算特殊工艺费用
+    // 2.6 计算第三字体（辅助字）费用
+    if (fontType3 !== 'none' && charCount3 > 0 && charSize3 > 0) {
+        const fontConfig3 = fontTypeConfig[fontType3];
+        const fontResult3 = fontConfig3.calcPrice(charCount3, charSize3);
+
+        let fontUnitPrice3 = fontResult3.unitPrice;
+        let fontCostPrice3 = fontResult3.unitPrice;
+
+        const fontProductPrice3 = getProductPriceByName(fontConfig3.name, '门头材料');
+        if (fontProductPrice3 !== null) {
+            fontUnitPrice3 = fontProductPrice3.sellingPrice;
+            fontCostPrice3 = fontProductPrice3.costPrice;
+        } else {
+            const fontTempPrice3 = getDoorHeaderTempPrice(type, fontConfig3.name, null);
+            if (fontTempPrice3 !== null) {
+                fontUnitPrice3 = fontTempPrice3;
+            }
+        }
+
+        fontItems.push({
+            name: fontConfig3.name + '(辅助字)',
+            spec: `字高${charSize3}cm`,
+            qty: charCount3,
+            unit: '个',
+            unitPrice: fontUnitPrice3,
+            costPrice: fontCostPrice3,
+            category: '字体'
+        });
+
+        if (fontConfig3.isLighted) {
+            const powerSupplyQty3 = calcLEDPowerSupply(charCount3, charSize3, fontType3, true);
+            const elecWasteRate3 = getWasteRateByCategory('电气');
+            const elecMultiplier3 = (1 + elecWasteRate3) * (1 + wasteRate / 100);
+
+            let ledPowerPrice3 = 45;
+            let ledCostPrice3 = powerSupplyQty3 <= 2 ? 30 : 45;
+
+            const ledProductName3 = powerSupplyQty3 <= 2 ? 'LED电源(12V10A)' : 'LED电源';
+            const ledProductPrice3 = getProductPriceByName(ledProductName3, '门头材料');
+            if (ledProductPrice3 !== null) {
+                ledPowerPrice3 = ledProductPrice3.sellingPrice;
+                ledCostPrice3 = ledProductPrice3.costPrice;
+            } else {
+                const ledTempPrice3 = getDoorHeaderTempPrice(type, 'LED电源', null);
+                if (ledTempPrice3 !== null) {
+                    ledPowerPrice3 = ledTempPrice3;
+                }
+            }
+
+            fontItems.push({
+                name: 'LED电源(辅助字)',
+                spec: powerSupplyQty3 <= 2 ? '12V10A开关电源' : '12V30A开关电源',
+                qty: Math.ceil(powerSupplyQty3 * elecMultiplier3),
+                unit: '个',
+                unitPrice: ledPowerPrice3,
+                costPrice: ledCostPrice3,
+                category: '电气'
+            });
+        }
+    }
+
+    // 2.7 计算特殊工艺费用
     const craftPrices = {
         baking: { name: '烤漆工艺', price: 80, type: 'area' },
         electroplating: { name: '电镀工艺', price: 150, type: 'area' },
@@ -21127,6 +21574,215 @@ const globalPriceConfig = {
         { key: 'cultureDesign', name: '设计费', unit: '元/㎡', defaultValue: 50 }
     ]
 };
+
+// 展板画面价格配置数据
+const boardPriceConfig = {
+    boardTypes: [
+        { key: 'boardKT', name: 'KT板', unit: '元/㎡', defaultValue: 35 },
+        { key: 'boardXiuFu', name: '雪弗板', unit: '元/㎡', defaultValue: 45 },
+        { key: 'boardAcrylic', name: '亚克力板', unit: '元/㎡', defaultValue: 120 },
+        { key: 'boardPVC', name: 'PVC板', unit: '元/㎡', defaultValue: 55 },
+        { key: 'boardMDF', name: '密度板', unit: '元/㎡', defaultValue: 65 },
+        { key: 'boardAluminumPlastic', name: '铝塑板', unit: '元/㎡', defaultValue: 85 },
+        { key: 'boardCorrugated', name: '瓦楞板', unit: '元/㎡', defaultValue: 25 },
+        { key: 'boardMagnetic', name: '磁性展板', unit: '元/㎡', defaultValue: 95 }
+    ],
+    backdropTypes: [
+        { key: 'backdropPVC', name: 'PVC板+UV', unit: '元/㎡', defaultValue: 60 },
+        { key: 'backdropBacklit', name: '灯箱片', unit: '元/㎡', defaultValue: 75 },
+        { key: 'backdropCanvas', name: '油画布', unit: '元/㎡', defaultValue: 65 },
+        { key: 'backdropTransparent', name: '透明贴', unit: '元/㎡', defaultValue: 55 },
+        { key: 'backdropWallpaper', name: '墙纸/壁布', unit: '元/㎡', defaultValue: 45 },
+        { key: 'backdropCloth', name: '彩喷布/旗布', unit: '元/㎡', defaultValue: 35 },
+        { key: 'backdropWindow', name: '磨砂窗贴', unit: '元/㎡', defaultValue: 80 },
+        { key: 'backdropFloor', name: '地板贴', unit: '元/㎡', defaultValue: 95 },
+        { key: 'backdropReflective', name: '反光贴', unit: '元/㎡', defaultValue: 120 },
+        { key: 'backdropSandblasting', name: '喷砂贴', unit: '元/㎡', defaultValue: 100 },
+        { key: 'backdropCarWrap', name: '车贴/改色膜', unit: '元/㎡', defaultValue: 150 },
+        { key: 'backdropWallCurtain', name: '壁布软包', unit: '元/㎡', defaultValue: 110 }
+    ]
+};
+
+// 切换综合价格配置标签页
+function switchPriceConfigTab(tab) {
+    const tabs = ['base', 'char', 'board'];
+    const tabContents = {
+        'base': 'priceConfigBase',
+        'char': 'priceConfigChar',
+        'board': 'priceConfigBoard'
+    };
+    const tabColors = {
+        'base': '#64748b',
+        'char': '#64748b',
+        'board': '#64748b'
+    };
+    const tabActiveColors = {
+        'base': '#92400e',
+        'char': '#7c3aed',
+        'board': '#0891b2'
+    };
+
+    // 隐藏所有内容
+    Object.values(tabContents).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+
+    // 重置所有按钮样式
+    tabs.forEach(t => {
+        const btn = document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (btn) {
+            btn.className = 'price-tab-btn';
+            btn.style.color = tabColors[t];
+            btn.style.borderBottomColor = 'transparent';
+            btn.style.background = 'transparent';
+        }
+    });
+
+    // 显示选中的内容
+    const activeContent = document.getElementById(tabContents[tab]);
+    if (activeContent) activeContent.style.display = 'block';
+
+    // 高亮选中的按钮
+    const activeBtn = document.getElementById('tabBtn' + tab.charAt(0).toUpperCase() + tab.slice(1));
+    if (activeBtn) {
+        activeBtn.style.color = tabActiveColors[tab];
+        activeBtn.style.borderBottomColor = tabActiveColors[tab];
+    }
+
+    // 如果切换到字符价格标签，初始化字符价格配置
+    if (tab === 'char') {
+        initCharPricingConfig();
+    }
+
+    // 如果切换到展板画面标签，初始化展板画面配置
+    if (tab === 'board') {
+        showBoardPriceCategory('boardTypes');
+    }
+}
+
+// 切换AI服务配置标签页
+function switchAIServiceTab(tab) {
+    const tabs = ['ocr', 'baidu', 'deepseek'];
+    const tabContents = {
+        'ocr': 'aiConfigOcr',
+        'baidu': 'aiConfigBaidu',
+        'deepseek': 'aiConfigDeepseek'
+    };
+    const tabColors = {
+        'ocr': '#64748b',
+        'baidu': '#64748b',
+        'deepseek': '#64748b'
+    };
+    const tabActiveColors = {
+        'ocr': '#2563eb',
+        'baidu': '#059669',
+        'deepseek': '#7c3aed'
+    };
+
+    // 隐藏所有内容
+    Object.values(tabContents).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+
+    // 重置所有按钮样式
+    tabs.forEach(t => {
+        const btn = document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (btn) {
+            btn.className = 'ai-tab-btn';
+            btn.style.color = tabColors[t];
+            btn.style.borderBottomColor = 'transparent';
+            btn.style.background = 'transparent';
+        }
+    });
+
+    // 显示选中的内容
+    const activeContent = document.getElementById(tabContents[tab]);
+    if (activeContent) activeContent.style.display = 'block';
+
+    // 高亮选中的按钮
+    const activeBtn = document.getElementById('tabBtn' + tab.charAt(0).toUpperCase() + tab.slice(1));
+    if (activeBtn) {
+        activeBtn.style.color = tabActiveColors[tab];
+        activeBtn.style.borderBottomColor = tabActiveColors[tab];
+    }
+}
+
+// 显示展板画面价格分类
+function showBoardPriceCategory(category) {
+    const categoryToBtnId = {
+        'boardTypes': 'btnBoardTypes',
+        'backdropTypes': 'btnBackdropTypes'
+    };
+
+    // 更新按钮状态
+    document.querySelectorAll('[id^="btnBoard"]').forEach(btn => {
+        btn.className = 'btn btn-sm btn-outline';
+        btn.style.background = '';
+    });
+
+    const activeBtnId = categoryToBtnId[category];
+    const activeBtn = document.getElementById(activeBtnId);
+    if (activeBtn) {
+        activeBtn.className = 'btn btn-sm';
+    }
+
+    const config = boardPriceConfig[category];
+    const container = document.getElementById('boardPriceConfigFields');
+    if (!config || !container) return;
+
+    let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.5rem;">';
+    config.forEach(item => {
+        const savedValue = localStorage.getItem('boardPrice_' + item.key);
+        const currentValue = savedValue !== null ? parseFloat(savedValue) : item.defaultValue;
+
+        html += `
+            <div style="display:flex;align-items:center;gap:0.5rem;padding:0.375rem;background:white;border-radius:6px;border:1px solid #e5e7eb;">
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:0.75rem;color:#374151;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</div>
+                    <div style="font-size:0.6875rem;color:#6b7280;">${item.unit}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.25rem;">
+                    <span style="font-size:0.75rem;color:#6b7280;">¥</span>
+                    <input type="number" id="boardPrice_${item.key}" value="${currentValue}"
+                        style="width:70px;padding:0.25rem 0.375rem;font-size:0.8125rem;border:1px solid #d1d5db;border-radius:4px;text-align:right;"
+                        step="0.1" min="0">
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// 保存展板画面价格配置
+function saveBoardPriceConfig() {
+    const categories = Object.keys(boardPriceConfig);
+    categories.forEach(cat => {
+        boardPriceConfig[cat].forEach(item => {
+            const input = document.getElementById('boardPrice_' + item.key);
+            if (input) {
+                localStorage.setItem('boardPrice_' + item.key, input.value);
+            }
+        });
+    });
+    showToast('展板画面价格已保存！', 'success');
+}
+
+// 重置展板画面价格配置
+function resetBoardPriceConfig() {
+    if (!confirm('确定要重置所有展板画面价格到默认值吗？')) return;
+
+    const categories = Object.keys(boardPriceConfig);
+    categories.forEach(cat => {
+        boardPriceConfig[cat].forEach(item => {
+            localStorage.setItem('boardPrice_' + item.key, item.defaultValue);
+        });
+    });
+    showBoardPriceCategory('boardTypes');
+    showToast('展板画面价格已重置为默认值！', 'success');
+}
 
 // 显示指定分类的价格配置
 function showGlobalPriceCategory(category) {
@@ -25825,12 +26481,84 @@ function refreshAnalytics() {
 // ===== 系统设置 =====
 function selectPrintStyle(style){
     if(!style) style='classic';
-    document.querySelectorAll('.style-card').forEach(el=>el.classList.remove('selected'));
-    const target=document.querySelector(`.style-card[data-style="${style}"]`);
-    if(target) target.classList.add('selected');
-    appData.systemSettings.printStyle=style;
+
+    // 移除所有卡片的选中状态
+    document.querySelectorAll('.style-card').forEach(el => {
+        el.classList.remove('selected');
+        el.style.borderColor = '#e5e7eb';
+    });
+
+    // 添加选中状态到目标卡片
+    const target = document.querySelector(`.style-card[data-style="${style}"]`);
+    if(target) {
+        target.classList.add('selected');
+        target.style.borderColor = '#2563eb';
+    }
+
+    appData.systemSettings.printStyle = style;
     saveData();
 }
+
+// 自定义主题色预览
+function updateCustomTheme() {
+    const primary = document.getElementById('customPrimaryColor').value;
+    const secondary = document.getElementById('customSecondaryColor').value;
+    const preview = document.getElementById('customThemePreview');
+    const previewBox = document.getElementById('themePreviewBox');
+
+    if (preview && previewBox) {
+        preview.style.display = 'block';
+        previewBox.style.background = `linear-gradient(135deg, ${primary}, ${secondary})`;
+    }
+}
+
+// 应用自定义主题色
+function applyCustomTheme() {
+    const primary = document.getElementById('customPrimaryColor').value;
+    const secondary = document.getElementById('customSecondaryColor').value;
+
+    appData.systemSettings.printStyle = 'custom';
+    appData.systemSettings.customPrimaryColor = primary;
+    appData.systemSettings.customSecondaryColor = secondary;
+
+    // 移除所有预设卡片的选中状态
+    document.querySelectorAll('.style-card').forEach(el => {
+        el.classList.remove('selected');
+        el.style.borderColor = '#e5e7eb';
+    });
+
+    saveData();
+    showToast('自定义主题色已应用', 'success');
+}
+
+// 预览报价单Logo
+function previewQuoteLogo(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const preview = document.getElementById('quoteLogoPreview');
+        if (preview) {
+            preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:contain;border-radius:6px;">`;
+            appData.systemSettings.quoteLogo = e.target.result;
+            saveData();
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+// 清除报价单Logo
+function clearQuoteLogo() {
+    appData.systemSettings.quoteLogo = null;
+    saveData();
+    const preview = document.getElementById('quoteLogoPreview');
+    if (preview) {
+        preview.innerHTML = '<span style="font-size:0.625rem;color:#9ca3af;text-align:center;">无Logo</span>';
+    }
+    document.getElementById('quoteLogoUpload').value = '';
+}
+
 function previewNewSeal(){
     const file=document.getElementById('newSealImage').files[0];
     if(!file){ document.getElementById('newSealPreview').style.display='none'; return; }
@@ -26127,6 +26855,41 @@ function initIdentity() {
         isAdmin = false;
         updateIdentityUI(false);
         updateSensitiveDataVisibility(false);
+    }
+    updateAutoLoginToggle();
+}
+
+function toggleAutoLogin(enabled) {
+    localStorage.setItem('autoLogin', enabled ? 'true' : 'false');
+    const toggle = document.getElementById('autoLoginToggle');
+    if (toggle) {
+        const span = toggle.nextElementSibling;
+        const knob = span.nextElementSibling;
+        if (enabled) {
+            span.style.backgroundColor = '#10b981';
+            knob.style.transform = 'translateX(16px)';
+        } else {
+            span.style.backgroundColor = '#ccc';
+            knob.style.transform = 'translateX(0)';
+        }
+    }
+    showToast(enabled ? '✅ 已开启自动登录' : 'ℹ️ 已关闭自动登录', 'info');
+}
+
+function updateAutoLoginToggle() {
+    const toggle = document.getElementById('autoLoginToggle');
+    const autoLogin = localStorage.getItem('autoLogin');
+    if (toggle) {
+        toggle.checked = autoLogin === 'true';
+        const span = toggle.nextElementSibling;
+        const knob = span.nextElementSibling;
+        if (autoLogin === 'true') {
+            span.style.backgroundColor = '#10b981';
+            knob.style.transform = 'translateX(16px)';
+        } else {
+            span.style.backgroundColor = '#ccc';
+            knob.style.transform = 'translateX(0)';
+        }
     }
 }
 
@@ -31841,6 +32604,248 @@ const CHAR_PRICING_MODE = {
         { maxHeight: 150, unitPrice: 440 },
         { maxHeight: 200, unitPrice: 640 },
         { maxHeight: Infinity, unitPrice: 880 }
+    ],
+    // 外露发光字
+    '外露发光字': [
+        { maxHeight: 20, unitPrice: 55 },
+        { maxHeight: 30, unitPrice: 85 },
+        { maxHeight: 50, unitPrice: 130 },
+        { maxHeight: 80, unitPrice: 200 },
+        { maxHeight: 100, unitPrice: 290 },
+        { maxHeight: 150, unitPrice: 440 },
+        { maxHeight: 200, unitPrice: 640 },
+        { maxHeight: Infinity, unitPrice: 880 }
+    ],
+    // 亚克力发光字
+    '亚克力发光字': [
+        { maxHeight: 20, unitPrice: 70 },
+        { maxHeight: 30, unitPrice: 100 },
+        { maxHeight: 50, unitPrice: 150 },
+        { maxHeight: 80, unitPrice: 240 },
+        { maxHeight: 100, unitPrice: 350 },
+        { maxHeight: 150, unitPrice: 520 },
+        { maxHeight: 200, unitPrice: 750 },
+        { maxHeight: Infinity, unitPrice: 1000 }
+    ],
+    // 背发光字
+    '背发光字': [
+        { maxHeight: 20, unitPrice: 70 },
+        { maxHeight: 30, unitPrice: 100 },
+        { maxHeight: 50, unitPrice: 150 },
+        { maxHeight: 80, unitPrice: 240 },
+        { maxHeight: 100, unitPrice: 350 },
+        { maxHeight: 150, unitPrice: 520 },
+        { maxHeight: 200, unitPrice: 750 },
+        { maxHeight: Infinity, unitPrice: 1000 }
+    ],
+    // 侧发光字
+    '侧发光字': [
+        { maxHeight: 20, unitPrice: 70 },
+        { maxHeight: 30, unitPrice: 100 },
+        { maxHeight: 50, unitPrice: 150 },
+        { maxHeight: 80, unitPrice: 240 },
+        { maxHeight: 100, unitPrice: 350 },
+        { maxHeight: 150, unitPrice: 520 },
+        { maxHeight: 200, unitPrice: 750 },
+        { maxHeight: Infinity, unitPrice: 1000 }
+    ],
+    // 迷你发光字
+    '迷你发光字': [
+        { maxHeight: 20, unitPrice: 80 },
+        { maxHeight: 30, unitPrice: 120 },
+        { maxHeight: 50, unitPrice: 180 },
+        { maxHeight: 80, unitPrice: 280 },
+        { maxHeight: 100, unitPrice: 400 },
+        { maxHeight: 150, unitPrice: 600 },
+        { maxHeight: 200, unitPrice: 880 },
+        { maxHeight: Infinity, unitPrice: 1200 }
+    ],
+    // 无边发光字
+    '无边发光字': [
+        { maxHeight: 20, unitPrice: 65 },
+        { maxHeight: 30, unitPrice: 95 },
+        { maxHeight: 50, unitPrice: 140 },
+        { maxHeight: 80, unitPrice: 220 },
+        { maxHeight: 100, unitPrice: 320 },
+        { maxHeight: 150, unitPrice: 480 },
+        { maxHeight: 200, unitPrice: 700 },
+        { maxHeight: Infinity, unitPrice: 950 }
+    ],
+    // 超级字
+    '超级字': [
+        { maxHeight: 20, unitPrice: 35 },
+        { maxHeight: 30, unitPrice: 55 },
+        { maxHeight: 50, unitPrice: 85 },
+        { maxHeight: 80, unitPrice: 130 },
+        { maxHeight: 100, unitPrice: 190 },
+        { maxHeight: 150, unitPrice: 280 },
+        { maxHeight: 200, unitPrice: 400 },
+        { maxHeight: Infinity, unitPrice: 550 }
+    ],
+    // 点阵字
+    '点阵字': [
+        { maxHeight: 20, unitPrice: 55 },
+        { maxHeight: 30, unitPrice: 85 },
+        { maxHeight: 50, unitPrice: 130 },
+        { maxHeight: 80, unitPrice: 200 },
+        { maxHeight: 100, unitPrice: 290 },
+        { maxHeight: 150, unitPrice: 440 },
+        { maxHeight: 200, unitPrice: 640 },
+        { maxHeight: Infinity, unitPrice: 880 }
+    ],
+    // 柔性霓虹字
+    '柔性霓虹字': [
+        { maxHeight: 20, unitPrice: 70 },
+        { maxHeight: 30, unitPrice: 100 },
+        { maxHeight: 50, unitPrice: 150 },
+        { maxHeight: 80, unitPrice: 240 },
+        { maxHeight: 100, unitPrice: 350 },
+        { maxHeight: 150, unitPrice: 520 },
+        { maxHeight: 200, unitPrice: 750 },
+        { maxHeight: Infinity, unitPrice: 1000 }
+    ],
+    // 千层镜字
+    '千层镜字': [
+        { maxHeight: 20, unitPrice: 70 },
+        { maxHeight: 30, unitPrice: 100 },
+        { maxHeight: 50, unitPrice: 150 },
+        { maxHeight: 80, unitPrice: 240 },
+        { maxHeight: 100, unitPrice: 350 },
+        { maxHeight: 150, unitPrice: 520 },
+        { maxHeight: 200, unitPrice: 750 },
+        { maxHeight: Infinity, unitPrice: 1000 }
+    ],
+    // 背光水晶字
+    '背光水晶字': [
+        { maxHeight: 20, unitPrice: 90 },
+        { maxHeight: 30, unitPrice: 140 },
+        { maxHeight: 50, unitPrice: 210 },
+        { maxHeight: 80, unitPrice: 330 },
+        { maxHeight: 100, unitPrice: 480 },
+        { maxHeight: 150, unitPrice: 720 },
+        { maxHeight: 200, unitPrice: 1050 },
+        { maxHeight: Infinity, unitPrice: 1400 }
+    ],
+    // 玻璃霓虹字
+    '玻璃霓虹字': [
+        { maxHeight: 20, unitPrice: 70 },
+        { maxHeight: 30, unitPrice: 100 },
+        { maxHeight: 50, unitPrice: 150 },
+        { maxHeight: 80, unitPrice: 240 },
+        { maxHeight: 100, unitPrice: 350 },
+        { maxHeight: 150, unitPrice: 520 },
+        { maxHeight: 200, unitPrice: 750 },
+        { maxHeight: Infinity, unitPrice: 1000 }
+    ],
+    // 水晶字
+    '水晶字': [
+        { maxHeight: 20, unitPrice: 90 },
+        { maxHeight: 30, unitPrice: 140 },
+        { maxHeight: 50, unitPrice: 210 },
+        { maxHeight: 80, unitPrice: 330 },
+        { maxHeight: 100, unitPrice: 480 },
+        { maxHeight: 150, unitPrice: 720 },
+        { maxHeight: 200, unitPrice: 1050 },
+        { maxHeight: Infinity, unitPrice: 1400 }
+    ],
+    // 不锈钢字
+    '不锈钢字': [
+        { maxHeight: 20, unitPrice: 50 },
+        { maxHeight: 30, unitPrice: 75 },
+        { maxHeight: 50, unitPrice: 110 },
+        { maxHeight: 80, unitPrice: 170 },
+        { maxHeight: 100, unitPrice: 250 },
+        { maxHeight: 150, unitPrice: 380 },
+        { maxHeight: 200, unitPrice: 550 },
+        { maxHeight: Infinity, unitPrice: 750 }
+    ],
+    // 精工字
+    '精工字': [
+        { maxHeight: 20, unitPrice: 50 },
+        { maxHeight: 30, unitPrice: 75 },
+        { maxHeight: 50, unitPrice: 110 },
+        { maxHeight: 80, unitPrice: 170 },
+        { maxHeight: 100, unitPrice: 250 },
+        { maxHeight: 150, unitPrice: 380 },
+        { maxHeight: 200, unitPrice: 550 },
+        { maxHeight: Infinity, unitPrice: 750 }
+    ],
+    // 电镀字
+    '电镀字': [
+        { maxHeight: 20, unitPrice: 35 },
+        { maxHeight: 30, unitPrice: 55 },
+        { maxHeight: 50, unitPrice: 85 },
+        { maxHeight: 80, unitPrice: 130 },
+        { maxHeight: 100, unitPrice: 190 },
+        { maxHeight: 150, unitPrice: 280 },
+        { maxHeight: 200, unitPrice: 400 },
+        { maxHeight: Infinity, unitPrice: 550 }
+    ],
+    // 镀锌板烤漆字
+    '镀锌板烤漆字': [
+        { maxHeight: 20, unitPrice: 35 },
+        { maxHeight: 30, unitPrice: 55 },
+        { maxHeight: 50, unitPrice: 85 },
+        { maxHeight: 80, unitPrice: 130 },
+        { maxHeight: 100, unitPrice: 190 },
+        { maxHeight: 150, unitPrice: 280 },
+        { maxHeight: 200, unitPrice: 400 },
+        { maxHeight: Infinity, unitPrice: 550 }
+    ],
+    // 实木字
+    '实木字': [
+        { maxHeight: 20, unitPrice: 15 },
+        { maxHeight: 30, unitPrice: 25 },
+        { maxHeight: 50, unitPrice: 40 },
+        { maxHeight: 80, unitPrice: 65 },
+        { maxHeight: 100, unitPrice: 95 },
+        { maxHeight: 150, unitPrice: 140 },
+        { maxHeight: 200, unitPrice: 200 },
+        { maxHeight: Infinity, unitPrice: 280 }
+    ],
+    // 仿大理石字
+    '仿大理石字': [
+        { maxHeight: 20, unitPrice: 15 },
+        { maxHeight: 30, unitPrice: 25 },
+        { maxHeight: 50, unitPrice: 40 },
+        { maxHeight: 80, unitPrice: 65 },
+        { maxHeight: 100, unitPrice: 95 },
+        { maxHeight: 150, unitPrice: 140 },
+        { maxHeight: 200, unitPrice: 200 },
+        { maxHeight: Infinity, unitPrice: 280 }
+    ],
+    // 液态亚克力字
+    '液态亚克力字': [
+        { maxHeight: 20, unitPrice: 30 },
+        { maxHeight: 30, unitPrice: 45 },
+        { maxHeight: 50, unitPrice: 70 },
+        { maxHeight: 80, unitPrice: 110 },
+        { maxHeight: 100, unitPrice: 160 },
+        { maxHeight: 150, unitPrice: 240 },
+        { maxHeight: 200, unitPrice: 350 },
+        { maxHeight: Infinity, unitPrice: 480 }
+    ],
+    // 钛金字
+    '钛金字': [
+        { maxHeight: 20, unitPrice: 35 },
+        { maxHeight: 30, unitPrice: 55 },
+        { maxHeight: 50, unitPrice: 85 },
+        { maxHeight: 80, unitPrice: 130 },
+        { maxHeight: 100, unitPrice: 190 },
+        { maxHeight: 150, unitPrice: 280 },
+        { maxHeight: 200, unitPrice: 400 },
+        { maxHeight: Infinity, unitPrice: 550 }
+    ],
+    // 玫瑰金字
+    '玫瑰金字': [
+        { maxHeight: 20, unitPrice: 35 },
+        { maxHeight: 30, unitPrice: 55 },
+        { maxHeight: 50, unitPrice: 85 },
+        { maxHeight: 80, unitPrice: 130 },
+        { maxHeight: 100, unitPrice: 190 },
+        { maxHeight: 150, unitPrice: 280 },
+        { maxHeight: 200, unitPrice: 400 },
+        { maxHeight: Infinity, unitPrice: 550 }
     ]
 };
 
@@ -31892,23 +32897,6 @@ function getCharPricingModeName(height, width, material) {
     const ruleIndex = rules.findIndex(r => height <= r.maxHeight);
     return SIZE_TIERS[ruleIndex] ? SIZE_TIERS[ruleIndex].label : SIZE_TIERS[SIZE_TIERS.length - 1].label;
 }
-
-// 材质中文名称映射
-const MATERIAL_NAMES = {
-    acrylic: '亚克力',
-    stainless: '不锈钢',
-    led: 'LED发光字',
-    resin: '树脂字',
-    metal: '金属烤漆',
-    pvc: 'PVC字',
-    '无边字': '无边字',
-    '迷你字': '迷你字',
-    '水晶背光字': '水晶背光字',
-    '铝板冲孔字': '铝板冲孔字'
-};
-
-// 材质列表
-const MATERIAL_LIST = ['acrylic', 'stainless', 'led', 'resin', 'metal', 'pvc', '无边字', '迷你字', '水晶背光字', '铝板冲孔字'];
 
 // 渲染字符价格配置UI
 function renderCharPricingConfig() {
@@ -32085,6 +33073,226 @@ function loadDefaultCharPricing() {
         { maxHeight: 150, unitPrice: 440 },
         { maxHeight: 200, unitPrice: 640 },
         { maxHeight: Infinity, unitPrice: 880 }
+    ];
+    CHAR_PRICING_MODE['外露发光字'] = [
+        { maxHeight: 20, unitPrice: 55 },
+        { maxHeight: 30, unitPrice: 85 },
+        { maxHeight: 50, unitPrice: 130 },
+        { maxHeight: 80, unitPrice: 200 },
+        { maxHeight: 100, unitPrice: 290 },
+        { maxHeight: 150, unitPrice: 440 },
+        { maxHeight: 200, unitPrice: 640 },
+        { maxHeight: Infinity, unitPrice: 880 }
+    ];
+    CHAR_PRICING_MODE['亚克力发光字'] = [
+        { maxHeight: 20, unitPrice: 70 },
+        { maxHeight: 30, unitPrice: 100 },
+        { maxHeight: 50, unitPrice: 150 },
+        { maxHeight: 80, unitPrice: 240 },
+        { maxHeight: 100, unitPrice: 350 },
+        { maxHeight: 150, unitPrice: 520 },
+        { maxHeight: 200, unitPrice: 750 },
+        { maxHeight: Infinity, unitPrice: 1000 }
+    ];
+    CHAR_PRICING_MODE['背发光字'] = [
+        { maxHeight: 20, unitPrice: 70 },
+        { maxHeight: 30, unitPrice: 100 },
+        { maxHeight: 50, unitPrice: 150 },
+        { maxHeight: 80, unitPrice: 240 },
+        { maxHeight: 100, unitPrice: 350 },
+        { maxHeight: 150, unitPrice: 520 },
+        { maxHeight: 200, unitPrice: 750 },
+        { maxHeight: Infinity, unitPrice: 1000 }
+    ];
+    CHAR_PRICING_MODE['侧发光字'] = [
+        { maxHeight: 20, unitPrice: 70 },
+        { maxHeight: 30, unitPrice: 100 },
+        { maxHeight: 50, unitPrice: 150 },
+        { maxHeight: 80, unitPrice: 240 },
+        { maxHeight: 100, unitPrice: 350 },
+        { maxHeight: 150, unitPrice: 520 },
+        { maxHeight: 200, unitPrice: 750 },
+        { maxHeight: Infinity, unitPrice: 1000 }
+    ];
+    CHAR_PRICING_MODE['迷你发光字'] = [
+        { maxHeight: 20, unitPrice: 80 },
+        { maxHeight: 30, unitPrice: 120 },
+        { maxHeight: 50, unitPrice: 180 },
+        { maxHeight: 80, unitPrice: 280 },
+        { maxHeight: 100, unitPrice: 400 },
+        { maxHeight: 150, unitPrice: 600 },
+        { maxHeight: 200, unitPrice: 880 },
+        { maxHeight: Infinity, unitPrice: 1200 }
+    ];
+    CHAR_PRICING_MODE['无边发光字'] = [
+        { maxHeight: 20, unitPrice: 65 },
+        { maxHeight: 30, unitPrice: 95 },
+        { maxHeight: 50, unitPrice: 140 },
+        { maxHeight: 80, unitPrice: 220 },
+        { maxHeight: 100, unitPrice: 320 },
+        { maxHeight: 150, unitPrice: 480 },
+        { maxHeight: 200, unitPrice: 700 },
+        { maxHeight: Infinity, unitPrice: 950 }
+    ];
+    CHAR_PRICING_MODE['超级字'] = [
+        { maxHeight: 20, unitPrice: 35 },
+        { maxHeight: 30, unitPrice: 55 },
+        { maxHeight: 50, unitPrice: 85 },
+        { maxHeight: 80, unitPrice: 130 },
+        { maxHeight: 100, unitPrice: 190 },
+        { maxHeight: 150, unitPrice: 280 },
+        { maxHeight: 200, unitPrice: 400 },
+        { maxHeight: Infinity, unitPrice: 550 }
+    ];
+    CHAR_PRICING_MODE['点阵字'] = [
+        { maxHeight: 20, unitPrice: 55 },
+        { maxHeight: 30, unitPrice: 85 },
+        { maxHeight: 50, unitPrice: 130 },
+        { maxHeight: 80, unitPrice: 200 },
+        { maxHeight: 100, unitPrice: 290 },
+        { maxHeight: 150, unitPrice: 440 },
+        { maxHeight: 200, unitPrice: 640 },
+        { maxHeight: Infinity, unitPrice: 880 }
+    ];
+    CHAR_PRICING_MODE['柔性霓虹字'] = [
+        { maxHeight: 20, unitPrice: 70 },
+        { maxHeight: 30, unitPrice: 100 },
+        { maxHeight: 50, unitPrice: 150 },
+        { maxHeight: 80, unitPrice: 240 },
+        { maxHeight: 100, unitPrice: 350 },
+        { maxHeight: 150, unitPrice: 520 },
+        { maxHeight: 200, unitPrice: 750 },
+        { maxHeight: Infinity, unitPrice: 1000 }
+    ];
+    CHAR_PRICING_MODE['千层镜字'] = [
+        { maxHeight: 20, unitPrice: 70 },
+        { maxHeight: 30, unitPrice: 100 },
+        { maxHeight: 50, unitPrice: 150 },
+        { maxHeight: 80, unitPrice: 240 },
+        { maxHeight: 100, unitPrice: 350 },
+        { maxHeight: 150, unitPrice: 520 },
+        { maxHeight: 200, unitPrice: 750 },
+        { maxHeight: Infinity, unitPrice: 1000 }
+    ];
+    CHAR_PRICING_MODE['背光水晶字'] = [
+        { maxHeight: 20, unitPrice: 90 },
+        { maxHeight: 30, unitPrice: 140 },
+        { maxHeight: 50, unitPrice: 210 },
+        { maxHeight: 80, unitPrice: 330 },
+        { maxHeight: 100, unitPrice: 480 },
+        { maxHeight: 150, unitPrice: 720 },
+        { maxHeight: 200, unitPrice: 1050 },
+        { maxHeight: Infinity, unitPrice: 1400 }
+    ];
+    CHAR_PRICING_MODE['玻璃霓虹字'] = [
+        { maxHeight: 20, unitPrice: 70 },
+        { maxHeight: 30, unitPrice: 100 },
+        { maxHeight: 50, unitPrice: 150 },
+        { maxHeight: 80, unitPrice: 240 },
+        { maxHeight: 100, unitPrice: 350 },
+        { maxHeight: 150, unitPrice: 520 },
+        { maxHeight: 200, unitPrice: 750 },
+        { maxHeight: Infinity, unitPrice: 1000 }
+    ];
+    CHAR_PRICING_MODE['水晶字'] = [
+        { maxHeight: 20, unitPrice: 90 },
+        { maxHeight: 30, unitPrice: 140 },
+        { maxHeight: 50, unitPrice: 210 },
+        { maxHeight: 80, unitPrice: 330 },
+        { maxHeight: 100, unitPrice: 480 },
+        { maxHeight: 150, unitPrice: 720 },
+        { maxHeight: 200, unitPrice: 1050 },
+        { maxHeight: Infinity, unitPrice: 1400 }
+    ];
+    CHAR_PRICING_MODE['不锈钢字'] = [
+        { maxHeight: 20, unitPrice: 50 },
+        { maxHeight: 30, unitPrice: 75 },
+        { maxHeight: 50, unitPrice: 110 },
+        { maxHeight: 80, unitPrice: 170 },
+        { maxHeight: 100, unitPrice: 250 },
+        { maxHeight: 150, unitPrice: 380 },
+        { maxHeight: 200, unitPrice: 550 },
+        { maxHeight: Infinity, unitPrice: 750 }
+    ];
+    CHAR_PRICING_MODE['精工字'] = [
+        { maxHeight: 20, unitPrice: 50 },
+        { maxHeight: 30, unitPrice: 75 },
+        { maxHeight: 50, unitPrice: 110 },
+        { maxHeight: 80, unitPrice: 170 },
+        { maxHeight: 100, unitPrice: 250 },
+        { maxHeight: 150, unitPrice: 380 },
+        { maxHeight: 200, unitPrice: 550 },
+        { maxHeight: Infinity, unitPrice: 750 }
+    ];
+    CHAR_PRICING_MODE['电镀字'] = [
+        { maxHeight: 20, unitPrice: 35 },
+        { maxHeight: 30, unitPrice: 55 },
+        { maxHeight: 50, unitPrice: 85 },
+        { maxHeight: 80, unitPrice: 130 },
+        { maxHeight: 100, unitPrice: 190 },
+        { maxHeight: 150, unitPrice: 280 },
+        { maxHeight: 200, unitPrice: 400 },
+        { maxHeight: Infinity, unitPrice: 550 }
+    ];
+    CHAR_PRICING_MODE['镀锌板烤漆字'] = [
+        { maxHeight: 20, unitPrice: 35 },
+        { maxHeight: 30, unitPrice: 55 },
+        { maxHeight: 50, unitPrice: 85 },
+        { maxHeight: 80, unitPrice: 130 },
+        { maxHeight: 100, unitPrice: 190 },
+        { maxHeight: 150, unitPrice: 280 },
+        { maxHeight: 200, unitPrice: 400 },
+        { maxHeight: Infinity, unitPrice: 550 }
+    ];
+    CHAR_PRICING_MODE['实木字'] = [
+        { maxHeight: 20, unitPrice: 15 },
+        { maxHeight: 30, unitPrice: 25 },
+        { maxHeight: 50, unitPrice: 40 },
+        { maxHeight: 80, unitPrice: 65 },
+        { maxHeight: 100, unitPrice: 95 },
+        { maxHeight: 150, unitPrice: 140 },
+        { maxHeight: 200, unitPrice: 200 },
+        { maxHeight: Infinity, unitPrice: 280 }
+    ];
+    CHAR_PRICING_MODE['仿大理石字'] = [
+        { maxHeight: 20, unitPrice: 15 },
+        { maxHeight: 30, unitPrice: 25 },
+        { maxHeight: 50, unitPrice: 40 },
+        { maxHeight: 80, unitPrice: 65 },
+        { maxHeight: 100, unitPrice: 95 },
+        { maxHeight: 150, unitPrice: 140 },
+        { maxHeight: 200, unitPrice: 200 },
+        { maxHeight: Infinity, unitPrice: 280 }
+    ];
+    CHAR_PRICING_MODE['液态亚克力字'] = [
+        { maxHeight: 20, unitPrice: 30 },
+        { maxHeight: 30, unitPrice: 45 },
+        { maxHeight: 50, unitPrice: 70 },
+        { maxHeight: 80, unitPrice: 110 },
+        { maxHeight: 100, unitPrice: 160 },
+        { maxHeight: 150, unitPrice: 240 },
+        { maxHeight: 200, unitPrice: 350 },
+        { maxHeight: Infinity, unitPrice: 480 }
+    ];
+    CHAR_PRICING_MODE['钛金字'] = [
+        { maxHeight: 20, unitPrice: 35 },
+        { maxHeight: 30, unitPrice: 55 },
+        { maxHeight: 50, unitPrice: 85 },
+        { maxHeight: 80, unitPrice: 130 },
+        { maxHeight: 100, unitPrice: 190 },
+        { maxHeight: 150, unitPrice: 280 },
+        { maxHeight: 200, unitPrice: 400 },
+        { maxHeight: Infinity, unitPrice: 550 }
+    ];
+    CHAR_PRICING_MODE['玫瑰金字'] = [
+        { maxHeight: 20, unitPrice: 35 },
+        { maxHeight: 30, unitPrice: 55 },
+        { maxHeight: 50, unitPrice: 85 },
+        { maxHeight: 80, unitPrice: 130 },
+        { maxHeight: 100, unitPrice: 190 },
+        { maxHeight: 150, unitPrice: 280 },
+        { maxHeight: 200, unitPrice: 400 },
+        { maxHeight: Infinity, unitPrice: 550 }
     ];
     
     // 保存到本地存储
@@ -32306,6 +33514,38 @@ function calculatePrice() {
     if (el) el.textContent = unit;
     el = document.getElementById('calcCostTotal');
     if (el) el.textContent = '¥' + costTotal.toFixed(2);
+
+    var itemName = document.getElementById('calcItemName').value.trim() || '未命名';
+    var finalQty = baseQty + wasteArea;
+    autoSaveCalcToHistory(itemName, length, width, height, unitPrice, costPrice, waste, profit, qty, finalPrice, finalQty);
+}
+
+function autoSaveCalcToHistory(name, l, w, h, up, cp, wl, pr, qty, total, finalQty) {
+    if (!name || name === '未命名') return;
+    var record = {
+        id: Date.now(),
+        name: name,
+        length: l,
+        width: w,
+        height: h,
+        unitPrice: up,
+        costPrice: cp,
+        waste: wl,
+        profit: pr,
+        qty: qty,
+        total: total,
+        finalQty: finalQty,
+        time: new Date().toLocaleTimeString()
+    };
+    var exists = calcHistory.some(function(h) { return h.name === name && Math.abs(h.total - total) < 0.01; });
+    if (!exists) {
+        calcHistory.unshift(record);
+        if (calcHistory.length > 20) {
+            calcHistory.pop();
+        }
+        saveCalcHistory();
+        renderCalcHistory();
+    }
 }
 
 function addCalcToQuote() {
@@ -32365,8 +33605,6 @@ function addCalcToQuote() {
         priceHistory[itemName] = finalPrice;
         saveCalcHistory();
     }
-    
-    addToCalcHistory(itemName, length, width, height, unitPrice, costPrice, waste, profit, qty, finalPrice);
     
     appData.currentQuote.items.push({
         id: Date.now(),
@@ -32454,6 +33692,67 @@ function useCalcHistory(id) {
     updateCalcInputs();
     calculatePrice();
     showToast('已复用历史记录！');
+}
+
+function manualSaveCalcToHistory() {
+    var calcType = document.getElementById('calcType').value;
+    var length = parseDimension(document.getElementById('calcLength').value) || 0;
+    var width = parseDimension(document.getElementById('calcWidth').value) || 0;
+    var height = parseDimension(document.getElementById('calcHeight').value) || 0;
+    var unitPrice = parseFloat(document.getElementById('calcUnitPrice').value) || 0;
+    var costPrice = parseFloat(document.getElementById('calcCostPrice').value) || 0;
+    var waste = parseFloat(document.getElementById('calcWaste').value) || 0;
+    var profit = parseFloat(document.getElementById('calcProfit').value) || 0;
+    var qty = parseInt(document.getElementById('calcQty').value) || 1;
+    var itemName = document.getElementById('calcItemName').value.trim() || '未命名计算';
+    
+    if (length <= 0 && width <= 0 && height <= 0) {
+        showToast('请先输入尺寸进行计算！', 'warning');
+        return;
+    }
+    
+    var quantity = 0;
+    if (calcType === 'character') {
+        quantity = parseInt(document.getElementById('charCount').value) || 1;
+    } else if (calcType === 'square') {
+        quantity = length * width;
+    } else if (calcType === 'cubic') {
+        quantity = length * width * height;
+    } else if (calcType === 'length') {
+        quantity = length;
+    }
+    
+    var baseQty = quantity * qty;
+    var wasteArea = baseQty * (waste / 100);
+    var finalQty = baseQty + wasteArea;
+    var finalPrice = finalQty * unitPrice;
+    if (profit > 0 && costPrice > 0) {
+        finalPrice = finalQty * costPrice * (1 + profit / 100);
+    }
+    
+    var record = {
+        id: Date.now(),
+        name: itemName,
+        length: length,
+        width: width,
+        height: height,
+        unitPrice: unitPrice,
+        costPrice: costPrice,
+        waste: waste,
+        profit: profit,
+        qty: qty,
+        total: finalPrice,
+        finalQty: finalQty,
+        time: new Date().toLocaleTimeString()
+    };
+    
+    calcHistory.unshift(record);
+    if (calcHistory.length > 20) {
+        calcHistory.pop();
+    }
+    saveCalcHistory();
+    renderCalcHistory();
+    showToast('已保留计算结果！💾');
 }
 
 function clearCalc() {
@@ -32602,6 +33901,7 @@ document.querySelectorAll('form').forEach(form=>{
         if(e.key==='Enter'&&!e.shiftKey){ 
             e.preventDefault(); 
             const modal = form.closest('.modal'); 
+            if (!modal) return;
             const saveBtn = modal.querySelector('.btn-primary'); 
             if(saveBtn) saveBtn.click(); 
         } 
@@ -32609,6 +33909,22 @@ document.querySelectorAll('form').forEach(form=>{
 });
 
 // ===== 存储空间统计功能 =====
+function toggleStorageStats() {
+    const container = document.getElementById('storageStatsContainer');
+    if (container.style.display === 'none' || !container.style.display) {
+        // 显示详细统计
+        container.style.display = 'block';
+        // 如果还没有数据，先获取
+        const statsDiv = document.getElementById('storageStats');
+        if (!statsDiv.innerHTML.trim()) {
+            checkStorageUsage();
+        }
+    } else {
+        // 隐藏详细统计
+        container.style.display = 'none';
+    }
+}
+
 function checkStorageUsage() {
     var total = 0;
     var backupCount = 0;
@@ -32687,7 +34003,6 @@ function checkStorageUsage() {
     
     var container = document.getElementById('storageStats');
     container.innerHTML = html;
-    container.style.display = 'block';
     updateStorageSummary();
 }
 
