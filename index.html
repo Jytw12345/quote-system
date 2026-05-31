@@ -6878,6 +6878,19 @@ var DataManager = {
                                 <button class="btn btn-outline btn-sm" onclick="changeAdminPassword()">💾 修改密码</button>
                             </div>
                         </div>
+                        <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--gray-200);">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <div style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">退出后自动登录</div>
+                                    <div style="font-size:0.6875rem;color:var(--gray-500);">关闭后退出需要重新输入密码</div>
+                                </div>
+                                <label style="position:relative;display:inline-block;width:44px;height:24px;">
+                                    <input type="checkbox" id="autoLoginToggle" onchange="toggleAutoLogin(this.checked)" style="opacity:0;width:0;height:0;">
+                                    <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#ccc;transition:0.3s;border-radius:24px;"></span>
+                                    <span style="position:absolute;content:'';height:18px;width:18px;left:3px;bottom:3px;background-color:white;transition:0.3s;border-radius:50%;"></span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div style="background:#f0fdf4;border-radius:var(--radius);padding:0.75rem;">
@@ -26119,15 +26132,20 @@ function initIdentity() {
         adminPassword = savedPassword;
     }
     const savedIsAdmin = localStorage.getItem('isAdmin');
-    if (savedIsAdmin === 'true') {
+    const autoLogin = localStorage.getItem('autoLogin');
+    
+    // 只有明确开启了自动登录（autoLogin 为 'true'），才自动登录
+    if (savedIsAdmin === 'true' && autoLogin === 'true') {
         isAdmin = true;
         updateIdentityUI(true);
         updateSensitiveDataVisibility(true);
     } else {
         isAdmin = false;
+        localStorage.removeItem('isAdmin');
         updateIdentityUI(false);
         updateSensitiveDataVisibility(false);
     }
+    updateAutoLoginToggle();
 }
 
 function verifyAdminPassword() {
@@ -26153,6 +26171,11 @@ function verifyAdminPassword() {
 
 function logoutAdmin() {
     isAdmin = false;
+    const autoLogin = localStorage.getItem('autoLogin');
+    // 如果关闭了自动登录，退出后不再自动登录
+    if (autoLogin === 'false') {
+        localStorage.setItem('autoLogin', 'false');
+    }
     localStorage.removeItem('isAdmin');
     updateIdentityUI(false);
     updateSensitiveDataVisibility(false);
@@ -26181,6 +26204,42 @@ function changeAdminPassword() {
     newPwd.value = '';
     confirmPwd.value = '';
     showToast('✅ 密码修改成功', 'success');
+}
+
+function toggleAutoLogin(enabled) {
+    localStorage.setItem('autoLogin', enabled ? 'true' : 'false');
+    // 更新开关样式
+    const toggle = document.getElementById('autoLoginToggle');
+    if (toggle) {
+        const span = toggle.nextElementSibling;
+        const knob = span.nextElementSibling;
+        if (enabled) {
+            span.style.backgroundColor = '#10b981';
+            knob.style.transform = 'translateX(20px)';
+        } else {
+            span.style.backgroundColor = '#ccc';
+            knob.style.transform = 'translateX(0)';
+        }
+    }
+    showToast(enabled ? '✅ 已开启自动登录' : 'ℹ️ 已关闭自动登录，退出后需要重新输入密码', 'info');
+}
+
+function updateAutoLoginToggle() {
+    const toggle = document.getElementById('autoLoginToggle');
+    const autoLogin = localStorage.getItem('autoLogin');
+    if (toggle) {
+        toggle.checked = autoLogin === 'true';
+        // 更新开关样式
+        const span = toggle.nextElementSibling;
+        const knob = span.nextElementSibling;
+        if (autoLogin === 'true') {
+            span.style.backgroundColor = '#10b981';
+            knob.style.transform = 'translateX(20px)';
+        } else {
+            span.style.backgroundColor = '#ccc';
+            knob.style.transform = 'translateX(0)';
+        }
+    }
 }
 
 function updateIdentityUI(isAdminMode) {
