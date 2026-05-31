@@ -9980,7 +9980,7 @@ function switchTab(tabName){
     if (tabName === 'history') renderHistory();
     if (tabName === 'photos') refreshPhotoList();
     if (tabName === 'settings') {
-        renderCharPricingConfig(); // 渲染字符价格配置界面
+        initCharPricingConfig(); // 初始化字符价格配置界面
         loadSystemSettings(); // 加载系统设置
     }
     // 切换选项卡时关闭手机端计算器面板
@@ -21738,10 +21738,26 @@ function showBoardPriceCategory(category) {
         activeBtn.style.borderColor = colors.borderColor;
     }
 
-    const config = boardPriceConfig[category];
-    const container = document.getElementById('boardPriceConfigFields');
-    if (!config || !container) return;
+    // 渲染配置 - 添加延迟确保DOM已完全加载
+    setTimeout(function() {
+        const config = boardPriceConfig[category];
+        const container = document.getElementById('boardPriceConfigFields');
+        if (!config || !container) {
+            console.warn('展板画面配置容器未找到，尝试重新渲染...');
+            setTimeout(function() {
+                const retryConfig = boardPriceConfig[category];
+                const retryContainer = document.getElementById('boardPriceConfigFields');
+                if (retryConfig && retryContainer) {
+                    renderBoardPriceConfig(category, retryConfig, retryContainer);
+                }
+            }, 100);
+            return;
+        }
+        renderBoardPriceConfig(category, config, container);
+    }, 0);
+}
 
+function renderBoardPriceConfig(category, config, container) {
     let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.5rem;">';
     config.forEach(item => {
         const savedValue = localStorage.getItem('boardPrice_' + item.key);
@@ -33444,10 +33460,17 @@ function initCharPricingConfig() {
         console.error('加载字符价格配置失败:', e);
     }
     
-    // 渲染配置UI
-    if (document.getElementById('charPricingConfig')) {
-        renderCharPricingConfig();
-    }
+    // 渲染配置UI - 添加延迟确保DOM已完全加载
+    setTimeout(function() {
+        const container = document.getElementById('charPricingConfig');
+        const buttonsContainer = document.getElementById('charPricingButtons');
+        if (container && buttonsContainer) {
+            renderCharPricingConfig();
+        } else {
+            console.warn('字符价格配置容器未找到，尝试重新渲染...');
+            setTimeout(renderCharPricingConfig, 100);
+        }
+    }, 0);
 }
 
 function calculatePrice() {
