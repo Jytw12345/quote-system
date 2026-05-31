@@ -14,7 +14,7 @@
     <!-- PWA 相关 -->
     <meta name="theme-color" content="#2563eb">
     <meta name="description" content="图文广告行业快速报价解决方案，支持产品管理、客户管理、报价模板、AI智能助手">
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/quote-system/manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -35413,7 +35413,7 @@ if ('serviceWorker' in navigator) {
     
     if (isSecureContext) {
         window.addEventListener('load', function() {
-            navigator.serviceWorker.register('./sw.js')
+            navigator.serviceWorker.register('/quote-system/sw.js')
                 .then(function(registration) {
                     console.log('[SW] 注册成功:', registration.scope);
                 })
@@ -36061,7 +36061,7 @@ function confirmMainImages() {
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
+        navigator.serviceWorker.register('/quote-system/sw.js')
             .then(registration => {
                 console.log('SW registered:', registration.scope);
             })
