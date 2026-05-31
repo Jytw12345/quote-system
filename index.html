@@ -37368,10 +37368,11 @@ function applyCrop() {
 }
 
 function confirmMainImages() {
+    const count = pendingMainImages.length;
     appData.currentQuote.mainImages = JSON.parse(JSON.stringify(pendingMainImages));
     updateMainImagesPreview();
     closeMainImageModal();
-    showToast('主图已保存（' + pendingMainImages.length + '张）', 'success');
+    showToast('主图已保存（' + count + '张）', 'success');
 }
 
 if ('serviceWorker' in navigator) {
