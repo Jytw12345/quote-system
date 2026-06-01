@@ -21,16 +21,6 @@
     <meta name="apple-mobile-web-app-title" content="快速报价">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%232563eb' width='100' height='100' rx='20'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>💰</text></svg>">
     <style>
-        /* 移除 number input 的上下滚动箭头（但保留带 .allow-spinner 类的） */
-        input[type="number"]:not(.allow-spinner)::-webkit-inner-spin-button,
-        input[type="number"]:not(.allow-spinner)::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        input[type="number"]:not(.allow-spinner) {
-            -moz-appearance: textfield;
-        }
-        
         :root {
             /* ===== 主色调系统 ===== */
             --color-primary: #2563eb;
@@ -139,6 +129,11 @@
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { height: 100%; overflow-y: auto; }
+        .quote-item-row .no-spin::-webkit-outer-spin-button,
+        .quote-item-row .no-spin::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
         @media (max-width: 640px) {
             * { max-width: 100vw; overflow-x: hidden; }
             .quote-preview-wrapper { max-width: none !important; overflow-x: auto !important; }
@@ -460,30 +455,38 @@
         .product-list-view { background: white; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
         .product-list-view tr:hover { background: #f9fafb; }
         @media (max-width: 640px) { 
-            .product-list-view { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-            .product-list-view table { table-layout: auto; }
-            .product-list-view th, .product-list-view td { white-space: nowrap; font-size: 0.7rem; padding: 0.25rem !important; }
+            .product-list-view { overflow-x: auto; -webkit-overflow-scrolling: touch; display: block !important; }
+            .product-list-view > div { width: 100% !important; }
+            .product-list-view table { border-collapse: collapse; width: 100%; table-layout: auto; }
+            .product-list-view th, .product-list-view td { white-space: nowrap; font-size: 0.7rem; padding: 0.25rem 0.375rem !important; }
+            .product-list-view th.category-col, .product-list-view td.category-col { display: none !important; }
+            .product-list-view th:first-child, .product-list-view td:first-child { width: 28px; }
             .product-list-view th:nth-child(2), .product-list-view td:nth-child(2) { max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
-            .product-list-view th:last-child, .product-list-view td:last-child { width: auto !important; min-width: 130px; }
             .product-list-view .action-btn { 
-                padding: 2px 4px !important; 
-                font-size: 12px !important; 
-                margin: 0 !important; 
+                padding: 3px 5px !important; 
+                font-size: 11px !important; 
+                margin: 0 2px !important; 
                 min-width: 24px !important;
                 min-height: 24px !important;
             }
         }
         @media (min-width: 641px) { 
             .product-list-view { overflow-x: auto; }
-            .product-list-view table { table-layout: auto; }
+            .product-list-view table { table-layout: fixed; width: 100%; }
             .product-list-view th, .product-list-view td { white-space: nowrap; font-size: 0.75rem; padding: 0.375rem !important; }
-            .product-list-view th:last-child, .product-list-view td:last-child { width: auto !important; min-width: 130px; }
+            .product-list-view th:nth-child(1), .product-list-view td:nth-child(1) { width: 35px; }
+            .product-list-view th:nth-child(2), .product-list-view td:nth-child(2) { width: 150px; }
+            .product-list-view th:nth-child(3), .product-list-view td:nth-child(3) { width: 100px; }
+            .product-list-view th:nth-child(4), .product-list-view td:nth-child(4) { width: 70px; }
+            .product-list-view th:nth-child(5), .product-list-view td:nth-child(5) { width: 70px; }
+            .product-list-view th:nth-child(6), .product-list-view td:nth-child(6) { width: 70px; }
+            .product-list-view th:last-child, .product-list-view td:last-child { width: 100px !important; }
             .product-list-view .action-btn { 
-                padding: 4px 8px !important; 
+                padding: 4px 6px !important; 
                 font-size: 12px !important; 
                 margin: 0 2px !important; 
-                min-width: 28px !important;
-                min-height: 28px !important;
+                min-width: 26px !important;
+                min-height: 26px !important;
             }
         }
         .product-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; transition: all 0.2s ease; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; min-height: 220px; }
@@ -4949,17 +4952,17 @@ var DataManager = {
                     </div>
                     <div id="quickSearchResults" class="quick-search-results" style="display:none;position:fixed;top:auto;left:auto;background:white;border:2px solid var(--primary);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:1000;max-height:350px;overflow-y:auto;width:calc(100% - 2rem);max-width:500px;"></div>
                     <div id="quoteItemsContainer">
-                        <div class="quote-item-row" id="quoteItemHeader" style="font-weight:600;background:var(--gray-50);font-size:0.6875rem;padding:0.5rem 0.625rem;">
-                            <div style="display:flex;align-items:center;justify-content:center;"><span class="quote-item-number" style="cursor:default;">序号</span></div>
-                            <div style="display:flex;align-items:center;justify-content:center;"><span class="column-label">图片</span></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">项目名称</span></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">规格参数</span></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">备注</span></div>
-                            <div class="cost-price-column" style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">成本价</span></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">数量</span></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">单价</span></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">小计</span></div>
-                            <div></div>
+                        <div class="quote-item-row" id="quoteItemHeader" style="font-weight:600;background:var(--gray-50);font-size:0.6875rem;padding:0.625rem;">
+                            <div style="display:flex;align-items:center;justify-content:center;height:32px;"><span class="quote-item-number" style="cursor:default;">序号</span></div>
+                            <div style="display:flex;align-items:center;justify-content:center;height:32px;"><span class="column-label">图片</span></div>
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">项目名称</span></div>
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">规格参数</span></div>
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">备注</span></div>
+                            <div class="cost-price-column" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">成本价</span></div>
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">数量</span></div>
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">单价</span></div>
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">小计</span></div>
+                            <div style="height:32px;"></div>
                         </div>
                         <div id="quoteItemsList"></div>
                     </div>
@@ -6792,43 +6795,39 @@ var DataManager = {
 
             <div class="settings-section">
                 <h3>📥📤 数据导入导出</h3>
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:0.5rem;margin-bottom:0.75rem;">
-                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.5rem;">
-                        <div style="font-size:0.8125rem;color:var(--gray-700);margin-bottom:0.375rem;font-weight:600;">💾 全部数据备份</div>
-                        <div style="font-size:0.625rem;color:var(--gray-500);margin-bottom:0.375rem;">包含产品库、模板、客户等所有数据</div>
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;margin-bottom:0.75rem;">
+                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
+                        <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">💾 全部数据</div>
                         <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
-                            <button class="btn btn-primary btn-xs" onclick="exportAllData()">📥 导出全部数据</button>
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📂 导入文件<input type="file" id="importFile" accept=".json" hidden onchange="importAllData(event)"></label>
+                            <button class="btn btn-primary btn-xs" onclick="exportAllData()">📤 导出数据</button>
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📥 导入数据<input type="file" id="importFile" accept=".json" hidden onchange="importAllData(event)"></label>
                         </div>
                     </div>
-                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.5rem;">
-                        <div style="font-size:0.8125rem;color:var(--gray-700);margin-bottom:0.375rem;font-weight:600;">📦 产品库数据</div>
-                        <div style="font-size:0.625rem;color:var(--gray-500);margin-bottom:0.375rem;">支持 JSON/Excel 互导</div>
-                        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.25rem;">
+                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
+                        <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">📦 产品库</div>
+                        <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📥 导入JSON<input type="file" id="importProducts" accept=".json" hidden onchange="importProducts(event)"></label>
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📥 导入XLSX<input type="file" id="importProductsXLSX" accept=".xlsx,.xls" hidden onchange="importProductsXLSX(event)"></label>
                             <button class="btn btn-success btn-xs" onclick="exportProducts()">📤 导出JSON</button>
-                            <button class="btn btn-success btn-xs" onclick="exportProductsXLSX()">📊 导出Excel</button>
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📂 导入JSON<input type="file" id="importProducts" accept=".json" hidden onchange="importProducts(event)"></label>
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📊 导入Excel<input type="file" id="importProductsXLSX" accept=".xlsx,.xls" hidden onchange="importProductsXLSX(event)"></label>
+                            <button class="btn btn-success btn-xs" onclick="exportProductsXLSX()">📊 导出XLSX</button>
                         </div>
                     </div>
-                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.5rem;">
-                        <div style="font-size:0.8125rem;color:var(--gray-700);margin-bottom:0.375rem;font-weight:600;">📋 报价模板</div>
-                        <div style="font-size:0.625rem;color:var(--gray-500);margin-bottom:0.375rem;">报价单模板和样式配置</div>
-                        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.25rem;">
+                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
+                        <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">📋 报价模板</div>
+                        <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📥 导入JSON<input type="file" id="importTemplates" accept=".json" hidden onchange="importTemplates(event)"></label>
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📥 导入XLSX<input type="file" id="importTemplatesXLSX" accept=".xlsx,.xls" hidden onchange="importTemplatesXLSX(event)"></label>
                             <button class="btn btn-success btn-xs" onclick="exportTemplates()">📤 导出JSON</button>
-                            <button class="btn btn-success btn-xs" onclick="exportTemplatesXLSX()">📊 导出Excel</button>
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📂 导入JSON<input type="file" id="importTemplates" accept=".json" hidden onchange="importTemplates(event)"></label>
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📊 导入Excel<input type="file" id="importTemplatesXLSX" accept=".xlsx,.xls" hidden onchange="importTemplatesXLSX(event)"></label>
+                            <button class="btn btn-success btn-xs" onclick="exportTemplatesXLSX()">📊 导出XLSX</button>
                         </div>
                     </div>
-                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.5rem;">
-                        <div style="font-size:0.8125rem;color:var(--gray-700);margin-bottom:0.375rem;font-weight:600;">👥 客户管理</div>
-                        <div style="font-size:0.625rem;color:var(--gray-500);margin-bottom:0.375rem;">客户信息和联系方式</div>
-                        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.25rem;">
+                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
+                        <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">👥 客户管理</div>
+                        <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📥 导入JSON<input type="file" id="importCustomers" accept=".json" hidden onchange="importCustomers(event)"></label>
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📥 导入XLSX<input type="file" id="importCustomersXLSX" accept=".xlsx,.xls" hidden onchange="importCustomersXLSX(event)"></label>
                             <button class="btn btn-success btn-xs" onclick="exportCustomers()">📤 导出JSON</button>
-                            <button class="btn btn-success btn-xs" onclick="exportCustomersXLSX()">📊 导出Excel</button>
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📂 导入JSON<input type="file" id="importCustomers" accept=".json" hidden onchange="importCustomers(event)"></label>
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📊 导入Excel<input type="file" id="importCustomersXLSX" accept=".xlsx,.xls" hidden onchange="importCustomersXLSX(event)"></label>
+                            <button class="btn btn-success btn-xs" onclick="exportCustomersXLSX()">📊 导出XLSX</button>
                         </div>
                     </div>
                 </div>
@@ -7361,10 +7360,6 @@ var DataManager = {
                         </label>
                         <button type="button" class="btn btn-outline btn-sm" onclick="openPhotoSelector()">📷 从相册选择</button>
                         <button type="button" class="btn btn-outline btn-sm" onclick="removeProductImage()" style="display:none;" id="removeImageBtn">🗑️ 移除图片</button>
-                    </div>
-                    <div style="display:flex;gap:0.5rem;margin-bottom:0.375rem;">
-                        <input type="text" id="imageUrlInput" placeholder="📋 粘贴图床链接（如 Gitee、路过图床等）" style="flex:1;padding:0.375rem;border:1px solid #e5e7eb;border-radius:var(--radius);font-size:0.875rem;">
-                        <button type="button" class="btn btn-outline btn-sm" onclick="applyImageUrl()">✅ 应用链接</button>
                     </div>
                     <div id="imagePreviewContainer" style="margin-top:0.375rem;"><img id="imagePreview" class="image-preview hidden"></div>
                     <div id="materialAnalysisResult" style="margin-top:0.5rem;display:none;padding:0.5rem;background:#f3f4f6;border-radius:var(--radius);font-size:0.875rem;"></div>
@@ -10773,10 +10768,11 @@ function removeQuoteItem(iid){
         showToast('数据错误', 'error');
         return;
     }
-    const item = appData.currentQuote.items.find(i => i.id === iid);
+    const numId = typeof iid === 'string' ? parseFloat(iid) : iid;
+    const item = appData.currentQuote.items.find(i => i.id === numId || i.id === iid);
     const itemName = item ? item.name : '项目';
     saveToUndoStack('删除项目', '删除: ' + itemName);
-    appData.currentQuote.items=appData.currentQuote.items.filter(item=>item.id!==iid);
+    appData.currentQuote.items=appData.currentQuote.items.filter(item=>item.id!==numId && item.id!==iid);
     renderQuoteItems();
     calculateTotals();
     saveDraftQuote();
@@ -10785,8 +10781,8 @@ function removeQuoteItem(iid){
 function updateQuoteItem(iid,field,value){
     try {
         if(!appData.currentQuote || !appData.currentQuote.items) return;
-        const numericId = typeof iid === 'string' ? iid.replace(/'/g, '') : iid;
-        const item=appData.currentQuote.items.find(i=>String(i.id) === String(numericId));
+        const numId = typeof iid === 'string' ? parseFloat(iid) : iid;
+        const item=appData.currentQuote.items.find(i=>i.id===numId || i.id===iid);
         if(item){
             const oldValue = item[field];
             if(field==='qty'||field==='price'||field==='cost') item[field]=parseFloat(value)||0;
@@ -10861,12 +10857,12 @@ function renderQuoteItems(){
         div.innerHTML = `
             <div style="display:flex;align-items:center;justify-content:center;"><span class="quote-item-number" draggable="true" ondragstart="handleDragStart(${idx}, event)" ondragend="handleDragEnd">${idx+1}</span></div>
             <div style="display:flex;align-items:center;justify-content:center;">${ih}</div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">项目名称</span><input type="text" value="${escapeHtml(itemName)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'name',this.value)" style="width:100%;"></div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">规格参数</span><input type="text" value="${escapeHtml(itemSpec)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'spec',this.value)" style="width:100%;"></div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">备注</span><input type="text" value="${escapeHtml(itemNote)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'note',this.value)" style="width:100%;"></div>
-            <div class="cost-price-column" style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">成本价</span><input type="number" step="0.01" min="0" value="${itemCost}" onchange="updateQuoteItem(${itemIdQuoted},'cost',this.value)" style="width:65px;font-weight:500;"></div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">数量</span><input type="number" min="1" value="${itemQty}" onchange="updateQuoteItem(${itemIdQuoted},'qty',this.value)" class="allow-spinner integer-spin" onwheel="if(this.value) this.value=Math.max(1,Math.round(parseFloat(this.value)||1));" style="width:70px;"></div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">单价</span><input type="number" step="0.01" min="0" value="${itemPrice}" onchange="updateQuoteItem(${itemIdQuoted},'price',this.value)" style="width:100%;"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">项目名称</span><input type="text" value="${escapeHtml(itemName)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'name',this.value)" style="width:100%;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">规格参数</span><input type="text" value="${escapeHtml(itemSpec)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'spec',this.value)" style="width:100%;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">备注</span><input type="text" value="${escapeHtml(itemNote)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'note',this.value)" style="width:100%;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
+            <div class="cost-price-column" style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">成本价</span><input type="number" step="0.01" min="0" value="${itemCost}" onchange="updateQuoteItem(${itemIdQuoted},'cost',this.value)" onwheel="return false;" class="no-spin" style="width:70px;font-weight:500;-moz-appearance:textfield;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">数量</span><input type="number" min="1" step="1" value="${itemQty}" onchange="updateQuoteItem(${itemIdQuoted},'qty',this.value)" style="width:65px;min-height:32px;padding:0.25rem 0.25rem;box-sizing:border-box;text-align:center;"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">单价</span><input type="number" step="0.01" min="0" value="${itemPrice}" onchange="updateQuoteItem(${itemIdQuoted},'price',this.value)" onwheel="return false;" class="no-spin" style="width:70px;-moz-appearance:textfield;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">小计</span><span id="subtotal-${itemId}" style="font-weight:600;color:var(--primary);font-size:0.8125rem;">¥${it.toFixed(2)}</span></div>
             <div class="quote-item-actions" style="display:flex;gap:0.5rem;align-items:center;flex-shrink:0;justify-content:flex-end;width:100%;">
                 <button class="btn btn-success btn-icon" onclick="saveQuoteItemToProduct(${itemIdQuoted})" title="保存到产品库">💾</button>
@@ -11874,7 +11870,6 @@ function updateQuoteItemFromPreview(itemId, field, value){
     const newSubtotal = (item.qty * item.price * (dr / 100)).toFixed(2);
     const subtotalEl = document.getElementById('edit-subtotal-' + itemId);
     if(subtotalEl) subtotalEl.textContent = '¥' + newSubtotal;
-    calculateTotals();
 }
 function savePreviewEdits(){
     calculateTotals();
@@ -12653,7 +12648,6 @@ function openAddProductModal(){
     document.getElementById('imagePreview').src = '';
     document.getElementById('imagePreview').dataset.imageRemoved = 'false';
     document.getElementById('removeImageBtn').style.display = 'none';
-    document.getElementById('imageUrlInput').value = '';
 
     // 清除表单错误状态
     clearFormFieldErrors();
@@ -12739,14 +12733,6 @@ function openEditProductModal(pid){
     const loadImage = function(url) {
         // 清除图片移除标志
         document.getElementById('imagePreview').dataset.imageRemoved = 'false';
-        
-        // 如果是图床链接，显示在输入框中
-        if (url && url.startsWith('http')) {
-            document.getElementById('imageUrlInput').value = url;
-        } else {
-            document.getElementById('imageUrlInput').value = '';
-        }
-        
         if(url){
             document.getElementById('imagePreview').src=url;
             document.getElementById('imagePreview').classList.remove('hidden');
@@ -12820,51 +12806,6 @@ function handleProductImageUpload(input){
         };
         reader.readAsDataURL(file);
     }
-}
-
-// 应用图床链接
-function applyImageUrl() {
-    const urlInput = document.getElementById('imageUrlInput');
-    const imageUrl = urlInput.value.trim();
-    
-    if (!imageUrl) {
-        showToast('请输入图片链接', 'warning');
-        return;
-    }
-    
-    // 验证URL格式
-    const urlPattern = /^(https?:\/\/)?[\w\-]+(\.[\w\-]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?$/;
-    if (!urlPattern.test(imageUrl)) {
-        showToast('请输入有效的图片链接', 'warning');
-        return;
-    }
-    
-    // 检查是否为图片链接
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
-    const lowerUrl = imageUrl.toLowerCase();
-    const hasImageExtension = imageExtensions.some(ext => lowerUrl.includes(ext));
-    
-    if (!hasImageExtension && !lowerUrl.includes('imgchr') && !lowerUrl.includes('gitee') && !lowerUrl.includes('beeimg')) {
-        showToast('请确保链接指向图片文件', 'warning');
-        return;
-    }
-    
-    showToast('正在加载图片...', 'info');
-    
-    const img = new Image();
-    img.onload = function() {
-        document.getElementById('imagePreview').src = imageUrl;
-        document.getElementById('imagePreview').classList.remove('hidden');
-        document.getElementById('removeImageBtn').style.display = 'inline-flex';
-        document.getElementById('aiMaterialBtn').disabled = false;
-        showToast('图片链接加载成功', 'success');
-    };
-    
-    img.onerror = function() {
-        showToast('图片加载失败，请检查链接是否有效', 'error');
-    };
-    
-    img.src = imageUrl;
 }
 
 function addToPhotoAlbum(fileName, dataUrl, fileSize) {
@@ -12997,7 +12938,6 @@ function removeProductImage() {
     document.getElementById('imagePreview').classList.add('hidden');
     document.getElementById('removeImageBtn').style.display = 'none';
     document.getElementById('productImage').value = '';
-    document.getElementById('imageUrlInput').value = '';
     // 设置标志表示图片已被手动移除
     document.getElementById('imagePreview').dataset.imageRemoved = 'true';
     showToast('图片已移除', 'success');
@@ -13236,26 +13176,19 @@ function saveProduct(){
     
     // 处理图片 - 等待 IDB 初始化完成
     const finalizeSave = function() {
-        if(imagePreviewSrc) {
-            if(imagePreviewSrc.startsWith('data:')) {
-                // 本地上传的图片，保存为 base64
-                p.image = imagePreviewSrc;
-                if(idbInitialized && IDB.isSupported()) {
-                    const imageId = id ? 'product_' + id : 'product_' + p.id;
-                    p.imageId = imageId;
-                    IDB.saveImage(imageId, imagePreviewSrc).then(function() {
-                        console.log('图片成功保存到 IndexedDB:', imageId);
-                        completeSave();
-                    }).catch(function(e) {
-                        console.error('图片保存到 IDB 失败，保留 base64:', e);
-                        completeSave();
-                    });
-                } else {
+        if(imagePreviewSrc && imagePreviewSrc.startsWith('data:')) {
+            p.image = imagePreviewSrc;
+            if(idbInitialized && IDB.isSupported()) {
+                const imageId = id ? 'product_' + id : 'product_' + p.id;
+                p.imageId = imageId;
+                IDB.saveImage(imageId, imagePreviewSrc).then(function() {
+                    console.log('图片成功保存到 IndexedDB:', imageId);
                     completeSave();
-                }
-            } else if(imagePreviewSrc.startsWith('http')) {
-                // 图床链接，直接保存URL
-                p.image = imagePreviewSrc;
+                }).catch(function(e) {
+                    console.error('图片保存到 IDB 失败，保留 base64:', e);
+                    completeSave();
+                });
+            } else {
                 completeSave();
             }
         } else {
@@ -25252,19 +25185,21 @@ function renderProducts(useSmartResults = false){
     }
     if(productViewMode === 'list'){
         c.className = 'product-list-view';
-        c.style.display = 'grid';
-        c.style.gridTemplateColumns = window.innerWidth <= 640 ? '1fr' : 'repeat(2, 1fr)';
-        c.style.gap = '1rem';
+        const isMobile = window.innerWidth <= 640;
+        c.style.display = isMobile ? 'block' : 'grid';
+        c.style.gridTemplateColumns = isMobile ? '1fr' : 'repeat(2, 1fr)';
+        c.style.gap = isMobile ? '0' : '0.75rem';
+        
         const halfLength = Math.ceil(displayProducts.length / 2);
         const firstHalf = displayProducts.slice(0, halfLength);
         const secondHalf = displayProducts.slice(halfLength);
         
         const generateTable = (products) => {
             const isAdmin = isAdminMode();
-            const thCost = isAdmin ? '<th style="padding:0.375rem;text-align:right;width:65px;">成本</th>' : '';
-            const thSelling = '<th style="padding:0.375rem;text-align:right;width:70px;">售价</th>';
-            const thProfit = isAdmin ? '<th style="padding:0.375rem;text-align:right;width:65px;">利润</th>' : '';
-            return '<table style="width:100%;border-collapse:collapse;font-size:0.75rem;table-layout:fixed;"><thead style="background:#f3f4f6;"><tr><th style="padding:0.375rem;text-align:left;width:35px;">⭐</th><th style="padding:0.375rem;text-align:left;min-width:100px;">产品名称</th><th style="padding:0.375rem;text-align:left;width:80px;">分类</th>' + thCost + thSelling + thProfit + '<th style="padding:0.375rem;text-align:center;width:130px;">操作</th></tr></thead><tbody>' + products.map(p => { 
+            const thCost = isAdmin ? '<th style="padding:0.375rem;text-align:right;">成本</th>' : '';
+            const thSelling = '<th style="padding:0.375rem;text-align:right;">售价</th>';
+            const thProfit = isAdmin ? '<th style="padding:0.375rem;text-align:right;">利润</th>' : '';
+            return '<table style="border-collapse:collapse;font-size:0.75rem;width:100%;"><thead style="background:#f3f4f6;"><tr><th style="padding:0.375rem;text-align:left;">⭐</th><th style="padding:0.375rem;text-align:left;">产品名称</th><th class="category-col" style="padding:0.375rem;text-align:left;">分类</th>' + thCost + thSelling + thProfit + '<th style="padding:0.375rem;text-align:center;">操作</th></tr></thead><tbody>' + products.map(p => { 
                 const sellingPrice = p.sellingPrice !== undefined ? p.sellingPrice : (p.price || 0); 
                 const costPrice = p.costPrice !== undefined ? p.costPrice : (p.cost || 0); 
                 const profit = sellingPrice - costPrice; 
@@ -25274,12 +25209,16 @@ function renderProducts(useSmartResults = false){
                 const tdCost = isAdmin ? '<td style="padding:0.375rem;text-align:right;">¥' + costPrice + '</td>' : '';
                 const tdSelling = '<td style="padding:0.375rem;text-align:right;font-weight:600;color:#2563eb;">¥' + sellingPrice + '</td>';
                 const tdProfit = isAdmin ? '<td style="padding:0.375rem;text-align:right;color:' + (profit >= 0 ? '#16a34a' : '#dc2626') + ';">¥' + profit.toFixed(0) + '</td>' : '';
-                return '<tr style="border-bottom:1px solid #e5e7eb;' + (batchMode && isSelected ? 'background:#fef2f2;' : '') + '"><td style="padding:0.375rem;cursor:pointer;" onclick="toggleFavorite(' + p.id + ')">' + (appData.favoriteIds && appData.favoriteIds.includes(p.id) ? '⭐' : '☆') + '</td><td style="padding:0.375rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escapeHtml(p.name || '') + '">' + escapeHtml(p.name || '未命名') + '</td><td style="padding:0.375rem;color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escapeHtml(catText || '-') + '">' + escapeHtml(catText || '-') + '</td>' + tdCost + tdSelling + tdProfit + '<td style="padding:0.25rem;text-align:center;white-space:nowrap;">' + (batchMode ? '<button class="btn action-btn ' + (isSelected ? 'btn-danger' : 'btn-outline') + '" onclick="toggleBatchSelect(' + p.id + ')">' + (isSelected ? '✓' : '☐') + '</button>' : '<button class="btn action-btn btn-primary" onclick="addToQuote(' + p.id + ')" title="添加">➕</button><button class="btn action-btn btn-outline" onclick="openEditProductModal(' + p.id + ')" title="编辑">✏️</button><button class="btn action-btn btn-danger" onclick="deleteProduct(' + p.id + ')" title="删除">🗑️</button>') + '</td></tr>'; 
+                return '<tr style="border-bottom:1px solid #e5e7eb;' + (batchMode && isSelected ? 'background:#fef2f2;' : '') + '"><td style="padding:0.375rem;cursor:pointer;" onclick="toggleFavorite(' + p.id + ')">' + (appData.favoriteIds && appData.favoriteIds.includes(p.id) ? '⭐' : '☆') + '</td><td style="padding:0.375rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escapeHtml(p.name || '') + '">' + escapeHtml(p.name || '未命名') + '</td><td class="category-col" style="padding:0.375rem;color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escapeHtml(catText || '-') + '">' + escapeHtml(catText || '-') + '</td>' + tdCost + tdSelling + tdProfit + '<td style="padding:0.25rem;text-align:center;white-space:nowrap;">' + (batchMode ? '<button class="btn action-btn ' + (isSelected ? 'btn-danger' : 'btn-outline') + '" onclick="toggleBatchSelect(' + p.id + ')">' + (isSelected ? '✓' : '☐') + '</button>' : '<button class="btn action-btn btn-primary" onclick="addToQuote(' + p.id + ')" title="添加">➕</button><button class="btn action-btn btn-outline" onclick="openEditProductModal(' + p.id + ')" title="编辑">✏️</button><button class="btn action-btn btn-danger" onclick="deleteProduct(' + p.id + ')" title="删除">🗑️</button>') + '</td></tr>'; 
             }).join('') + '</tbody></table>';
         };
         
-        c.innerHTML = '<div style="background:white;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);">' + generateTable(firstHalf) + '</div>' + 
-                      '<div style="background:white;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);">' + generateTable(secondHalf) + '</div>';
+        if (isMobile) {
+            c.innerHTML = '<div style="background:white;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);">' + generateTable(displayProducts) + '</div>';
+        } else {
+            c.innerHTML = '<div style="background:white;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);">' + generateTable(firstHalf) + '</div>' + 
+                          '<div style="background:white;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);">' + generateTable(secondHalf) + '</div>';
+        }
         return;
     }
     const viewConfigs = {
@@ -31158,7 +31097,7 @@ function importProducts(event){
                 };
                 
                 preCheckImages().then(() => {
-                    const mode = prompt(`请选择导入方式：\n1. 替换（清空现有数据，导入全部新数据）\n2. 合并-留旧（保留现有，遇到重复保留旧数据）\n3. 合并-留新（保留现有，遇到重复用新数据覆盖）\n4. 更新（只更新匹配的，不添加新数据）\n\n检测到 ${linkedImages} 个可自动链接的图片\n\n请输入数字 1/2/3/4`, '2');
+                    const mode = prompt(`请选择导入方式：\n1. 替换（清空现有数据）\n2. 合并（保留现有，添加新数据）\n3. 更新（按名称匹配更新）\n\n检测到 ${linkedImages} 个可自动链接的图片\n\n请输入数字 1/2/3`, '2');
                     if(!mode) return;
                     
                     // 处理产品导入
@@ -31184,7 +31123,6 @@ function importProducts(event){
                                 }
                             });
                         } else if(mode === '3'){
-                            // 合并-留新：保留现有，遇到重复用新数据覆盖
                             p.forEach(x => {
                                 if(!validateProductImport(x)){ skipped++; return; }
                                 const normalized = normalizeProduct(x);
@@ -31201,23 +31139,6 @@ function importProducts(event){
                                     linkProductImage(normalized);
                                     appData.products.push(normalized);
                                     imported++;
-                                }
-                            });
-                        } else if(mode === '4'){
-                            // 更新：只更新匹配的，不添加新数据
-                            p.forEach(x => {
-                                if(!validateProductImport(x)){ skipped++; return; }
-                                const normalized = normalizeProduct(x);
-                                const idx = appData.products.findIndex(e => e.name === normalized.name);
-                                if(idx >= 0){
-                                    // 自动链接图片
-                                    linkProductImage(normalized);
-                                    normalized.id = appData.products[idx].id;
-                                    appData.products[idx] = normalized;
-                                    updated++;
-                                } else {
-                                    // 不添加新数据，跳过
-                                    skipped++;
                                 }
                             });
                         }
@@ -31534,40 +31455,29 @@ function renderAll(){
 // ===== XLSX导入导出 =====
 function exportToXLSX(data, headers, filename, sheetName) {
     if (!window.XLSX) {
-        showToast('正在加载Excel处理库，请稍候...', 'info');
+        alert('正在加载Excel处理库，请稍后...');
         var script = document.createElement('script');
         script.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
-        script.onload = function() { 
-            exportToXLSX(data, headers, filename, sheetName); 
-        };
-        script.onerror = function() {
-            showToast('❌ Excel库加载失败，请检查网络或稍后重试', 'error');
-        };
-        script.timeout = 15000;
+        script.onload = function() { exportToXLSX(data, headers, filename, sheetName); };
         document.head.appendChild(script);
         return;
     }
-    try {
-        var wsData = []; 
-        var headerRow = headers.map(function(h) { return h.label; }); 
-        wsData.push(headerRow);
-        data.forEach(function(item) { 
-            var row = []; 
-            headers.forEach(function(h) { 
-                var val = item[h.key] !== undefined ? item[h.key] : ''; 
-                row.push(val); 
-            }); 
-            wsData.push(row); 
-        });
-        var ws = XLSX.utils.aoa_to_sheet(wsData); 
-        ws['!cols'] = headers.map(function(h) { return { wch: h.width || 15 }; });
-        var wb = XLSX.utils.book_new(); 
-        XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Sheet1'); 
-        XLSX.writeFile(wb, filename);
-        showToast('✅ Excel导出成功！', 'success');
-    } catch (err) {
-        showToast('❌ Excel导出失败: ' + err.message, 'error');
-    }
+    var wsData = []; 
+    var headerRow = headers.map(function(h) { return h.label; }); 
+    wsData.push(headerRow);
+    data.forEach(function(item) { 
+        var row = []; 
+        headers.forEach(function(h) { 
+            var val = item[h.key] !== undefined ? item[h.key] : ''; 
+            row.push(val); 
+        }); 
+        wsData.push(row); 
+    });
+    var ws = XLSX.utils.aoa_to_sheet(wsData); 
+    ws['!cols'] = headers.map(function(h) { return { wch: h.width || 15 }; });
+    var wb = XLSX.utils.book_new(); 
+    XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Sheet1'); 
+    XLSX.writeFile(wb, filename);
 }
 function importFromXLSX(file, headers, callback) {
     if (!window.XLSX) { 
@@ -31606,36 +31516,36 @@ function exportProductsXLSX() {
         { key: 'category1', label: '一级分类', width: 15 }, 
         { key: 'category2', label: '二级分类', width: 15 }, 
         { key: 'description', label: '产品描述', width: 35 }, 
+        { key: 'calcType', label: '计算方式', width: 12 },
+        { key: 'width', label: '默认宽度(米)', width: 12 },
+        { key: 'height', label: '默认高度(米)', width: 12 },
         { key: 'costPrice', label: '成本价', width: 10 }, 
         { key: 'sellingPrice', label: '售价', width: 10 }, 
         { key: 'unit', label: '单位', width: 8 },
         { key: 'imageLocation', label: '图片存储位置', width: 20 },
-        { key: 'imageUrl', label: '图片链接/地址', width: 80 }
+        { key: 'imageRef', label: '图片引用ID', width: 40 }
     ]; 
     
     // 准备带图片引用信息的产品数据
     const productsWithImageInfo = appData.products.map(product => {
         let imageLocation = 'none';
-        let imageUrl = '';
+        let imageRef = '';
         
         if (product.imageId) {
             imageLocation = 'indexeddb';
-            imageUrl = 'IDB:' + product.imageId;
+            imageRef = product.imageId;
         } else if (product.image) {
-            if (product.image.startsWith('http')) {
-                // 图床链接，直接导出
-                imageLocation = 'url';
-                imageUrl = product.image;
-            } else {
-                imageLocation = 'embedded';
-                imageUrl = 'base64_embedded';
-            }
+            imageLocation = 'embedded';
+            imageRef = 'base64_data';
         }
         
         return {
             ...product,
+            calcType: product.calcType || 'fixed',
+            width: product.width || '',
+            height: product.height || '',
             imageLocation: imageLocation,
-            imageUrl: imageUrl
+            imageRef: imageRef
         };
     });
     
@@ -31649,11 +31559,14 @@ function importProductsXLSX(event) {
         { key: 'category1', label: '一级分类' }, 
         { key: 'category2', label: '二级分类' },
         { key: 'description', label: '产品描述' }, 
+        { key: 'calcType', label: '计算方式' },
+        { key: 'width', label: '默认宽度(米)' },
+        { key: 'height', label: '默认高度(米)' },
         { key: 'costPrice', label: '成本价' }, 
         { key: 'sellingPrice', label: '售价' }, 
         { key: 'unit', label: '单位' },
         { key: 'imageLocation', label: '图片存储位置' },
-        { key: 'imageUrl', label: '图片链接/地址' }
+        { key: 'imageRef', label: '图片引用ID' }
     ]; 
     importFromXLSX(file, headers, function(importedData) { 
         if (!importedData.length) { 
@@ -31664,14 +31577,10 @@ function importProductsXLSX(event) {
         
         // 预检查可链接的图片
         var linkedImages = 0;
-        var urlImages = 0;
         if (idbInitialized && IDB.isSupported()) {
             importedData.forEach(function(row) {
-                if (row.imageLocation === 'indexeddb' && row.imageUrl && row.imageUrl.startsWith('IDB:')) {
+                if (row.imageLocation === 'indexeddb' && row.imageRef) {
                     linkedImages++;
-                }
-                if (row.imageLocation === 'url' && row.imageUrl && row.imageUrl.startsWith('http')) {
-                    urlImages++;
                 }
             });
         }
@@ -31683,6 +31592,9 @@ function importProductsXLSX(event) {
                 category1: String(row.category1 || row.category || '').trim(), 
                 category2: String(row.category2 || '').trim(), 
                 description: String(row.description || '').trim(), 
+                calcType: String(row.calcType || 'fixed').trim(),
+                width: parseFloat(row.width) || 0,
+                height: parseFloat(row.height) || 0,
                 costPrice: parseFloat(row.costPrice) || 0, 
                 sellingPrice: parseFloat(row.sellingPrice) || 0, 
                 unit: String(row.unit || '项').trim(), 
@@ -31692,29 +31604,21 @@ function importProductsXLSX(event) {
                 updatedAt: new Date().toISOString() 
             }; 
             
-            // 处理图片链接
-            if (row.imageUrl) {
-                var imageUrl = String(row.imageUrl).trim();
-                if (imageUrl.startsWith('http')) {
-                    // 图床链接，直接保存
-                    product.image = imageUrl;
-                } else if (imageUrl.startsWith('IDB:')) {
-                    // IndexedDB引用，保存imageId以便后续链接
-                    product.imageId = imageUrl.substring(4);
-                }
+            // 添加图片引用信息以便自动链接
+            if (row.imageLocation) {
+                product.imageLocation = String(row.imageLocation).trim();
+            }
+            if (row.imageRef) {
+                product.imageRef = String(row.imageRef).trim();
             }
             
             return product;
         }).filter(function(p) { return p.name; }); 
         
-        // 自动链接IndexedDB图片
-        if (idbInitialized && IDB.isSupported()) {
-            newProducts.forEach(function(p) {
-                if (p.imageId && !p.image) {
-                    linkProductImage(p);
-                }
-            });
-        }
+        // 自动链接图片
+        newProducts.forEach(function(p) {
+            linkProductImage(p);
+        });
         
         if (!newProducts.length) { 
             alert('没有有效的产品数据（产品名称为空）！'); 
@@ -31724,112 +31628,58 @@ function importProductsXLSX(event) {
         
         var msg = '即将导入 ' + newProducts.length + ' 个产品';
         if (linkedImages > 0) {
-            msg += '，其中 ' + linkedImages + ' 个产品可自动链接IndexedDB图片';
+            msg += '，其中 ' + linkedImages + ' 个产品可自动链接图片';
         }
-        if (urlImages > 0) {
-            msg += '，' + urlImages + ' 个产品带有图床链接';
-        }
-        
-        var mode = prompt(msg + '。\n\n请选择导入方式：\n1. 替换（清空现有数据，导入全部新数据）\n2. 合并-留旧（保留现有，遇到重复保留旧数据）\n3. 合并-留新（保留现有，遇到重复用新数据覆盖）\n4. 更新（只更新匹配的，不添加新数据）\n\n请输入数字 1/2/3/4', '2');
-        if (!mode) {
-            event.target.value = '';
-            return;
-        }
-        
-        var imported = 0, updated = 0, skipped = 0;
-        if (mode === '1') {
-            // 替换：清空现有数据，导入全部新数据
-            appData.products = newProducts;
-            imported = newProducts.length;
-        } else if (mode === '2') {
-            // 合并-留旧：保留现有，遇到重复保留旧数据
-            newProducts.forEach(function(p) {
-                if (!appData.products.find(function(e) { return e.name === p.name && e.category1 === p.category1; })) {
-                    appData.products.push(p);
-                    imported++;
-                } else {
-                    skipped++;
-                }
-            });
-        } else if (mode === '3') {
-            // 合并-留新：保留现有，遇到重复用新数据覆盖
-            newProducts.forEach(function(p) {
-                var idx = appData.products.findIndex(function(e) { return e.name === p.name && e.category1 === p.category1; });
-                if (idx >= 0) {
-                    p.id = appData.products[idx].id;
-                    appData.products[idx] = p;
-                    updated++;
-                } else {
-                    appData.products.push(p);
-                    imported++;
-                }
-            });
-        } else if (mode === '4') {
-            // 更新：只更新匹配的，不添加新数据
-            newProducts.forEach(function(p) {
-                var idx = appData.products.findIndex(function(e) { return e.name === p.name && e.category1 === p.category1; });
-                if (idx >= 0) {
-                    p.id = appData.products[idx].id;
-                    appData.products[idx] = p;
-                    updated++;
-                } else {
-                    skipped++;
-                }
-            });
+        if (confirm(msg + '。\n\n是否替换现有产品库？取消则合并导入')) { 
+            appData.products = newProducts; 
+        } else { 
+            newProducts.forEach(function(p) { 
+                if (!appData.products.find(function(e) { return e.name === p.name && e.category1 === p.category1; })) { 
+                    appData.products.push(p); 
+                } 
+            }); 
         } 
         saveDataImmediately(); 
         renderProducts(); 
         updateCategoryFilter(); 
         populateQuoteProductList(); 
-        var resultMsg = '导入完成！\n';
-        if (imported > 0) resultMsg += '新增: ' + imported + ' 个\n';
-        if (updated > 0) resultMsg += '更新: ' + updated + ' 个\n';
-        if (skipped > 0) resultMsg += '跳过: ' + skipped + ' 个';
-        alert(resultMsg); 
+        alert('成功导入 ' + newProducts.length + ' 个产品！'); 
         event.target.value = ''; 
     }); 
 }
 function exportTemplatesXLSX() { 
     if (!window.XLSX) { 
-        showToast('正在加载Excel处理库，请稍候...', 'info'); 
+        alert('正在加载Excel处理库，请稍后...'); 
         var script = document.createElement('script'); 
         script.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js'; 
         script.onload = function() { exportTemplatesXLSX(); }; 
-        script.onerror = function() {
-            showToast('❌ Excel库加载失败，请检查网络或稍后重试', 'error');
-        };
         document.head.appendChild(script); 
         return; 
     } 
-    try {
-        var wb = XLSX.utils.book_new(); 
-        var overviewHeaders = ['模板名称', '描述', '项目数量', '总价', '案例信息']; 
-        var overviewData = [overviewHeaders]; 
-        appData.templates.forEach(function(t) { 
-            var total = t.items.reduce(function(s, i) { return s + (i.qty * i.price); }, 0); 
-            overviewData.push([ t.name, t.description || '', t.items.length, total, t.caseInfo || '' ]); 
+    var wb = XLSX.utils.book_new(); 
+    var overviewHeaders = ['模板名称', '描述', '项目数量', '总价', '案例信息']; 
+    var overviewData = [overviewHeaders]; 
+    appData.templates.forEach(function(t) { 
+        var total = t.items.reduce(function(s, i) { return s + (i.qty * i.price); }, 0); 
+        overviewData.push([ t.name, t.description || '', t.items.length, total, t.caseInfo || '' ]); 
+    }); 
+    var ws1 = XLSX.utils.aoa_to_sheet(overviewData); 
+    ws1['!cols'] = [{ wch: 25 }, { wch: 30 }, { wch: 10 }, { wch: 12 }, { wch: 40 }]; 
+    XLSX.utils.book_append_sheet(wb, ws1, '模板概览'); 
+    appData.templates.forEach(function(t, idx) { 
+        var itemHeaders = ['项目名称', '规格参数', '备注', '成本价', '数量', '单价', '小计']; 
+        var itemData = [itemHeaders]; 
+        t.items.forEach(function(item) { 
+            const qty = item.qty || 1;
+            const price = item.price || 0;
+            itemData.push([ item.name, item.spec || '', item.note || '', item.cost || 0, qty, price, qty * price ]); 
         }); 
-        var ws1 = XLSX.utils.aoa_to_sheet(overviewData); 
-        ws1['!cols'] = [{ wch: 25 }, { wch: 30 }, { wch: 10 }, { wch: 12 }, { wch: 40 }]; 
-        XLSX.utils.book_append_sheet(wb, ws1, '模板概览'); 
-        appData.templates.forEach(function(t, idx) { 
-            var itemHeaders = ['项目名称', '规格参数', '备注', '成本价', '数量', '单价', '小计']; 
-            var itemData = [itemHeaders]; 
-            t.items.forEach(function(item) { 
-                const qty = item.qty || 1;
-                const price = item.price || 0;
-                itemData.push([ item.name, item.spec || '', item.note || '', item.cost || 0, qty, price, qty * price ]); 
-            }); 
-            var ws = XLSX.utils.aoa_to_sheet(itemData); 
-            ws['!cols'] = [{ wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 12 }]; 
-            var sheetName = (idx + 1) + '_' + t.name.substring(0, 20); 
-            XLSX.utils.book_append_sheet(wb, ws, sheetName); 
-        }); 
-        XLSX.writeFile(wb, '报价模板库_' + new Date().toISOString().slice(0,10) + '.xlsx'); 
-        showToast('✅ Excel导出成功！', 'success');
-    } catch (err) {
-        showToast('❌ Excel导出失败: ' + err.message, 'error');
-    }
+        var ws = XLSX.utils.aoa_to_sheet(itemData); 
+        ws['!cols'] = [{ wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 12 }]; 
+        var sheetName = (idx + 1) + '_' + t.name.substring(0, 20); 
+        XLSX.utils.book_append_sheet(wb, ws, sheetName); 
+    }); 
+    XLSX.writeFile(wb, '报价模板库_' + new Date().toISOString().slice(0,10) + '.xlsx'); 
 }
 function importTemplatesXLSX(event) { 
     var file = event.target.files[0]; 
@@ -36967,7 +36817,8 @@ function saveQuoteItemToProduct(itemId) {
         showToast('数据错误', 'error');
         return;
     }
-    const item = appData.currentQuote.items.find(i => i.id === itemId);
+    const numId = typeof itemId === 'string' ? parseFloat(itemId) : itemId;
+    const item = appData.currentQuote.items.find(i => i.id === numId || i.id === itemId);
     if (!item) {
         showToast('未找到该报价项目', 'error');
         return;
