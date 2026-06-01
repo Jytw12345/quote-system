@@ -754,6 +754,49 @@
             .char-pricing-container {
                 gap: 0.75rem !important;
             }
+            .char-pricing-grid input[type="number"] {
+                width: 75px !important;
+            }
+            #boardPriceConfigFields input[type="number"] {
+                width: 55px !important;
+            }
+            .board-price-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            .price-config-tabs {
+                overflow-x: auto !important;
+                scrollbar-width: none !important;
+                -ms-overflow-style: none !important;
+            }
+            .price-config-tabs::-webkit-scrollbar {
+                display: none !important;
+            }
+            #globalPriceConfigFields > div {
+                max-height: none !important;
+                overflow-y: visible !important;
+            }
+            .price-config-content {
+                max-height: none !important;
+                overflow-y: visible !important;
+            }
+            .global-price-grid {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 0.25rem !important;
+            }
+            .global-price-grid > div {
+                flex-direction: row !important;
+                padding: 0.375rem !important;
+            }
+            .global-price-grid input[type="number"] {
+                width: 50px !important;
+                padding: 0.25rem !important;
+            }
+        }
+        @media (min-width: 769px) {
+            .global-price-grid {
+                grid-template-columns: repeat(3, 1fr) !important;
+            }
         }
         .seal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem; }
         .seal-card { background: white; border: 2px solid var(--gray-200); border-radius: var(--radius); padding: 0.75rem; text-align: center; transition: all 0.2s; cursor: pointer; position: relative; }
@@ -3135,6 +3178,22 @@
     #aiPanelDoorHeader [style*="第二字体"] [style*="grid-template-columns:1fr 1fr 1fr"] {
         grid-template-columns: repeat(2, 1fr) !important;
     }
+    /* GitHub Token 输入框眼睛按钮优化 */
+    #gistToken {
+        padding-right: 2rem !important;
+    }
+    #gistToken + button {
+        min-width: auto !important;
+        width: 1.75rem !important;
+        height: 1.75rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    /* 云同步状态卡片手机端2列 */
+    #syncStatusCard {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
 
 }
 
@@ -4755,7 +4814,7 @@ var DataManager = {
                                 <label style="font-size:0.6875rem;">利润率 (%)</label>
                                 <input type="number" id="calcProfit" value="0" step="1" min="0" max="200" placeholder="0" oninput="calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;">
                             </div>
-                            <div class="form-group" style="margin-bottom:0;">
+                            <div class="form-group" style="margin-bottom:0;" id="calcQtyInput">
                                 <label style="font-size:0.6875rem;">数量</label>
                                 <input type="number" id="calcQty" value="1" step="1" min="1" placeholder="1" oninput="calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;">
                             </div>
@@ -4767,7 +4826,7 @@ var DataManager = {
                             </div>
                             <div style="display:flex;justify-content:space-between;margin-bottom:0.2rem;font-size:0.6875rem;">
                                 <span style="color:var(--gray-600);">损耗数量：</span>
-                                <span id="calcWasteArea" style="font-weight:600;color:#e53e3e;">+0.00 ㎡</span>
+                                <span id="calcWasteArea" style="font-weight:600;color:#e53e3e;">+0.00 <span id="wasteUnit">㎡</span></span>
                             </div>
                             <div style="display:flex;justify-content:space-between;margin-bottom:0.2rem;font-size:0.6875rem;">
                                 <span style="color:var(--gray-600);">最终数量：</span>
@@ -6705,7 +6764,8 @@ var DataManager = {
                     <div style="margin-bottom:1rem;">
                         <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.5rem;">
                             <input type="text" id="deepseekApiKey" placeholder="sk-xxxxxxxxxxxxxxxx" style="flex:1;min-width:280px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
-                            <select id="deepseekModel" style="padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
+                            <label style="font-size:0.8125rem;color:var(--gray-700);white-space:nowrap;">默认模型选择</label>
+                            <select id="deepseekModel" style="min-width:200px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
                                 <option value="deepseek-v4-pro">deepseek-v4-pro（推荐·高性能）</option>
                                 <option value="deepseek-v4-flash">deepseek-v4-flash（快速·低成本）</option>
                             </select>
@@ -6842,7 +6902,7 @@ var DataManager = {
                         <label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">GitHub Token</label>
                         <div style="position:relative;">
                             <input type="password" id="gistToken" placeholder="ghp_xxxxxxxxxxxx" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;">
-                            <button type="button" class="btn btn-xs btn-outline" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);padding:0.125rem 0.375rem;" onclick="toggleTokenVisibility()">👁️</button>
+                            <button type="button" class="btn btn-xs btn-outline" style="position:absolute;right:4px;top:0;bottom:0;margin:auto;width:1.75rem;min-width:0!important;min-height:0!important;height:1.75rem!important;display:flex;align-items:center;justify-content:center;box-sizing:border-box;" onclick="toggleTokenVisibility()">👁️</button>
                         </div>
                     </div>
                     <div style="display:flex;flex-direction:column;gap:0.25rem;">
@@ -7086,7 +7146,7 @@ var DataManager = {
                         <button class="btn btn-sm" onclick="showGlobalPriceCategory('doorFrame')" id="btnDoorFrame" style="background:#92400e;color:white;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">门头骨架</button>
                         <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('doorBoard')" id="btnDoorBoard" style="color:#92400e;border-color:#92400e;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">门头底板</button>
                         <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('doorElectric')" id="btnDoorElectric" style="color:#92400e;border-color:#92400e;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">门头电气</button>
-                        <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('doorFont')" id="btnDoorFont" style="color:#92400e;border-color:#92400e;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">门头字体</button>
+                        <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('doorFont')" id="btnDoorFont" style="color:#92400e;border-color:#92400e;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;display:none;">门头字体</button>
                         <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('doorInstall')" id="btnDoorInstall" style="color:#92400e;border-color:#92400e;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">门头安装</button>
                         <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('cultureBase')" id="btnCultureBase" style="color:#7c3aed;border-color:#7c3aed;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">文化墙基底</button>
                         <button class="btn btn-sm btn-outline" onclick="showGlobalPriceCategory('cultureSurface')" id="btnCultureSurface" style="color:#7c3aed;border-color:#7c3aed;border-radius:16px;font-size:0.6875rem;padding:0.3125rem 0.625rem;">文化墙表面</button>
@@ -21758,7 +21818,7 @@ function showBoardPriceCategory(category) {
 }
 
 function renderBoardPriceConfig(category, config, container) {
-    let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.5rem;">';
+    let html = '<div class="board-price-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.5rem;">';
     config.forEach(item => {
         const savedValue = localStorage.getItem('boardPrice_' + item.key);
         const currentValue = savedValue !== null ? parseFloat(savedValue) : item.defaultValue;
@@ -21840,13 +21900,13 @@ function showGlobalPriceCategory(category) {
     const fieldsDiv = document.getElementById('globalPriceConfigFields');
     const items = globalPriceConfig[category] || [];
 
-    let html = '<div style="display:flex;flex-direction:column;gap:0.375rem;max-height:400px;overflow-y:auto;">';
+    let html = '<div class="global-price-grid" style="display:grid;gap:0.375rem;max-height:400px;overflow-y:auto;">';
     items.forEach(item => {
         const currentValue = localStorage.getItem('globalPrice_' + item.key) || item.defaultValue;
         const isDoor = category.startsWith('door');
         html += `
-            <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;background:white;border-radius:6px;border:1px solid #fcd34d;">
-                <span style="flex:1;font-size:0.75rem;color:#92400e;word-break:break-all;">${item.name}</span>
+            <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;background:white;border-radius:6px;border:1px solid #fcd34d;min-width:220px;flex:1 1 220px;">
+                <span style="min-width:0;flex:1;font-size:0.75rem;color:#92400e;word-break:break-all;">${item.name}</span>
                 <input type="number" id="globalPrice_${item.key}" value="${currentValue}" step="0.01" min="0"
                     style="width:70px;padding:0.375rem;font-size:0.8125rem;border:1px solid #fcd34d;border-radius:4px;text-align:right;flex-shrink:0;">
                 <span style="font-size:0.6875rem;color:#92400e;white-space:nowrap;flex-shrink:0;">${item.unit}</span>
@@ -31863,28 +31923,38 @@ function updateCalcInputs() {
     var characterInputs = document.getElementById('characterInputs');
     var priceUnit = document.getElementById('priceUnit');
     var qtyUnit = document.getElementById('qtyUnit');
+    var wasteUnit = document.getElementById('wasteUnit');
+    var calcQtyInput = document.getElementById('calcQtyInput');
     if (!calcType || !heightInput || !priceUnit || !qtyUnit) return;
     
     if (calcType.value === 'square') {
         heightInput.style.display = 'none';
         characterInputs.style.display = 'none';
+        if (calcQtyInput) calcQtyInput.style.display = 'block';
         priceUnit.textContent = '元/㎡';
         qtyUnit.textContent = '㎡';
+        if (wasteUnit) wasteUnit.textContent = '㎡';
     } else if (calcType.value === 'cubic') {
         heightInput.style.display = 'block';
         characterInputs.style.display = 'none';
+        if (calcQtyInput) calcQtyInput.style.display = 'block';
         priceUnit.textContent = '元/m³';
         qtyUnit.textContent = 'm³';
+        if (wasteUnit) wasteUnit.textContent = 'm³';
     } else if (calcType.value === 'length') {
         heightInput.style.display = 'none';
         characterInputs.style.display = 'none';
+        if (calcQtyInput) calcQtyInput.style.display = 'block';
         priceUnit.textContent = '元/m';
         qtyUnit.textContent = 'm';
+        if (wasteUnit) wasteUnit.textContent = 'm';
     } else if (calcType.value === 'character') {
         heightInput.style.display = 'none';
         characterInputs.style.display = 'block';
+        if (calcQtyInput) calcQtyInput.style.display = 'none';
         priceUnit.textContent = '元/字';
         qtyUnit.textContent = '字';
+        if (wasteUnit) wasteUnit.textContent = '字';
     }
     calculatePrice();
 }
@@ -33507,6 +33577,7 @@ function calculatePrice() {
         quantity = charCount;
         unitPrice = smartUnitPrice;
         costPrice = charCostPrice;
+        qty = 1; // 字符模式下数量由 charCount 决定，qty 固定为1
     } else {
         // 普通计算模式
         if (calcType === 'square') {
