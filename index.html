@@ -21,6 +21,16 @@
     <meta name="apple-mobile-web-app-title" content="快速报价">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%232563eb' width='100' height='100' rx='20'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>💰</text></svg>">
     <style>
+        /* 移除 number input 的上下滚动箭头（但保留带 .allow-spinner 类的） */
+        input[type="number"]:not(.allow-spinner)::-webkit-inner-spin-button,
+        input[type="number"]:not(.allow-spinner)::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"]:not(.allow-spinner) {
+            -moz-appearance: textfield;
+        }
+        
         :root {
             /* ===== 主色调系统 ===== */
             --color-primary: #2563eb;
@@ -10775,7 +10785,8 @@ function removeQuoteItem(iid){
 function updateQuoteItem(iid,field,value){
     try {
         if(!appData.currentQuote || !appData.currentQuote.items) return;
-        const item=appData.currentQuote.items.find(i=>i.id===iid);
+        const numericId = typeof iid === 'string' ? iid.replace(/'/g, '') : iid;
+        const item=appData.currentQuote.items.find(i=>String(i.id) === String(numericId));
         if(item){
             const oldValue = item[field];
             if(field==='qty'||field==='price'||field==='cost') item[field]=parseFloat(value)||0;
@@ -10853,8 +10864,8 @@ function renderQuoteItems(){
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">项目名称</span><input type="text" value="${escapeHtml(itemName)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'name',this.value)" style="width:100%;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">规格参数</span><input type="text" value="${escapeHtml(itemSpec)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'spec',this.value)" style="width:100%;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">备注</span><input type="text" value="${escapeHtml(itemNote)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'note',this.value)" style="width:100%;"></div>
-            <div class="cost-price-column" style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">成本价</span><input type="number" step="0.01" min="0" value="${itemCost}" onchange="updateQuoteItem(${itemIdQuoted},'cost',this.value)" style="width:100%;font-weight:500;"></div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">数量</span><input type="number" min="1" value="${itemQty}" onchange="updateQuoteItem(${itemIdQuoted},'qty',this.value)" style="width:50px;"></div>
+            <div class="cost-price-column" style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">成本价</span><input type="number" step="0.01" min="0" value="${itemCost}" onchange="updateQuoteItem(${itemIdQuoted},'cost',this.value)" style="width:65px;font-weight:500;"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">数量</span><input type="number" min="1" value="${itemQty}" onchange="updateQuoteItem(${itemIdQuoted},'qty',this.value)" class="allow-spinner integer-spin" onwheel="if(this.value) this.value=Math.max(1,Math.round(parseFloat(this.value)||1));" style="width:70px;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">单价</span><input type="number" step="0.01" min="0" value="${itemPrice}" onchange="updateQuoteItem(${itemIdQuoted},'price',this.value)" style="width:100%;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">小计</span><span id="subtotal-${itemId}" style="font-weight:600;color:var(--primary);font-size:0.8125rem;">¥${it.toFixed(2)}</span></div>
             <div class="quote-item-actions" style="display:flex;gap:0.5rem;align-items:center;flex-shrink:0;justify-content:flex-end;width:100%;">
@@ -11863,6 +11874,7 @@ function updateQuoteItemFromPreview(itemId, field, value){
     const newSubtotal = (item.qty * item.price * (dr / 100)).toFixed(2);
     const subtotalEl = document.getElementById('edit-subtotal-' + itemId);
     if(subtotalEl) subtotalEl.textContent = '¥' + newSubtotal;
+    calculateTotals();
 }
 function savePreviewEdits(){
     calculateTotals();
@@ -31146,7 +31158,7 @@ function importProducts(event){
                 };
                 
                 preCheckImages().then(() => {
-                    const mode = prompt(`请选择导入方式：\n1. 替换（清空现有数据）\n2. 合并（保留现有，添加新数据）\n3. 更新（按名称匹配更新）\n\n检测到 ${linkedImages} 个可自动链接的图片\n\n请输入数字 1/2/3`, '2');
+                    const mode = prompt(`请选择导入方式：\n1. 替换（清空现有数据，导入全部新数据）\n2. 合并-留旧（保留现有，遇到重复保留旧数据）\n3. 合并-留新（保留现有，遇到重复用新数据覆盖）\n4. 更新（只更新匹配的，不添加新数据）\n\n检测到 ${linkedImages} 个可自动链接的图片\n\n请输入数字 1/2/3/4`, '2');
                     if(!mode) return;
                     
                     // 处理产品导入
@@ -31172,6 +31184,7 @@ function importProducts(event){
                                 }
                             });
                         } else if(mode === '3'){
+                            // 合并-留新：保留现有，遇到重复用新数据覆盖
                             p.forEach(x => {
                                 if(!validateProductImport(x)){ skipped++; return; }
                                 const normalized = normalizeProduct(x);
@@ -31188,6 +31201,23 @@ function importProducts(event){
                                     linkProductImage(normalized);
                                     appData.products.push(normalized);
                                     imported++;
+                                }
+                            });
+                        } else if(mode === '4'){
+                            // 更新：只更新匹配的，不添加新数据
+                            p.forEach(x => {
+                                if(!validateProductImport(x)){ skipped++; return; }
+                                const normalized = normalizeProduct(x);
+                                const idx = appData.products.findIndex(e => e.name === normalized.name);
+                                if(idx >= 0){
+                                    // 自动链接图片
+                                    linkProductImage(normalized);
+                                    normalized.id = appData.products[idx].id;
+                                    appData.products[idx] = normalized;
+                                    updated++;
+                                } else {
+                                    // 不添加新数据，跳过
+                                    skipped++;
                                 }
                             });
                         }
@@ -31504,29 +31534,40 @@ function renderAll(){
 // ===== XLSX导入导出 =====
 function exportToXLSX(data, headers, filename, sheetName) {
     if (!window.XLSX) {
-        alert('正在加载Excel处理库，请稍后...');
+        showToast('正在加载Excel处理库，请稍候...', 'info');
         var script = document.createElement('script');
         script.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
-        script.onload = function() { exportToXLSX(data, headers, filename, sheetName); };
+        script.onload = function() { 
+            exportToXLSX(data, headers, filename, sheetName); 
+        };
+        script.onerror = function() {
+            showToast('❌ Excel库加载失败，请检查网络或稍后重试', 'error');
+        };
+        script.timeout = 15000;
         document.head.appendChild(script);
         return;
     }
-    var wsData = []; 
-    var headerRow = headers.map(function(h) { return h.label; }); 
-    wsData.push(headerRow);
-    data.forEach(function(item) { 
-        var row = []; 
-        headers.forEach(function(h) { 
-            var val = item[h.key] !== undefined ? item[h.key] : ''; 
-            row.push(val); 
-        }); 
-        wsData.push(row); 
-    });
-    var ws = XLSX.utils.aoa_to_sheet(wsData); 
-    ws['!cols'] = headers.map(function(h) { return { wch: h.width || 15 }; });
-    var wb = XLSX.utils.book_new(); 
-    XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Sheet1'); 
-    XLSX.writeFile(wb, filename);
+    try {
+        var wsData = []; 
+        var headerRow = headers.map(function(h) { return h.label; }); 
+        wsData.push(headerRow);
+        data.forEach(function(item) { 
+            var row = []; 
+            headers.forEach(function(h) { 
+                var val = item[h.key] !== undefined ? item[h.key] : ''; 
+                row.push(val); 
+            }); 
+            wsData.push(row); 
+        });
+        var ws = XLSX.utils.aoa_to_sheet(wsData); 
+        ws['!cols'] = headers.map(function(h) { return { wch: h.width || 15 }; });
+        var wb = XLSX.utils.book_new(); 
+        XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Sheet1'); 
+        XLSX.writeFile(wb, filename);
+        showToast('✅ Excel导出成功！', 'success');
+    } catch (err) {
+        showToast('❌ Excel导出失败: ' + err.message, 'error');
+    }
 }
 function importFromXLSX(file, headers, callback) {
     if (!window.XLSX) { 
@@ -31688,56 +31729,107 @@ function importProductsXLSX(event) {
         if (urlImages > 0) {
             msg += '，' + urlImages + ' 个产品带有图床链接';
         }
-        if (confirm(msg + '。\n\n是否替换现有产品库？取消则合并导入')) { 
-            appData.products = newProducts; 
-        } else { 
-            newProducts.forEach(function(p) { 
-                if (!appData.products.find(function(e) { return e.name === p.name && e.category1 === p.category1; })) { 
-                    appData.products.push(p); 
-                } 
-            }); 
+        
+        var mode = prompt(msg + '。\n\n请选择导入方式：\n1. 替换（清空现有数据，导入全部新数据）\n2. 合并-留旧（保留现有，遇到重复保留旧数据）\n3. 合并-留新（保留现有，遇到重复用新数据覆盖）\n4. 更新（只更新匹配的，不添加新数据）\n\n请输入数字 1/2/3/4', '2');
+        if (!mode) {
+            event.target.value = '';
+            return;
+        }
+        
+        var imported = 0, updated = 0, skipped = 0;
+        if (mode === '1') {
+            // 替换：清空现有数据，导入全部新数据
+            appData.products = newProducts;
+            imported = newProducts.length;
+        } else if (mode === '2') {
+            // 合并-留旧：保留现有，遇到重复保留旧数据
+            newProducts.forEach(function(p) {
+                if (!appData.products.find(function(e) { return e.name === p.name && e.category1 === p.category1; })) {
+                    appData.products.push(p);
+                    imported++;
+                } else {
+                    skipped++;
+                }
+            });
+        } else if (mode === '3') {
+            // 合并-留新：保留现有，遇到重复用新数据覆盖
+            newProducts.forEach(function(p) {
+                var idx = appData.products.findIndex(function(e) { return e.name === p.name && e.category1 === p.category1; });
+                if (idx >= 0) {
+                    p.id = appData.products[idx].id;
+                    appData.products[idx] = p;
+                    updated++;
+                } else {
+                    appData.products.push(p);
+                    imported++;
+                }
+            });
+        } else if (mode === '4') {
+            // 更新：只更新匹配的，不添加新数据
+            newProducts.forEach(function(p) {
+                var idx = appData.products.findIndex(function(e) { return e.name === p.name && e.category1 === p.category1; });
+                if (idx >= 0) {
+                    p.id = appData.products[idx].id;
+                    appData.products[idx] = p;
+                    updated++;
+                } else {
+                    skipped++;
+                }
+            });
         } 
         saveDataImmediately(); 
         renderProducts(); 
         updateCategoryFilter(); 
         populateQuoteProductList(); 
-        alert('成功导入 ' + newProducts.length + ' 个产品！'); 
+        var resultMsg = '导入完成！\n';
+        if (imported > 0) resultMsg += '新增: ' + imported + ' 个\n';
+        if (updated > 0) resultMsg += '更新: ' + updated + ' 个\n';
+        if (skipped > 0) resultMsg += '跳过: ' + skipped + ' 个';
+        alert(resultMsg); 
         event.target.value = ''; 
     }); 
 }
 function exportTemplatesXLSX() { 
     if (!window.XLSX) { 
-        alert('正在加载Excel处理库，请稍后...'); 
+        showToast('正在加载Excel处理库，请稍候...', 'info'); 
         var script = document.createElement('script'); 
         script.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js'; 
         script.onload = function() { exportTemplatesXLSX(); }; 
+        script.onerror = function() {
+            showToast('❌ Excel库加载失败，请检查网络或稍后重试', 'error');
+        };
         document.head.appendChild(script); 
         return; 
     } 
-    var wb = XLSX.utils.book_new(); 
-    var overviewHeaders = ['模板名称', '描述', '项目数量', '总价', '案例信息']; 
-    var overviewData = [overviewHeaders]; 
-    appData.templates.forEach(function(t) { 
-        var total = t.items.reduce(function(s, i) { return s + (i.qty * i.price); }, 0); 
-        overviewData.push([ t.name, t.description || '', t.items.length, total, t.caseInfo || '' ]); 
-    }); 
-    var ws1 = XLSX.utils.aoa_to_sheet(overviewData); 
-    ws1['!cols'] = [{ wch: 25 }, { wch: 30 }, { wch: 10 }, { wch: 12 }, { wch: 40 }]; 
-    XLSX.utils.book_append_sheet(wb, ws1, '模板概览'); 
-    appData.templates.forEach(function(t, idx) { 
-        var itemHeaders = ['项目名称', '规格参数', '备注', '成本价', '数量', '单价', '小计']; 
-        var itemData = [itemHeaders]; 
-        t.items.forEach(function(item) { 
-            const qty = item.qty || 1;
-            const price = item.price || 0;
-            itemData.push([ item.name, item.spec || '', item.note || '', item.cost || 0, qty, price, qty * price ]); 
+    try {
+        var wb = XLSX.utils.book_new(); 
+        var overviewHeaders = ['模板名称', '描述', '项目数量', '总价', '案例信息']; 
+        var overviewData = [overviewHeaders]; 
+        appData.templates.forEach(function(t) { 
+            var total = t.items.reduce(function(s, i) { return s + (i.qty * i.price); }, 0); 
+            overviewData.push([ t.name, t.description || '', t.items.length, total, t.caseInfo || '' ]); 
         }); 
-        var ws = XLSX.utils.aoa_to_sheet(itemData); 
-        ws['!cols'] = [{ wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 12 }]; 
-        var sheetName = (idx + 1) + '_' + t.name.substring(0, 20); 
-        XLSX.utils.book_append_sheet(wb, ws, sheetName); 
-    }); 
-    XLSX.writeFile(wb, '报价模板库_' + new Date().toISOString().slice(0,10) + '.xlsx'); 
+        var ws1 = XLSX.utils.aoa_to_sheet(overviewData); 
+        ws1['!cols'] = [{ wch: 25 }, { wch: 30 }, { wch: 10 }, { wch: 12 }, { wch: 40 }]; 
+        XLSX.utils.book_append_sheet(wb, ws1, '模板概览'); 
+        appData.templates.forEach(function(t, idx) { 
+            var itemHeaders = ['项目名称', '规格参数', '备注', '成本价', '数量', '单价', '小计']; 
+            var itemData = [itemHeaders]; 
+            t.items.forEach(function(item) { 
+                const qty = item.qty || 1;
+                const price = item.price || 0;
+                itemData.push([ item.name, item.spec || '', item.note || '', item.cost || 0, qty, price, qty * price ]); 
+            }); 
+            var ws = XLSX.utils.aoa_to_sheet(itemData); 
+            ws['!cols'] = [{ wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 12 }]; 
+            var sheetName = (idx + 1) + '_' + t.name.substring(0, 20); 
+            XLSX.utils.book_append_sheet(wb, ws, sheetName); 
+        }); 
+        XLSX.writeFile(wb, '报价模板库_' + new Date().toISOString().slice(0,10) + '.xlsx'); 
+        showToast('✅ Excel导出成功！', 'success');
+    } catch (err) {
+        showToast('❌ Excel导出失败: ' + err.message, 'error');
+    }
 }
 function importTemplatesXLSX(event) { 
     var file = event.target.files[0]; 
