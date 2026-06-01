@@ -6782,39 +6782,43 @@ var DataManager = {
 
             <div class="settings-section">
                 <h3>📥📤 数据导入导出</h3>
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0.5rem;margin-bottom:0.75rem;">
-                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
-                        <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">💾 全部数据</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:0.5rem;margin-bottom:0.75rem;">
+                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.5rem;">
+                        <div style="font-size:0.8125rem;color:var(--gray-700);margin-bottom:0.375rem;font-weight:600;">💾 全部数据备份</div>
+                        <div style="font-size:0.625rem;color:var(--gray-500);margin-bottom:0.375rem;">包含产品库、模板、客户等所有数据</div>
                         <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
-                            <button class="btn btn-primary btn-xs" onclick="exportAllData()">💾 导出</button>
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📂 导入<input type="file" id="importFile" accept=".json" hidden onchange="importAllData(event)"></label>
+                            <button class="btn btn-primary btn-xs" onclick="exportAllData()">📥 导出全部数据</button>
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📂 导入文件<input type="file" id="importFile" accept=".json" hidden onchange="importAllData(event)"></label>
                         </div>
                     </div>
-                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
-                        <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">📦 产品库</div>
-                        <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">🥡 JSON<input type="file" id="importProducts" accept=".json" hidden onchange="importProducts(event)"></label>
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📊 XLSX<input type="file" id="importProductsXLSX" accept=".xlsx,.xls" hidden onchange="importProductsXLSX(event)"></label>
+                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.5rem;">
+                        <div style="font-size:0.8125rem;color:var(--gray-700);margin-bottom:0.375rem;font-weight:600;">📦 产品库数据</div>
+                        <div style="font-size:0.625rem;color:var(--gray-500);margin-bottom:0.375rem;">支持 JSON/Excel 互导</div>
+                        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.25rem;">
                             <button class="btn btn-success btn-xs" onclick="exportProducts()">📤 JSON</button>
-                            <button class="btn btn-success btn-xs" onclick="exportProductsXLSX()">📊 XLSX</button>
+                            <button class="btn btn-success btn-xs" onclick="exportProductsXLSX()">📊 Excel</button>
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📂 导入JSON<input type="file" id="importProducts" accept=".json" hidden onchange="importProducts(event)"></label>
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📊 导入Excel<input type="file" id="importProductsXLSX" accept=".xlsx,.xls" hidden onchange="importProductsXLSX(event)"></label>
                         </div>
                     </div>
-                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
-                        <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">📋 报价模板</div>
-                        <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">🥡 JSON<input type="file" id="importTemplates" accept=".json" hidden onchange="importTemplates(event)"></label>
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📊 XLSX<input type="file" id="importTemplatesXLSX" accept=".xlsx,.xls" hidden onchange="importTemplatesXLSX(event)"></label>
+                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.5rem;">
+                        <div style="font-size:0.8125rem;color:var(--gray-700);margin-bottom:0.375rem;font-weight:600;">📋 报价模板</div>
+                        <div style="font-size:0.625rem;color:var(--gray-500);margin-bottom:0.375rem;">报价单模板和样式配置</div>
+                        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.25rem;">
                             <button class="btn btn-success btn-xs" onclick="exportTemplates()">📤 JSON</button>
-                            <button class="btn btn-success btn-xs" onclick="exportTemplatesXLSX()">📊 XLSX</button>
+                            <button class="btn btn-success btn-xs" onclick="exportTemplatesXLSX()">📊 Excel</button>
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📂 导入JSON<input type="file" id="importTemplates" accept=".json" hidden onchange="importTemplates(event)"></label>
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📊 导入Excel<input type="file" id="importTemplatesXLSX" accept=".xlsx,.xls" hidden onchange="importTemplatesXLSX(event)"></label>
                         </div>
                     </div>
-                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
-                        <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">👥 客户管理</div>
-                        <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">🥡 JSON<input type="file" id="importCustomers" accept=".json" hidden onchange="importCustomers(event)"></label>
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📊 XLSX<input type="file" id="importCustomersXLSX" accept=".xlsx,.xls" hidden onchange="importCustomersXLSX(event)"></label>
+                    <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.5rem;">
+                        <div style="font-size:0.8125rem;color:var(--gray-700);margin-bottom:0.375rem;font-weight:600;">👥 客户管理</div>
+                        <div style="font-size:0.625rem;color:var(--gray-500);margin-bottom:0.375rem;">客户信息和联系方式</div>
+                        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.25rem;">
                             <button class="btn btn-success btn-xs" onclick="exportCustomers()">📤 JSON</button>
-                            <button class="btn btn-success btn-xs" onclick="exportCustomersXLSX()">📊 XLSX</button>
+                            <button class="btn btn-success btn-xs" onclick="exportCustomersXLSX()">📊 Excel</button>
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📂 导入JSON<input type="file" id="importCustomers" accept=".json" hidden onchange="importCustomers(event)"></label>
+                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📊 导入Excel<input type="file" id="importCustomersXLSX" accept=".xlsx,.xls" hidden onchange="importCustomersXLSX(event)"></label>
                         </div>
                     </div>
                 </div>
@@ -7347,6 +7351,10 @@ var DataManager = {
                         </label>
                         <button type="button" class="btn btn-outline btn-sm" onclick="openPhotoSelector()">📷 从相册选择</button>
                         <button type="button" class="btn btn-outline btn-sm" onclick="removeProductImage()" style="display:none;" id="removeImageBtn">🗑️ 移除图片</button>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;margin-bottom:0.375rem;">
+                        <input type="text" id="imageUrlInput" placeholder="📋 粘贴图床链接（如 Gitee、路过图床等）" style="flex:1;padding:0.375rem;border:1px solid #e5e7eb;border-radius:var(--radius);font-size:0.875rem;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="applyImageUrl()">✅ 应用链接</button>
                     </div>
                     <div id="imagePreviewContainer" style="margin-top:0.375rem;"><img id="imagePreview" class="image-preview hidden"></div>
                     <div id="materialAnalysisResult" style="margin-top:0.5rem;display:none;padding:0.5rem;background:#f3f4f6;border-radius:var(--radius);font-size:0.875rem;"></div>
@@ -12633,6 +12641,7 @@ function openAddProductModal(){
     document.getElementById('imagePreview').src = '';
     document.getElementById('imagePreview').dataset.imageRemoved = 'false';
     document.getElementById('removeImageBtn').style.display = 'none';
+    document.getElementById('imageUrlInput').value = '';
 
     // 清除表单错误状态
     clearFormFieldErrors();
@@ -12718,6 +12727,14 @@ function openEditProductModal(pid){
     const loadImage = function(url) {
         // 清除图片移除标志
         document.getElementById('imagePreview').dataset.imageRemoved = 'false';
+        
+        // 如果是图床链接，显示在输入框中
+        if (url && url.startsWith('http')) {
+            document.getElementById('imageUrlInput').value = url;
+        } else {
+            document.getElementById('imageUrlInput').value = '';
+        }
+        
         if(url){
             document.getElementById('imagePreview').src=url;
             document.getElementById('imagePreview').classList.remove('hidden');
@@ -12791,6 +12808,51 @@ function handleProductImageUpload(input){
         };
         reader.readAsDataURL(file);
     }
+}
+
+// 应用图床链接
+function applyImageUrl() {
+    const urlInput = document.getElementById('imageUrlInput');
+    const imageUrl = urlInput.value.trim();
+    
+    if (!imageUrl) {
+        showToast('请输入图片链接', 'warning');
+        return;
+    }
+    
+    // 验证URL格式
+    const urlPattern = /^(https?:\/\/)?[\w\-]+(\.[\w\-]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?$/;
+    if (!urlPattern.test(imageUrl)) {
+        showToast('请输入有效的图片链接', 'warning');
+        return;
+    }
+    
+    // 检查是否为图片链接
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+    const lowerUrl = imageUrl.toLowerCase();
+    const hasImageExtension = imageExtensions.some(ext => lowerUrl.includes(ext));
+    
+    if (!hasImageExtension && !lowerUrl.includes('imgchr') && !lowerUrl.includes('gitee') && !lowerUrl.includes('beeimg')) {
+        showToast('请确保链接指向图片文件', 'warning');
+        return;
+    }
+    
+    showToast('正在加载图片...', 'info');
+    
+    const img = new Image();
+    img.onload = function() {
+        document.getElementById('imagePreview').src = imageUrl;
+        document.getElementById('imagePreview').classList.remove('hidden');
+        document.getElementById('removeImageBtn').style.display = 'inline-flex';
+        document.getElementById('aiMaterialBtn').disabled = false;
+        showToast('图片链接加载成功', 'success');
+    };
+    
+    img.onerror = function() {
+        showToast('图片加载失败，请检查链接是否有效', 'error');
+    };
+    
+    img.src = imageUrl;
 }
 
 function addToPhotoAlbum(fileName, dataUrl, fileSize) {
@@ -12923,6 +12985,7 @@ function removeProductImage() {
     document.getElementById('imagePreview').classList.add('hidden');
     document.getElementById('removeImageBtn').style.display = 'none';
     document.getElementById('productImage').value = '';
+    document.getElementById('imageUrlInput').value = '';
     // 设置标志表示图片已被手动移除
     document.getElementById('imagePreview').dataset.imageRemoved = 'true';
     showToast('图片已移除', 'success');
@@ -13161,19 +13224,26 @@ function saveProduct(){
     
     // 处理图片 - 等待 IDB 初始化完成
     const finalizeSave = function() {
-        if(imagePreviewSrc && imagePreviewSrc.startsWith('data:')) {
-            p.image = imagePreviewSrc;
-            if(idbInitialized && IDB.isSupported()) {
-                const imageId = id ? 'product_' + id : 'product_' + p.id;
-                p.imageId = imageId;
-                IDB.saveImage(imageId, imagePreviewSrc).then(function() {
-                    console.log('图片成功保存到 IndexedDB:', imageId);
+        if(imagePreviewSrc) {
+            if(imagePreviewSrc.startsWith('data:')) {
+                // 本地上传的图片，保存为 base64
+                p.image = imagePreviewSrc;
+                if(idbInitialized && IDB.isSupported()) {
+                    const imageId = id ? 'product_' + id : 'product_' + p.id;
+                    p.imageId = imageId;
+                    IDB.saveImage(imageId, imagePreviewSrc).then(function() {
+                        console.log('图片成功保存到 IndexedDB:', imageId);
+                        completeSave();
+                    }).catch(function(e) {
+                        console.error('图片保存到 IDB 失败，保留 base64:', e);
+                        completeSave();
+                    });
+                } else {
                     completeSave();
-                }).catch(function(e) {
-                    console.error('图片保存到 IDB 失败，保留 base64:', e);
-                    completeSave();
-                });
-            } else {
+                }
+            } else if(imagePreviewSrc.startsWith('http')) {
+                // 图床链接，直接保存URL
+                p.image = imagePreviewSrc;
                 completeSave();
             }
         } else {
@@ -31499,26 +31569,32 @@ function exportProductsXLSX() {
         { key: 'sellingPrice', label: '售价', width: 10 }, 
         { key: 'unit', label: '单位', width: 8 },
         { key: 'imageLocation', label: '图片存储位置', width: 20 },
-        { key: 'imageRef', label: '图片引用ID', width: 40 }
+        { key: 'imageUrl', label: '图片链接/地址', width: 80 }
     ]; 
     
     // 准备带图片引用信息的产品数据
     const productsWithImageInfo = appData.products.map(product => {
         let imageLocation = 'none';
-        let imageRef = '';
+        let imageUrl = '';
         
         if (product.imageId) {
             imageLocation = 'indexeddb';
-            imageRef = product.imageId;
+            imageUrl = 'IDB:' + product.imageId;
         } else if (product.image) {
-            imageLocation = 'embedded';
-            imageRef = 'base64_data';
+            if (product.image.startsWith('http')) {
+                // 图床链接，直接导出
+                imageLocation = 'url';
+                imageUrl = product.image;
+            } else {
+                imageLocation = 'embedded';
+                imageUrl = 'base64_embedded';
+            }
         }
         
         return {
             ...product,
             imageLocation: imageLocation,
-            imageRef: imageRef
+            imageUrl: imageUrl
         };
     });
     
@@ -31536,7 +31612,7 @@ function importProductsXLSX(event) {
         { key: 'sellingPrice', label: '售价' }, 
         { key: 'unit', label: '单位' },
         { key: 'imageLocation', label: '图片存储位置' },
-        { key: 'imageRef', label: '图片引用ID' }
+        { key: 'imageUrl', label: '图片链接/地址' }
     ]; 
     importFromXLSX(file, headers, function(importedData) { 
         if (!importedData.length) { 
@@ -31547,10 +31623,14 @@ function importProductsXLSX(event) {
         
         // 预检查可链接的图片
         var linkedImages = 0;
+        var urlImages = 0;
         if (idbInitialized && IDB.isSupported()) {
             importedData.forEach(function(row) {
-                if (row.imageLocation === 'indexeddb' && row.imageRef) {
+                if (row.imageLocation === 'indexeddb' && row.imageUrl && row.imageUrl.startsWith('IDB:')) {
                     linkedImages++;
+                }
+                if (row.imageLocation === 'url' && row.imageUrl && row.imageUrl.startsWith('http')) {
+                    urlImages++;
                 }
             });
         }
@@ -31571,21 +31651,29 @@ function importProductsXLSX(event) {
                 updatedAt: new Date().toISOString() 
             }; 
             
-            // 添加图片引用信息以便自动链接
-            if (row.imageLocation) {
-                product.imageLocation = String(row.imageLocation).trim();
-            }
-            if (row.imageRef) {
-                product.imageRef = String(row.imageRef).trim();
+            // 处理图片链接
+            if (row.imageUrl) {
+                var imageUrl = String(row.imageUrl).trim();
+                if (imageUrl.startsWith('http')) {
+                    // 图床链接，直接保存
+                    product.image = imageUrl;
+                } else if (imageUrl.startsWith('IDB:')) {
+                    // IndexedDB引用，保存imageId以便后续链接
+                    product.imageId = imageUrl.substring(4);
+                }
             }
             
             return product;
         }).filter(function(p) { return p.name; }); 
         
-        // 自动链接图片
-        newProducts.forEach(function(p) {
-            linkProductImage(p);
-        });
+        // 自动链接IndexedDB图片
+        if (idbInitialized && IDB.isSupported()) {
+            newProducts.forEach(function(p) {
+                if (p.imageId && !p.image) {
+                    linkProductImage(p);
+                }
+            });
+        }
         
         if (!newProducts.length) { 
             alert('没有有效的产品数据（产品名称为空）！'); 
@@ -31595,7 +31683,10 @@ function importProductsXLSX(event) {
         
         var msg = '即将导入 ' + newProducts.length + ' 个产品';
         if (linkedImages > 0) {
-            msg += '，其中 ' + linkedImages + ' 个产品可自动链接图片';
+            msg += '，其中 ' + linkedImages + ' 个产品可自动链接IndexedDB图片';
+        }
+        if (urlImages > 0) {
+            msg += '，' + urlImages + ' 个产品带有图床链接';
         }
         if (confirm(msg + '。\n\n是否替换现有产品库？取消则合并导入')) { 
             appData.products = newProducts; 
