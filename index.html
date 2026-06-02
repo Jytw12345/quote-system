@@ -3219,6 +3219,22 @@
     #syncStatusCard {
         grid-template-columns: repeat(2, 1fr) !important;
     }
+    /* 手机端新建报价单表头只显示带复选框的三个列 */
+    #quoteItemHeader > div:nth-child(1),
+    #quoteItemHeader > div:nth-child(3),
+    #quoteItemHeader > div:nth-child(5),
+    #quoteItemHeader > div:nth-child(7),
+    #quoteItemHeader > div:nth-child(8),
+    #quoteItemHeader > div:nth-child(9),
+    #quoteItemHeader > div:nth-child(10),
+    #quoteItemHeader > div:nth-child(11) {
+        display: none !important;
+    }
+    #quoteItemHeader > div:nth-child(2),
+    #quoteItemHeader > div:nth-child(4),
+    #quoteItemHeader > div:nth-child(6) {
+        display: flex !important;
+    }
 
 }
 
@@ -3907,7 +3923,7 @@ const MATERIAL_LIST = window.MATERIAL_LIST;
     window.globalConfirmModal = function() {
         try {
             if (modalCallback) modalCallback(true);
-        } catch(e) {}
+        } catch(e) { console.warn('模态框回调执行失败:', e); }
         window.globalCloseModal();
     };
     
@@ -3959,10 +3975,11 @@ var ImageStorage = {
     },
     
     // 判断是否应该使用 IndexedDB 存储图片
+    // 优化：优先使用 IndexedDB 存储所有图片，减少 localStorage 压力
     shouldUseIndexedDB: function(base64Data) {
         if (!IDB || !IDB.isSupported()) return false;
-        var size = base64Data ? base64Data.length : 0;
-        return size > this.MAX_IMAGE_SIZE;
+        // 优化：优先使用 IndexedDB，只有在特殊情况下才使用 localStorage
+        return true;
     },
     
     // 获取图片存储位置
@@ -3971,6 +3988,11 @@ var ImageStorage = {
             return 'indexeddb';
         }
         return 'localstorage';
+    },
+    
+    // 强制使用 IndexedDB 存储（新增）
+    forceUseIndexedDB: function() {
+        return IDB && IDB.isSupported();
     }
 };
 
@@ -4024,7 +4046,7 @@ var safeStorage = {
             }
         },
         removeItem: function(key) {
-            try { localStorage.removeItem(key); } catch(e) {}
+            try { localStorage.removeItem(key); } catch(e) { console.warn('localStorage删除失败:', key, e); }
         },
         // 获取 localStorage 使用量（字节）
         getUsedSpace: function() {
@@ -4035,7 +4057,7 @@ var safeStorage = {
                     var v = localStorage.getItem(k);
                     total += v ? v.length : 0;
                 }
-            } catch(e) {}
+            } catch(e) { console.warn('计算localStorage使用量失败:', e); }
             return total;
         },
         // 检查是否接近容量上限（80%）
@@ -4071,7 +4093,7 @@ var safeStorage = {
 
         document.getElementById('customModalIcon').textContent = opts.icon;
         document.getElementById('customModalTitle').textContent = opts.title;
-        document.getElementById('customModalMessage').innerHTML = opts.message;
+        document.getElementById('customModalMessage').innerHTML = escapeHtml(opts.message);
 
         modalCallback = opts.callback;
 
@@ -4144,7 +4166,7 @@ var safeStorage = {
         toast.className = 'toast ' + config.class;
         toast.innerHTML = `
             <span class="toast-icon ${config.spin ? 'spin' : ''}">${config.icon}</span>
-            <span class="toast-message">${message}</span>
+            <span class="toast-message">${escapeHtml(message)}</span>
             ${type !== 'loading' ? '<button class="toast-close" onclick="removeToast(this)">&times;</button>' : ''}
         `;
 
@@ -4182,7 +4204,7 @@ var safeStorage = {
                 var config = types[newType] || types.success;
                 activeLoadingToast.innerHTML = `
                     <span class="toast-icon">${config.icon}</span>
-                    <span class="toast-message">${newMessage}</span>
+                    <span class="toast-message">${escapeHtml(newMessage)}</span>
                     <button class="toast-close" onclick="removeToast(this)">&times;</button>
                 `;
                 activeLoadingToast.className = 'toast ' + config.class;
@@ -4966,11 +4988,11 @@ var DataManager = {
                     <div id="quoteItemsContainer">
                         <div class="quote-item-row" id="quoteItemHeader" style="font-weight:600;background:var(--gray-50);font-size:0.6875rem;padding:0.625rem;">
                             <div style="display:flex;align-items:center;justify-content:center;height:32px;"><span class="quote-item-number" style="cursor:default;">序号</span></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">图片</span><input type="checkbox" onchange="toggleColumnVisibility('image', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
+                            <div style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">图片</span><input type="checkbox" onchange="toggleColumnVisibility('image', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
                             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">项目名称</span></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">规格参数</span><input type="checkbox" onchange="toggleColumnVisibility('spec', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
+                            <div style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">规格参数</span><input type="checkbox" onchange="toggleColumnVisibility('spec', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
                             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">单位</span></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">备注</span><input type="checkbox" onchange="toggleColumnVisibility('note', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
+                            <div style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">备注</span><input type="checkbox" onchange="toggleColumnVisibility('note', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
                             <div class="cost-price-column" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">成本价</span></div>
                             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">数量</span></div>
                             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">单价</span></div>
@@ -7575,7 +7597,7 @@ var DataManager = {
                     
                     stores.forEach(function(storeName) {
                         if (database.objectStoreNames.contains(storeName)) {
-                            try { database.deleteObjectStore(storeName); } catch(e) {}
+                            try { database.deleteObjectStore(storeName); } catch(e) { console.warn('删除对象仓库失败:', storeName, e); }
                         }
                     });
                     
@@ -7831,14 +7853,8 @@ var DataManager = {
     };
 })();
 
-// ===== XSS 安全修复 - HTML转义工具 =====
-function escapeHtml(str) {
-    if (str === null || str === undefined) return '';
-    if (typeof str !== 'string') str = String(str);
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
+// ===== XSS 安全修复 - HTML属性转义工具 =====
+// escapeHtml 函数已在前面定义（第4331行），此处仅保留 escapeAttr
 
 function escapeAttr(str) {
     if (str === null || str === undefined) return '';
@@ -8218,7 +8234,7 @@ function createModal(title, content, buttons, modalId){
     const modal = document.createElement('div');
     modal.className = 'modal';
     if(modalId) modal.id = modalId;
-    modal.innerHTML = '<div class="modal-content"><div class="modal-header"><h3>' + title + '</h3><span class="modal-close" onclick="closeModal()">&times;</span></div><div class="modal-body">' + content + '</div><div class="modal-footer" style="display:flex;gap:0.5rem;justify-content:flex-end;"></div></div>';
+    modal.innerHTML = '<div class="modal-content"><div class="modal-header"><h3>' + escapeHtml(title) + '</h3><span class="modal-close" onclick="closeModal()">&times;</span></div><div class="modal-body">' + escapeHtml(content) + '</div><div class="modal-footer" style="display:flex;gap:0.5rem;justify-content:flex-end;"></div></div>';
     if(buttons){
         const footer = modal.querySelector('.modal-footer');
         buttons.forEach(btn => {
@@ -9014,7 +9030,7 @@ function cleanupSingleObjectURL(url) {
 // 清理所有 objectURL，防止内存泄漏
 function cleanupObjectURLs() {
     activeObjectURLs.forEach(function(url) {
-        try { URL.revokeObjectURL(url); } catch(e) {}
+        try { URL.revokeObjectURL(url); } catch(e) { console.warn('释放ObjectURL失败:', url, e); }
     });
     activeObjectURLs = [];
 }
@@ -9899,12 +9915,12 @@ function loadDraftQuote() {
                 });
             }
         }
-    } catch(e) {}
+    } catch(e) { console.warn('恢复草稿失败:', e); }
 }
 function clearDraftQuote() {
     try {
         localStorage.removeItem('adQuoteDraft');
-    } catch(e) {}
+    } catch(e) { console.warn('清除草稿失败:', e); }
 }
 
 var saveDataTimer = null;
@@ -13729,7 +13745,7 @@ function toggleBatchMode(){
     try {
         const modal = document.getElementById('customModal');
         if(modal) modal.classList.remove('active');
-    } catch(e) {}
+    } catch(e) { console.warn('关闭模态框失败:', e); }
     
     batchMode = !batchMode;
     batchSelectedIds = [];
@@ -35333,9 +35349,26 @@ window.addEventListener('beforeunload', function() {
 });
 
 // 定期清理（每小时一次）
-setInterval(function() {
+var objectURLCleanupTimer = setInterval(function() {
     cleanupObjectURLs();
 }, 3600000);
+
+// ===== 页面卸载时清理定时器 =====
+window.addEventListener('beforeunload', function() {
+    // 清理草稿保存定时器
+    if (typeof draftSaveTimer !== 'undefined' && draftSaveTimer) {
+        clearInterval(draftSaveTimer);
+    }
+    // 清理云同步定时器
+    if (typeof syncTimer !== 'undefined' && syncTimer) {
+        clearInterval(syncTimer);
+    }
+    // 清理ObjectURL清理定时器
+    if (typeof objectURLCleanupTimer !== 'undefined' && objectURLCleanupTimer) {
+        clearInterval(objectURLCleanupTimer);
+    }
+    console.log('页面卸载，定时器已清理');
+});
 
 // ===== 照片管理模块 =====
 var currentViewPhoto = null;
