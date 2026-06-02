@@ -3222,30 +3222,32 @@
         grid-template-columns: repeat(2, 1fr) !important;
     }
     /* 手机端新建报价单表头只显示带复选框的三个列（图片、规格明细、备注） */
-    #quoteItemHeader > div:nth-child(1),
-    #quoteItemHeader > div:nth-child(3),
-    #quoteItemHeader > div:nth-child(5),
-    #quoteItemHeader > div:nth-child(7),
-    #quoteItemHeader > div:nth-child(8),
-    #quoteItemHeader > div:nth-child(9),
-    #quoteItemHeader > div:nth-child(10),
-    #quoteItemHeader > div:nth-child(11) {
+    #quoteItemHeader > .header-col-1,
+    #quoteItemHeader > .header-col-3,
+    #quoteItemHeader > .header-col-5,
+    #quoteItemHeader > .header-col-7,
+    #quoteItemHeader > .header-col-8,
+    #quoteItemHeader > .header-col-9,
+    #quoteItemHeader > .header-col-10,
+    #quoteItemHeader > .header-col-11 {
         display: none !important;
         visibility: hidden !important;
         width: 0 !important;
         min-width: 0 !important;
         max-width: 0 !important;
         overflow: hidden !important;
+        flex: 0 !important;
     }
-    #quoteItemHeader > div:nth-child(2),
-    #quoteItemHeader > div:nth-child(4),
-    #quoteItemHeader > div:nth-child(6) {
+    #quoteItemHeader > .header-col-2,
+    #quoteItemHeader > .header-col-4,
+    #quoteItemHeader > .header-col-6 {
         display: flex !important;
         visibility: visible !important;
         width: auto !important;
         min-width: auto !important;
         max-width: none !important;
         overflow: visible !important;
+        flex: 1 !important;
     }
     /* 手机端表头横向滚动支持 */
     #quoteItemHeader {
@@ -3260,30 +3262,32 @@
 
 @media (max-width: 768px) {
     /* 手机端新建报价单表头只显示带复选框的三个列 */
-    #quoteItemHeader > div:nth-child(1),
-    #quoteItemHeader > div:nth-child(3),
-    #quoteItemHeader > div:nth-child(5),
-    #quoteItemHeader > div:nth-child(7),
-    #quoteItemHeader > div:nth-child(8),
-    #quoteItemHeader > div:nth-child(9),
-    #quoteItemHeader > div:nth-child(10),
-    #quoteItemHeader > div:nth-child(11) {
+    #quoteItemHeader > .header-col-1,
+    #quoteItemHeader > .header-col-3,
+    #quoteItemHeader > .header-col-5,
+    #quoteItemHeader > .header-col-7,
+    #quoteItemHeader > .header-col-8,
+    #quoteItemHeader > .header-col-9,
+    #quoteItemHeader > .header-col-10,
+    #quoteItemHeader > .header-col-11 {
         display: none !important;
         visibility: hidden !important;
         width: 0 !important;
         min-width: 0 !important;
         max-width: 0 !important;
         overflow: hidden !important;
+        flex: 0 !important;
     }
-    #quoteItemHeader > div:nth-child(2),
-    #quoteItemHeader > div:nth-child(4),
-    #quoteItemHeader > div:nth-child(6) {
+    #quoteItemHeader > .header-col-2,
+    #quoteItemHeader > .header-col-4,
+    #quoteItemHeader > .header-col-6 {
         display: flex !important;
         visibility: visible !important;
         width: auto !important;
         min-width: auto !important;
         max-width: none !important;
         overflow: visible !important;
+        flex: 1 !important;
     }
     #quoteItemHeader {
         display: flex !important;
@@ -5041,17 +5045,17 @@ var DataManager = {
                     <div id="quickSearchResults" class="quick-search-results" style="display:none;position:fixed;top:auto;left:auto;background:white;border:2px solid var(--primary);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:1000;max-height:350px;overflow-y:auto;width:calc(100% - 2rem);max-width:500px;"></div>
                     <div id="quoteItemsContainer">
                         <div class="quote-item-row" id="quoteItemHeader" style="font-weight:600;background:var(--gray-50);font-size:0.6875rem;padding:0.625rem;">
-                            <div style="display:flex;align-items:center;justify-content:center;height:32px;"><span class="quote-item-number" style="cursor:default;">序号</span></div>
-                            <div style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">图片</span><input type="checkbox" onchange="toggleColumnVisibility('image', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">项目名称</span></div>
-                            <div style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">规格参数</span><input type="checkbox" onchange="toggleColumnVisibility('spec', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">单位</span></div>
-                            <div style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">备注</span><input type="checkbox" onchange="toggleColumnVisibility('note', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
-                            <div class="cost-price-column" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">成本价</span></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">数量</span></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">单价</span></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">小计</span></div>
-                            <div style="height:32px;"></div>
+                            <div class="header-col header-col-1" style="display:flex;align-items:center;justify-content:center;height:32px;"><span class="quote-item-number" style="cursor:default;">序号</span></div>
+                            <div class="header-col header-col-2" style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">图片</span><input type="checkbox" onchange="toggleColumnVisibility('image', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
+                            <div class="header-col header-col-3" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">项目名称</span></div>
+                            <div class="header-col header-col-4" style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">规格参数</span><input type="checkbox" onchange="toggleColumnVisibility('spec', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
+                            <div class="header-col header-col-5" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">单位</span></div>
+                            <div class="header-col header-col-6" style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">备注</span><input type="checkbox" onchange="toggleColumnVisibility('note', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
+                            <div class="cost-price-column header-col header-col-7" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">成本价</span></div>
+                            <div class="header-col header-col-8" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">数量</span></div>
+                            <div class="header-col header-col-9" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">单价</span></div>
+                            <div class="header-col header-col-10" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">小计</span></div>
+                            <div class="header-col header-col-11" style="height:32px;"></div>
                         </div>
                         <div id="quoteItemsList"></div>
                     </div>
