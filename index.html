@@ -139,6 +139,8 @@
             .quote-preview-wrapper { max-width: none !important; overflow-x: auto !important; }
             #quotePreview, #quotePreview * { max-width: none !important; overflow-x: visible !important; }
             #quotePreview { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            #quoteItemHeader { overflow-x: visible !important; max-width: none !important; }
+            #quoteItemHeader * { max-width: none !important; overflow-x: visible !important; }
         }
         
         /* 登录页面样式 */
@@ -8467,7 +8469,7 @@ function initKeyboardShortcuts() {
         // + 或 = - 添加新报价项目
         if (e.key === '+' || e.key === '=') {
             e.preventDefault();
-            addNewQuoteItem();
+            addEmptyQuoteItem();
             return;
         }
         
