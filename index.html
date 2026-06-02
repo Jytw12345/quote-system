@@ -659,7 +659,7 @@
         .quote-sidebar { background: var(--gray-50); border-radius: var(--radius-lg); padding: 0.75rem; }
         .quote-sidebar h3 { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; padding-bottom: 0.375rem; border-bottom: 1px solid var(--gray-200); }
         .quote-items { background: white; border-radius: var(--radius-lg); padding: 0.75rem; box-shadow: var(--shadow-sm); overflow: visible; }
-        .quote-item-row { display: grid; grid-template-columns: 50px 60px 1fr 1.5fr 0.8fr 80px 80px 80px 80px 90px; gap: 0.5rem; align-items: center; padding: 0.625rem; border-bottom: 1px solid var(--gray-200); background: white; cursor: grab; transition: all 0.2s; font-size: 0.8125rem; overflow: visible; }
+        .quote-item-row { display: grid; grid-template-columns: 50px 60px 1fr 1.5fr 0.5fr 0.8fr 80px 80px 80px 80px 90px; gap: 0.5rem; align-items: center; padding: 0.625rem; border-bottom: 1px solid var(--gray-200); background: white; cursor: grab; transition: all 0.2s; font-size: 0.8125rem; overflow: visible; }
         .quote-item-row:hover { background: var(--gray-50); }
         .quote-item-row.dragging { opacity: 0.5; background: var(--gray-100); }
         .quote-item-row.drag-over { border-top: 2px solid var(--primary); }
@@ -901,7 +901,7 @@
         .print-style-classic .quote-preview-header{background:linear-gradient(135deg,#2563eb,#3b82f6) !important;}
         .print-style-classic .quote-preview-header h1{color:white !important;}
         .print-style-classic .quote-table th{background:#2563eb !important;color:white !important;}
-        .cost-price-column { transition: all 0.3s ease; }
+        .cost-price-column { transition: all 0.3s ease; display: flex !important; flex-direction: column !important; align-items: center !important; gap: 2px !important; justify-content: center !important; height: 32px !important; }
         .settings-basic-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 1rem; }
         .settings-compact-group { display: flex; align-items: center; gap: 0.5rem; }
         .settings-compact-group label { white-space: nowrap; margin-bottom: 0 !important; min-width: 110px; }
@@ -4944,7 +4944,7 @@ var DataManager = {
                             </div>
                         </div>
                     </div>
-                    <h3 style="margin-bottom:0.75rem;font-size:1rem;">报价项目 <span style="font-size:0.75rem;color:var(--gray-500);font-weight:normal;">（拖动序号可排序）</span></h3>
+                    <h3 style="margin-bottom:0.75rem;font-size:1rem;">报价项目 <span style="font-size:0.75rem;color:var(--gray-500);font-weight:normal;">（拖动序号可排序 · 勾选列名可隐藏）</span></h3>
                     <div class="quick-search-bar" style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;align-items:center;">
                         <input type="text" id="quickProductSearch" placeholder="🔍 快速搜索产品名称，按Enter添加到报价..." style="flex:1;min-width:200px;padding:0.5rem 0.75rem;border:2px solid var(--primary);border-radius:var(--radius);font-size:0.875rem;" onkeydown="handleQuickSearch(event)">
                         <button class="btn btn-primary btn-sm" onclick="quickAddSearchProduct()" style="padding:0.5rem 1rem;">➕ 添加</button>
@@ -4954,10 +4954,11 @@ var DataManager = {
                     <div id="quoteItemsContainer">
                         <div class="quote-item-row" id="quoteItemHeader" style="font-weight:600;background:var(--gray-50);font-size:0.6875rem;padding:0.625rem;">
                             <div style="display:flex;align-items:center;justify-content:center;height:32px;"><span class="quote-item-number" style="cursor:default;">序号</span></div>
-                            <div style="display:flex;align-items:center;justify-content:center;height:32px;"><span class="column-label">图片</span></div>
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">图片</span><input type="checkbox" onchange="toggleColumnVisibility('image', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
                             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">项目名称</span></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">规格参数</span></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">备注</span></div>
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">规格参数</span><input type="checkbox" onchange="toggleColumnVisibility('spec', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">单位</span></div>
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">备注</span><input type="checkbox" onchange="toggleColumnVisibility('note', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
                             <div class="cost-price-column" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">成本价</span></div>
                             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">数量</span></div>
                             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">单价</span></div>
@@ -5031,7 +5032,7 @@ var DataManager = {
                             <option value="classic">经典列表</option>
                             <option value="gallery">大图详情</option>
                             <option value="imageFocus">图片展示</option>
-                            <option value="mainImage">主图明细</option>
+                            <option value="mainImage">门头工程</option>
                         </select>
                         <button class="btn btn-primary" onclick="generateQuotePreview()">👁️ 预览报价单</button>
                         <button class="btn btn-outline" onclick="copyCurrentQuote()">📋 复制报价</button>
@@ -5070,8 +5071,15 @@ var DataManager = {
                             <div class="col-width-item">
                                 <label style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;display:block;">规格</label>
                                 <div style="display:flex;align-items:center;gap:0.5rem;">
-                                    <input type="range" id="cw-spec" min="80" max="300" value="150" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('spec',this.value)">
-                                    <input type="number" id="cw-spec-num" value="150" min="80" max="300" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('spec',this.value)">
+                                    <input type="range" id="cw-spec" min="80" max="300" value="120" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('spec',this.value)">
+                                    <input type="number" id="cw-spec-num" value="120" min="80" max="300" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('spec',this.value)">
+                                </div>
+                            </div>
+                            <div class="col-width-item">
+                                <label style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;display:block;">单位</label>
+                                <div style="display:flex;align-items:center;gap:0.5rem;">
+                                    <input type="range" id="cw-unit" min="30" max="100" value="60" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('unit',this.value)">
+                                    <input type="number" id="cw-unit-num" value="60" min="30" max="100" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('unit',this.value)">
                                 </div>
                             </div>
                             <div class="col-width-item">
@@ -10400,6 +10408,35 @@ function saveCurrentQuoteToHistory() {
     clearDraftQuote();
     showToast('报价已保存到历史记录！', 'success');
 }
+function toggleColumnVisibility(column, checked){
+    const settings = JSON.parse(localStorage.getItem('quoteColumnHidden') || '{}');
+    settings[column] = checked;
+    localStorage.setItem('quoteColumnHidden', JSON.stringify(settings));
+    if(appData.currentQuote && appData.currentQuote.items && appData.currentQuote.items.length > 0){
+        generateQuotePreview();
+    }
+}
+function initColumnVisibility(){
+    const settings = JSON.parse(localStorage.getItem('quoteColumnHidden') || '{}');
+    const headerRow = document.getElementById('quoteItemHeader');
+    if(headerRow){
+        const checkboxes = headerRow.querySelectorAll('input[type="checkbox"]');
+        if(checkboxes.length >= 3){
+            checkboxes[0].checked = settings.image === true;
+            checkboxes[1].checked = settings.spec === true;
+            checkboxes[2].checked = settings.note === true;
+        }
+    }
+}
+function getColumnVisibility(){
+    const settings = JSON.parse(localStorage.getItem('quoteColumnHidden') || '{}');
+    return {
+        image: settings.image !== true,
+        spec: settings.spec !== true,
+        note: settings.note !== true,
+        cost: false
+    };
+}
 function handleQuickSearch(event){
     if(event.key === 'Enter'){
         event.preventDefault();
@@ -10890,6 +10927,7 @@ function renderQuoteItems(){
         const it=(item.qty||1)*(item.price||0);
         const itemName = item.name || '';
         const itemSpec = item.spec || '';
+        const itemUnit = item.unit || '项';
         const itemNote = item.note || '';
         const itemId = item.id || '0';
         const itemIdQuoted = "'" + itemId + "'";
@@ -10907,11 +10945,12 @@ function renderQuoteItems(){
             <div style="display:flex;align-items:center;justify-content:center;">${ih}</div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">项目名称</span><input type="text" value="${escapeHtml(itemName)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'name',this.value)" style="width:100%;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">规格参数</span><input type="text" value="${escapeHtml(itemSpec)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'spec',this.value)" style="width:100%;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">单位</span><input type="text" value="${escapeHtml(itemUnit)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'unit',this.value)" style="width:100%;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">备注</span><input type="text" value="${escapeHtml(itemNote)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'note',this.value)" style="width:100%;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
-            <div class="cost-price-column" style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">成本价</span><input type="number" step="0.01" min="0" value="${itemCost}" onchange="updateQuoteItem(${itemIdQuoted},'cost',this.value)" onwheel="return false;" class="no-spin" style="width:70px;font-weight:500;-moz-appearance:textfield;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
+            <div class="cost-price-column" style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">成本价</span><input type="number" step="0.01" min="0" value="${Number(itemCost).toFixed(2)}" onchange="updateQuoteItem(${itemIdQuoted},'cost',this.value)" onwheel="return false;" class="no-spin" style="width:70px;font-weight:500;-moz-appearance:textfield;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">数量</span><input type="number" min="1" step="1" value="${itemQty}" onchange="updateQuoteItem(${itemIdQuoted},'qty',this.value)" style="width:65px;min-height:32px;padding:0.25rem 0.25rem;box-sizing:border-box;text-align:center;"></div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">单价</span><input type="number" step="0.01" min="0" value="${itemPrice}" onchange="updateQuoteItem(${itemIdQuoted},'price',this.value)" onwheel="return false;" class="no-spin" style="width:70px;-moz-appearance:textfield;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">小计</span><span id="subtotal-${itemId}" style="font-weight:600;color:var(--primary);font-size:0.8125rem;">¥${it.toFixed(2)}</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">单价</span><input type="number" step="0.01" min="0" value="${Number(itemPrice).toFixed(2)}" onchange="updateQuoteItem(${itemIdQuoted},'price',this.value)" onwheel="return false;" class="no-spin" style="width:70px;-moz-appearance:textfield;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">小计</span><span id="subtotal-${itemId}" style="font-weight:600;color:var(--primary);font-size:0.8125rem;">¥${Number(it).toFixed(2)}</span></div>
             <div class="quote-item-actions" style="display:flex;gap:0.5rem;align-items:center;flex-shrink:0;justify-content:flex-end;width:100%;">
                 <button class="btn btn-success btn-icon" onclick="saveQuoteItemToProduct(${itemIdQuoted})" title="保存到产品库">💾</button>
                 <button class="btn btn-danger btn-icon" onclick="removeQuoteItem(${itemIdQuoted})">🗑️</button>
@@ -10921,6 +10960,7 @@ function renderQuoteItems(){
     c.innerHTML = '';
     c.appendChild(fragment);
     toggleCostPriceColumn();
+    initColumnVisibility();
 }
 function validateAndCalculate(fieldId, min, max){
     const el = document.getElementById(fieldId);
@@ -11040,7 +11080,7 @@ function changeQuoteStyle(style){
     var select = document.getElementById('quoteStyleSelect');
     if(select) select.value = style;
 }
-let columnWidthSettings = {index:45,image:70,name:180,spec:120,note:90,qty:55,price:90,subtotal:95,marginTop:10,marginSides:15,lineHeight:18};
+let columnWidthSettings = {index:45,image:70,name:180,spec:120,unit:60,note:90,qty:55,price:90,subtotal:95,marginTop:10,marginSides:15,lineHeight:18};
 function toggleColumnWidthPanel(){
     const panel = document.getElementById('columnWidthPanel');
     if(panel){
@@ -11052,10 +11092,13 @@ function toggleColumnWidthPanel(){
 }
 function loadColumnWidthSettings(){
     const saved = appData.systemSettings.columnWidthSettings;
+    const defaults = {index:45,image:70,name:180,spec:120,unit:60,note:90,qty:55,price:90,subtotal:95,marginTop:10,marginSides:15,lineHeight:18};
     if(saved){
-        columnWidthSettings = {...columnWidthSettings, ...saved};
+        columnWidthSettings = {...defaults, ...saved};
+    } else {
+        columnWidthSettings = {...defaults};
     }
-    const cols = ['index','image','name','spec','note','qty','price','subtotal','marginTop','marginSides','lineHeight'];
+    const cols = ['index','image','name','spec','unit','note','qty','price','subtotal','marginTop','marginSides','lineHeight'];
     cols.forEach(col => {
         const slider = document.getElementById('cw-' + col);
         const numInput = document.getElementById('cw-' + col + '-num');
@@ -11087,7 +11130,45 @@ function resetColumnWidth(){
 }
 function getColumnWidths(){
     const saved = appData.systemSettings.columnWidthSettings;
-    return saved || columnWidthSettings;
+    const autoWidths = calculateAutoColumnWidths();
+    const defaults = columnWidthSettings;
+    const isDefault = !saved || (saved.name === defaults.name && saved.spec === defaults.spec);
+    return {
+        index: saved?.index ?? autoWidths.index ?? defaults.index,
+        image: saved?.image ?? autoWidths.image ?? defaults.image,
+        name: isDefault ? (autoWidths.name ?? defaults.name) : (saved?.name ?? defaults.name),
+        spec: isDefault ? (autoWidths.spec ?? defaults.spec) : (saved?.spec ?? defaults.spec),
+        unit: saved?.unit ?? autoWidths.unit ?? defaults.unit,
+        note: isDefault ? (autoWidths.note ?? defaults.note) : (saved?.note ?? defaults.note),
+        qty: saved?.qty ?? autoWidths.qty ?? defaults.qty,
+        price: saved?.price ?? autoWidths.price ?? defaults.price,
+        subtotal: saved?.subtotal ?? autoWidths.subtotal ?? defaults.subtotal,
+        marginTop: saved?.marginTop ?? defaults.marginTop,
+        marginSides: saved?.marginSides ?? defaults.marginSides,
+        lineHeight: saved?.lineHeight ?? defaults.lineHeight
+    };
+}
+function calculateAutoColumnWidths(){
+    if(!appData.currentQuote || !appData.currentQuote.items || !appData.currentQuote.items.length){
+        return {};
+    }
+    const items = appData.currentQuote.items;
+    const charWidth = 14;
+    const padding = 20;
+    let maxNameLen = 0, maxSpecLen = 0, maxNoteLen = 0;
+    let hasImage = false;
+    items.forEach(item => {
+        if(item.name) maxNameLen = Math.max(maxNameLen, item.name.length);
+        if(item.spec) maxSpecLen = Math.max(maxSpecLen, item.spec.length);
+        if(item.note) maxNoteLen = Math.max(maxNoteLen, item.note.length);
+        if(item.image) hasImage = true;
+    });
+    return {
+        name: Math.max(120, maxNameLen * charWidth + padding),
+        spec: Math.max(80, maxSpecLen * charWidth + padding),
+        note: Math.max(80, maxNoteLen * charWidth + padding),
+        image: hasImage ? 70 : 0
+    };
 }
 function generateQuotePreview(){
     if(!appData.currentQuote.mainImages) appData.currentQuote.mainImages = [];
@@ -11100,6 +11181,7 @@ function generateQuotePreview(){
     appData.currentQuote.quoteNumber=document.getElementById('quoteNumber').value;
     appData.currentQuote.paymentMethod=getPaymentMethod();
     if(!appData.currentQuote || !appData.currentQuote.items || !appData.currentQuote.items.length){ showToast('请至少添加一个报价项目', 'warning'); return; }
+    const colVis = getColumnVisibility();
     let cw=getColumnWidths();
     let marginTop=cw.marginTop||10;
     let marginSides=cw.marginSides||15;
@@ -11130,12 +11212,20 @@ function generateQuotePreview(){
         else { taxNote=`<span style="font-size:0.85rem;font-weight:normal;color:rgba(255,255,255,0.8);">（另加税额 ¥${tax.toFixed(2)}）</span>`; }
     }
     let ih=appData.currentQuote.items.map((item,idx)=>{
-        // 修复：添加空值检查，防止 undefined 导致错误
         const qty = item.qty || 1;
         const price = item.price || 0;
         const it = (qty * price * (dr / 100)).toFixed(2);
-        const ic = item.image ? `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;"><img src="${item.image}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;border:1px solid #eee;cursor:pointer;" data-preview-img-id="${item.id}" title="点击替换图片"></td>` : `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;cursor:pointer;color:var(--gray-400);" data-preview-img-id="${item.id}" title="点击添加图片">点击添加</td>`;
-        return `<tr><td style="text-align:center;padding:0.75rem;border-bottom:1px solid #eee;font-weight:600;width:50px;">${idx+1}</td>${ic}<td style="text-align:left;padding:0.75rem;border-bottom:1px solid #eee;width:150px;"><div><strong>${item.name}</strong></div></td><td style="text-align:left;padding:0.75rem;border-bottom:1px solid #eee;width:150px;">${item.spec||''}</td><td style="text-align:left;padding:0.75rem;border-bottom:1px solid #eee;width:150px;">${item.note||''}</td><td style="text-align:center;padding:0.75rem;border-bottom:1px solid #eee;width:80px;"><input type="number" id="edit-qty-${item.id}" value="${qty}" min="1" step="1" style="width:60px;text-align:center;border:1px solid #ddd;border-radius:4px;padding:0.25rem;" onchange="updateQuoteItemFromPreview('${item.id}','qty',this.value)"></td><td style="text-align:right;padding:0.75rem;border-bottom:1px solid #eee;width:100px;"><input type="number" id="edit-price-${item.id}" value="${price.toFixed(2)}" min="0" step="0.01" style="width:80px;text-align:right;border:1px solid #ddd;border-radius:4px;padding:0.25rem;" onchange="updateQuoteItemFromPreview('${item.id}','price',this.value)"></td><td style="text-align:right;padding:0.75rem;border-bottom:1px solid #eee;font-weight:600;width:100px;" id="edit-subtotal-${item.id}">¥${it}</td></tr>`;
+        let row = `<tr><td style="text-align:center;padding:0.75rem;border-bottom:1px solid #eee;font-weight:600;width:50px;">${idx+1}</td>`;
+        if(colVis.image !== false) {
+            const ic = item.image ? `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;"><img src="${item.image}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;border:1px solid #eee;cursor:pointer;" data-preview-img-id="${item.id}" title="点击替换图片"></td>` : `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;cursor:pointer;color:var(--gray-400);" data-preview-img-id="${item.id}" title="点击添加图片">点击添加</td>`;
+            row += ic;
+        }
+        row += `<td style="text-align:left;padding:0.75rem;border-bottom:1px solid #eee;width:150px;"><div><strong>${item.name}</strong></div></td>`;
+        if(colVis.spec !== false) row += `<td style="text-align:left;padding:0.75rem;border-bottom:1px solid #eee;width:120px;">${item.spec||''}</td>`;
+        row += `<td style="text-align:center;padding:0.75rem;border-bottom:1px solid #eee;width:60px;">${item.unit||'项'}</td>`;
+        if(colVis.note !== false) row += `<td style="text-align:left;padding:0.75rem;border-bottom:1px solid #eee;width:120px;">${item.note||''}</td>`;
+        row += `<td style="text-align:center;padding:0.75rem;border-bottom:1px solid #eee;width:80px;"><input type="number" id="edit-qty-${item.id}" value="${qty}" min="1" step="1" style="width:60px;text-align:center;border:1px solid #ddd;border-radius:4px;padding:0.25rem;" onchange="updateQuoteItemFromPreview('${item.id}','qty',this.value)"></td><td style="text-align:right;padding:0.75rem;border-bottom:1px solid #eee;width:100px;"><input type="number" id="edit-price-${item.id}" value="${price.toFixed(2)}" min="0" step="0.01" style="width:80px;text-align:right;border:1px solid #ddd;border-radius:4px;padding:0.25rem;" onchange="updateQuoteItemFromPreview('${item.id}','price',this.value)"></td><td style="text-align:right;padding:0.75rem;border-bottom:1px solid #eee;font-weight:600;width:100px;" id="edit-subtotal-${item.id}">¥${it}</td></tr>`;
+        return row;
     }).join('');
     const today=new Date();
     const ds=today.getFullYear()+' 年 '+(today.getMonth()+1)+' 月 '+today.getDate()+' 日';
@@ -11180,8 +11270,12 @@ function generateQuotePreview(){
                             ${item.spec ? `<div style="font-size:0.85rem;color:#666;margin-left:2rem;">规格：${item.spec}</div>` : ''}
                             ${item.note ? `<div style="font-size:0.8rem;color:#888;margin-left:2rem;margin-top:0.2rem;">备注：${item.note}</div>` : ''}
                         </div>
-                        <div style="text-align:right;flex-shrink:0;min-width:280px;">
+                        <div style="text-align:right;flex-shrink:0;min-width:320px;">
                             <div style="display:flex;justify-content:flex-end;align-items:center;gap:1.5rem;">
+                                <div style="text-align:center;">
+                                    <div style="font-size:0.7rem;color:#999;margin-bottom:0.2rem;">单位</div>
+                                    <div style="font-size:0.9rem;color:#666;">${item.unit||'项'}</div>
+                                </div>
                                 <div style="text-align:center;">
                                     <div style="font-size:0.7rem;color:#999;margin-bottom:0.2rem;">单价</div>
                                     <div style="font-size:0.95rem;color:#333;">¥${itemPrice.toFixed(2)}</div>
@@ -11311,6 +11405,7 @@ function generateQuotePreview(){
         preview.innerHTML=`<div style="background:#ffffff;width:100%;max-width:210mm;min-height:297mm;margin:0 auto;font-family:'Microsoft YaHei','PingFang SC',Arial,sans-serif;overflow:hidden;border:1px solid #ddd;${innerPadding};position:relative;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">${headerHtml}${bodyHtml}${footerHtml}${sh}${sigHtml}</div>${saveBtnHtml}`;
     } else if(quoteStyle === 'imageFocus'){
         saveBtnHtml=`<button class="btn btn-sm" style="background:#059669;color:white;border:none;margin-left:1rem;" onclick="savePreviewEdits()">💾 保存修改</button>`;
+        let cw = getColumnWidths();
         
         let imageCards=appData.currentQuote.items.map((item,idx)=>{
             const itemQty = item.qty || 1;
@@ -11486,15 +11581,17 @@ function generateQuotePreview(){
             const itemQty = item.qty || 1;
             const itemPrice = item.price || 0;
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
-            return `
-                <tr style="border-bottom:1px solid #e5e7eb;">
-                    <td style="padding:0.75rem 1rem;text-align:center;font-size:0.9rem;color:#666;width:50px;">${idx+1}</td>
-                    <td style="padding:0.75rem 1rem;font-size:0.95rem;color:#1f2937;font-weight:500;">${item.name}</td>
-                    <td style="padding:0.75rem 1rem;font-size:0.9rem;color:#666;white-space:pre-wrap;">${item.spec || '-'}</td>
-                    <td style="padding:0.75rem 1rem;text-align:center;font-size:0.9rem;color:#333;">${itemQty}</td>
-                    <td style="padding:0.75rem 1rem;text-align:right;font-size:0.9rem;color:#333;">¥${itemPrice.toFixed(2)}</td>
-                    <td style="padding:0.75rem 1rem;text-align:right;font-size:0.95rem;color:#dc2626;font-weight:600;">¥${it}</td>
-                </tr>`;
+            let row = `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:0.75rem 1rem;text-align:center;font-size:0.9rem;color:#666;">${idx+1}</td>`;
+            if(colVis.image !== false) {
+                const productImage = item.image ? `<img src="${item.image}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;border:1px solid #ddd;">` : '<span style="color:#999;">-</span>';
+                row += `<td style="padding:0.75rem 1rem;text-align:center;">${productImage}</td>`;
+            }
+            row += `<td style="padding:0.75rem 1rem;text-align:left;font-size:0.95rem;color:#1f2937;font-weight:500;">${item.name}</td>`;
+            if(colVis.spec !== false) row += `<td style="padding:0.75rem 1rem;text-align:left;font-size:0.9rem;color:#666;white-space:pre-wrap;">${item.spec || '-'}</td>`;
+            row += `<td style="padding:0.75rem 1rem;text-align:center;font-size:0.9rem;color:#666;">${item.unit || '项'}</td>`;
+            if(colVis.note !== false) row += `<td style="padding:0.75rem 1rem;text-align:left;font-size:0.9rem;color:#666;">${item.note || '-'}</td>`;
+            row += `<td style="padding:0.75rem 1rem;text-align:center;font-size:0.9rem;color:#333;">${itemQty}</td><td style="padding:0.75rem 1rem;text-align:right;font-size:0.9rem;color:#333;">¥${itemPrice.toFixed(2)}</td><td style="padding:0.75rem 1rem;text-align:right;font-size:0.95rem;color:#dc2626;font-weight:600;">¥${it}</td></tr>`;
+            return row;
         }).join('');
         
         headerHtml=`<div style="background:#ffffff;padding:1.5rem 2rem;border-bottom:3px solid #dc2626;">
@@ -11543,11 +11640,17 @@ function generateQuotePreview(){
                     报价明细
                 </div>
                 <table style="width:100%;border-collapse:collapse;background:white;">
+                    <colgroup>
+                        <col style="width:${cw.index}px;">${colVis.image !== false ? `<col style="width:${cw.image}px;">` : ''}<col style="width:${cw.name}px;">${colVis.spec !== false ? `<col style="width:${cw.spec}px;">` : ''}<col style="width:${cw.unit}px;">${colVis.note !== false ? `<col style="width:${cw.note}px;">` : ''}<col style="width:${cw.qty}px;"><col style="width:${cw.price}px;"><col style="width:${cw.subtotal}px;">
+                    </colgroup>
                     <thead>
                         <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
-                            <th style="padding:0.75rem 1rem;text-align:center;font-size:0.8rem;color:#666;font-weight:600;width:50px;">序号</th>
+                            <th style="padding:0.75rem 1rem;text-align:center;font-size:0.8rem;color:#666;font-weight:600;">序号</th>
+                            ${colVis.image !== false ? '<th style="padding:0.75rem 1rem;text-align:center;font-size:0.8rem;color:#666;font-weight:600;">图片</th>' : ''}
                             <th style="padding:0.75rem 1rem;text-align:left;font-size:0.8rem;color:#666;font-weight:600;">项目名称</th>
-                            <th style="padding:0.75rem 1rem;text-align:left;font-size:0.8rem;color:#666;font-weight:600;">规格参数</th>
+                            ${colVis.spec !== false ? '<th style="padding:0.75rem 1rem;text-align:left;font-size:0.8rem;color:#666;font-weight:600;">规格参数</th>' : ''}
+                            <th style="padding:0.75rem 1rem;text-align:center;font-size:0.8rem;color:#666;font-weight:600;">单位</th>
+                            ${colVis.note !== false ? '<th style="padding:0.75rem 1rem;text-align:left;font-size:0.8rem;color:#666;font-weight:600;">备注</th>' : ''}
                             <th style="padding:0.75rem 1rem;text-align:center;font-size:0.8rem;color:#666;font-weight:600;">数量</th>
                             <th style="padding:0.75rem 1rem;text-align:right;font-size:0.8rem;color:#666;font-weight:600;">单价</th>
                             <th style="padding:0.75rem 1rem;text-align:right;font-size:0.8rem;color:#666;font-weight:600;">小计</th>
@@ -11641,22 +11744,21 @@ function generateQuotePreview(){
         saveBtnHtml=`<button class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.3);margin-left:1rem;" onclick="savePreviewEdits()">💾 保存修改</button>`;
         let cw = getColumnWidths();
         let rows=appData.currentQuote.items.map((item,idx)=>{
-            // 修复：添加空值检查
             const itemQty = item.qty || 1;
             const itemPrice = item.price || 0;
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
             let bg=idx%2===0?'#fff':'#f8fafc';
-            let ic=item.image?`<img src="${item.image}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">`:'-';
-            return `<tr style="background:${bg};">
-                <td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:0.8rem;width:${cw.index}px;">${idx+1}</td>
-                <td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;width:${cw.image}px;">${ic}</td>
-                <td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:0.85rem;font-weight:500;width:${cw.name}px;">${item.name}</td>
-                <td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:0.75rem;color:#666;width:${cw.spec}px;">${item.spec||'-'}</td>
-                <td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:0.75rem;color:#666;width:${cw.note}px;">${item.note||'-'}</td>
-                <td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:0.8rem;width:${cw.qty}px;">${itemQty}</td>
-                <td style="padding:0.6rem 0.5rem;text-align:right;border-bottom:1px solid #e2e8f0;font-size:0.8rem;width:${cw.price}px;">¥${itemPrice.toFixed(2)}</td>
-                <td style="padding:0.6rem 0.5rem;text-align:right;border-bottom:1px solid #e2e8f0;font-size:0.85rem;font-weight:600;width:${cw.subtotal}px;">¥${it}</td>
-            </tr>`;
+            let row = `<tr style="background:${bg};"><td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:0.8rem;">${idx+1}</td>`;
+            if(colVis.image !== false) {
+                let ic=item.image?`<img src="${item.image}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">`:'-';
+                row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;">${ic}</td>`;
+            }
+            row += `<td style="padding:0.6rem 0.5rem;text-align:left;border-bottom:1px solid #e2e8f0;font-size:0.85rem;font-weight:500;">${item.name}</td>`;
+            if(colVis.spec !== false) row += `<td style="padding:0.6rem 0.5rem;text-align:left;border-bottom:1px solid #e2e8f0;font-size:0.75rem;color:#666;">${item.spec||'-'}</td>`;
+            row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:0.75rem;color:#666;">${item.unit||'项'}</td>`;
+            if(colVis.note !== false) row += `<td style="padding:0.6rem 0.5rem;text-align:left;border-bottom:1px solid #e2e8f0;font-size:0.75rem;color:#666;">${item.note||'-'}</td>`;
+            row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:0.8rem;">${itemQty}</td><td style="padding:0.6rem 0.5rem;text-align:right;border-bottom:1px solid #e2e8f0;font-size:0.8rem;">¥${itemPrice.toFixed(2)}</td><td style="padding:0.6rem 0.5rem;text-align:right;border-bottom:1px solid #e2e8f0;font-size:0.85rem;font-weight:600;">¥${it}</td></tr>`;
+            return row;
         }).join('');
         bodyHtml=`<div style="padding:1.5rem 2rem;background:#fff;">
             <div style="margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:2px solid #e2e8f0;">
@@ -11684,16 +11786,20 @@ function generateQuotePreview(){
                 </div>
             </div>
             <table style="width:100%;border-collapse:collapse;font-family:'Microsoft YaHei',Arial,sans-serif;line-height:${lhPx}rem;">
+                <colgroup>
+                    <col style="width:${cw.index}px;"><col style="width:${cw.image}px;"><col style="width:${cw.name}px;"><col style="width:${cw.spec}px;"><col style="width:${cw.unit}px;"><col style="width:${cw.note}px;"><col style="width:${cw.qty}px;"><col style="width:${cw.price}px;"><col style="width:${cw.subtotal}px;">
+                </colgroup>
                 <thead>
                     <tr style="background:#f7fafc;">
-                        <th style="padding:0.6rem 0.5rem;text-align:center;font-size:0.7rem;font-weight:600;color:#4a5568;width:${cw.index}px;">序号</th>
-                        <th style="padding:0.6rem 0.5rem;text-align:center;font-size:0.7rem;font-weight:600;color:#4a5568;width:${cw.image}px;">图片</th>
-                        <th style="padding:0.6rem 0.5rem;text-align:center;font-size:0.7rem;font-weight:600;color:#4a5568;width:${cw.name}px;">项目名称</th>
-                        <th style="padding:0.6rem 0.5rem;text-align:center;font-size:0.7rem;font-weight:600;color:#4a5568;width:${cw.spec}px;">规格</th>
-                        <th style="padding:0.6rem 0.5rem;text-align:center;font-size:0.7rem;font-weight:600;color:#4a5568;width:${cw.note}px;">备注</th>
-                        <th style="padding:0.6rem 0.5rem;text-align:center;font-size:0.7rem;font-weight:600;color:#4a5568;width:${cw.qty}px;">数量</th>
-                        <th style="padding:0.6rem 0.5rem;text-align:right;font-size:0.7rem;font-weight:600;color:#4a5568;width:${cw.price}px;">单价</th>
-                        <th style="padding:0.6rem 0.5rem;text-align:right;font-size:0.7rem;font-weight:600;color:#4a5568;width:${cw.subtotal}px;">小计</th>
+                        <th style="padding:0.6rem 0.5rem;text-align:center;font-size:0.7rem;font-weight:600;color:#4a5568;">序号</th>
+                        ${colVis.image !== false ? '<th style="padding:0.6rem 0.5rem;text-align:center;font-size:0.7rem;font-weight:600;color:#4a5568;">图片</th>' : ''}
+                        <th style="padding:0.6rem 0.5rem;text-align:left;font-size:0.7rem;font-weight:600;color:#4a5568;">项目名称</th>
+                        ${colVis.spec !== false ? '<th style="padding:0.6rem 0.5rem;text-align:left;font-size:0.7rem;font-weight:600;color:#4a5568;">规格</th>' : ''}
+                        <th style="padding:0.6rem 0.5rem;text-align:center;font-size:0.7rem;font-weight:600;color:#4a5568;">单位</th>
+                        ${colVis.note !== false ? '<th style="padding:0.6rem 0.5rem;text-align:left;font-size:0.7rem;font-weight:600;color:#4a5568;">备注</th>' : ''}
+                        <th style="padding:0.6rem 0.5rem;text-align:center;font-size:0.7rem;font-weight:600;color:#4a5568;">数量</th>
+                        <th style="padding:0.6rem 0.5rem;text-align:right;font-size:0.7rem;font-weight:600;color:#4a5568;">单价</th>
+                        <th style="padding:0.6rem 0.5rem;text-align:right;font-size:0.7rem;font-weight:600;color:#4a5568;">小计</th>
                     </tr>
                 </thead><tbody>${rows}</tbody></table>`;
         footerHtml=`<div style="margin-top:1.5rem;display:flex;justify-content:flex-end;">
@@ -11730,31 +11836,36 @@ function generateQuotePreview(){
         </div>`;
         let cw = getColumnWidths();
         let rows=appData.currentQuote.items.map((item,idx)=>{
-            // 修复：添加空值检查
             const itemQty = item.qty || 1;
             const itemPrice = item.price || 0;
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
-            let ic=item.image?`<img src="${item.image}" style="width:35px;height:35px;object-fit:cover;border:1px solid #ddd;">`:'';
-            return `<tr>
-                <td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:0.75rem;width:${cw.index}px;">${idx+1}</td>
-                <td style="padding:0.5rem;border:1px solid #333;text-align:center;width:${cw.image}px;">${ic}</td>
-                <td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:0.8rem;width:${cw.name}px;word-break:break-all;">${item.name}</td>
-                <td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:0.75rem;word-break:break-all;">${item.spec||''}</td>
-                <td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:0.75rem;width:${cw.qty}px;">${itemQty}</td>
-                <td style="padding:0.5rem;border:1px solid #333;text-align:right;font-size:0.75rem;width:${cw.price}px;">¥${itemPrice.toFixed(2)}</td>
-                <td style="padding:0.5rem;border:1px solid #333;text-align:right;font-size:0.8rem;font-weight:600;width:${cw.subtotal}px;">¥${it}</td>
-            </tr>`;
+            let row = `<tr><td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:0.75rem;">${idx+1}</td>`;
+            if(colVis.image !== false) {
+                let ic=item.image?`<img src="${item.image}" style="width:35px;height:35px;object-fit:cover;border:1px solid #ddd;">`:'';
+                row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;">${ic}</td>`;
+            }
+            row += `<td style="padding:0.5rem;border:1px solid #333;text-align:left;font-size:0.8rem;word-break:break-all;">${item.name}</td>`;
+            if(colVis.spec !== false) row += `<td style="padding:0.5rem;border:1px solid #333;text-align:left;font-size:0.75rem;word-break:break-all;">${item.spec||''}</td>`;
+            row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:0.75rem;">${item.unit||'项'}</td>`;
+            if(colVis.note !== false) row += `<td style="padding:0.5rem;border:1px solid #333;text-align:left;font-size:0.75rem;word-break:break-all;">${item.note||''}</td>`;
+            row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:0.75rem;">${itemQty}</td><td style="padding:0.5rem;border:1px solid #333;text-align:right;font-size:0.75rem;">¥${itemPrice.toFixed(2)}</td><td style="padding:0.5rem;border:1px solid #333;text-align:right;font-size:0.8rem;font-weight:600;">¥${it}</td></tr>`;
+            return row;
         }).join('');
         bodyHtml=`<table style="width:100%;border-collapse:collapse;font-family:'SimSun',Arial,sans-serif;line-height:${lhPx}rem;">
+            <colgroup>
+                <col style="width:${cw.index}px;">${colVis.image !== false ? `<col style="width:${cw.image}px;">` : ''}<col style="width:${cw.name}px;">${colVis.spec !== false ? `<col style="width:${cw.spec}px;">` : ''}<col style="width:${cw.unit}px;">${colVis.note !== false ? `<col style="width:${cw.note}px;">` : ''}<col style="width:${cw.qty}px;"><col style="width:${cw.price}px;"><col style="width:${cw.subtotal}px;">
+            </colgroup>
             <thead>
                 <tr style="background:#f0f0f0;">
-                    <th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:0.7rem;font-weight:600;width:${cw.index}px;">序号</th>
-                    <th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:0.7rem;font-weight:600;width:${cw.image}px;">图片</th>
-                    <th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:0.7rem;font-weight:600;width:${cw.name}px;">项目名称</th>
-                    <th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:0.7rem;font-weight:600;">规格</th>
-                    <th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:0.7rem;font-weight:600;width:${cw.qty}px;">数量</th>
-                    <th style="padding:0.4rem;border:1px solid #333;text-align:right;font-size:0.7rem;font-weight:600;width:${cw.price}px;">单价</th>
-                    <th style="padding:0.4rem;border:1px solid #333;text-align:right;font-size:0.7rem;font-weight:600;width:${cw.subtotal}px;">小计</th>
+                    <th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:0.7rem;font-weight:600;">序号</th>
+                    ${colVis.image !== false ? '<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:0.7rem;font-weight:600;">图片</th>' : ''}
+                    <th style="padding:0.4rem;border:1px solid #333;text-align:left;font-size:0.7rem;font-weight:600;">项目名称</th>
+                    ${colVis.spec !== false ? '<th style="padding:0.4rem;border:1px solid #333;text-align:left;font-size:0.7rem;font-weight:600;">规格</th>' : ''}
+                    <th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:0.7rem;font-weight:600;">单位</th>
+                    ${colVis.note !== false ? '<th style="padding:0.4rem;border:1px solid #333;text-align:left;font-size:0.7rem;font-weight:600;">备注</th>' : ''}
+                    <th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:0.7rem;font-weight:600;">数量</th>
+                    <th style="padding:0.4rem;border:1px solid #333;text-align:right;font-size:0.7rem;font-weight:600;">单价</th>
+                    <th style="padding:0.4rem;border:1px solid #333;text-align:right;font-size:0.7rem;font-weight:600;">小计</th>
                 </tr>
             </thead><tbody>${rows}</tbody></table>`;
         footerHtml=`<div style="margin-top:1rem;display:flex;justify-content:flex-end;">
@@ -11786,26 +11897,29 @@ function generateQuotePreview(){
             let bg=idx%2===0?'#fff':'#f8fafc';
             let ic=item.image?`<img src="${item.image}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;">`:`<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
             return `<tr style="background:${bg};">
-                <td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;width:${cw.index}px;">
+                <td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
                     <span style="display:inline-flex;width:22px;height:22px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border-radius:50%;font-size:0.65rem;font-weight:600;align-items:center;justify-content:center;">${idx+1}</span>
                 </td>
-                <td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;width:${cw.image}px;">${ic}</td>
-                <td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;width:${cw.name}px;">
+                <td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">${ic}</td>
+                <td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;">
                     <div style="font-weight:600;color:#1f2937;font-size:0.85rem;line-height:1.3;">${item.name}</div>
                     ${item.spec?`<div style="font-size:0.7rem;color:#6b7280;margin-top:0.2rem;">规格：${item.spec}</div>`:''}
                 </td>
-                <td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;font-size:0.75rem;color:#6b7280;width:${cw.note}px;line-height:1.3;">${item.note||'-'}</td>
-                <td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;width:${cw.qty}px;">
+                <td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
+                    <span style="font-size:0.75rem;color:#6b7280;">${item.unit||'项'}</span>
+                </td>
+                <td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;font-size:0.75rem;color:#6b7280;line-height:1.3;">${item.note||'-'}</td>
+                <td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
                     <span style="background:#e5e7eb;padding:0.15rem 0.5rem;border-radius:6px;font-weight:600;color:#374151;font-size:0.8rem;">${itemQty}</span>
                 </td>
-                <td style="padding:0.6rem 0.4rem;text-align:right;border-bottom:1px solid #e5e7eb;color:#4b5563;font-size:0.85rem;font-weight:500;width:${cw.price}px;">¥${itemPrice.toFixed(2)}</td>
-                <td style="padding:0.6rem 0.4rem;text-align:right;border-bottom:1px solid #e5e7eb;width:${cw.subtotal}px;"><span style="font-weight:700;color:#1f2937;font-size:0.9rem;">¥${it}</span></td>
+                <td style="padding:0.6rem 0.4rem;text-align:right;border-bottom:1px solid #e5e7eb;color:#4b5563;font-size:0.85rem;font-weight:500;">¥${itemPrice.toFixed(2)}</td>
+                <td style="padding:0.6rem 0.4rem;text-align:right;border-bottom:1px solid #e5e7eb;"><span style="font-weight:700;color:#1f2937;font-size:0.9rem;">¥${it}</span></td>
             </tr>`;
         }).join('');
-        let mFooterRows=`<tr><td colspan="6" style="padding:0.6rem 1rem;text-align:right;font-size:0.8rem;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;">报价金额</td><td style="padding:0.6rem 1rem;text-align:right;font-size:0.85rem;font-weight:600;background:#f9fafb;border-bottom:1px solid #e5e7eb;">¥${st.toFixed(2)}</td></tr>`;
-        if(dr<100){mFooterRows+=`<tr><td colspan="6" style="padding:0.6rem 1rem;text-align:right;font-size:0.8rem;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;">折扣 (${dr}%)</td><td style="padding:0.6rem 1rem;text-align:right;font-size:0.85rem;font-weight:600;color:#dc2626;background:#f9fafb;border-bottom:1px solid #e5e7eb;">-¥${da.toFixed(2)}</td></tr>`;}
-        mFooterRows+=`<tr><td colspan="6" style="padding:0.8rem 1rem;text-align:right;font-size:1rem;font-weight:700;color:${hc};background:${hg};border-bottom:none;">合计金额${tr>0&&pm==='in'?'（含税'+tr+'%）':tr>0&&pm==='ex'?'（含税'+tr+'%，税金¥'+tax.toFixed(2)+'）':pm==='ex'&&tr===0?'（未税）':''}</td><td style="padding:0.8rem 1rem;text-align:right;font-size:1.15rem;font-weight:700;color:${hc};background:${hg};border-bottom:none;">¥${total.toFixed(2)}</td></tr>`;
-        mFooterRows+=`<tr><td colspan="7" style="padding:0.5rem 1rem;text-align:right;font-size:0.9rem;color:${hc};background:${hg};border-bottom:none;font-weight:500;">大写金额：${numberToChineseUpper(total)}</td></tr>`;
+        let mFooterRows=`<tr><td colspan="7" style="padding:0.6rem 1rem;text-align:right;font-size:0.8rem;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;">报价金额</td><td style="padding:0.6rem 1rem;text-align:right;font-size:0.85rem;font-weight:600;background:#f9fafb;border-bottom:1px solid #e5e7eb;">¥${st.toFixed(2)}</td></tr>`;
+        if(dr<100){mFooterRows+=`<tr><td colspan="7" style="padding:0.6rem 1rem;text-align:right;font-size:0.8rem;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;">折扣 (${dr}%)</td><td style="padding:0.6rem 1rem;text-align:right;font-size:0.85rem;font-weight:600;color:#dc2626;background:#f9fafb;border-bottom:1px solid #e5e7eb;">-¥${da.toFixed(2)}</td></tr>`;}
+        mFooterRows+=`<tr><td colspan="7" style="padding:0.8rem 1rem;text-align:right;font-size:1rem;font-weight:700;color:${hc};background:${hg};border-bottom:none;">合计金额${tr>0&&pm==='in'?'（含税'+tr+'%）':tr>0&&pm==='ex'?'（含税'+tr+'%，税金¥'+tax.toFixed(2)+'）':pm==='ex'&&tr===0?'（未税）':''}</td><td style="padding:0.8rem 1rem;text-align:right;font-size:1.15rem;font-weight:700;color:${hc};background:${hg};border-bottom:none;">¥${total.toFixed(2)}</td></tr>`;
+        mFooterRows+=`<tr><td colspan="8" style="padding:0.5rem 1rem;text-align:right;font-size:0.9rem;color:${hc};background:${hg};border-bottom:none;font-weight:500;">大写金额：${numberToChineseUpper(total)}</td></tr>`;
         preview.innerHTML=`<div style="background:white;max-width:100%;margin:0 auto;font-family:'Microsoft YaHei','PingFang SC',Arial,sans-serif;overflow:hidden;${innerPadding};">
             <div style="background:${hg};padding:2.5rem 2rem;color:${hc};">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;">
@@ -11850,15 +11964,19 @@ function generateQuotePreview(){
             </div>
             <div style="padding:1.5rem 2rem 2rem;">
                 <table style="width:100%;border-collapse:collapse;line-height:${lhPx}rem;">
+                    <colgroup>
+                        <col style="width:${cw.index}px;"><col style="width:${cw.image}px;"><col style="width:${cw.name}px;"><col style="width:${cw.unit}px;"><col style="width:${cw.note}px;"><col style="width:${cw.qty}px;"><col style="width:${cw.price}px;"><col style="width:${cw.subtotal}px;">
+                    </colgroup>
                     <thead>
                         <tr style="background:#f1f5f9;">
-                            <th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;width:${cw.index}px;">序号</th>
-                            <th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;width:${cw.image}px;">图片</th>
-                            <th style="padding:0.5rem 0.4rem;text-align:left;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;width:${cw.name}px;">项目名称</th>
-                            <th style="padding:0.5rem 0.4rem;text-align:left;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;width:${cw.note}px;">备注</th>
-                            <th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;width:${cw.qty}px;">数量</th>
-                            <th style="padding:0.5rem 0.4rem;text-align:right;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;width:${cw.price}px;">单价</th>
-                            <th style="padding:0.5rem 0.4rem;text-align:right;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;width:${cw.subtotal}px;">小计</th>
+                            <th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">序号</th>
+                            <th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">图片</th>
+                            <th style="padding:0.5rem 0.4rem;text-align:left;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">项目名称</th>
+                            <th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">单位</th>
+                            <th style="padding:0.5rem 0.4rem;text-align:left;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">备注</th>
+                            <th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">数量</th>
+                            <th style="padding:0.5rem 0.4rem;text-align:right;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">单价</th>
+                            <th style="padding:0.5rem 0.4rem;text-align:right;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">小计</th>
                         </tr>
                     </thead>
                     <tbody>${mRows}</tbody>
@@ -12358,7 +12476,7 @@ function exportXLS(){
     var vd=settings.quoteValidDays||7;
     var today=new Date();
     var ds=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
-    var cols=7;
+    var cols=8;
     var html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
     html+='<head><meta charset="utf-8">';
     html+='<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>';
@@ -12368,7 +12486,7 @@ function exportXLS(){
     html+='<x:Margins x:Left="0.5" x:Right="0.5" x:Top="0.6" x:Bottom="0.5"/>';
     html+='</x:PageSetup>';
     html+='<x:Print><x:ValidPrinterInfo/><x:PaperSizeIndex>9</x:PaperSizeIndex><x:HorizontalResolution>600</x:HorizontalResolution><x:VerticalResolution>600</x:VerticalResolution><x:Gridlines>False</x:Gridlines></x:Print>';
-    html+='<x:Selected/><x:DoNotDisplayGridlines/><x:FitToPage/><x:PrintArea>$A$1:$G$200</x:PrintArea>';
+    html+='<x:Selected/><x:DoNotDisplayGridlines/><x:FitToPage/><x:PrintArea>$A$1:$H$200</x:PrintArea>';
     html+='</x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
     html+='<style>';
     html+='@page{size:A4 portrait;margin:12mm 10mm 12mm 10mm;}';
@@ -12376,7 +12494,7 @@ function exportXLS(){
     html+='br{mso-data-placement:same-cell;}';
     html+='</style></head><body>';
     html+='<table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">';
-    html+='<col width="6%"><col width="30%"><col width="16%"><col width="18%"><col width="8%"><col width="11%"><col width="11%">';
+    html+='<col width="6%"><col width="28%"><col width="14%"><col width="6%"><col width="14%"><col width="8%"><col width="11%"><col width="13%">';
     html+='<tr><td colspan="'+cols+'" align="center" style="font-size:14pt;font-weight:bold;padding:10px 0 2px 0;color:#333;">'+(settings.companyName||'公司名称')+'</td></tr>';
     if(settings.companyAddress||settings.companyPhone) html+='<tr><td colspan="'+cols+'" align="center" style="font-size:9pt;color:#666;padding:2px 0 6px 0;">'+(settings.companyAddress||'')+(settings.companyPhone?' | '+settings.companyPhone:'')+'</td></tr>';
     html+='<tr><td colspan="'+cols+'" align="center" style="font-size:16pt;font-weight:bold;padding:8px 0 4px 0;color:#333;text-decoration:underline;">报 价 单</td></tr>';
@@ -12397,6 +12515,7 @@ function exportXLS(){
     html+='<th align="center" style="font-size:9pt;padding:8px 4px;font-weight:600;color:#333;border:1px solid #333;">序号</th>';
     html+='<th align="left" style="font-size:9pt;padding:8px 4px;font-weight:600;color:#333;border:1px solid #333;">项目名称</th>';
     html+='<th align="left" style="font-size:9pt;padding:8px 4px;font-weight:600;color:#333;border:1px solid #333;">规格</th>';
+    html+='<th align="center" style="font-size:9pt;padding:8px 4px;font-weight:600;color:#333;border:1px solid #333;">单位</th>';
     html+='<th align="left" style="font-size:9pt;padding:8px 4px;font-weight:600;color:#333;border:1px solid #333;">备注</th>';
     html+='<th align="center" style="font-size:9pt;padding:8px 4px;font-weight:600;color:#333;border:1px solid #333;">数量</th>';
     html+='<th align="right" style="font-size:9pt;padding:8px 4px;font-weight:600;color:#333;border:1px solid #333;">单价</th>';
@@ -12411,6 +12530,7 @@ function exportXLS(){
         html+='<td align="center" style="font-size:9pt;padding:8px 4px;border:1px solid #333;color:#333;">'+(i+1)+'</td>';
         html+='<td align="left" style="font-size:10pt;padding:8px 4px;border:1px solid #333;color:#333;font-weight:600;">'+item.name+'</td>';
         html+='<td align="left" style="font-size:9pt;padding:8px 4px;border:1px solid #333;color:#666;">'+(item.spec||'')+'</td>';
+        html+='<td align="center" style="font-size:9pt;padding:8px 4px;border:1px solid #333;color:#666;">'+(item.unit||'项')+'</td>';
         html+='<td align="left" style="font-size:9pt;padding:8px 4px;border:1px solid #333;color:#666;">'+(item.note||'')+'</td>';
         html+='<td align="center" style="font-size:9pt;padding:8px 4px;border:1px solid #333;color:#333;">'+qty+'</td>';
         html+='<td align="right" style="font-size:9pt;padding:8px 4px;border:1px solid #333;color:#333;">¥'+price.toFixed(2)+'</td>';
@@ -12422,16 +12542,16 @@ function exportXLS(){
     if(tr>0&&pm==='in') taxLabel='（含税'+tr+'%）';
     else if(tr>0&&pm==='ex') taxLabel='（含税'+tr+'%，税金¥'+tax.toFixed(2)+'）';
     else if(pm==='ex'&&tr===0) taxLabel='（未税）';
-    html+='<tr><td colspan="6" align="right" style="font-size:10pt;padding:6px 8px;border-bottom:1px solid #ddd;color:#333;">报价：</td><td align="right" style="font-size:10pt;padding:6px 8px;border-bottom:1px solid #ddd;color:#333;">¥'+st.toFixed(2)+'</td></tr>';
-    if(dr<100) html+='<tr><td colspan="6" align="right" style="font-size:10pt;padding:6px 8px;border-bottom:1px solid #ddd;color:#c00;">折扣 ('+dr+'%)：</td><td align="right" style="font-size:10pt;padding:6px 8px;border-bottom:1px solid #ddd;color:#c00;">-¥'+da.toFixed(2)+'</td></tr>';
-    if(tr>0&&pm==='ex') html+='<tr><td colspan="6" align="right" style="font-size:10pt;padding:6px 8px;border-bottom:1px solid #ddd;color:#333;">税额 ('+tr+'%)：</td><td align="right" style="font-size:10pt;padding:6px 8px;border-bottom:1px solid #ddd;color:#333;">¥'+tax.toFixed(2)+'</td></tr>';
-    html+='<tr><td colspan="6" align="right" style="font-size:11pt;padding:8px 8px;font-weight:600;border-top:2px solid #333;color:#333;">合计'+taxLabel+'：</td><td align="right" style="font-size:12pt;padding:8px 8px;font-weight:700;border-top:2px solid #333;color:#c00;">¥'+total.toFixed(2)+'</td></tr>';
+    html+='<tr><td colspan="7" align="right" style="font-size:10pt;padding:6px 8px;border-bottom:1px solid #ddd;color:#333;">报价：</td><td align="right" style="font-size:10pt;padding:6px 8px;border-bottom:1px solid #ddd;color:#333;">¥'+st.toFixed(2)+'</td></tr>';
+    if(dr<100) html+='<tr><td colspan="7" align="right" style="font-size:10pt;padding:6px 8px;border-bottom:1px solid #ddd;color:#c00;">折扣 ('+dr+'%)：</td><td align="right" style="font-size:10pt;padding:6px 8px;border-bottom:1px solid #ddd;color:#c00;">-¥'+da.toFixed(2)+'</td></tr>';
+    if(tr>0&&pm==='ex') html+='<tr><td colspan="7" align="right" style="font-size:10pt;padding:6px 8px;border-bottom:1px solid #ddd;color:#333;">税额 ('+tr+'%)：</td><td align="right" style="font-size:10pt;padding:6px 8px;border-bottom:1px solid #ddd;color:#333;">¥'+tax.toFixed(2)+'</td></tr>';
+    html+='<tr><td colspan="7" align="right" style="font-size:11pt;padding:8px 8px;font-weight:600;border-top:2px solid #333;color:#333;">合计'+taxLabel+'：</td><td align="right" style="font-size:12pt;padding:8px 8px;font-weight:700;border-top:2px solid #333;color:#c00;">¥'+total.toFixed(2)+'</td></tr>';
     html+='<tr><td colspan="'+cols+'" align="right" style="font-size:10pt;padding:6px 8px;color:#333;font-weight:500;">大写金额：'+numberToChineseUpper(total)+'</td></tr>';
     html+='<tr><td colspan="'+cols+'" style="height:10px;padding:0;"></td></tr>';
     html+='<tr><td colspan="'+cols+'" style="font-size:8.5pt;color:#666;padding:6px 4px;border-top:1px solid #ccc;">1.本报价单有效期为'+vd+'天 &nbsp; 2.最终价格以实际制作量为准 &nbsp; 3.交付时间双方协商确定</td></tr>';
     html+='<tr><td colspan="'+cols+'" style="height:12px;padding:0;"></td></tr>';
     html+='<tr><td colspan="3" style="font-size:10pt;padding:8px 4px;color:#333;"><b>报价方：</b>'+(settings.companyName||'______________')+'<br><br>签字：________________</td>';
-    html+='<td colspan="4" style="font-size:10pt;padding:8px 4px;color:#333;"><b>客户确认：</b>________________<br><br>签字：________________</td></tr>';
+    html+='<td colspan="5" style="font-size:10pt;padding:8px 4px;color:#333;"><b>客户确认：</b>________________<br><br>签字：________________</td></tr>';
     html+='</table></body></html>';
     var uri='data:application/vnd.ms-excel;charset=utf-8,'+encodeURIComponent(html);
     var link=document.createElement('a');
