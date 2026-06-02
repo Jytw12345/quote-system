@@ -7207,6 +7207,7 @@ var DataManager = {
                     <div style="font-size:0.75rem;color:#1e40af;margin-bottom:0.5rem;font-weight:500;">📦 材料产品库初始化</div>
                     <div style="font-size:0.6875rem;color:#64748b;margin-bottom:0.75rem;">包含门头材料、文化墙展板/表面材料、导视系统、公共辅材等共200+种材料</div>
                     <button class="btn btn-sm" onclick="initMaterialProductLibrary()" style="background:#2563eb;color:white;">🚀 一键初始化材料库</button>
+                    <button class="btn btn-sm" onclick="clearProductLibrary()" style="background:#dc2626;color:white;margin-left:0.5rem;">🗑️ 清空产品库</button>
                 </div>
             </div>
         </div>
@@ -7321,18 +7322,16 @@ var DataManager = {
         <form id="productForm" class="form-grid">
             <input type="hidden" id="productId">
             <div class="form-group"><label>产品名称 *</label><input type="text" id="productName" required placeholder="例如：户内外喷绘"></div>
-            <div class="form-group"><label>一级分类</label><select id="productCategory1" onchange="updateSubCategoryOptions()">
-                <option value="">选择一级分类</option>
-                <option value="__new__">+ 新建一级分类</option>
-            </select></div>
-            <div class="form-group"><label>二级分类</label><select id="productCategory2">
-                <option value="">选择二级分类</option>
-                <option value="__new__">+ 新建二级分类</option>
+            <div class="form-group"><label>分类</label><select id="productCategory">
+                <option value="">选择分类</option>
+                <option value="__new__">+ 新建分类</option>
             </select></div>
             <div class="form-group"><label>计算方式</label><select id="productCalcType" onchange="updateProductCalcFields()">
-                <option value="fixed">固定价格</option>
-                <option value="area">按面积计算</option>
-                <option value="size">按尺寸计算</option>
+                <option value="fixed">💰 固定价格</option>
+                <option value="area">📐 按面积计算（长×宽）</option>
+                <option value="cubic">📦 按立方计算（长×宽×高）</option>
+                <option value="length">📏 按长度计算</option>
+                <option value="character">🔤 按字符计算（发光字/雕刻字）</option>
             </select></div>
             <div id="productSizeFields" style="display:none;">
                 <div class="form-group"><label>默认宽度 (米)</label><input type="number" id="productWidth" step="0.01" min="0" placeholder="0.00" oninput="calculateProductPrice()"></div>
@@ -7340,7 +7339,41 @@ var DataManager = {
             </div>
             <div class="form-group sensitive-data"><label>成本价 (元)</label><input type="number" id="productCostPrice" step="0.01" min="0" placeholder="0.00" oninput="calculateProductPrice()"></div>
             <div class="form-group"><label>售价 (元) *</label><input type="number" id="productSellingPrice" step="0.01" min="0" required placeholder="0.00"></div>
-            <div class="form-group"><label>单位</label><input type="text" id="productUnit" placeholder="平方/件/套"></div>
+            <div class="form-group"><label>单位</label><select id="productUnit">
+                    <option value="">请选择单位</option>
+                    <!-- 面积单位 -->
+                    <optgroup label="面积单位">
+                        <option value="平方">平方 (元/㎡)</option>
+                        <option value="平方厘米">平方厘米 (元/cm²)</option>
+                        <option value="平方米">平方米 (元/㎡)</option>
+                    </optgroup>
+                    <!-- 长度单位 -->
+                    <optgroup label="长度单位">
+                        <option value="米">米 (元/米)</option>
+                        <option value="厘米">厘米 (元/厘米)</option>
+                        <option value="毫米">毫米 (元/毫米)</option>
+                    </optgroup>
+                    <!-- 数量单位 -->
+                    <optgroup label="数量单位">
+                        <option value="件">件 (元/件)</option>
+                        <option value="个">个 (元/个)</option>
+                        <option value="块">块 (元/块)</option>
+                        <option value="张">张 (元/张)</option>
+                        <option value="本">本 (元/本)</option>
+                        <option value="支">支 (元/支)</option>
+                        <option value="把">把 (元/把)</option>
+                        <option value="顶">顶 (元/顶)</option>
+                        <option value="面">面 (元/面)</option>
+                        <option value="幅">幅 (元/幅)</option>
+                        <option value="卷">卷 (元/卷)</option>
+                        <option value="升">升 (元/升)</option>
+                    </optgroup>
+                    <!-- 套装单位 -->
+                    <optgroup label="套装单位">
+                        <option value="套">套 (元/套)</option>
+                        <option value="台">台 (元/台)</option>
+                    </optgroup>
+                </select></div>
             <div class="form-group full-width">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.375rem;">
                         <label>产品描述</label>
@@ -9177,47 +9210,23 @@ function fixAppDataCompat() {
     
     // 确保分类数据存在，如果不存在则从产品中提取
     if(!appData.categories || appData.categories.length === 0) {
-        const catMap = {};
+        const catSet = new Set();
         appData.products.forEach(p => {
-            if (p.category1) {
-                if (!catMap[p.category1]) {
-                    catMap[p.category1] = { name: p.category1, subCategories: new Set() };
-                }
-                if (p.category2) {
-                    catMap[p.category1].subCategories.add(p.category2);
-                }
-            }
+            // 兼容旧数据：优先使用 category，否则用 category1
+            var cat = p.category || p.category1;
+            if (cat) catSet.add(cat);
         });
         
-        // 添加文化墙专属分类
-        const cultureWallCategories = [
-            { name: '文化墙', subCategories: ['党建文化墙', '企业文化墙', '校园文化墙', '社区文化墙'] },
-            { name: '标识标牌', subCategories: ['发光字', '不锈钢字', '亚克力字', '金属标识', '科室牌'] },
-            { name: '喷绘写真', subCategories: ['户外喷绘', '室内写真', '车贴', '展板', '海报'] },
-            { name: '展示器材', subCategories: ['X展架', '易拉宝', '门型展架', '桁架', '展台'] },
-            { name: '广告制作', subCategories: ['灯箱', '宣传栏', '精神堡垒', '导视牌'] },
-            { name: '印刷品', subCategories: ['名片', '宣传单', '画册', '手提袋', '信封'] }
-        ];
+        appData.categories = Array.from(catSet).map(name => ({ name: name }));
         
-        // 合并现有分类和文化墙专属分类
-        const existingCats = Object.values(catMap);
-        const mergedCats = [...cultureWallCategories];
-        
-        existingCats.forEach(existingCat => {
-            const existingIndex = mergedCats.findIndex(c => c.name === existingCat.name);
-            if (existingIndex === -1) {
-                mergedCats.push(existingCat);
-            } else {
-                // 合并子分类
-                existingCat.subCategories.forEach(subCat => {
-                    if (!mergedCats[existingIndex].subCategories.includes(subCat)) {
-                        mergedCats[existingIndex].subCategories.push(subCat);
-                    }
-                });
-            }
-        });
-        
-        appData.categories = mergedCats;
+        // 如果没有分类，添加默认分类
+        if (appData.categories.length === 0) {
+            appData.categories = [
+                { name: '喷绘写真' },
+                { name: '标识标牌' },
+                { name: '广告制作' }
+            ];
+        }
     }
     if(!appData.recycleBin) appData.recycleBin = { products: [], customers: [], templates: [], deletedAt: null };
     var now = Date.now();
@@ -9285,9 +9294,13 @@ function fixAppDataCompat() {
     }
     if (appData.products && appData.products.length > 0) {
         appData.products.forEach(function(p) {
-            if (!p.category1 && p.category) {
-                p.category1 = p.category;
-                p.category2 = '';
+            // 兼容旧数据：把 category1/category2 转换为 category
+            if (!p.category) {
+                if (p.category1) {
+                    p.category = p.category2 ? (p.category1 + ' / ' + p.category2) : p.category1;
+                } else if (p.category) {
+                    // 已经有 category，不需要处理
+                }
             }
         });
     }
@@ -9456,6 +9469,17 @@ function applyDefaults(){
 }
 
 // ===== 初始化材料产品库（门头+文化墙原材料） =====
+function clearProductLibrary() {
+    if (!confirm('确定要清空产品库吗？此操作不可恢复！')) {
+        return;
+    }
+    appData.products = [];
+    appData.categories = [];
+    saveDataImmediately();
+    showToast('✅ 产品库已清空！', 'success');
+    setTimeout(function() { location.reload(); }, 500);
+}
+
 function initMaterialProductLibrary() {
     if (appData.products && appData.products.length > 0) {
         if (!confirm('产品库中已有 ' + appData.products.length + ' 个产品，继续初始化将添加新材料（不会覆盖现有产品）。是否继续？')) {
@@ -9472,8 +9496,7 @@ function initMaterialProductLibrary() {
         materials.push({
             id: baseId + idx,
             name: name,
-            category1: category1,
-            category2: category2,
+            category: category1,
             unit: unit,
             sellingPrice: sellingPrice,
             costPrice: costPrice || sellingPrice * 0.7,
@@ -9767,23 +9790,20 @@ function initMaterialProductLibrary() {
         appData.categories = [];
     }
     
-    var materialCategories = [
-        { name: '门头材料', subCategories: ['骨架', '底板', '面板', '电气', '字体', '包边', '装饰', '安装', '辅材', '工艺'] },
-        { name: '文化墙材料', subCategories: ['基础', '展板', '表面', '装饰', '安装', '辅材', '立体字'] },
-        { name: '导视系统', subCategories: ['立柱', '指示牌', '支架', '科室牌', '导向', '吊架', '工艺', '基础', '膜', '型材', '板材', '灯箱'] },
-        { name: '公共辅材', subCategories: ['紧固件', '粘合剂', '焊接', '打磨', '涂料', '保护', '辅助', '电气', '工具'] }
-    ];
+    // 自动从材料中提取分类并创建
+    var categorySet = new Set();
+    materials.forEach(function(m) {
+        if (m.category) categorySet.add(m.category);
+    });
     
-    materialCategories.forEach(function(cat) {
-        var existingCat = appData.categories.find(function(c) { return c.name === cat.name; });
-        if (!existingCat) {
-            appData.categories.push(cat);
-        } else {
-            cat.subCategories.forEach(function(subCat) {
-                if (!existingCat.subCategories.includes(subCat)) {
-                    existingCat.subCategories.push(subCat);
-                }
-            });
+    if (!appData.categories) {
+        appData.categories = [];
+    }
+    
+    categorySet.forEach(function(catName) {
+        var exists = appData.categories.some(function(c) { return c.name === catName; });
+        if (!exists) {
+            appData.categories.push({ name: catName });
         }
     });
     
@@ -10397,8 +10417,7 @@ function quickAddSearchProduct(){
     }
     const results = appData.products.filter(p =>
         p.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        (p.category1 && p.category1.toLowerCase().includes(searchText.toLowerCase())) ||
-        (p.category2 && p.category2.toLowerCase().includes(searchText.toLowerCase()))
+        (p.category && p.category.toLowerCase().includes(searchText.toLowerCase()))
     );
     if(results.length === 0){
         showToast('没有找到匹配的产品', 'warning');
@@ -10437,7 +10456,7 @@ function showQuickSearchResults(results){
     let html = '<div style="padding:0.5rem;font-weight:600;border-bottom:1px solid var(--gray-200);background:var(--gray-50);display:flex;justify-content:space-between;align-items:center;"><span>找到 ' + results.length + ' 个产品</span><span style="font-weight:normal;color:var(--gray-500);font-size:0.75rem;">点击选择添加到报价</span></div>';
     results.slice(0,10).forEach((p, idx) => {
         html += '<div class="quick-search-item" onclick="selectQuickSearchProduct(' + idx + ')" style="padding:0.625rem;border-bottom:1px solid var(--gray-100);cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onmouseover="this.style.background=\'var(--primary-50)\'" onmouseout="this.style.background=\'\'">';
-        html += '<div><div style="font-weight:500;">' + escapeHtml(p.name) + '</div><div style="font-size:0.75rem;color:var(--gray-500);">' + escapeHtml(p.category1||'') + (p.category2?' / '+escapeHtml(p.category2):'') + '</div></div>';
+        html += '<div><div style="font-weight:500;">' + escapeHtml(p.name) + '</div><div style="font-size:0.75rem;color:var(--gray-500);">' + escapeHtml(p.category||'') + '</div></div>';
         html += '<div style="text-align:right;"><div style="font-weight:600;color:var(--primary);">¥' + (p.sellingPrice||0).toFixed(2) + '</div><div style="font-size:0.6875rem;color:var(--gray-400);">' + escapeHtml(p.unit||'项') + '</div></div>';
         html += '</div>';
     });
@@ -10521,7 +10540,7 @@ function updateQuickSearchUI(results){
     results.slice(0,10).forEach((p, idx) => {
         const isSelected = window.quickSearchSelected.indexOf(p.id) > -1;
         html += '<div class="quick-search-item" onclick="toggleQuickSearchSelect(' + idx + ')" style="padding:0.625rem;border-bottom:1px solid var(--gray-100);cursor:pointer;display:flex;justify-content:space-between;align-items:center;' + (isSelected ? 'background:var(--primary-50);' : '') + '" onmouseover="this.style.background=\'var(--gray-50)\'" onmouseout="this.style.background=\'' + (isSelected ? 'var(--primary-50)' : '') + '\'">';
-        html += '<div style="display:flex;align-items:center;gap:0.5rem;"><span style="color:' + (isSelected ? 'var(--primary)' : 'var(--gray-300)') + ';">' + (isSelected ? '☑️' : '☐') + '</span><div><div style="font-weight:500;">' + escapeHtml(p.name) + '</div><div style="font-size:0.75rem;color:var(--gray-500);">' + escapeHtml(p.category1||'') + (p.category2?' / '+escapeHtml(p.category2):'') + '</div></div></div>';
+        html += '<div style="display:flex;align-items:center;gap:0.5rem;"><span style="color:' + (isSelected ? 'var(--primary)' : 'var(--gray-300)') + ';">' + (isSelected ? '☑️' : '☐') + '</span><div><div style="font-weight:500;">' + escapeHtml(p.name) + '</div><div style="font-size:0.75rem;color:var(--gray-500);">' + escapeHtml(p.category||'') + '</div></div></div>';
         html += '<div style="text-align:right;"><div style="font-weight:600;color:var(--primary);">¥' + (p.sellingPrice||0).toFixed(2) + '</div><div style="font-size:0.6875rem;color:var(--gray-400);">' + escapeHtml(p.unit||'项') + '</div></div>';
         html += '</div>';
     });
@@ -10713,7 +10732,7 @@ function populateQuoteProductList(){
     if(!appData.products || !appData.products.length){ c.innerHTML='<p style="text-align:center;color:var(--gray-500);font-size:0.8125rem;">产品库为空，请先添加产品</p>'; return; }
     const s=document.getElementById('quoteProductSearch').value.toLowerCase();
     let f=appData.products; 
-    if(s) f=f.filter(p=>p.name.toLowerCase().includes(s)||(p.category1&&p.category1.toLowerCase().includes(s))||(p.category2&&p.category2.toLowerCase().includes(s)));
+    if(s) f=f.filter(p=>p.name.toLowerCase().includes(s)||(p.category&&p.category.toLowerCase().includes(s)));
     const fragment = document.createDocumentFragment();
     f.slice(0,15).forEach(p => {
         const div = document.createElement('div');
@@ -10721,7 +10740,7 @@ function populateQuoteProductList(){
         div.onmouseover = function(){this.style.background='var(--gray-50)';};
         div.onmouseout = function(){this.style.background='transparent';};
         div.onclick = function(){addToQuote(p.id);};
-        const catText = [p.category1, p.category2].filter(Boolean).join(' / ');
+        const catText = p.category || '';
         div.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div style="display:flex;align-items:center;gap:0.375rem;">
@@ -12618,55 +12637,25 @@ function navigateCategory(index) {
     renderCategoryCards(last.cat1, last.cat2);
     renderProducts();
 }
-function updateSubCategoryOptions() {
-    const category1 = document.getElementById('productCategory1').value;
-    const category2Select = document.getElementById('productCategory2');
-    
-    // 清空并重置二级分类选项
-    category2Select.innerHTML = `
-        <option value="">选择二级分类</option>
-        <option value="__new__">+ 新建二级分类</option>
-    `;
-    
-    // 如果选择了一级分类，加载对应的二级分类
-    if (category1 && category1 !== '__new__' && appData.categories) {
-        const cat1 = appData.categories.find(c => c.name === category1);
-        if (cat1 && cat1.subCategories) {
-            cat1.subCategories.forEach(subCat => {
-                const option = document.createElement('option');
-                option.value = subCat;
-                option.textContent = subCat;
-                category2Select.appendChild(option);
-            });
-        }
-    }
-}
 
 function populateCategorySelects() {
-    const category1Select = document.getElementById('productCategory1');
+    const categorySelect = document.getElementById('productCategory');
     
-    // 清空并重置一级分类选项
-    category1Select.innerHTML = `
-        <option value="">选择一级分类</option>
-        <option value="__new__">+ 新建一级分类</option>
+    // 清空并重置分类选项
+    categorySelect.innerHTML = `
+        <option value="">选择分类</option>
+        <option value="__new__">+ 新建分类</option>
     `;
     
-    // 加载已有的一级分类
+    // 加载已有的分类
     if (appData.categories) {
         appData.categories.forEach(cat => {
             const option = document.createElement('option');
             option.value = cat.name;
             option.textContent = cat.name;
-            category1Select.appendChild(option);
+            categorySelect.appendChild(option);
         });
     }
-    
-    // 重置二级分类
-    const category2Select = document.getElementById('productCategory2');
-    category2Select.innerHTML = `
-        <option value="">选择二级分类</option>
-        <option value="__new__">+ 新建二级分类</option>
-    `;
 }
 
 function openAddProductModal(){
@@ -12715,9 +12704,30 @@ function openAddProductModal(){
 function updateProductCalcFields() {
     const calcType = document.getElementById('productCalcType').value;
     const sizeFields = document.getElementById('productSizeFields');
+    const heightField = document.querySelector('#productSizeFields .form-group:nth-child(2)');
+    const cubicFields = document.getElementById('productCubicFields');
     
-    if (calcType === 'area' || calcType === 'size') {
+    // 移除旧的立方字段（如果存在）
+    if (cubicFields) {
+        cubicFields.remove();
+    }
+    
+    if (calcType === 'area' || calcType === 'size' || calcType === 'cubic' || calcType === 'character') {
         sizeFields.style.display = 'block';
+        
+        // 如果是立方计算，添加高度字段
+        if (calcType === 'cubic') {
+            if (heightField) {
+                heightField.innerHTML = '<label>高度 (米)</label><input type="number" id="productHeight" step="0.01" min="0" placeholder="0.00" oninput="calculateProductPrice()">';
+            }
+            // 添加深度字段
+            const cubicHTML = '<div id="productCubicFields" style="margin-top:0.5rem;">' +
+                '<div class="form-group"><label>深度 (米)</label><input type="number" id="productDepth" step="0.01" min="0" placeholder="0.00" oninput="calculateProductPrice()"></div>' +
+                '</div>';
+            sizeFields.insertAdjacentHTML('afterend', cubicHTML);
+        } else if (heightField) {
+            heightField.innerHTML = '<label>默认高度 (米)</label><input type="number" id="productHeight" step="0.01" min="0" placeholder="0.00" oninput="calculateProductPrice()">';
+        }
     } else {
         sizeFields.style.display = 'none';
     }
@@ -12728,15 +12738,54 @@ function calculateProductPrice() {
     const costPrice = parseFloat(document.getElementById('productCostPrice').value) || 0;
     const width = parseFloat(document.getElementById('productWidth').value) || 0;
     const height = parseFloat(document.getElementById('productHeight').value) || 0;
+    const depth = parseFloat(document.getElementById('productDepth').value) || 0;
+    const markupRate = 1.3;
+    let sellingPrice = 0;
+    let unit = '项';
     
-    if (calcType === 'area' && width > 0 && height > 0) {
-        const area = width * height;
-        // 如果成本价是单价/平方，则计算总价
-        const unitCost = costPrice;
-        // 售价默认加价30%
-        const markupRate = 1.3;
-        document.getElementById('productSellingPrice').value = (area * unitCost * markupRate).toFixed(2);
-        document.getElementById('productUnit').value = '平方';
+    switch (calcType) {
+        case 'area':
+            if (width > 0 && height > 0) {
+                const area = width * height;
+                sellingPrice = area * costPrice * markupRate;
+                unit = '平方';
+            }
+            break;
+        case 'cubic':
+            if (width > 0 && height > 0 && depth > 0) {
+                const volume = width * height * depth;
+                sellingPrice = volume * costPrice * markupRate;
+                unit = '立方';
+            }
+            break;
+        case 'length':
+            if (width > 0) {
+                sellingPrice = width * costPrice * markupRate;
+                unit = '米';
+            }
+            break;
+        case 'character':
+            if (width > 0 && height > 0) {
+                const area = width * height;
+                sellingPrice = area * costPrice * markupRate;
+                unit = '平方';
+            }
+            break;
+        case 'size':
+        case 'fixed':
+        default:
+            sellingPrice = costPrice * markupRate;
+            unit = '项';
+            break;
+    }
+    
+    if (sellingPrice > 0) {
+        document.getElementById('productSellingPrice').value = sellingPrice.toFixed(2);
+    }
+    
+    // 仅在自动计算成功时更新单位
+    if (calcType !== 'fixed' && sellingPrice > 0) {
+        document.getElementById('productUnit').value = unit;
     }
 }
 
@@ -12745,8 +12794,16 @@ function openEditProductModal(pid){
     document.getElementById('productModalTitle').textContent='编辑产品';
     document.getElementById('productId').value=p.id;
     document.getElementById('productName').value=p.name;
-    document.getElementById('productCategory1').value=p.category1||p.category||'';
-    document.getElementById('productCategory2').value=p.category2||'';
+    
+    // 先填充分类选项，再设置值
+    populateCategorySelects();
+    // 兼容旧数据：优先使用 category，否则用 category1 + category2 拼接
+    var catValue = p.category || p.category1 || '';
+    if (!p.category && p.category1 && p.category2) {
+        catValue = p.category1 + ' / ' + p.category2;
+    }
+    document.getElementById('productCategory').value = catValue;
+    
     document.getElementById('productDescription').value=p.description||'';
     document.getElementById('productCostPrice').value=p.costPrice||'';
     document.getElementById('productSellingPrice').value=p.sellingPrice;
@@ -13238,8 +13295,7 @@ function saveProduct(){
     const productName = document.getElementById('productName');
     const productSellingPrice = document.getElementById('productSellingPrice');
     const productCostPrice = document.getElementById('productCostPrice');
-    const productCategory1 = document.getElementById('productCategory1');
-    const productCategory2 = document.getElementById('productCategory2');
+    const productCategory = document.getElementById('productCategory');
     const productDescription = document.getElementById('productDescription');
     const productUnit = document.getElementById('productUnit');
     const imagePreview = document.getElementById('imagePreview');
@@ -13269,7 +13325,7 @@ function saveProduct(){
     });
     if (existingProduct) {
         var confirmMsg = '⚠️ 已存在同名产品「' + existingProduct.name + '」';
-        if (existingProduct.category1) confirmMsg += '（' + existingProduct.category1 + '）';
+        if (existingProduct.category) confirmMsg += '（' + existingProduct.category + '）';
         confirmMsg += '\n\n是否仍要添加？';
         if (!confirm(confirmMsg)) {
             return;
@@ -13282,61 +13338,29 @@ function saveProduct(){
     if(costPrice < 0){ showToast('成本价不能为负数！', 'warning'); return; }
     
     // 处理分类选择
-    let category1 = productCategory1 ? productCategory1.value : '';
-    let category2 = productCategory2 ? productCategory2.value : '';
+    let category = productCategory ? productCategory.value : '';
     
-    // 如果选择了新建一级分类
-    if (category1 === '__new__') {
-        const newCat1 = prompt('请输入新的一级分类名称：');
-        if (!newCat1 || !newCat1.trim()) {
+    // 如果选择了新建分类
+    if (category === '__new__') {
+        const newCat = prompt('请输入新的分类名称：');
+        if (!newCat || !newCat.trim()) {
             showToast('请输入分类名称', 'warning');
             return;
         }
-        category1 = newCat1.trim();
+        category = newCat.trim();
         
         // 添加到分类数组
         if (!appData.categories) {
             appData.categories = [];
         }
-        if (!appData.categories.some(c => c.name === category1)) {
-            appData.categories.push({
-                name: category1,
-                subCategories: []
-            });
-        }
-    }
-    
-    // 如果选择了新建二级分类
-    if (category2 === '__new__') {
-        if (!category1 || category1 === '__new__') {
-            showToast('请先选择或创建一级分类', 'warning');
-            return;
-        }
-        const newCat2 = prompt('请输入新的二级分类名称：');
-        if (!newCat2 || !newCat2.trim()) {
-            showToast('请输入子分类名称', 'warning');
-            return;
-        }
-        category2 = newCat2.trim();
-        
-        // 添加到分类数组
-        if (!appData.categories) {
-            appData.categories = [];
-        }
-        let cat1Obj = appData.categories.find(c => c.name === category1);
-        if (!cat1Obj) {
-            cat1Obj = { name: category1, subCategories: [] };
-            appData.categories.push(cat1Obj);
-        }
-        if (!cat1Obj.subCategories.includes(category2)) {
-            cat1Obj.subCategories.push(category2);
+        if (!appData.categories.some(c => c.name === category)) {
+            appData.categories.push({ name: category });
         }
     }
     
     const p={
         name:sanitizeString(name, 50),
-        category1:sanitizeString(category1, 50),
-        category2:sanitizeString(category2, 50),
+        category:sanitizeString(category, 50),
         description:sanitizeString(productDescription ? productDescription.value : '', 500),
         costPrice:costPrice,
         sellingPrice:sellingPrice,
@@ -13600,15 +13624,13 @@ function toggleBatchMode(){
 function selectAllProducts(){
     const s=document.getElementById('productSearch').value.toLowerCase();
     let f=appData.products;
-    if(s) f=f.filter(p=>p.name.toLowerCase().includes(s)||(p.category1&&p.category1.toLowerCase().includes(s))||(p.category2&&p.category2.toLowerCase().includes(s))||(p.description&&p.description.toLowerCase().includes(s)));
+    if(s) f=f.filter(p=>p.name.toLowerCase().includes(s)||(p.category&&p.category.toLowerCase().includes(s))||(p.description&&p.description.toLowerCase().includes(s)));
     
     // 使用分类卡片的筛选
     if (window.currentCategoryPath && window.currentCategoryPath.length > 1) {
         const last = window.currentCategoryPath[window.currentCategoryPath.length - 1];
-        if (last.type === 'cat1') {
-            f = f.filter(p => p.category1 === last.cat1);
-        } else if (last.type === 'cat2') {
-            f = f.filter(p => p.category1 === last.cat1 && p.category2 === last.cat2);
+        if (last.type === 'cat') {
+            f = f.filter(p => p.category === last.cat);
         }
     }
     batchSelectedIds = f.map(p => p.id);
@@ -13651,8 +13673,7 @@ function executeBatchDelete(){
                 if(window.currentCategoryPath && window.currentCategoryPath.length > 1){
                     const last = window.currentCategoryPath[window.currentCategoryPath.length - 1];
                     const hasProductsInCategory = appData.products.some(p => {
-                        if(last.type === 'cat1') return p.category1 === last.cat1;
-                        if(last.type === 'cat2') return p.category1 === last.cat1 && p.category2 === last.cat2;
+                        if(last.type === 'cat1') return p.category === last.cat1 || p.category1 === last.cat1;
                         return true;
                     });
                     if(!hasProductsInCategory){
@@ -24332,7 +24353,7 @@ function findSimilarProducts() {
                         <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem;background:#fef3c7;border-radius:var(--radius);cursor:pointer;" onclick="selectSimilarProduct(${p.id})">
                             <div>
                                 <div style="font-weight:500;">${escapeHtml(p.name)}</div>
-                                <small style="color:#9ca3af;">${escapeHtml(p.category1 || '')} ${escapeHtml(p.category2 || '')}</small>
+                                <small style="color:#9ca3af;">${escapeHtml(p.category || p.category1 || '')}</small>
                             </div>
                             <div style="text-align:right;">
                                 <div style="color:#166534;font-weight:600;">¥${(p.sellingPrice || 0).toFixed(2)}</div>
@@ -25077,7 +25098,7 @@ function generatePricingRecommendation(product){
     // 查找同类产品进行比较
     const similarProducts = appData.products.filter(p => {
         if(p.id === product.id) return false;
-        return p.category1 === product.category1 || p.category2 === product.category2;
+        return p.category === product.category || p.category1 === product.category1;
     });
     
     // 分析同类产品定价
@@ -25249,30 +25270,18 @@ function renderCategoryCards(selectedCat1 = null, selectedCat2 = null) {
         categories = appData.categories;
     } else {
         // 兼容旧数据：从产品中提取分类
-        const catMap = {};
+        const catSet = new Set();
         appData.products.forEach(p => {
-            if (p.category1) {
-                if (!catMap[p.category1]) {
-                    catMap[p.category1] = { name: p.category1, subCategories: new Set() };
-                }
-                if (p.category2) {
-                    catMap[p.category1].subCategories.add(p.category2);
-                }
-            }
+            if (p.category) catSet.add(p.category);
+            if (p.category1) catSet.add(p.category1);
         });
-        categories = Object.values(catMap).map(c => ({
-            name: c.name,
-            subCategories: Array.from(c.subCategories)
-        }));
+        categories = Array.from(catSet).map(name => ({ name: name }));
     }
     
     // 计算每个分类的产品数量
-    const getProductCount = (cat1, cat2 = null) => {
+    const getProductCount = (catName) => {
         return appData.products.filter(p => {
-            if (cat2) {
-                return p.category1 === cat1 && p.category2 === cat2;
-            }
-            return p.category1 === cat1;
+            return p.category === catName || p.category1 === catName;
         }).length;
     };
     
@@ -25348,16 +25357,14 @@ function renderProducts(useSmartResults = false){
             f = cached;
         } else {
             if(!useSmartResults && s) {
-                f=f.filter(p=>p.name.toLowerCase().includes(s)||(p.category1&&p.category1.toLowerCase().includes(s))||(p.category2&&p.category2.toLowerCase().includes(s))||(p.description&&p.description.toLowerCase().includes(s)));
+                f=f.filter(p=>p.name.toLowerCase().includes(s)||(p.category&&p.category.toLowerCase().includes(s))||(p.description&&p.description.toLowerCase().includes(s)));
             }
 
             // 使用分类卡片的筛选
             if (window.currentCategoryPath && window.currentCategoryPath.length > 1) {
                 const last = window.currentCategoryPath[window.currentCategoryPath.length - 1];
                 if (last.type === 'cat1') {
-                    f = f.filter(p => p.category1 === last.cat1);
-                } else if (last.type === 'cat2') {
-                    f = f.filter(p => p.category1 === last.cat1 && p.category2 === last.cat2);
+                    f = f.filter(p => p.category === last.cat1 || p.category1 === last.cat1);
                 }
             }
             if(favoritesFilterActive){
@@ -25370,16 +25377,14 @@ function renderProducts(useSmartResults = false){
     } else {
         // 智能搜索模式或已有结果，不使用缓存
         if(!useSmartResults && s) {
-            f=f.filter(p=>p.name.toLowerCase().includes(s)||(p.category1&&p.category1.toLowerCase().includes(s))||(p.category2&&p.category2.toLowerCase().includes(s))||(p.description&&p.description.toLowerCase().includes(s)));
+            f=f.filter(p=>p.name.toLowerCase().includes(s)||(p.category&&p.category.toLowerCase().includes(s))||(p.description&&p.description.toLowerCase().includes(s)));
         }
 
         // 使用分类卡片的筛选
         if (window.currentCategoryPath && window.currentCategoryPath.length > 1) {
             const last = window.currentCategoryPath[window.currentCategoryPath.length - 1];
             if (last.type === 'cat1') {
-                f = f.filter(p => p.category1 === last.cat1);
-            } else if (last.type === 'cat2') {
-                f = f.filter(p => p.category1 === last.cat1 && p.category2 === last.cat2);
+                f = f.filter(p => p.category === last.cat1 || p.category1 === last.cat1);
             }
         }
         if(favoritesFilterActive){
@@ -25423,7 +25428,7 @@ function renderProducts(useSmartResults = false){
                 const costPrice = p.costPrice !== undefined ? p.costPrice : (p.cost || 0); 
                 const profit = sellingPrice - costPrice; 
                 const pp = costPrice ? ((profit / costPrice) * 100).toFixed(0) : 0; 
-                const catText = [p.category1, p.category2].filter(Boolean).join('/'); 
+                const catText = p.category || p.category1 || ''; 
                 const isSelected = batchSelectedIds.includes(p.id); 
                 const tdCost = isAdmin ? '<td style="padding:0.375rem;text-align:right;">¥' + costPrice + '</td>' : '';
                 const tdSelling = '<td style="padding:0.375rem;text-align:right;font-weight:600;color:#2563eb;">¥' + sellingPrice + '</td>';
@@ -25465,7 +25470,7 @@ function renderProducts(useSmartResults = false){
         const profit = sellingPrice - costPrice;
         const pp = costPrice ? ((profit / costPrice) * 100).toFixed(0) : 0;
         const ih = p.image ? `<img src="${p.image}" alt="${escapeHtml(p.name || '')}" loading="lazy">` : '<span>暂无图片</span>';
-        const catText = [p.category1, p.category2].filter(Boolean).join(' / ');
+        const catText = p.category || p.category1 || '';
         const isSelected = batchSelectedIds.includes(p.id);
         const isTileMode = productViewMode === 'tile';
         const div = document.createElement('div');
@@ -27996,9 +28001,7 @@ function setupInfiniteScroll() {
                     if (window.currentCategoryPath && window.currentCategoryPath.length > 1) {
                         var last = window.currentCategoryPath[window.currentCategoryPath.length - 1];
                         if (last.type === 'cat1') {
-                            f = f.filter(function(p) { return p.category1 === last.cat1; });
-                        } else if (last.type === 'cat2') {
-                            f = f.filter(function(p) { return p.category1 === last.cat1 && p.category2 === last.cat2; });
+                            f = f.filter(function(p) { return p.category === last.cat1 || p.category1 === last.cat1; });
                         }
                     }
                     if (favoritesFilterActive) {
@@ -31095,7 +31098,7 @@ function globalSearch() {
     const results = [];
     appData.products.forEach(p => {
         if (p.name.toLowerCase().includes(keyword) || (p.description && p.description.toLowerCase().includes(keyword))) {
-            results.push({type: '产品', name: p.name, description: (p.category1 ? p.category1 + (p.category2 ? ' / ' + p.category2 : '') : '') + ' - ¥' + p.sellingPrice, id: p.id});
+            results.push({type: '产品', name: p.name, description: (p.category || p.category1 || '') + ' - ¥' + p.sellingPrice, id: p.id});
         }
     });
     appData.templates.forEach(t => {
@@ -31150,7 +31153,7 @@ function handleHeaderGlobalSearch(keyword) {
 
     appData.products.forEach(p => {
         if (p.name.toLowerCase().includes(keyword) || (p.description && p.description.toLowerCase().includes(keyword))) {
-            results.push({type: '产品', name: p.name, description: (p.category1 ? p.category1 + (p.category2 ? ' / ' + p.category2 : '') : '') + ' - ¥' + (p.sellingPrice || p.price || 0), id: p.id});
+            results.push({type: '产品', name: p.name, description: (p.category || p.category1 || '') + ' - ¥' + (p.sellingPrice || p.price || 0), id: p.id});
         }
     });
     appData.templates.forEach(t => {
@@ -31550,9 +31553,11 @@ function importAllData(event){
                     printStyle:'classic', defaultTaxRate:13, defaultPriceMode:'in', defaultDiscountRate:100, quoteValidDays:7, selectedSealId:null 
                 }; 
                 appData.products.forEach(p => {
-                    if (!p.category1 && p.category) {
-                        p.category1 = p.category;
-                        p.category2 = '';
+                    // 兼容旧数据：把 category1/category2 转换为 category
+                    if (!p.category) {
+                        if (p.category1) {
+                            p.category = p.category2 ? (p.category1 + ' / ' + p.category2) : p.category1;
+                        }
                     }
                 });
                 appData.currentQuote.items.forEach(item=>{ 
@@ -31642,9 +31647,11 @@ function importAllData(event){
                     printStyle:'classic', defaultTaxRate:13, defaultPriceMode:'in', defaultDiscountRate:100, quoteValidDays:7, selectedSealId:null 
                 }; 
                 appData.products.forEach(p => {
-                    if (!p.category1 && p.category) {
-                        p.category1 = p.category;
-                        p.category2 = '';
+                    // 兼容旧数据：把 category1/category2 转换为 category
+                    if (!p.category) {
+                        if (p.category1) {
+                            p.category = p.category2 ? (p.category1 + ' / ' + p.category2) : p.category1;
+                        }
                     }
                 });
                 appData.currentQuote.items.forEach(item=>{ 
@@ -31750,8 +31757,7 @@ function importFromXLSX(file, headers, callback) {
 function exportProductsXLSX() {
     var headers = [
         { key: 'name', label: '产品名称', width: 25 },
-        { key: 'category1', label: '一级分类', width: 15 },
-        { key: 'category2', label: '二级分类', width: 15 },
+        { key: 'category', label: '分类', width: 20 },
         { key: 'description', label: '产品描述', width: 35 },
         { key: 'calcType', label: '计算方式', width: 12 },
         { key: 'width', label: '默认宽度(米)', width: 12 },
@@ -31801,8 +31807,7 @@ function importProductsXLSX(event) {
     if (!file) return;
     var headers = [
         { key: 'name', label: '产品名称' },
-        { key: 'category1', label: '一级分类' },
-        { key: 'category2', label: '二级分类' },
+        { key: 'category', label: '分类' },
         { key: 'description', label: '产品描述' },
         { key: 'calcType', label: '计算方式' },
         { key: 'width', label: '默认宽度(米)' },
@@ -31832,11 +31837,19 @@ function importProductsXLSX(event) {
         }
         
         var newProducts = importedData.map(function(row, idx) {
+            // 兼容旧数据：优先使用 category，否则拼接 category1/category2
+            var cat = String(row.category || '').trim();
+            if (!cat && row.category1) {
+                cat = String(row.category1).trim();
+                if (row.category2) {
+                    cat += ' / ' + String(row.category2).trim();
+                }
+            }
+            
             var product = {
                 id: Date.now() * 1000 + idx,
                 name: String(row.name || '').trim(),
-                category1: String(row.category1 || row.category || '').trim(),
-                category2: String(row.category2 || '').trim(),
+                category: cat,
                 description: String(row.description || '').trim(),
                 calcType: String(row.calcType || 'fixed').trim(),
                 width: parseFloat(row.width) || 0,
@@ -35008,21 +35021,19 @@ function getCategories() {
         return appData.categories.map(c => c.name);
     }
     // 从产品中提取分类作为兼容
-    const cat1Set = new Set(appData.products.map(p => p.category1).filter(Boolean));
-    const categories = Array.from(cat1Set).map(name => ({
-        name,
-        subCategories: [...new Set(appData.products.filter(p => p.category1 === name).map(p => p.category2).filter(Boolean))]
-    }));
+    const catSet = new Set();
+    appData.products.forEach(p => {
+        if (p.category) catSet.add(p.category);
+        if (p.category1) catSet.add(p.category1);
+    });
+    const categories = Array.from(catSet).map(name => ({ name }));
     appData.categories = categories;
     saveData();
     return categories.map(c => c.name);
 }
 
-function getProductCount(cat1, cat2) {
-    if (cat2) {
-        return appData.products.filter(p => p.category1 === cat1 && p.category2 === cat2).length;
-    }
-    return appData.products.filter(p => p.category1 === cat1).length;
+function getProductCount(catName) {
+    return appData.products.filter(p => p.category === catName || p.category1 === catName).length;
 }
 
 // ===== 通过名称获取产品价格 =====
@@ -35118,7 +35129,7 @@ function addSubCategory(cat1) {
 }
 
 function renameCategory(oldName, type, parentCat) {
-    const newName = prompt(`请输入新的${type === 'cat1' ? '分类' : '子分类'}名称：`, oldName);
+    const newName = prompt(`请输入新的分类名称：`, oldName);
     if (!newName || !newName.trim() || newName === oldName) return;
     const trimmedNewName = newName.trim();
     
@@ -35128,31 +35139,18 @@ function renameCategory(oldName, type, parentCat) {
     }
     
     if (type === 'cat1') {
-        // 重命名一级分类
+        // 重命名分类
         const catIndex = appData.categories.findIndex(c => c.name === oldName);
         if (catIndex !== -1) {
             appData.categories[catIndex].name = trimmedNewName;
-        }
-    } else {
-        // 重命名二级分类
-        const parentCatObj = appData.categories.find(c => c.name === parentCat);
-        if (parentCatObj) {
-            if (!Array.isArray(parentCatObj.subCategories)) {
-                parentCatObj.subCategories = [];
-            }
-            const subIndex = parentCatObj.subCategories.indexOf(oldName);
-            if (subIndex !== -1) {
-                parentCatObj.subCategories[subIndex] = trimmedNewName;
-            }
         }
     }
     
     // 更新产品中的分类名称
     appData.products.forEach(p => {
-        if (type === 'cat1' && p.category1 === oldName) {
-            p.category1 = trimmedNewName;
-        } else if (type === 'cat2' && p.category1 === parentCat && p.category2 === oldName) {
-            p.category2 = trimmedNewName;
+        if (type === 'cat1' && (p.category === oldName || p.category1 === oldName)) {
+            p.category = trimmedNewName;
+            if (p.category1) p.category1 = trimmedNewName;
         }
     });
     
@@ -35164,7 +35162,7 @@ function renameCategory(oldName, type, parentCat) {
 }
 
 function deleteCategory(name, type, parentCat) {
-    const count = getProductCount(parentCat || name, type === 'cat2' ? name : undefined);
+    const count = getProductCount(name);
     if (count > 0) {
         if (!confirm(`该分类下有 ${count} 个产品，确定删除吗？删除后产品将变为未分类状态。`)) {
             return;
@@ -35179,28 +35177,14 @@ function deleteCategory(name, type, parentCat) {
             if (catIndex !== -1) {
                 appData.categories.splice(catIndex, 1);
             }
-        } else {
-            // 删除二级分类
-            const parentCatObj = appData.categories.find(c => c.name === parentCat);
-            if (parentCatObj) {
-                if (!Array.isArray(parentCatObj.subCategories)) {
-                    parentCatObj.subCategories = [];
-                }
-                const subIndex = parentCatObj.subCategories.indexOf(name);
-                if (subIndex !== -1) {
-                    parentCatObj.subCategories.splice(subIndex, 1);
-                }
-            }
         }
     }
     
     // 更新产品中的分类名称
     appData.products.forEach(p => {
-        if (type === 'cat1' && p.category1 === name) {
-            p.category1 = '';
-            p.category2 = '';
-        } else if (type === 'cat2' && p.category1 === parentCat && p.category2 === name) {
-            p.category2 = '';
+        if (type === 'cat1' && (p.category === name || p.category1 === name)) {
+            p.category = '';
+            if (p.category1) p.category1 = '';
         }
     });
     
