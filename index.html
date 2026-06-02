@@ -7361,12 +7361,41 @@ var DataManager = {
                         <button type="button" class="btn btn-outline btn-sm" onclick="openPhotoSelector()">📷 从相册选择</button>
                         <button type="button" class="btn btn-outline btn-sm" onclick="removeProductImage()" style="display:none;" id="removeImageBtn">🗑️ 移除图片</button>
                     </div>
-                    <div id="imagePreviewContainer" style="margin-top:0.375rem;"><img id="imagePreview" class="image-preview hidden"></div>
+                    <div class="form-group" style="margin-bottom:0.375rem;">
+                        <label style="font-size:0.75rem;margin-bottom:0.125rem;">或使用在线图片URL</label>
+                        <input type="url" id="productImageUrlField" placeholder="http:// 或 https:// 开头的图片链接" oninput="applyProductImageUrl(this)" style="width:100%;padding:0.5rem 0.625rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.875rem;outline:none;">
+                    </div>
+                    <div id="imagePreviewContainer" style="margin-top:0.375rem;">
+                        <img id="imagePreview" class="image-preview hidden" onerror="handleImagePreviewError(this)">
+                        <div id="imageUrlHint" style="display:none;margin-top:0.25rem;font-size:0.7rem;color:var(--gray-500);word-break:break-all;"></div>
+                    </div>
                     <div id="materialAnalysisResult" style="margin-top:0.5rem;display:none;padding:0.5rem;background:#f3f4f6;border-radius:var(--radius);font-size:0.875rem;"></div>
                 </div>
         </form>
     </div>
     <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('productModal')">取消</button><button class="btn btn-primary" onclick="saveProduct()">保存</button></div>
+</div></div>
+<!-- 产品图片URL输入弹窗 -->
+<div id="productImageUrlModal" class="modal"><div class="modal-content">
+    <div class="modal-header"><h3 class="modal-title">🔗 设置产品图片URL</h3><button class="modal-close" onclick="closeModal('productImageUrlModal')">&times;</button></div>
+    <div class="modal-body">
+        <form id="productImageUrlForm" class="form-grid">
+            <div class="form-group full-width">
+                <label>图片URL地址</label>
+                <input type="url" id="productImageUrlInput" required placeholder="请输入 http:// 或 https:// 开头的图片链接" style="width:100%;padding:0.625rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.875rem;outline:none;transition:border-color 0.2s;" oninput="checkProductImageUrl()">
+            </div>
+            <div class="form-group full-width" style="margin:0;">
+                <div id="productImageUrlPreview" style="min-height:120px;background:var(--gray-100);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--gray-500);padding:0.5rem;overflow:hidden;">
+                    输入URL后这里会显示预览
+                </div>
+                <p id="productImageUrlHint" style="margin-top:0.5rem;font-size:0.75rem;color:var(--gray-600);">支持格式：jpg、jpeg、png、gif、webp、svg、bmp、ico、avif</p>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('productImageUrlModal')">取消</button>
+        <button class="btn btn-primary" id="productImageUrlConfirmBtn" onclick="confirmProductImageUrl()" disabled>确定</button>
+    </div>
 </div></div>
 <!-- 模板 Modal -->
 <div id="templateDetailModal" class="modal"><div class="modal-content" style="max-width:800px;max-height:90vh;overflow-y:auto;">
@@ -12647,7 +12676,14 @@ function openAddProductModal(){
     document.getElementById('imagePreview').classList.add('hidden');
     document.getElementById('imagePreview').src = '';
     document.getElementById('imagePreview').dataset.imageRemoved = 'false';
+    document.getElementById('imagePreview').dataset.isUrl = 'false';
+    document.getElementById('imagePreview').dataset.errorShown = 'false';
     document.getElementById('removeImageBtn').style.display = 'none';
+    document.getElementById('productImageUrlField').value = ''; // 清空URL输入框
+    var addHint = document.getElementById('imageUrlHint');
+    if (addHint) { addHint.style.display = 'none'; addHint.textContent = ''; }
+    var addAiBtn = document.getElementById('aiMaterialBtn');
+    if (addAiBtn) addAiBtn.disabled = true;
 
     // 清除表单错误状态
     clearFormFieldErrors();
@@ -12732,15 +12768,35 @@ function openEditProductModal(pid){
     // 加载图片
     const loadImage = function(url) {
         // 清除图片移除标志
-        document.getElementById('imagePreview').dataset.imageRemoved = 'false';
+        var preview = document.getElementById('imagePreview');
+        preview.dataset.imageRemoved = 'false';
+        preview.dataset.errorShown = 'false';
+        var urlField = document.getElementById('productImageUrlField');
         if(url){
-            document.getElementById('imagePreview').src=url;
-            document.getElementById('imagePreview').classList.remove('hidden');
+            if(/^https?:\/\//i.test(url)) {
+                preview.dataset.isUrl = 'true';
+                urlField.value = url; // 回显URL到输入框
+                var editHint = document.getElementById('imageUrlHint');
+                if (editHint) { editHint.textContent = '🔗 在线图片：' + url; editHint.style.display = 'block'; }
+                var editAiBtn = document.getElementById('aiMaterialBtn');
+                if (editAiBtn) editAiBtn.disabled = true;
+            } else {
+                preview.dataset.isUrl = 'false';
+                urlField.value = ''; // 本地图片，清空URL输入框
+                var editHint2 = document.getElementById('imageUrlHint');
+                if (editHint2) { editHint2.style.display = 'none'; editHint2.textContent = ''; }
+            }
+            preview.src=url;
+            preview.classList.remove('hidden');
             document.getElementById('removeImageBtn').style.display = 'inline-flex';
         } else {
-            document.getElementById('imagePreview').src='';
-            document.getElementById('imagePreview').classList.add('hidden');
+            preview.src='';
+            preview.classList.add('hidden');
             document.getElementById('removeImageBtn').style.display = 'none';
+            preview.dataset.isUrl = 'false';
+            urlField.value = ''; // 清空URL输入框
+            var editHint3 = document.getElementById('imageUrlHint');
+            if (editHint3) { editHint3.style.display = 'none'; editHint3.textContent = ''; }
         }
         openModal('productModal');
     };
@@ -12789,8 +12845,13 @@ function handleProductImageUpload(input){
                 const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
                 document.getElementById('imagePreview').src = compressedDataUrl;
                 document.getElementById('imagePreview').classList.remove('hidden');
+                document.getElementById('imagePreview').dataset.isUrl = 'false';
+                document.getElementById('imagePreview').dataset.errorShown = 'false';
+                document.getElementById('productImageUrlField').value = ''; // 上传本地图片，清空URL输入框
                 document.getElementById('removeImageBtn').style.display = 'inline-flex';
                 document.getElementById('aiMaterialBtn').disabled = false;
+                var uploadHint = document.getElementById('imageUrlHint');
+                if (uploadHint) { uploadHint.style.display = 'none'; uploadHint.textContent = ''; }
                 showToast('图片上传完成', 'success');
                 
                 // 同时添加到相册
@@ -12917,11 +12978,20 @@ function renderPhotoSelectorGrid() {
 function selectPhotoForProduct(photoId) {
     const photo = appData.photos.find(p => p.id === photoId);
     if (!photo) return;
-    
-    document.getElementById('imagePreview').src = photo.data;
-    document.getElementById('imagePreview').classList.remove('hidden');
+
+    var preview = document.getElementById('imagePreview');
+    preview.src = photo.data;
+    preview.classList.remove('hidden');
+    preview.dataset.imageRemoved = 'false';
+    preview.dataset.isUrl = 'false';
+    preview.dataset.errorShown = 'false';
+    document.getElementById('productImageUrlField').value = ''; // 从相册选择本地图片，清空URL输入框
     document.getElementById('removeImageBtn').style.display = 'inline-flex';
-    
+    var selHint = document.getElementById('imageUrlHint');
+    if (selHint) { selHint.style.display = 'none'; selHint.textContent = ''; }
+    var selAiBtn = document.getElementById('aiMaterialBtn');
+    if (selAiBtn) selAiBtn.disabled = false;
+
     closePhotoSelector();
     showToast('已选择照片', 'success');
 }
@@ -12938,9 +13008,149 @@ function removeProductImage() {
     document.getElementById('imagePreview').classList.add('hidden');
     document.getElementById('removeImageBtn').style.display = 'none';
     document.getElementById('productImage').value = '';
+    document.getElementById('productImageUrlField').value = '';
     // 设置标志表示图片已被手动移除
     document.getElementById('imagePreview').dataset.imageRemoved = 'true';
+    document.getElementById('imagePreview').dataset.isUrl = 'false';
+    var hint = document.getElementById('imageUrlHint');
+    if (hint) { hint.style.display = 'none'; hint.textContent = ''; }
     showToast('图片已移除', 'success');
+}
+
+// 直接应用输入框中的图片URL
+function applyProductImageUrl(input) {
+    var url = input.value.trim();
+    if (!url) {
+        // 清空时不做操作，用户可以通过「移除图片」按钮来删除
+        return;
+    }
+    if (!/^https?:\/\//i.test(url)) {
+        return;
+    }
+
+    var preview = document.getElementById('imagePreview');
+    // 清除文件上传与已移除标志
+    var fileInput = document.getElementById('productImage');
+    if (fileInput) fileInput.value = '';
+    preview.dataset.imageRemoved = 'false';
+    preview.dataset.isUrl = 'true';
+    preview.dataset.errorShown = 'false';
+
+    // 设置预览
+    preview.src = url;
+    preview.classList.remove('hidden');
+    document.getElementById('removeImageBtn').style.display = 'inline-flex';
+
+    // 显示URL提示
+    var hint = document.getElementById('imageUrlHint');
+    if (hint) {
+        hint.textContent = '🔗 在线图片：' + url;
+        hint.style.display = 'block';
+    }
+
+    // URL图片不进行本地AI材质识别（避免CORS）
+    var aiBtn = document.getElementById('aiMaterialBtn');
+    if (aiBtn) aiBtn.disabled = true;
+}
+
+// 打开产品图片URL输入弹窗
+function setProductImageFromUrl() {
+    var currentUrl = '';
+    var preview = document.getElementById('imagePreview');
+    if (preview && preview.dataset && preview.dataset.isUrl === 'true' && preview.src) {
+        currentUrl = preview.src;
+    }
+    document.getElementById('productImageUrlInput').value = currentUrl;
+    checkProductImageUrl();
+    openModal('productImageUrlModal');
+    setTimeout(function(){document.getElementById('productImageUrlInput').focus();}, 100);
+}
+
+// 校验产品图片URL并显示预览
+function checkProductImageUrl() {
+    var urlInput = document.getElementById('productImageUrlInput');
+    var previewContainer = document.getElementById('productImageUrlPreview');
+    var confirmBtn = document.getElementById('productImageUrlConfirmBtn');
+    var url = urlInput.value.trim();
+
+    // 重置预览和按钮
+    previewContainer.innerHTML = '输入URL后这里会显示预览';
+    previewContainer.style.alignItems = 'center';
+    confirmBtn.disabled = true;
+
+    if (!url) return;
+    if (!/^https?:\/\//i.test(url)) {
+        previewContainer.innerHTML = '❌ URL必须以 http:// 或 https:// 开头';
+        return;
+    }
+
+    var looksLikeImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg|ico|avif)(\?.*)?$|^data:image\//i.test(url.toLowerCase());
+    if (!looksLikeImage) {
+        previewContainer.innerHTML = '⚠️ 该URL看起来不是常见的图片格式，仍可尝试';
+    }
+
+    // 尝试加载图片预览
+    var img = new Image();
+    img.onload = function() {
+        previewContainer.innerHTML = '';
+        previewContainer.style.alignItems = 'stretch';
+        img.style.width = '100%';
+        img.style.height = 'auto';
+        img.style.maxHeight = '300px';
+        img.style.objectFit = 'contain';
+        previewContainer.appendChild(img);
+        confirmBtn.disabled = false;
+    };
+    img.onerror = function() {
+        previewContainer.innerHTML = '⚠️ 图片加载失败，可能存在跨域限制或链接已失效（仍可尝试使用）';
+        confirmBtn.disabled = false; // 即使预览失败，允许用户尝试使用
+    };
+    img.src = url;
+}
+
+// 确认使用产品图片URL
+function confirmProductImageUrl() {
+    var urlInput = document.getElementById('productImageUrlInput');
+    var url = urlInput.value.trim();
+    if (!url || !/^https?:\/\//i.test(url)) {
+        showToast('请输入有效的 http/https URL', 'warning');
+        return;
+    }
+
+    var preview = document.getElementById('imagePreview');
+    // 清除文件上传与已移除标志
+    var fileInput = document.getElementById('productImage');
+    if (fileInput) fileInput.value = '';
+    preview.dataset.imageRemoved = 'false';
+    preview.dataset.isUrl = 'true';
+    preview.dataset.errorShown = 'false';
+
+    // 设置预览
+    preview.src = url;
+    preview.classList.remove('hidden');
+    document.getElementById('removeImageBtn').style.display = 'inline-flex';
+
+    // 显示URL提示
+    var hint = document.getElementById('imageUrlHint');
+    if (hint) {
+        hint.textContent = '🔗 在线图片：' + url;
+        hint.style.display = 'block';
+    }
+
+    // URL图片不进行本地AI材质识别（避免CORS）
+    var aiBtn = document.getElementById('aiMaterialBtn');
+    if (aiBtn) aiBtn.disabled = true;
+
+    closeModal('productImageUrlModal');
+    showToast('已设置在线图片URL', 'success');
+}
+
+// 图片预览加载失败时的处理
+function handleImagePreviewError(img) {
+    if (!img || !img.dataset || img.dataset.isUrl !== 'true') return;
+    if (img.dataset.errorShown === 'true') return;
+    img.dataset.errorShown = 'true';
+    showToast('图片加载失败：可能存在跨域限制(CORS)或链接已失效', 'error');
 }
 function handleBatchImageUpload(input){
     const files = input.files;
@@ -13176,7 +13386,12 @@ function saveProduct(){
     
     // 处理图片 - 等待 IDB 初始化完成
     const finalizeSave = function() {
-        if(imagePreviewSrc && imagePreviewSrc.startsWith('data:')) {
+        if(imagePreviewSrc && /^https?:\/\//i.test(imagePreviewSrc)) {
+            // 在线URL图片：直接保存URL字符串，不写入IDB
+            p.image = imagePreviewSrc;
+            p.imageId = null;
+            completeSave();
+        } else if(imagePreviewSrc && imagePreviewSrc.startsWith('data:')) {
             p.image = imagePreviewSrc;
             if(idbInitialized && IDB.isSupported()) {
                 const imageId = id ? 'product_' + id : 'product_' + p.id;
@@ -13200,7 +13415,11 @@ function saveProduct(){
         // 清除图片移除标志
         if (imagePreview && imagePreview.dataset) {
             imagePreview.dataset.imageRemoved = 'false';
+            imagePreview.dataset.isUrl = 'false';
+            imagePreview.dataset.errorShown = 'false';
         }
+        var saveHint = document.getElementById('imageUrlHint');
+        if (saveHint) { saveHint.style.display = 'none'; saveHint.textContent = ''; }
         // 添加团队活动记录
         var isNew = !id;
         addTeamActivity(isNew ? 'create' : 'update', 'product', p.name, isNew ? 'added' : 'modified', p.id);
@@ -30993,7 +31212,7 @@ document.addEventListener('click', function(e) {
 // ===== 导入导出 =====
 function exportProducts() {
     showToast('正在导出产品数据...', 'info');
-    
+
     // 创建包含图片引用信息的产品数据副本
     const productsWithImages = appData.products.map(product => {
         const productCopy = { ...product };
@@ -31001,16 +31220,25 @@ function exportProducts() {
         if (productCopy.imageId) {
             productCopy.imageLocation = 'indexeddb';
             productCopy.imageRef = productCopy.imageId;
+            productCopy.imageUrl = null;
         } else if (productCopy.image) {
-            productCopy.imageLocation = 'embedded';
-            productCopy.imageRef = 'base64_data';
+            if (/^https?:\/\//i.test(productCopy.image)) {
+                productCopy.imageLocation = 'url';
+                productCopy.imageUrl = productCopy.image;
+                productCopy.imageRef = null;
+            } else {
+                productCopy.imageLocation = 'embedded';
+                productCopy.imageRef = 'base64_data';
+                productCopy.imageUrl = null;
+            }
         } else {
             productCopy.imageLocation = 'none';
             productCopy.imageRef = null;
+            productCopy.imageUrl = null;
         }
         return productCopy;
     });
-    
+
     downloadFile(JSON.stringify(productsWithImages, null, 2), `products_${new Date().toISOString().slice(0, 10)}.json`, 'application/json');
     showToast('产品数据导出成功！图片引用信息已包含在导出文件中', 'success');
 }
@@ -31179,6 +31407,15 @@ function linkProductImage(product) {
         if (product.image && product.image.startsWith('[Stored in IndexedDB:')) {
             delete product.image;
         }
+    } else if (product.imageLocation === 'url' && product.imageRef) {
+        // 在线URL图片：直接把URL放到 image 字段
+        if (/^https?:\/\//i.test(product.imageRef)) {
+            product.image = product.imageRef;
+            // URL图片不需要 imageId
+            if (product.imageId) {
+                delete product.imageId;
+            }
+        }
     } else if (product.imageLocation === 'embedded' && product.image) {
         // 图片是嵌入的 base64 数据，保留 image 字段
         // 可以选择删除 imageId 避免冲突
@@ -31187,7 +31424,7 @@ function linkProductImage(product) {
         }
     }
     // 如果图片位置是 none，则保持原样
-    
+
     // 清理临时字段
     delete product.imageLocation;
     delete product.imageRef;
@@ -31510,64 +31747,73 @@ function importFromXLSX(file, headers, callback) {
     }; 
     reader.readAsArrayBuffer(file);
 }
-function exportProductsXLSX() { 
+function exportProductsXLSX() {
     var headers = [
-        { key: 'name', label: '产品名称', width: 25 }, 
-        { key: 'category1', label: '一级分类', width: 15 }, 
-        { key: 'category2', label: '二级分类', width: 15 }, 
-        { key: 'description', label: '产品描述', width: 35 }, 
+        { key: 'name', label: '产品名称', width: 25 },
+        { key: 'category1', label: '一级分类', width: 15 },
+        { key: 'category2', label: '二级分类', width: 15 },
+        { key: 'description', label: '产品描述', width: 35 },
         { key: 'calcType', label: '计算方式', width: 12 },
         { key: 'width', label: '默认宽度(米)', width: 12 },
         { key: 'height', label: '默认高度(米)', width: 12 },
-        { key: 'costPrice', label: '成本价', width: 10 }, 
-        { key: 'sellingPrice', label: '售价', width: 10 }, 
+        { key: 'costPrice', label: '成本价', width: 10 },
+        { key: 'sellingPrice', label: '售价', width: 10 },
         { key: 'unit', label: '单位', width: 8 },
-        { key: 'imageLocation', label: '图片存储位置', width: 20 },
-        { key: 'imageRef', label: '图片引用ID', width: 40 }
-    ]; 
-    
+        { key: 'imageLocation', label: '图片存储位置', width: 18 },
+        { key: 'imageRef', label: '图片引用ID', width: 30 },
+        { key: 'imageUrl', label: '在线图片URL', width: 50 }
+    ];
+
     // 准备带图片引用信息的产品数据
     const productsWithImageInfo = appData.products.map(product => {
         let imageLocation = 'none';
         let imageRef = '';
-        
+        let imageUrl = '';
+
         if (product.imageId) {
             imageLocation = 'indexeddb';
             imageRef = product.imageId;
         } else if (product.image) {
-            imageLocation = 'embedded';
-            imageRef = 'base64_data';
+            if (/^https?:\/\//i.test(product.image)) {
+                imageLocation = 'url';
+                imageUrl = product.image;
+            } else {
+                imageLocation = 'embedded';
+                imageRef = 'base64_data';
+            }
         }
-        
+
         return {
             ...product,
             calcType: product.calcType || 'fixed',
             width: product.width || '',
             height: product.height || '',
             imageLocation: imageLocation,
-            imageRef: imageRef
+            imageRef: imageRef,
+            imageUrl: imageUrl
         };
     });
-    
-    exportToXLSX(productsWithImageInfo, headers, '产品库_' + new Date().toISOString().slice(0,10) + '.xlsx', '产品库'); 
+
+    exportToXLSX(productsWithImageInfo, headers, '产品库_' + new Date().toISOString().slice(0,10) + '.xlsx', '产品库');
 }
-function importProductsXLSX(event) { 
-    var file = event.target.files[0]; 
-    if (!file) return; 
+function importProductsXLSX(event) {
+    var file = event.target.files[0];
+    if (!file) return;
     var headers = [
-        { key: 'name', label: '产品名称' }, 
-        { key: 'category1', label: '一级分类' }, 
+        { key: 'name', label: '产品名称' },
+        { key: 'category1', label: '一级分类' },
         { key: 'category2', label: '二级分类' },
-        { key: 'description', label: '产品描述' }, 
+        { key: 'description', label: '产品描述' },
         { key: 'calcType', label: '计算方式' },
         { key: 'width', label: '默认宽度(米)' },
         { key: 'height', label: '默认高度(米)' },
-        { key: 'costPrice', label: '成本价' }, 
-        { key: 'sellingPrice', label: '售价' }, 
+        { key: 'costPrice', label: '成本价' },
+        { key: 'sellingPrice', label: '售价' },
         { key: 'unit', label: '单位' },
         { key: 'imageLocation', label: '图片存储位置' },
-        { key: 'imageRef', label: '图片引用ID' }
-    ]; 
+        { key: 'imageRef', label: '图片引用ID' },
+        { key: 'imageUrl', label: '在线图片URL' }
+    ];
     importFromXLSX(file, headers, function(importedData) { 
         if (!importedData.length) { 
             alert('导入的数据为空！'); 
@@ -31587,23 +31833,23 @@ function importProductsXLSX(event) {
         
         var newProducts = importedData.map(function(row, idx) {
             var product = {
-                id: Date.now() * 1000 + idx, 
-                name: String(row.name || '').trim(), 
-                category1: String(row.category1 || row.category || '').trim(), 
-                category2: String(row.category2 || '').trim(), 
-                description: String(row.description || '').trim(), 
+                id: Date.now() * 1000 + idx,
+                name: String(row.name || '').trim(),
+                category1: String(row.category1 || row.category || '').trim(),
+                category2: String(row.category2 || '').trim(),
+                description: String(row.description || '').trim(),
                 calcType: String(row.calcType || 'fixed').trim(),
                 width: parseFloat(row.width) || 0,
                 height: parseFloat(row.height) || 0,
-                costPrice: parseFloat(row.costPrice) || 0, 
-                sellingPrice: parseFloat(row.sellingPrice) || 0, 
-                unit: String(row.unit || '项').trim(), 
-                image: null, 
+                costPrice: parseFloat(row.costPrice) || 0,
+                sellingPrice: parseFloat(row.sellingPrice) || 0,
+                unit: String(row.unit || '项').trim(),
+                image: null,
                 imageId: null,
-                createdAt: new Date().toISOString(), 
-                updatedAt: new Date().toISOString() 
-            }; 
-            
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
             // 添加图片引用信息以便自动链接
             if (row.imageLocation) {
                 product.imageLocation = String(row.imageLocation).trim();
@@ -31611,9 +31857,19 @@ function importProductsXLSX(event) {
             if (row.imageRef) {
                 product.imageRef = String(row.imageRef).trim();
             }
-            
+            // 支持在线URL图片：标记为 url 并把URL放到 imageRef，由 linkProductImage 处理
+            if (row.imageUrl) {
+                var url = String(row.imageUrl).trim();
+                if (/^https?:\/\//i.test(url)) {
+                    if (!product.imageLocation) {
+                        product.imageLocation = 'url';
+                    }
+                    product.imageRef = url;
+                }
+            }
+
             return product;
-        }).filter(function(p) { return p.name; }); 
+        }).filter(function(p) { return p.name; });
         
         // 自动链接图片
         newProducts.forEach(function(p) {
