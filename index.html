@@ -2555,9 +2555,21 @@
         overflow: visible;
     }
 
-    /* 移动端隐藏表格表头，使用卡片布局 */
+    /* 移动端表格表头改为可滚动 */
     #quoteItemHeader {
-        display: none;
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 0.5rem 0.25rem;
+    }
+    #quoteItemHeader > div {
+        flex-shrink: 0;
+        padding: 0.25rem;
+    }
+    #quoteItemHeader input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
     }
     
     .quote-items input,
