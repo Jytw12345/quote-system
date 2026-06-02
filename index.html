@@ -3221,6 +3221,44 @@
     #syncStatusCard {
         grid-template-columns: repeat(2, 1fr) !important;
     }
+    /* 手机端新建报价单表头只显示带复选框的三个列（图片、规格明细、备注） */
+    #quoteItemHeader > div:nth-child(1),
+    #quoteItemHeader > div:nth-child(3),
+    #quoteItemHeader > div:nth-child(5),
+    #quoteItemHeader > div:nth-child(7),
+    #quoteItemHeader > div:nth-child(8),
+    #quoteItemHeader > div:nth-child(9),
+    #quoteItemHeader > div:nth-child(10),
+    #quoteItemHeader > div:nth-child(11) {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        overflow: hidden !important;
+    }
+    #quoteItemHeader > div:nth-child(2),
+    #quoteItemHeader > div:nth-child(4),
+    #quoteItemHeader > div:nth-child(6) {
+        display: flex !important;
+        visibility: visible !important;
+        width: auto !important;
+        min-width: auto !important;
+        max-width: none !important;
+        overflow: visible !important;
+    }
+    /* 手机端表头横向滚动支持 */
+    #quoteItemHeader {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: visible !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+}
+
+@media (max-width: 768px) {
     /* 手机端新建报价单表头只显示带复选框的三个列 */
     #quoteItemHeader > div:nth-child(1),
     #quoteItemHeader > div:nth-child(3),
@@ -3231,16 +3269,30 @@
     #quoteItemHeader > div:nth-child(10),
     #quoteItemHeader > div:nth-child(11) {
         display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        overflow: hidden !important;
     }
     #quoteItemHeader > div:nth-child(2),
     #quoteItemHeader > div:nth-child(4),
     #quoteItemHeader > div:nth-child(6) {
         display: flex !important;
+        visibility: visible !important;
+        width: auto !important;
+        min-width: auto !important;
+        max-width: none !important;
+        overflow: visible !important;
     }
-
+    #quoteItemHeader {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: visible !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch;
+    }
 }
-
-@media (max-width: 768px) {
     /* 文化墙报价手机端优化 */
     #aiPanelCultureWall {
         padding: 0.5rem !important;
