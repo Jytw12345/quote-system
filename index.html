@@ -1051,6 +1051,22 @@
     /* 手机端隐藏产品库选择和计算器 */
     .mobile-hide { display: none !important; }
     
+    /* 手机端撤销/重做按钮角标修复 */
+    #undoBtn, #redoBtn {
+        min-width: 50px !important;
+        min-height: 30px !important;
+        padding: 0.25rem 0.375rem !important;
+        font-size: 0.6875rem !important;
+    }
+    
+    #undoCount, #redoCount {
+        top: -4px !important;
+        right: -4px !important;
+        width: 16px !important;
+        height: 16px !important;
+        font-size: 9px !important;
+    }
+    
     /* 手机端隐藏整个侧边栏的额外内容 */
     .quote-sidebar > h3:not(:first-child) { display: none; }
     
@@ -8376,12 +8392,14 @@ function createModal(title, content, buttons, modalId){
     const modal = document.createElement('div');
     modal.className = 'modal';
     if(modalId) modal.id = modalId;
-    modal.innerHTML = '<div class="modal-content"><div class="modal-header"><h3>' + escapeHtml(title) + '</h3><span class="modal-close" onclick="closeModal()">&times;</span></div><div class="modal-body">' + content + '</div><div class="modal-footer" style="display:flex;gap:0.5rem;justify-content:flex-end;"></div></div>';
+    // 为关闭按钮设置正确的点击事件
+    const closeBtnId = modalId ? modalId + 'Close' : 'modalClose';
+    modal.innerHTML = '<div class="modal-content"><div class="modal-header"><h3>' + escapeHtml(title) + '</h3><span class="modal-close" id="' + closeBtnId + '">&times;</span></div><div class="modal-body">' + content + '</div><div class="modal-footer" style="display:flex;gap:0.5rem;justify-content:flex-end;"></div></div>';
     if(buttons){
         const footer = modal.querySelector('.modal-footer');
         buttons.forEach(btn => {
             const button = document.createElement('button');
-            button.className = btn.class;
+            button.className = btn.class || 'btn';
             button.textContent = btn.text;
             // 设置按钮ID
             if (btn.id) button.id = btn.id;
@@ -8392,14 +8410,33 @@ function createModal(title, content, buttons, modalId){
                 button.onclick = btn.onClick;
             } else if (typeof btn.onclick === 'function') {
                 button.onclick = btn.onclick;
-            } else {
-                console.warn('createModal: button onclick is not a function');
             }
             footer.appendChild(button);
         });
     }
     document.body.appendChild(modal);
     modal.classList.add('active');
+    // 添加关闭按钮点击事件
+    const closeBtn = modal.querySelector('.modal-close');
+    closeBtn.onclick = function() {
+        if (modalId) {
+            closeModal(modalId);
+        } else {
+            modal.classList.remove('active');
+            setTimeout(() => modal.remove(), 300);
+        }
+    };
+    // 点击遮罩层关闭模态框
+    modal.onclick = function(e) {
+        if (e.target === modal) {
+            if (modalId) {
+                closeModal(modalId);
+            } else {
+                modal.classList.remove('active');
+                setTimeout(() => modal.remove(), 300);
+            }
+        }
+    };
     return modal;
 }
 document.addEventListener('keydown', function(e){
@@ -8455,13 +8492,9 @@ function showKeyboardShortcuts(){
     });
     html += '</tbody></table>';
     html += '</div>';
-    showModal({
-        title: '⌨️ 快捷键帮助',
-        message: html,
-        icon: '⌨️',
-        type: 'alert',
-        confirmText: '知道了'
-    });
+    createModal('⌨️ 快捷键帮助', html, [
+        { text: '知道了', class: 'btn-outline', onclick: function() { closeModal('keyboardShortcutsModal'); } }
+    ], 'keyboardShortcutsModal');
 }
 // ===== 数据加载与存储 =====
 var idbInitialized = false;
@@ -8657,8 +8690,8 @@ function showKeyboardShortcutsHelp() {
     html += '</tbody></table></div>';
     
     createModal('快捷键帮助', html, [
-        { text: '关闭', onclick: closeTopModal, class: 'btn-outline' }
-    ], { width: '500px' });
+        { text: '关闭', onclick: function() { closeModal('keyboardShortcutsHelpModal'); }, class: 'btn-outline' }
+    ], 'keyboardShortcutsHelpModal');
 }
 
 // ===== 增强空状态组件 =====
