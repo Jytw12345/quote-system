@@ -135,7 +135,7 @@
             margin: 0;
         }
         @media (max-width: 640px) {
-            * { max-width: 100vw; overflow-x: hidden; }
+            * { max-width: 100vw; }
             .quote-preview-wrapper { max-width: none !important; overflow-x: auto !important; }
             #quotePreview, #quotePreview * { max-width: none !important; overflow-x: visible !important; }
             #quotePreview { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -284,7 +284,6 @@
             line-height: 1.5;
             font-size: 14px;
             padding-bottom: 2rem;
-            overflow-x: hidden;
         }
         @media (max-width: 640px) {
             body { font-size: 12px; }
@@ -296,7 +295,6 @@
             #aiPanelCultureWall span, #aiPanelCultureWall label { font-size: 0.65rem !important; }
             #cultureWallPriceEditPanel { padding: 0.375rem !important; max-height: 200px !important; }
             #cultureWallPriceEditPanel .btn { padding: 0.2rem 0.4rem; font-size: 0.65rem; }
-            #cultureWallAreasContainer { overflow-x: hidden !important; }
             .btn-sm { white-space: nowrap; }
         }
         .container { max-width: 1440px; margin: 0 auto; padding: 0.75rem 0.75rem 2rem 0.75rem; }
@@ -617,7 +615,16 @@
         .cultureWallPriceGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.375rem; }
         @media (max-width: 640px) { .cultureWallPriceGrid { grid-template-columns: repeat(2, 1fr) !important; gap: 0.25rem !important; } }
         .areaItemsGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.3rem; }
-        @media (max-width: 640px) { .areaItemsGrid { grid-template-columns: repeat(2, 1fr) !important; gap: 0.25rem !important; } }
+        @media (max-width: 640px) {
+            .areaItemsGrid { grid-template-columns: 1fr !important; gap: 0.25rem !important; }
+            .areaItemsGrid > div { min-width: 0; }
+        }
+        /* 移动端内容项参数网格强制2列垂直排列 */
+        @media (max-width: 640px) {
+            #aiPanelCultureWall .item-params-grid {
+                grid-template-columns: 1fr 1fr !important;
+            }
+        }
         .cultureWallPreviewGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.375rem; }
         @media (max-width: 640px) { .cultureWallPreviewGrid { grid-template-columns: repeat(3, 1fr) !important; gap: 0.25rem !important; } }
         .areaDimGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.25rem; }
@@ -747,7 +754,7 @@
         .settings-section h3 { font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--gray-200); color: var(--primary); }
         @media (max-width: 640px) {
             .settings-section { padding: 1rem; }
-            .settings-section > div[style*="grid-template-columns"]:not(.char-pricing-container) {
+            .settings-section > div[style*="grid-template-columns"]:not(.char-pricing-container):not(.default-settings-grid) {
                 grid-template-columns: 1fr !important;
                 gap: 0.75rem !important;
             }
@@ -765,6 +772,27 @@
             .char-pricing-grid {
                 grid-template-columns: repeat(2, 1fr) !important;
                 gap: 0.375rem !important;
+            }
+            /* 默认设置在手机端显示2列 */
+            .settings-section .default-settings-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 0.5rem !important;
+            }
+            /* 管理员身份验证在手机端保持一行 */
+            .settings-section .admin-auth-row {
+                flex-wrap: nowrap !important;
+            }
+            .settings-section .admin-auth-row input {
+                flex: 1 !important;
+                min-width: 100px !important;
+            }
+            .settings-section .default-settings-grid > div {
+                min-width: 0;
+            }
+            .settings-section .default-settings-grid input,
+            .settings-section .default-settings-grid select {
+                width: 100% !important;
+                min-width: 0 !important;
             }
             .char-pricing-container {
                 gap: 0.75rem !important;
@@ -903,7 +931,7 @@
         .print-style-classic .quote-preview-header{background:linear-gradient(135deg,#2563eb,#3b82f6) !important;}
         .print-style-classic .quote-preview-header h1{color:white !important;}
         .print-style-classic .quote-table th{background:#2563eb !important;color:white !important;}
-        .cost-price-column { transition: all 0.3s ease; display: flex !important; flex-direction: column !important; align-items: center !important; gap: 2px !important; justify-content: center !important; height: 32px !important; }
+        .cost-price-column { transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; gap: 2px; justify-content: center; height: 32px; }
         .settings-basic-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 1rem; }
         .settings-compact-group { display: flex; align-items: center; gap: 0.5rem; }
         .settings-compact-group label { white-space: nowrap; margin-bottom: 0 !important; min-width: 110px; }
@@ -1276,6 +1304,16 @@
 .hide-cost-price .cost-price-column { display: none !important; }
 .hide-cost-price #quotePreview .cost-col { display: none !important; }
 
+/* 高级身份时隐藏成本列 */
+.admin-mode.hide-cost .cost-price-column { display: none !important; }
+.admin-mode.hide-cost #quotePreview .cost-col { display: none !important; }
+
+/* 普通身份隐藏敏感数据 */
+.sensitive-data.hidden,
+body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
+    display: none !important;
+}
+
 /* 批量选择模式样式 */
 .product-card.selected {
     border: 3px solid var(--danger) !important;
@@ -1490,7 +1528,7 @@
     border-top: 1px solid var(--gray-200);
     z-index: 999;
     padding: 0.5rem 0;
-    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0.5rem;
     box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
     overflow: visible !important;
     clip-path: none !important;
@@ -1597,60 +1635,16 @@
     white-space: nowrap;
 }
 
-/* 移动端底部操作栏 */
-.mobile-action-bar {
-    display: none;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(255,255,255,0.98);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-top: 1px solid var(--gray-200);
-    z-index: 998;
-    padding: 0.5rem 1rem;
-    padding-bottom: calc(0.5rem + 70px + env(safe-area-inset-bottom, 0px));
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
-}
-
-.mobile-action-bar-items {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
-    max-width: 400px;
-    margin: 0 auto;
-}
-
-.mobile-action-bar .btn {
-    flex: 1;
-    max-width: none;
-    min-height: 44px;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    padding: 0.5rem 0.625rem;
-    border-radius: var(--radius-lg);
-    touch-action: manipulation;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.mobile-action-bar .btn:active {
-    transform: scale(0.97);
-}
-
 /* 移动端模态框全屏 */
 @media (max-width: 576px) {
     /* 全局移动端防止横向滚动 */
     html, body {
-        overflow-x: hidden;
         max-width: 100vw;
     }
     
-    /* 内容区域添加底部padding，避免被底部操作栏遮挡 */
+    /* 内容区域添加底部padding，避免被底部导航栏遮挡 */
     .tab-content, #mainContent {
-        padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
     }
     
     .modal {
@@ -1954,7 +1948,7 @@
     
     .mobile-action-bar {
         display: block;
-        padding-bottom: calc(0.5rem + 80px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: calc(0.5rem + 80px);
     }
     
     .mobile-action-bar-items {
@@ -2062,19 +2056,16 @@
             flex: unset !important;
             flex-shrink: unset !important;
         }
-        后边
+
         #mobileBtnGrid #quoteStyleSelect {
             min-width: unset !important;
             font-size: 0.75rem !important;
+            grid-column: span 2 !important;
         }
         
         #mobileBtnGrid button[onclick="copyCurrentQuote()"] {
             grid-row: 3 !important;
             grid-column: 1 !important;
-        }
-        
-        #mobileBtnGrid #quoteStyleSelect {
-            grid-column: span 2 !important;
         }
         
         #mobileBtnGrid button[onclick="generateQuotePreview()"] {
@@ -2133,7 +2124,7 @@
     }
     
     body {
-        padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: 160px;
     }
     
     .container {
@@ -2333,7 +2324,7 @@
     
     /* 产品库管理界面额外底部padding */
     #products {
-        padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: 180px !important;
     }
 
 /* 移动端客户管理优化 */
@@ -2611,6 +2602,47 @@
         width: 100% !important;
         min-width: 0 !important;
     }
+    
+    /* 手机端报价单项目名称和编号区域优化 */
+    .quote-items > div[style*="margin-bottom:1rem"][style*="display:flex"] {
+        flex-direction: column !important;
+        gap: 0.375rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .quote-items > div[style*="margin-bottom:1rem"][style*="display:flex"] > div {
+        min-width: 100% !important;
+        flex: none !important;
+        width: 100% !important;
+    }
+    
+    /* 报价单编号区域紧凑显示 */
+    #quoteNumber {
+        flex: 1 !important;
+        min-width: 60px !important;
+        font-size: 0.75rem !important;
+        padding: 0.3rem 0.4rem !important;
+    }
+    
+    #quoteNumberRule {
+        flex-shrink: 0 !important;
+        font-size: 0.6875rem !important;
+        padding: 0.3rem 0.4rem !important;
+    }
+    
+    /* 重新生成按钮样式 */
+    .quote-items .btn-outline.btn-xs {
+        font-size: 0.6875rem !important;
+        padding: 0.3rem 0.4rem !important;
+    }
+    
+    /* 确保报价单编号区域的输入框和按钮都显示 */
+    #quoteNumber,
+    #quoteNumberRule,
+    .quote-items button[onclick="regenerateQuoteNumber()"] {
+        display: inline-flex !important;
+        align-items: center !important;
+    }
 }
 
 /* 修复iOS安全区域 */
@@ -2620,6 +2652,22 @@
     }
     .mobile-action-bar {
         padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    }
+    @media (max-width: 576px) {
+        .mobile-action-bar {
+            padding-bottom: calc(0.5rem + 70px + env(safe-area-inset-bottom));
+        }
+        body {
+            padding-bottom: calc(160px + env(safe-area-inset-bottom));
+        }
+        #products {
+            padding-bottom: calc(180px + env(safe-area-inset-bottom)) !important;
+        }
+    }
+    @media (max-width: 480px) {
+        .mobile-action-bar {
+            padding-bottom: calc(0.5rem + 80px + env(safe-area-inset-bottom));
+        }
     }
 }
 
@@ -3125,48 +3173,76 @@
 
     /* 门头报价手机端优化 */
     #aiPanelDoorHeader {
-        padding: 0.5rem !important;
+        padding: 0.375rem !important;
     }
     #aiPanelDoorHeader > div {
-        padding: 0.5rem !important;
+        padding: 0.375rem !important;
     }
     #aiPanelDoorHeader select,
     #aiPanelDoorHeader input[type="number"],
     #aiPanelDoorHeader input[type="text"] {
-        font-size: 0.875rem !important;
-        padding: 0.5rem 0.375rem !important;
-        min-height: 36px;
+        font-size: 0.8125rem !important;
+        padding: 0.375rem 0.25rem !important;
+        min-height: 34px;
     }
     #aiPanelDoorHeader label {
-        font-size: 0.6875rem !important;
+        font-size: 0.625rem !important;
     }
     #aiPanelDoorHeader .ai-panel-content > div:first-child {
         font-size: 0.75rem !important;
     }
+    /* 门头类型和字体类型保持2列并列 */
     #aiPanelDoorHeader [style*="grid-template-columns:1fr 1fr"] {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: 1fr 1fr !important;
         gap: 0.375rem !important;
     }
+    /* 基础参数6列 → 3列 */
     #aiPanelDoorHeader [style*="grid-template-columns:repeat(6, 1fr)"] {
         grid-template-columns: repeat(3, 1fr) !important;
         gap: 0.25rem !important;
     }
+    /* 预览信息保持3列 */
+    #aiPanelDoorHeader [style*="grid-template-columns:repeat(3, 1fr)"][style*="border-top:1px dashed"] {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+    /* 第二字体和第三字体（带虚线边框的区域）的三个选项保持3列一行显示 */
+    #aiPanelDoorHeader [style*="border-top:1px dashed #fcd34d"] [style*="grid-template-columns:1fr 1fr 1fr"] {
+        grid-template-columns: 0.6fr 0.6fr 1.2fr !important;
+        gap: 0.125rem !important;
+    }
+    /* 第二字体和第三字体的输入框和选择框高度统一 */
+    #aiPanelDoorHeader [style*="border-top:1px dashed #fcd34d"] input[type="number"],
+    #aiPanelDoorHeader [style*="border-top:1px dashed #fcd34d"] select {
+        font-size: 0.6875rem !important;
+        padding: 0.1875rem 0.25rem !important;
+        min-height: 28px !important;
+    }
+    /* 第二字体和第三字体的标签变小 */
+    #aiPanelDoorHeader [style*="border-top:1px dashed #fcd34d"] label {
+        font-size: 0.5625rem !important;
+        margin-bottom: 0.0625rem !important;
+    }
+    /* 其他3列区域 → 2列 */
     #aiPanelDoorHeader [style*="grid-template-columns:repeat(3, 1fr)"] {
         grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.25rem !important;
     }
+    /* 2列区域保持2列 */
     #aiPanelDoorHeader [style*="grid-template-columns:repeat(2, 1fr)"] {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.25rem !important;
     }
     #aiPanelDoorHeader .btn {
-        font-size: 0.8125rem !important;
-        padding: 0.5rem 0.75rem !important;
-        min-height: 36px;
+        font-size: 0.75rem !important;
+        padding: 0.4rem 0.625rem !important;
+        min-height: 34px;
     }
     #doorHeaderTempPriceFields {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.25rem !important;
     }
     #doorHeaderTempPriceFields > div {
-        padding: 0.375rem !important;
+        padding: 0.25rem !important;
     }
     .door-header-basic > div {
         min-width: 0;
@@ -3178,32 +3254,21 @@
         text-overflow: ellipsis;
     }
     /* 延伸区域手机端紧凑布局 */
-    #aiPanelDoorHeader [style*="背景:#f0f9ff"] {
+    #aiPanelDoorHeader [style*="background:#f0f9ff"] {
         padding: 0.375rem !important;
     }
-    #aiPanelDoorHeader [style*="背景:#f0f9ff"] [style*="grid-template-columns:repeat(3, 1fr)"] {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 0.25rem !important;
+    /* 主面板分段材质区域 */
+    #aiPanelDoorHeader [style*="background:#fef3c7"] {
+        padding: 0.375rem !important;
     }
     /* 特殊工艺手机端紧凑布局 */
-    #aiPanelDoorHeader [style*="背景:#fce7f3"] {
+    #aiPanelDoorHeader [style*="background:#fce7f3"] {
         padding: 0.375rem !important;
     }
-    #aiPanelDoorHeader [style*="背景:#fce7f3"] [style*="grid-template-columns:repeat(3, 1fr)"],
-    #aiPanelDoorHeader [style*="背景:#fce7f3"] [style*="grid-template-columns:1fr 1fr 1fr"] {
+    #aiPanelDoorHeader [style*="background:#fce7f3"] [style*="grid-template-columns:1fr 1fr 1fr"],
+    #aiPanelDoorHeader [style*="background:#fce7f3"] [style*="grid-template-columns:1fr 1fr 1fr 1fr"] {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 0.125rem !important;
-    }
-    #aiPanelDoorHeader [style*="背景:#fce7f3"] [style*="grid-template-columns:1fr 1fr 1fr 1fr"] {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 0.125rem !important;
-    }
-    /* 第二字体手机端紧凑 */
-    #aiPanelDoorHeader [style*="第二字体"] {
-        padding: 0.375rem !important;
-    }
-    #aiPanelDoorHeader [style*="第二字体"] [style*="grid-template-columns:1fr 1fr 1fr"] {
-        grid-template-columns: repeat(2, 1fr) !important;
     }
     /* GitHub Token 输入框眼睛按钮优化 */
     #gistToken {
@@ -3300,6 +3365,7 @@
     /* 文化墙报价手机端优化 */
     #aiPanelCultureWall {
         padding: 0.5rem !important;
+        overflow-x: auto;
     }
     #aiPanelCultureWall > div {
         padding: 0.5rem !important;
@@ -3995,7 +4061,7 @@ var ImageStorage = {
     MAX_LOCALSTORAGE_IMAGES: 20, // localStorage最多存储20张图片
     
     // 压缩图片
-    compressImage: function(base64Data, maxWidth, maxHeight, quality) {
+    compressImage: function(base64Data, maxWidth, maxHeight, quality, onError) {
         return new Promise(function(resolve) {
             try {
                 var img = new Image();
@@ -4022,11 +4088,14 @@ var ImageStorage = {
                     resolve(compressed);
                 };
                 img.onerror = function() {
+                    console.warn('图片压缩失败: 图片加载错误');
+                    if (onError) onError('图片加载失败');
                     resolve(base64Data); // 压缩失败，返回原数据
                 };
                 img.src = base64Data;
             } catch(e) {
                 console.warn('图片压缩失败:', e);
+                if (onError) onError('图片压缩处理失败: ' + e.message);
                 resolve(base64Data);
             }
         });
@@ -4035,7 +4104,14 @@ var ImageStorage = {
     // 判断是否应该使用 IndexedDB 存储图片
     // 优化：优先使用 IndexedDB 存储所有图片，减少 localStorage 压力
     shouldUseIndexedDB: function(base64Data) {
-        if (!IDB || !IDB.isSupported()) return false;
+        // 检查 IDB 是否存在且已初始化
+        if (!IDB || typeof IDB.isSupported !== 'function') return false;
+        try {
+            if (!IDB.isSupported()) return false;
+        } catch(e) {
+            console.warn('IDB.isSupported() 检查失败:', e);
+            return false;
+        }
         // 优化：优先使用 IndexedDB，只有在特殊情况下才使用 localStorage
         return true;
     },
@@ -4073,18 +4149,23 @@ var safeStorage = {
                         totalUsed += size;
                     }
                     console.warn('当前 localStorage 已使用: ' + (totalUsed/1024/1024).toFixed(2) + 'MB');
-                    // 优先删除备份，其次删除大图片，然后删除旧图片
+                    // 简化清理逻辑：按优先级排序后删除
                     items.sort(function(a, b) {
-                        // 备份优先删除
+                        // 1. 备份文件优先删除
                         if (a.isBackup !== b.isBackup) return b.isBackup - a.isBackup;
-                        // 大图片优先删除
+                        // 2. 大文件其次（>5KB）
+                        if ((b.size > 5000) !== (a.size > 5000)) return b.size - a.size;
+                        // 3. 图片文件再次
+                        if (a.isImage !== b.isImage) return b.isImage - a.isImage;
+                        // 4. 最后按大小降序
                         return b.size - a.size;
                     });
                     var deleted = 0;
                     var freedSpace = 0;
                     // 增加清理数量，从 3 增加到 15，释放更多空间
                     for (var j = 0; j < items.length && deleted < 15; j++) {
-                        if ((items[j].size > 5000 || items[j].isBackup) && (items[j].isBackup || items[j].isImage)) {
+                        // 删除条件：备份文件 OR (大文件 OR 图片)
+                        if (items[j].isBackup || items[j].isImage || items[j].size > 5000) {
                             localStorage.removeItem(items[j].key);
                             freedSpace += items[j].size;
                             console.warn('已清理数据: ' + items[j].key + ' (' + (items[j].size/1024).toFixed(1) + 'KB)');
@@ -4135,7 +4216,6 @@ var safeStorage = {
     window.safeSetItem = function(key, value) { return safeStorage.setItem(key, value); };
     window.safeRemoveItem = function(key) { return safeStorage.removeItem(key); };
     // ===== 自定义弹窗组件 =====
-    var modalCallback = null;
     function showModal(options) {
         var defaults = {
             title: '提示',
@@ -5051,7 +5131,7 @@ var DataManager = {
                             <div class="header-col header-col-4" style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">规格参数</span><input type="checkbox" onchange="toggleColumnVisibility('spec', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
                             <div class="header-col header-col-5" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">单位</span></div>
                             <div class="header-col header-col-6" style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">备注</span><input type="checkbox" onchange="toggleColumnVisibility('note', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
-                            <div class="cost-price-column header-col header-col-7" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">成本价</span></div>
+                            <div class="cost-price-column header-col header-col-7 sensitive-data" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">成本价</span></div>
                             <div class="header-col header-col-8" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">数量</span></div>
                             <div class="header-col header-col-9" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">单价</span></div>
                             <div class="header-col header-col-10" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">小计</span></div>
@@ -5073,7 +5153,7 @@ var DataManager = {
                         </div>
                         <div style="flex: 0 0 auto; display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;">
                             <label style="display: flex; align-items: center; gap: 5px; font-size: inherit; font-weight: normal; margin: 0; cursor: pointer;">
-                                <input type="checkbox" id="hideCostPrice" onchange="toggleCostPriceColumn()"> 显示成本(4秒)
+                                <input type="checkbox" id="hideCostPrice" onchange="toggleCostPriceColumn()"> <span id="costPriceLabel">显示成本(4秒)</span>
                             </label>
                         </div>
                         <div style="flex: 0 0 auto; display: flex; align-items: center; gap: 10px;">
@@ -6207,7 +6287,8 @@ var DataManager = {
                             </div>
                             <!-- 利润率 & 损耗率设置 -->
                             <div style="border-top:1px dashed #fcd34d;padding-top:0.375rem;margin-top:0.25rem;">
-                                <div style="display:flex;align-items:center;gap:0.375rem;flex-wrap:wrap;">
+                                <!-- 加价 -->
+                                <div style="display:flex;align-items:center;gap:0.375rem;">
                                     <label style="font-size:0.75rem;color:#92400e;font-weight:600;white-space:nowrap;">加价:</label>
                                     <input type="number" id="doorHeaderMarkup" value="30" min="0" max="500" placeholder="30" style="width:60px;padding:0.3rem 0.375rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:var(--radius);">
                                     <span style="font-size:0.6875rem;color:#92400e;">%</span>
@@ -6216,7 +6297,10 @@ var DataManager = {
                                         <button class="btn btn-xs" onclick="document.getElementById('doorHeaderMarkup').value=30" style="background:#fef3c7;color:#92400e;font-size:0.625rem;padding:0.125rem 0.25rem;">30%</button>
                                         <button class="btn btn-xs" onclick="document.getElementById('doorHeaderMarkup').value=50" style="background:#fef3c7;color:#92400e;font-size:0.625rem;padding:0.125rem 0.25rem;">50%</button>
                                     </div>
-                                    <label style="font-size:0.75rem;color:#92400e;font-weight:600;white-space:nowrap;margin-left:0.5rem;">损耗:</label>
+                                </div>
+                                <!-- 损耗 -->
+                                <div style="display:flex;align-items:center;gap:0.375rem;margin-top:0.25rem;">
+                                    <label style="font-size:0.75rem;color:#92400e;font-weight:600;white-space:nowrap;">损耗:</label>
                                     <input type="number" id="doorHeaderWasteRate" value="5" min="0" max="50" placeholder="5" style="width:55px;padding:0.3rem 0.375rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:var(--radius);">
                                     <span style="font-size:0.6875rem;color:#92400e;">%</span>
                                     <div style="display:flex;gap:0.125rem;">
@@ -6238,7 +6322,7 @@ var DataManager = {
                                         <div style="font-size:0.6875rem;color:#92400e;">📍 当前类型: <strong id="doorHeaderTempPriceType"></strong> - 临时单价设置</div>
                                         <button class="btn btn-xs" onclick="clearDoorHeaderTempPrices()" style="background:#ef4444;color:white;font-size:0.625rem;padding:0.125rem 0.375rem;">🗑️ 清除</button>
                                     </div>
-                                    <div id="doorHeaderTempPriceFields" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.375rem;max-height:200px;overflow-y:auto;"></div>
+                                    <div id="doorHeaderTempPriceFields" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.25rem;max-height:280px;overflow-y:auto;"></div>
                                 </div>
                             </div>
                             <!-- 快捷填充 -->
@@ -6266,7 +6350,7 @@ var DataManager = {
                     </div>
 
                     <!-- 文化空间报价 -->
-                    <div id="aiPanelCultureWall" class="ai-panel" style="display:none;overflow-x:hidden;">
+                    <div id="aiPanelCultureWall" class="ai-panel" style="display:none;">
                         <!-- 主容器：左右分栏布局 -->
                         <div style="background:white;border-radius:var(--radius);padding:0.75rem;">
                             <!-- 头部标题 -->
@@ -6293,7 +6377,7 @@ var DataManager = {
                                             <button class="btn btn-sm" onclick="addCultureWallArea()" style="background:#16a34a;color:white;font-size:0.7rem;padding:0.3rem 0.6rem;border-radius:var(--radius);box-shadow:0 2px 8px rgba(22,163,68,0.3);transition:all 0.2s;white-space:nowrap;">&plus; 添加区域</button>
                                         </div>
                                         <!-- 墙面/区域列表 -->
-                                        <div id="cultureWallAreasContainer" style="margin-bottom:0.25rem;max-height:calc(100% - 50px);overflow-y:auto;">
+                                        <div id="cultureWallAreasContainer" style="margin-bottom:0.25rem;max-height:calc(100% - 50px);overflow-x:auto;overflow-y:auto;">
                                         </div>
                                         <!-- 空状态提示 -->
                                         <div id="cultureWallEmptyHint" style="text-align:center;padding:2rem;color:#9ca3af;font-size:0.8125rem;">
@@ -6376,7 +6460,7 @@ var DataManager = {
                                             </button>
                                         </div>
                                         <!-- 自定义单价面板 -->
-                                        <div id="cultureWallPriceEditPanel" style="display:none;margin-top:0.5rem;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:0.5rem;max-height:280px;overflow-y:auto;overflow-x:hidden;">
+                                        <div id="cultureWallPriceEditPanel" style="display:none;margin-top:0.5rem;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:0.5rem;max-height:280px;overflow-y:auto;">
                                             <div style="font-size:0.7rem;color:#92400e;margin-bottom:0.375rem;font-weight:500;">📦 自定义单价设置（留空则使用默认值）</div>
                                             <div id="cultureWallPriceEditFields" style="display:flex;flex-direction:column;gap:0.5rem;">
                                             </div>
@@ -6683,30 +6767,30 @@ var DataManager = {
             <div class="section-title"><span>⚙️ 系统设置</span><button class="btn btn-success" onclick="saveSystemSettings()">💾 保存设置</button></div>
             <div class="settings-section">
                 <h3>🏢 公司信息</h3>
-                <div class="company-info-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
-                    <div style="display:flex;flex-direction:column;gap:0.125rem;">
-                        <label style="font-size:0.75rem;color:var(--gray-600);">公司名称</label>
-                        <input type="text" id="companyName" placeholder="公司名称" style="padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid var(--gray-200);border-radius:4px;">
+                <div class="company-info-grid" style="display:grid;grid-template-columns:250px 120px 150px;gap:0.375rem;">
+                    <div style="display:flex;flex-direction:column;gap:0.0625rem;">
+                        <label style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">公司名称</label>
+                        <input type="text" id="companyName" placeholder="请输入公司名称" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
                     </div>
-                    <div style="display:flex;flex-direction:column;gap:0.125rem;">
-                        <label style="font-size:0.75rem;color:var(--gray-600);">联系人</label>
-                        <input type="text" id="companyContact" placeholder="姓名" style="padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid var(--gray-200);border-radius:4px;">
+                    <div style="display:flex;flex-direction:column;gap:0.0625rem;">
+                        <label style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">联系人</label>
+                        <input type="text" id="companyContact" placeholder="姓名" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
                     </div>
-                    <div style="display:flex;flex-direction:column;gap:0.125rem;">
-                        <label style="font-size:0.75rem;color:var(--gray-600);">电话</label>
-                        <input type="text" id="companyPhone" placeholder="联系电话" style="padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid var(--gray-200);border-radius:4px;">
+                    <div style="display:flex;flex-direction:column;gap:0.0625rem;">
+                        <label style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">电话</label>
+                        <input type="text" id="companyPhone" placeholder="联系电话" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
                     </div>
-                    <div style="display:flex;flex-direction:column;gap:0.125rem;">
-                        <label style="font-size:0.75rem;color:var(--gray-600);">邮箱</label>
-                        <input type="email" id="companyEmail" placeholder="邮箱地址" style="padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid var(--gray-200);border-radius:4px;">
+                    <div style="display:flex;flex-direction:column;gap:0.0625rem;">
+                        <label style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">邮箱</label>
+                        <input type="email" id="companyEmail" placeholder="email@example.com" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
                     </div>
-                    <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.125rem;">
-                        <label style="font-size:0.75rem;color:var(--gray-600);">地址</label>
-                        <input type="text" id="companyAddress" placeholder="公司地址" style="padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid var(--gray-200);border-radius:4px;">
+                    <div style="grid-column:2/-1;display:flex;flex-direction:column;gap:0.0625rem;">
+                        <label style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">地址</label>
+                        <input type="text" id="companyAddress" placeholder="详细地址" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
                     </div>
-                    <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.125rem;">
-                        <label style="font-size:0.75rem;color:var(--gray-600);">备注说明</label>
-                        <textarea id="companyNotes" placeholder="默认备注说明（付款方式、交货时间等）" style="padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid var(--gray-200);border-radius:4px;min-height:48px;resize:vertical;"></textarea>
+                    <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.0625rem;margin-top:0.125rem;">
+                        <label style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">备注说明</label>
+                        <textarea id="companyNotes" placeholder="付款方式、交货时间等备注信息" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;min-height:56px;resize:vertical;"></textarea>
                     </div>
                 </div>
             </div>
@@ -6812,7 +6896,7 @@ var DataManager = {
             </div>
             <div class="settings-section">
                 <h3>📋 默认设置</h3>
-                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;">
+                <div class="default-settings-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;">
                     <div style="display:flex;flex-direction:column;gap:0.25rem;"><label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">税率 (%)</label><input type="number" id="defaultTaxRate" min="0" max="100" step="0.1" value="13" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100px;"></div>
                     <div style="display:flex;flex-direction:column;gap:0.25rem;"><label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">计价模式</label><select id="defaultPriceMode" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:120px;"><option value="in">含税价</option><option value="ex">未税价</option></select></div>
                     <div style="display:flex;flex-direction:column;gap:0.25rem;"><label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">折扣率 (%)</label><input type="number" id="defaultDiscountRate" min="0" max="100" step="0.1" value="100" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100px;"></div>
@@ -7220,10 +7304,10 @@ var DataManager = {
                     </div>
                     <div style="margin-top:0.75rem;">
                         <div style="font-size:0.75rem;font-weight:500;color:var(--gray-700);margin-bottom:0.375rem;">切换到高级身份</div>
-                        <div style="display:flex;gap:0.375rem;flex-wrap:wrap;">
-                            <input type="password" id="adminPasswordInput" placeholder="管理员密码" style="flex:1;min-width:150px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
-                            <button class="btn btn-primary btn-sm" onclick="verifyAdminPassword()">🔓 验证</button>
-                            <button class="btn btn-outline btn-sm" onclick="logoutAdmin()" style="display:none;" id="logoutAdminBtn">🔒 退出</button>
+                        <div class="admin-auth-row" style="display:flex;gap:0.25rem;flex-wrap:nowrap;align-items:center;">
+                            <input type="password" id="adminPasswordInput" placeholder="管理员密码" style="flex:1;min-width:80px;padding:0.25rem 0.375rem;font-size:0.75rem;border:1px solid var(--gray-200);border-radius:4px;height:28px;">
+                            <button class="btn btn-primary btn-xs" onclick="verifyAdminPassword()" style="white-space:nowrap;padding:0.25rem 0.5rem;font-size:0.6875rem;height:28px;line-height:1;">验证</button>
+                            <button class="btn btn-outline btn-xs" onclick="logoutAdmin()" style="white-space:nowrap;display:none;padding:0.25rem 0.5rem;font-size:0.6875rem;height:28px;line-height:1;" id="logoutAdminBtn">退出</button>
                         </div>
                         <div id="passwordError" style="display:none;margin-top:0.375rem;font-size:0.6875rem;color:#dc2626;">❌ 密码错误</div>
                     </div>
@@ -8292,7 +8376,7 @@ function createModal(title, content, buttons, modalId){
     const modal = document.createElement('div');
     modal.className = 'modal';
     if(modalId) modal.id = modalId;
-    modal.innerHTML = '<div class="modal-content"><div class="modal-header"><h3>' + escapeHtml(title) + '</h3><span class="modal-close" onclick="closeModal()">&times;</span></div><div class="modal-body">' + escapeHtml(content) + '</div><div class="modal-footer" style="display:flex;gap:0.5rem;justify-content:flex-end;"></div></div>';
+    modal.innerHTML = '<div class="modal-content"><div class="modal-header"><h3>' + escapeHtml(title) + '</h3><span class="modal-close" onclick="closeModal()">&times;</span></div><div class="modal-body">' + content + '</div><div class="modal-footer" style="display:flex;gap:0.5rem;justify-content:flex-end;"></div></div>';
     if(buttons){
         const footer = modal.querySelector('.modal-footer');
         buttons.forEach(btn => {
@@ -11033,7 +11117,7 @@ function renderQuoteItems(){
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">规格参数</span><input type="text" value="${escapeHtml(itemSpec)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'spec',this.value)" style="width:100%;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">单位</span><input type="text" value="${escapeHtml(itemUnit)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'unit',this.value)" style="width:100%;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">备注</span><input type="text" value="${escapeHtml(itemNote)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'note',this.value)" style="width:100%;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
-            <div class="cost-price-column" style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">成本价</span><input type="number" step="0.01" min="0" value="${Number(itemCost).toFixed(2)}" onchange="updateQuoteItem(${itemIdQuoted},'cost',this.value)" onwheel="return false;" class="no-spin" style="width:70px;font-weight:500;-moz-appearance:textfield;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
+            <div class="cost-price-column sensitive-data" style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">成本价</span><input type="number" step="0.01" min="0" value="${Number(itemCost).toFixed(2)}" onchange="updateQuoteItem(${itemIdQuoted},'cost',this.value)" onwheel="return false;" class="no-spin" style="width:70px;font-weight:500;-moz-appearance:textfield;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">数量</span><input type="number" min="1" step="1" value="${itemQty}" onchange="updateQuoteItem(${itemIdQuoted},'qty',this.value)" style="width:65px;min-height:32px;padding:0.25rem 0.25rem;box-sizing:border-box;text-align:center;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">单价</span><input type="number" step="0.01" min="0" value="${Number(itemPrice).toFixed(2)}" onchange="updateQuoteItem(${itemIdQuoted},'price',this.value)" onwheel="return false;" class="no-spin" style="width:70px;-moz-appearance:textfield;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">小计</span><span id="subtotal-${itemId}" style="font-weight:600;color:var(--primary);font-size:0.8125rem;">¥${Number(it).toFixed(2)}</span></div>
@@ -11445,7 +11529,7 @@ function generateQuotePreview(){
                         <span style="font-size:1.5rem;font-weight:700;color:#1e40af;">¥${total.toFixed(2)}</span>
                     </div>
                     <div style="text-align:right;margin-top:0.5rem;font-size:0.9rem;color:#666;">
-                        大写金额：${numberToChineseUpper(total)}${tr>0 ? `（${pm==='in'?'含':'不含'}税额¥${tax.toFixed(2)}）` : ''}
+                        大写金额：${numberToChineseUpper(total)}${tr>0 ? `（${pm==='in'?'含税':'税额'}¥${tax.toFixed(2)}）` : ''}
                     </div>
                 </div>
             </div>
@@ -11594,7 +11678,7 @@ function generateQuotePreview(){
                         <span style="font-size:1.5rem;font-weight:700;color:#059669;">¥${total.toFixed(2)}</span>
                     </div>
                     <div style="text-align:right;margin-top:0.5rem;font-size:0.9rem;color:#666;">
-                        大写金额：${numberToChineseUpper(total)}${tr>0 ? `（${pm==='in'?'含':'不含'}税额¥${tax.toFixed(2)}）` : ''}
+                        大写金额：${numberToChineseUpper(total)}${tr>0 ? `（${pm==='in'?'含税':'税额'}¥${tax.toFixed(2)}）` : ''}
                     </div>
                 </div>
             </div>
@@ -11765,7 +11849,7 @@ function generateQuotePreview(){
                         <span style="font-size:1.6rem;font-weight:800;color:#dc2626;">¥${total.toFixed(2)}</span>
                     </div>
                     <div style="text-align:right;margin-top:0.75rem;font-size:0.9rem;color:#666;background:white;padding:0.75rem;border-radius:4px;">
-                        大写金额：${numberToChineseUpper(total)}${tr>0 ? `（${pm==='in'?'含':'不含'}税额¥${tax.toFixed(2)}）` : ''}
+                        大写金额：${numberToChineseUpper(total)}${tr>0 ? `（${pm==='in'?'含税':'税额'}¥${tax.toFixed(2)}）` : ''}
                     </div>
                 </div>
             </div>
@@ -11873,7 +11957,7 @@ function generateQuotePreview(){
             </div>
             <table style="width:100%;border-collapse:collapse;font-family:'Microsoft YaHei',Arial,sans-serif;line-height:${lhPx}rem;">
                 <colgroup>
-                    <col style="width:${cw.index}px;"><col style="width:${cw.image}px;"><col style="width:${cw.name}px;"><col style="width:${cw.spec}px;"><col style="width:${cw.unit}px;"><col style="width:${cw.note}px;"><col style="width:${cw.qty}px;"><col style="width:${cw.price}px;"><col style="width:${cw.subtotal}px;">
+                    <col style="width:${cw.index}px;">${colVis.image !== false ? `<col style="width:${cw.image}px;">` : ''}<col style="width:${cw.name}px;">${colVis.spec !== false ? `<col style="width:${cw.spec}px;">` : ''}<col style="width:${cw.unit}px;">${colVis.note !== false ? `<col style="width:${cw.note}px;">` : ''}<col style="width:${cw.qty}px;"><col style="width:${cw.price}px;"><col style="width:${cw.subtotal}px;">
                 </colgroup>
                 <thead>
                     <tr style="background:#f7fafc;">
@@ -11976,36 +12060,51 @@ function generateQuotePreview(){
     if(quoteStyle === 'modern'){
         let cw = getColumnWidths();
         let mRows=appData.currentQuote.items.map((item,idx)=>{
-            // 修复：添加空值检查
             const itemQty = item.qty || 1;
             const itemPrice = item.price || 0;
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
             let bg=idx%2===0?'#fff':'#f8fafc';
-            let ic=item.image?`<img src="${item.image}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;">`:`<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
-            return `<tr style="background:${bg};">
+            let row = `<tr style="background:${bg};">
                 <td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
                     <span style="display:inline-flex;width:22px;height:22px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border-radius:50%;font-size:0.65rem;font-weight:600;align-items:center;justify-content:center;">${idx+1}</span>
-                </td>
-                <td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">${ic}</td>
-                <td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;">
+                </td>`;
+            if(colVis.image !== false) {
+                let ic=item.image?`<img src="${item.image}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;">`:`<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
+                row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">${ic}</td>`;
+            }
+            row += `<td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;">
                     <div style="font-weight:600;color:#1f2937;font-size:0.85rem;line-height:1.3;">${item.name}</div>
-                    ${item.spec?`<div style="font-size:0.7rem;color:#6b7280;margin-top:0.2rem;">规格：${item.spec}</div>`:''}
-                </td>
-                <td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
+                    ${colVis.spec !== false && item.spec?`<div style="font-size:0.7rem;color:#6b7280;margin-top:0.2rem;">规格：${item.spec}</div>`:''}
+                </td>`;
+            row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
                     <span style="font-size:0.75rem;color:#6b7280;">${item.unit||'项'}</span>
-                </td>
-                <td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;font-size:0.75rem;color:#6b7280;line-height:1.3;">${item.note||'-'}</td>
-                <td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
+                </td>`;
+            if(colVis.note !== false) {
+                row += `<td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;font-size:0.75rem;color:#6b7280;line-height:1.3;">${item.note||'-'}</td>`;
+            }
+            row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
                     <span style="background:#e5e7eb;padding:0.15rem 0.5rem;border-radius:6px;font-weight:600;color:#374151;font-size:0.8rem;">${itemQty}</span>
                 </td>
                 <td style="padding:0.6rem 0.4rem;text-align:right;border-bottom:1px solid #e5e7eb;color:#4b5563;font-size:0.85rem;font-weight:500;">¥${itemPrice.toFixed(2)}</td>
                 <td style="padding:0.6rem 0.4rem;text-align:right;border-bottom:1px solid #e5e7eb;"><span style="font-weight:700;color:#1f2937;font-size:0.9rem;">¥${it}</span></td>
             </tr>`;
+            return row;
         }).join('');
-        let mFooterRows=`<tr><td colspan="7" style="padding:0.6rem 1rem;text-align:right;font-size:0.8rem;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;">报价金额</td><td style="padding:0.6rem 1rem;text-align:right;font-size:0.85rem;font-weight:600;background:#f9fafb;border-bottom:1px solid #e5e7eb;">¥${st.toFixed(2)}</td></tr>`;
-        if(dr<100){mFooterRows+=`<tr><td colspan="7" style="padding:0.6rem 1rem;text-align:right;font-size:0.8rem;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;">折扣 (${dr}%)</td><td style="padding:0.6rem 1rem;text-align:right;font-size:0.85rem;font-weight:600;color:#dc2626;background:#f9fafb;border-bottom:1px solid #e5e7eb;">-¥${da.toFixed(2)}</td></tr>`;}
-        mFooterRows+=`<tr><td colspan="7" style="padding:0.8rem 1rem;text-align:right;font-size:1rem;font-weight:700;color:${hc};background:${hg};border-bottom:none;">合计金额${tr>0&&pm==='in'?'（含税'+tr+'%）':tr>0&&pm==='ex'?'（含税'+tr+'%，税金¥'+tax.toFixed(2)+'）':pm==='ex'&&tr===0?'（未税）':''}</td><td style="padding:0.8rem 1rem;text-align:right;font-size:1.15rem;font-weight:700;color:${hc};background:${hg};border-bottom:none;">¥${total.toFixed(2)}</td></tr>`;
-        mFooterRows+=`<tr><td colspan="8" style="padding:0.5rem 1rem;text-align:right;font-size:0.9rem;color:${hc};background:${hg};border-bottom:none;font-weight:500;">大写金额：${numberToChineseUpper(total)}</td></tr>`;
+        
+        // 计算列数：基础列是6列（序号，项目名称，单位，数量，单价，小计）
+        let colCount = 6;
+        if(colVis.image !== false) colCount++; // 如果图片显示，加1列
+        if(colVis.note !== false) colCount++; // 如果备注显示，加1列
+        
+        // 计算表头和表尾的colspan
+        let footerCol1 = colCount - 1;
+        let footerCol2 = colCount;
+        
+        let mFooterRows=`<tr><td colspan="${footerCol1}" style="padding:0.6rem 1rem;text-align:right;font-size:0.8rem;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;">报价金额</td><td style="padding:0.6rem 1rem;text-align:right;font-size:0.85rem;font-weight:600;background:#f9fafb;border-bottom:1px solid #e5e7eb;">¥${st.toFixed(2)}</td></tr>`;
+        if(dr<100){mFooterRows+=`<tr><td colspan="${footerCol1}" style="padding:0.6rem 1rem;text-align:right;font-size:0.8rem;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;">折扣 (${dr}%)</td><td style="padding:0.6rem 1rem;text-align:right;font-size:0.85rem;font-weight:600;color:#dc2626;background:#f9fafb;border-bottom:1px solid #e5e7eb;">-¥${da.toFixed(2)}</td></tr>`;}
+        mFooterRows+=`<tr><td colspan="${footerCol1}" style="padding:0.8rem 1rem;text-align:right;font-size:1rem;font-weight:700;color:${hc};background:${hg};border-bottom:none;">合计金额${tr>0&&pm==='in'?'（含税'+tr+'%）':tr>0&&pm==='ex'?'（含税'+tr+'%，税金¥'+tax.toFixed(2)+'）':pm==='ex'&&tr===0?'（未税）':''}</td><td style="padding:0.8rem 1rem;text-align:right;font-size:1.15rem;font-weight:700;color:${hc};background:${hg};border-bottom:none;">¥${total.toFixed(2)}</td></tr>`;
+        mFooterRows+=`<tr><td colspan="${footerCol2}" style="padding:0.5rem 1rem;text-align:right;font-size:0.9rem;color:${hc};background:${hg};border-bottom:none;font-weight:500;">大写金额：${numberToChineseUpper(total)}</td></tr>`;
+        
         preview.innerHTML=`<div style="background:white;max-width:100%;margin:0 auto;font-family:'Microsoft YaHei','PingFang SC',Arial,sans-serif;overflow:hidden;${innerPadding};">
             <div style="background:${hg};padding:2.5rem 2rem;color:${hc};">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;">
@@ -12051,15 +12150,22 @@ function generateQuotePreview(){
             <div style="padding:1.5rem 2rem 2rem;">
                 <table style="width:100%;border-collapse:collapse;line-height:${lhPx}rem;">
                     <colgroup>
-                        <col style="width:${cw.index}px;"><col style="width:${cw.image}px;"><col style="width:${cw.name}px;"><col style="width:${cw.unit}px;"><col style="width:${cw.note}px;"><col style="width:${cw.qty}px;"><col style="width:${cw.price}px;"><col style="width:${cw.subtotal}px;">
+                        <col style="width:${cw.index}px;">
+                        ${colVis.image !== false ? `<col style="width:${cw.image}px;">` : ''}
+                        <col style="width:${cw.name}px;">
+                        <col style="width:${cw.unit}px;">
+                        ${colVis.note !== false ? `<col style="width:${cw.note}px;">` : ''}
+                        <col style="width:${cw.qty}px;">
+                        <col style="width:${cw.price}px;">
+                        <col style="width:${cw.subtotal}px;">
                     </colgroup>
                     <thead>
                         <tr style="background:#f1f5f9;">
                             <th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">序号</th>
-                            <th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">图片</th>
+                            ${colVis.image !== false ? '<th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">图片</th>' : ''}
                             <th style="padding:0.5rem 0.4rem;text-align:left;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">项目名称</th>
                             <th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">单位</th>
-                            <th style="padding:0.5rem 0.4rem;text-align:left;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">备注</th>
+                            ${colVis.note !== false ? '<th style="padding:0.5rem 0.4rem;text-align:left;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">备注</th>' : ''}
                             <th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">数量</th>
                             <th style="padding:0.5rem 0.4rem;text-align:right;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">单价</th>
                             <th style="padding:0.5rem 0.4rem;text-align:right;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">小计</th>
@@ -12699,12 +12805,42 @@ function copyCurrentQuote(){
     showToast('报价单已复制为新报价单', 'success');
     addToHistory('复制报价单: ' + newTitle);
 }
+// 更新成本价标签文本（根据身份显示不同内容）
+function updateCostPriceLabel() {
+    const label = document.getElementById('costPriceLabel');
+    const checkbox = document.getElementById('hideCostPrice');
+    if (!label) return;
+    
+    const isAdmin = isAdminMode();
+    if (isAdmin) {
+        label.textContent = '隐藏成本';
+    } else {
+        label.textContent = '显示成本(4秒)';
+    }
+}
+
 function toggleCostPriceColumn() { 
     const isAdmin = isAdminMode();
     const checkbox = document.getElementById('hideCostPrice');
     const isChecked = checkbox ? checkbox.checked : false; 
+    const label = document.getElementById('costPriceLabel');
     
-    if (!isAdmin && isChecked) {
+    if (isAdmin) {
+        // 高级身份：使用hide-cost类控制
+        if (isChecked) {
+            document.body.classList.add('hide-cost');
+        } else {
+            document.body.classList.remove('hide-cost');
+        }
+        if (label) label.textContent = isChecked ? '隐藏成本' : '显示成本';
+        return;
+    }
+    
+    // 普通身份：勾选显示成本4秒
+    if (isChecked) {
+        // 添加 cost-visible 类以允许成本列显示
+        document.body.classList.add('cost-visible');
+        
         const costColumns = document.querySelectorAll('.cost-price-column'); 
         costColumns.forEach(function(col) { 
             col.style.display = ''; 
@@ -12713,8 +12849,12 @@ function toggleCostPriceColumn() {
         statRows.forEach(function(row) { 
             row.style.display = ''; 
         }); 
+        if (label) label.textContent = '显示成本(4秒)';
         if (window._costPriceTimeout) clearTimeout(window._costPriceTimeout);
         window._costPriceTimeout = setTimeout(function() {
+            // 移除 cost-visible 类以重新隐藏成本列
+            document.body.classList.remove('cost-visible');
+            
             costColumns.forEach(function(col) { 
                 col.style.display = 'none'; 
             }); 
@@ -12722,19 +12862,21 @@ function toggleCostPriceColumn() {
                 row.style.display = 'none'; 
             }); 
             if (checkbox) checkbox.checked = false;
+            if (label) label.textContent = '显示成本(4秒)';
             showToast('成本价已隐藏', 'info');
         }, 4000);
         return;
     }
     
-    const shouldHide = !isAdmin || isChecked;
+    // 普通身份未勾选：隐藏成本
+    document.body.classList.remove('cost-visible');
     const costColumns = document.querySelectorAll('.cost-price-column'); 
     costColumns.forEach(function(col) { 
-        col.style.display = shouldHide ? 'none' : ''; 
+        col.style.display = 'none'; 
     }); 
     const statRows = document.querySelectorAll('.cost-stat-row, .profit-stat-row, .margin-stat-row'); 
     statRows.forEach(function(row) { 
-        row.style.display = shouldHide ? 'none' : ''; 
+        row.style.display = 'none'; 
     }); 
 }
 // BUG修复：预览时正确处理成本列隐藏
@@ -12785,6 +12927,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('hideCostPrice').addEventListener('change', function() { 
         toggleCostPriceColumn(); 
     }); 
+    updateCostPriceLabel(); // 初始化成本价标签
     toggleCostPriceColumn(); 
 });
 // ===== 产品库 =====
@@ -18152,11 +18295,11 @@ function generateAreaHTML(areaIndex) {
 // 生成内容项参数HTML
 function generateItemParams(areaIndex, itemIndex, item) {
     const itemType = item.type || 'backdrop';
-    
+
     switch(itemType) {
         case 'backdrop': // 背景画面
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="4" step="0.1" min="0.1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18175,7 +18318,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'board': // 展板
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1.2" step="0.1" min="0.1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18198,7 +18341,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'letters': // 立体字
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>字符数量</label>
                         <input type="number" id="itemCount_${areaIndex}_${itemIndex}" value="${item.count || 8}" placeholder="8" min="1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'count', this.value)">
@@ -18217,7 +18360,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'ledStrip': // LED灯带
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>长度(米)</label>
                         <input type="number" id="itemLength_${areaIndex}_${itemIndex}" value="${item.length || 8}" placeholder="8" step="0.5" min="1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'length', this.value)">
@@ -18235,7 +18378,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'frame': // 边框装饰
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽度(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="4" step="0.1" min="0.5" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18256,7 +18399,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'photo': // 照片墙
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>照片数量</label>
                         <input type="number" id="itemCount_${areaIndex}_${itemIndex}" value="${item.count || 9}" placeholder="9" min="1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'count', this.value)">
@@ -18281,7 +18424,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'info': // 信息牌
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="0.6" step="0.1" min="0.1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18298,7 +18441,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'signage': // 导视牌
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="0.8" step="0.1" min="0.3" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18319,7 +18462,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'billboard': // 宣传栏
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="3" step="0.1" min="1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18340,7 +18483,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'directory': // 楼层导视
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1.2" step="0.1" min="0.5" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18357,7 +18500,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'logo': // LOGO墙
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="2" step="0.1" min="0.5" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18379,7 +18522,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'decor': // 装饰造型
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1" step="0.1" min="0.2" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18401,7 +18544,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'shelf': // 展示架
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1.2" step="0.1" min="0.5" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18418,7 +18561,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'glassSticker': // 玻璃贴
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1.5" step="0.1" min="0.3" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18440,7 +18583,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'floorSign': // 地面标识
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="0.6" step="0.1" min="0.2" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18457,7 +18600,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'standingSign': // 立牌/导视立牌
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1.2" step="0.1" min="0.5" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18497,7 +18640,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'doorPlate': // 门牌/科室牌
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || 0.3}" placeholder="0.3" step="0.05" min="0.1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18539,7 +18682,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'parkingSign': // 停车场导视
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="0.6" step="0.1" min="0.3" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18581,7 +18724,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'roadSign': // 道路指示牌
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1.5" step="0.1" min="0.5" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -18617,7 +18760,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'buildingNum': // 楼栋号
             return `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(80px,1fr));gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>字高(米)</label>
                         <input type="number" id="itemSize_${areaIndex}_${itemIndex}" value="${item.size || 1}" placeholder="1" step="0.1" min="0.3" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'size', this.value)">
@@ -19656,12 +19799,12 @@ function toggleDoorHeaderTempPrice() {
             const displayPrice = savedPrice !== null ? parseFloat(savedPrice) : item.unitPrice;
 
             html += `
-                <div style="display:flex;align-items:center;gap:0.25rem;padding:0.25rem;background:white;border-radius:4px;">
-                    <span style="flex:1;font-size:0.6875rem;color:#92400e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.name}">[${item.category}]${item.name}</span>
+                <div style="display:flex;align-items:center;gap:0.1875rem;padding:0.1875rem;background:white;border-radius:4px;">
+                    <span style="flex:1;font-size:0.625rem;color:#92400e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.name}">[${item.category}]${item.name}</span>
                     <input type="number" id="${safeKey}" data-key="${item.name}" data-type="${type}" value="${displayPrice}"
-                        style="width:60px;padding:0.125rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;text-align:right;"
+                        style="width:50px;padding:0.0625rem 0.1875rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:3px;text-align:right;"
                         oninput="saveDoorHeaderTempPrice(this)">
-                    <span style="font-size:0.625rem;color:#92400e;">${item.unit}</span>
+                    <span style="font-size:0.5625rem;color:#92400e;">${item.unit}</span>
                 </div>
             `;
         });
@@ -27516,6 +27659,14 @@ function updateIdentityUI(isAdminMode) {
     if (error) {
         error.style.display = 'none';
     }
+    
+    // 更新成本价标签文本
+    updateCostPriceLabel();
+    
+    // 重置复选框状态
+    const checkbox = document.getElementById('hideCostPrice');
+    if (checkbox) checkbox.checked = false;
+    toggleCostPriceColumn();
 }
 
 function updateSensitiveDataVisibility(show) {
@@ -27524,6 +27675,13 @@ function updateSensitiveDataVisibility(show) {
     sensitiveElements.forEach(el => {
         el.style.display = show ? '' : 'none';
     });
+    
+    // 添加/移除 admin-mode 类以支持CSS隐藏成本价列
+    if (show) {
+        document.body.classList.add('admin-mode');
+    } else {
+        document.body.classList.remove('admin-mode');
+    }
     
     if (typeof recalculateQuote === 'function') {
         recalculateQuote();
@@ -36353,13 +36511,6 @@ function resetSmartTemplates() {
     </div>
 </div>
 
-<!-- 移动端底部操作栏 -->
-<div class="mobile-action-bar" id="mobileActionBar">
-    <div class="mobile-action-bar-items" id="mobileActionBarItems">
-        <!-- 动态内容，根据当前标签页显示不同按钮 -->
-    </div>
-</div>
-
 <script>
 // 更新移动端导航高亮状态
 function updateMobileNavActive(el) {
@@ -36995,53 +37146,11 @@ function clearMobileCalculator() {
     showToast('已清除所有输入', 'info');
 }
 
-// 更新移动端操作栏内容
-function updateMobileActionBar() {
-    const actionBar = document.getElementById('mobileActionBar');
-    const actionItems = document.getElementById('mobileActionBarItems');
-    const currentTab = localStorage.getItem('currentTab') || 'builder';
-    
-    // 只在移动端显示操作栏
-    if (window.innerWidth > 576) {
-        actionBar.style.display = 'none';
-        return;
-    }
-    
-    // 根据当前标签页显示/隐藏操作栏
-    if (currentTab === 'builder' || currentTab === 'templates') {
-        actionBar.style.display = 'block';
-        
-        if (currentTab === 'builder') {
-            actionItems.innerHTML = `
-                <button class="btn btn-primary" onclick="saveQuoteToHistory()">💾 保存</button>
-                <button class="btn btn-success" onclick="switchTab('preview')">👁️ 预览</button>
-            `;
-        } else {
-            actionItems.innerHTML = `
-                <button class="btn btn-primary" onclick="createQuoteFromTemplate()">📋 新建报价</button>
-            `;
-        }
-    } else if (currentTab === 'history') {
-        actionBar.style.display = 'block';
-        actionItems.innerHTML = `
-            <button class="btn btn-primary" onclick="switchTab('builder')">🛠️ 新建报价</button>
-        `;
-    } else if (currentTab === 'customers') {
-        actionBar.style.display = 'block';
-        actionItems.innerHTML = `
-            <button class="btn btn-primary" onclick="openCustomerModal()">➕ 添加客户</button>
-        `;
-    } else {
-        actionBar.style.display = 'none';
-    }
-}
-
 // 重写 switchTab 函数以更新移动端导航
 const originalSwitchTab = switchTab;
 switchTab = function(tabName) {
     originalSwitchTab(tabName);
     localStorage.setItem('currentTab', tabName);
-    updateMobileActionBar();
     updateMobileNavState(tabName);
 };
 
@@ -37061,12 +37170,6 @@ function updateMobileNavState(tabName) {
 document.addEventListener('DOMContentLoaded', function() {
     const currentTab = localStorage.getItem('currentTab') || 'builder';
     updateMobileNavState(currentTab);
-    updateMobileActionBar();
-
-    // 监听窗口大小变化，确保移动端导航栏正确显示/隐藏
-    window.addEventListener('resize', function() {
-        updateMobileActionBar();
-    });
 
     // 撤销/重做键盘快捷键
     document.addEventListener('keydown', function(e) {
