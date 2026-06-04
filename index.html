@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>图文广告快速报价系统 V3.2专业版</title>
+    <title>图文广告快速报价系统 V3.3专业版</title>
     
-    <!-- Tesseract.js OCR -->
-    <script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- Tesseract.js OCR - 延迟加载，需要时再加载 -->
+    <!-- <script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script> -->
     <!-- PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
@@ -722,9 +722,13 @@
         .empty-state-action { margin-top: 1rem; }
         .import-export { background: var(--gray-50); border-radius: var(--radius-lg); padding: 0.875rem; margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
         @media (max-width: 640px) {
-            .import-export { padding: 0.5rem; gap: 0.375rem; }
-            .import-export > div:first-child { min-width: 100%; margin-bottom: 0.25rem; }
-            .import-export input { font-size: 0.8125rem !important; padding: 0.4rem 2.5rem 0.4rem 0.625rem !important; }
+            body { max-width: 100vw; overflow-x: hidden; }
+            .tab-content, #products { max-width: 100vw; overflow-x: hidden; }
+            .import-export { padding: 0.2rem 0.2rem; gap: 0.1rem !important; flex-wrap: nowrap !important; max-width: 100%; display: flex !important; justify-content: flex-start; }
+            .import-export .search-box-container { flex: 0 0 auto; min-width: 35%; max-width: 42%; }
+            .import-export .action-buttons { flex-shrink: 0; display: flex !important; gap: 0.05rem !important; flex-wrap: nowrap !important; }
+            .import-export input { font-size: 0.65rem !important; padding: 0.2rem 0.2rem !important; height: auto !important; box-sizing: border-box; width: 100%; }
+            .import-export .action-buttons .btn { padding: 0.2rem 0.12rem !important; font-size: 0.48rem !important; white-space: nowrap; line-height: 1.2; }
         }
         .image-preview { width: 100%; max-height: 160px; object-fit: contain; border-radius: var(--radius); background: var(--gray-100); }
         .badge { display: inline-block; padding: 0.125rem 0.375rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 500; }
@@ -3911,7 +3915,7 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
         <div class="login-logo">
             <div class="login-logo-icon" role="img" aria-label="报价系统图标">💰</div>
             <h1 id="login-title" class="login-logo-title">图文广告报价系统</h1>
-            <p id="login-desc" class="login-logo-subtitle">专业版 v3.2</p>
+            <p id="login-desc" class="login-logo-subtitle">专业版 v3.3</p>
         </div>
         
         <form class="login-form" onsubmit="handleLogin(event)" aria-describedby="login-error">
@@ -4875,7 +4879,7 @@ var DataManager = {
     <header>
         <div class="header-content">
             <div>
-                <h1>📊 图文广告快速报价系统 <span class="version-badge">v3.2 专业版</span></h1>
+                <h1>📊 图文广告快速报价系统 <span class="version-badge">v3.3 专业版</span></h1>
                 <p class="subtitle">快速生成专业报价单 · 产品库模板库客户管理 · 利润分析看板 · 报价历史记录 · 多级分类 · 批量操作 · 云同步</p>
             </div>
             <div class="btn-group" style="gap:0.5rem;align-items:center;position:relative;">
@@ -5121,8 +5125,8 @@ var DataManager = {
                         <div style="flex:1;min-width:280px;">
                             <div style="font-size:0.75rem;color:var(--gray-500);margin-bottom:0.25rem;">报价单编号</div>
                             <div style="display:flex;gap:0.5rem;align-items:center;">
-                                <input type="text" id="quoteNumber" placeholder="自动生成" style="flex:1;min-width:100px;padding:0.4rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:var(--radius);" readonly>
-                                <select id="quoteNumberRule" onchange="generateQuoteNumber()" style="padding:0.4rem 0.5rem;font-size:0.75rem;border:1px solid var(--gray-300);border-radius:var(--radius);">
+                                <input type="text" id="quoteNumber" placeholder="自动生成" style="width:100px;padding:0.4rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:var(--radius);" readonly>
+                                <select id="quoteNumberRule" onchange="generateQuoteNumber()" style="flex:1;min-width:120px;padding:0.4rem 0.5rem;font-size:0.75rem;border:1px solid var(--gray-300);border-radius:var(--radius);">
                                     <option value="date_seq">日期+序号</option>
                                     <option value="year_seq">年份+序号</option>
                                     <option value="prefix_seq">前缀+序号</option>
@@ -5139,7 +5143,7 @@ var DataManager = {
                         <button class="btn btn-outline btn-sm" onclick="showQuickSearchResults()" style="padding:0.5rem 0.75rem;">🔍 搜索</button>
                     </div>
                     <div id="quickSearchResults" class="quick-search-results" style="display:none;position:fixed;top:auto;left:auto;background:white;border:2px solid var(--primary);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:1000;max-height:350px;overflow-y:auto;width:calc(100% - 2rem);max-width:500px;"></div>
-                    <div id="quoteItemsContainer">
+                    <div id="quoteItemsContainer" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
                         <div class="quote-item-row" id="quoteItemHeader" style="font-weight:600;background:var(--gray-50);font-size:0.6875rem;padding:0.625rem;">
                             <div class="header-col header-col-1" style="display:flex;align-items:center;justify-content:center;height:32px;"><span class="quote-item-number" style="cursor:default;">序号</span></div>
                             <div class="header-col header-col-2" style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">图片</span><input type="checkbox" onchange="toggleColumnVisibility('image', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
@@ -5348,32 +5352,18 @@ var DataManager = {
             </div>
             <div class="import-export" style="display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;">
                 <!-- 搜索区域 -->
-                <div style="flex:1;min-width:200px;position:relative;">
-                    <input type="text" id="productSearch" placeholder="🔍 智能搜索产品..." oninput="smartSearchProducts()" style="width:100%;padding:0.5rem 2.75rem 0.5rem 0.75rem;font-size:0.875rem;">
-                    <button class="btn btn-outline btn-sm" onclick="clearSmartSearch()" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);padding:0.375rem 0.75rem;font-size:0.875rem;">清除</button>
+                <div style="width:45%;min-width:35%;max-width:45%;position:relative;" class="search-box-container">
+                    <input type="text" id="productSearch" placeholder="🔍 搜索产品..." oninput="smartSearchProducts()" style="width:100%;padding:0.45rem 3rem 0.45rem 0.625rem;font-size:0.875rem;height:36px;">
+                    <button class="btn btn-outline btn-xs" onclick="clearSmartSearch()" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);padding:0.15rem 0.4rem;font-size:0.65rem;height:22px;">清除</button>
                 </div>
                 
                 <!-- 功能按钮组 -->
-                <div style="display:flex;gap:0.375rem;justify-content:space-around;">
-                    <button class="btn btn-success btn-sm" onclick="openImageRecognitionModal()" title="上传图片识别产品" style="padding:0.5rem 0.75rem;font-size:0.875rem;">📷 图像识别</button>
-                    <button class="btn btn-outline btn-sm" id="favoritesFilterBtn" onclick="toggleFavoritesFilter()" style="padding:0.5rem 0.75rem;font-size:0.875rem;" title="只看收藏">⭐ 收藏</button>
-                    <button class="btn btn-outline btn-sm" id="viewToggleBtn" onclick="toggleProductView()" style="padding:0.5rem 0.75rem;font-size:0.875rem;" title="切换视图">🔄 视图</button>
-                    <button class="btn btn-primary btn-sm" onclick="showAIRecommendations()" style="padding:0.5rem 0.75rem;font-size:0.875rem;" title="AI智能推荐">🤖 推荐</button>
+                <div style="display:flex;gap:0.375rem;flex-wrap:wrap;" class="action-buttons">
+                    <button class="btn btn-success btn-sm" onclick="openImageRecognitionModal()" title="上传图片识别产品">📷识别</button>
+                    <button class="btn btn-outline btn-sm" id="favoritesFilterBtn" onclick="toggleFavoritesFilter()" title="只看收藏">⭐收藏</button>
+                    <button class="btn btn-outline btn-sm" id="viewToggleBtn" onclick="toggleProductView()" title="切换视图">🔄视图</button>
                 </div>
             </div>
-            <!-- 智能推荐区域 -->
-            <div id="aiRecommendationsBar" class="ai-recommendations-bar" style="display:none;margin-bottom:1rem;padding:0.75rem;background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);border-radius:var(--radius);border:1px solid #fcd34d;">
-                <div style="display:flex;align-items:center;gap:0.75rem;">
-                    <span style="font-size:1.2rem;">🤖</span>
-                    <div style="flex:1;">
-                        <div style="font-weight:600;color:#92400e;">AI推荐</div>
-                        <div style="font-size:0.8125rem;color:#b45309;" id="aiRecommendationsText">根据您的选择，推荐以下产品...</div>
-                    </div>
-                    <button class="btn btn-sm btn-outline" onclick="document.getElementById('aiRecommendationsBar').style.display='none'">✕</button>
-                </div>
-                <div id="aiRecommendationsList" style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap;"></div>
-            </div>
-            
             <!-- 分类卡片区域 -->
             <div id="categoryCards" class="category-cards" style="margin-bottom:1rem;">
                 <div id="categoryCardsContainer" class="category-cards-container"></div>
@@ -9124,6 +9114,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // 初始化分页
     initPagination();
 
+    // 预加载 XLSX 库（用于导入导出），不阻塞页面
+    if (!window.XLSX) {
+        setTimeout(function() {
+            var script = document.createElement('script');
+            script.src = 'https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+            document.head.appendChild(script);
+        }, 1000);
+    }
+
     // 初始化撤销/重做按钮状态
     updateUndoRedoButtons();
 
@@ -12266,7 +12265,8 @@ function savePreviewEdits(){
     calculateTotals();
     saveData();
     showToast('报价单已保存！', 'success');
-    document.getElementById('quotePreview').classList.add('hidden');
+    // 保存后不自动关闭预览，让用户可以继续查看
+    // 如需关闭预览，请点击右上角的关闭按钮
 }
 let dragTarget=null, dragOffsetX=0, dragOffsetY=0;
 function initDraggableElements(){
@@ -12352,12 +12352,14 @@ function updateSealPosition(prop, value){
     appData.systemSettings.sealPosition[prop] = parseInt(value);
     const seal = document.getElementById('previewSeal');
     if(seal) seal.style[prop] = value;
+    saveData();
 }
 function updateSigPosition(prop, value){
     if(!appData.systemSettings.signaturePosition) appData.systemSettings.signaturePosition = {bottom:40,right:20};
     appData.systemSettings.signaturePosition[prop] = parseInt(value);
     const sig = document.getElementById('previewSignature');
     if(sig) sig.style[prop] = value;
+    saveData();
 }
 // BUG修复：增加锁防止递归调用
 function exportPDF(){
@@ -14292,7 +14294,8 @@ function runSmartSearch(){
         }
     } else {
         renderProducts();
-        document.getElementById('aiRecommendationsBar').style.display = 'none';
+        const recBar = document.getElementById('aiRecommendationsBar');
+        if(recBar) recBar.style.display = 'none';
     }
 }
 
@@ -14392,7 +14395,8 @@ function clearSmartSearch(){
     document.getElementById('productSearch').value = '';
     window.currentSmartSearchResults = null;
     renderProducts();
-    document.getElementById('aiRecommendationsBar').style.display = 'none';
+    const recBar = document.getElementById('aiRecommendationsBar');
+    if(recBar) recBar.style.display = 'none';
 }
 
 function showRelatedRecommendations(baseProducts){
@@ -14403,14 +14407,16 @@ function showRelatedRecommendations(baseProducts){
     
     if(recommendations.length > 0){
         container.innerHTML = recommendations.map(p => `
-            <button class="btn btn-sm btn-outline" onclick="addToQuote(${p.id});document.getElementById('aiRecommendationsBar').style.display='none';" 
+            <button class="btn btn-sm btn-outline" onclick="addToQuote(${p.id});const r=document.getElementById('aiRecommendationsBar');if(r)r.style.display='none';" 
                     title="${escapeHtml(p.name)} - ¥${p.sellingPrice || p.price}">
                 ${escapeHtml(p.name)}
             </button>
         `).join('');
         
-        document.getElementById('aiRecommendationsBar').style.display = 'block';
-        document.getElementById('aiRecommendationsText').textContent = `根据"${baseProducts[0].name}"推荐搭配产品`;
+        const recBar = document.getElementById('aiRecommendationsBar');
+        const recText = document.getElementById('aiRecommendationsText');
+        if(recBar) recBar.style.display = 'block';
+        if(recText) recText.textContent = `根据"${baseProducts[0].name}"推荐搭配产品`;
     }
 }
 
@@ -15469,7 +15475,7 @@ function parseQuoteExcel(file) {
         if (!window.XLSX) {
             showToast('正在加载Excel处理库...', 'info');
             const script = document.createElement('script');
-            script.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
+            script.src = 'https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
             script.onload = () => parseQuoteExcel(file).then(resolve).catch(reject);
             script.onerror = () => reject(new Error('加载Excel库失败'));
             document.head.appendChild(script);
@@ -15685,16 +15691,31 @@ async function recognizeQuoteFromImage(file) {
     }
 }
 
+// 加载Tesseract.js
+function loadTesseract() {
+    return new Promise((resolve, reject) => {
+        if (typeof Tesseract !== 'undefined') {
+            resolve();
+            return;
+        }
+        var script = document.createElement('script');
+        script.src = 'https://cdn.bootcdn.net/ajax/libs/tesseract.js/5.0.0/tesseract.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
 // Tesseract.js 本地OCR识别（无需API key，完全在浏览器运行）
 async function callAliyunOCR(imageBase64) {
     // 超时控制：15秒后自动返回null，触发模拟模式
     const timeoutMs = 15000;
     
     try {
-        // 检查Tesseract是否已加载
+        // 检查Tesseract是否已加载，如果没有则动态加载
         if (typeof Tesseract === 'undefined') {
-            console.error('Tesseract.js 未加载');
-            return null;
+            document.getElementById('quoteRecognitionProgress').textContent = '正在加载OCR引擎...';
+            await loadTesseract();
         }
         
         document.getElementById('quoteRecognitionProgress').textContent = '正在初始化OCR引擎...';
@@ -17713,6 +17734,23 @@ const fontTypeConfig = {
         isLighted: false,
         calcPrice: function(charCount, charSize) {
             const unitPrice = getCharUnitPrice(charSize, charSize, '玫瑰金字', 'solid');
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
+    },
+    none: {
+        name: '无字',
+        material: 'none',
+        isLighted: false,
+        calcPrice: function(charCount, charSize) {
+            return { unitPrice: 0, ledCount: 0 };
+        }
+    },
+    metal_painted: {
+        name: '金属烤漆字',
+        material: 'metal',
+        isLighted: false,
+        calcPrice: function(charCount, charSize) {
+            const unitPrice = getCharUnitPrice(charSize, charSize, '金属烤漆字', 'solid');
             return { unitPrice: Math.ceil(unitPrice) };
         }
     }
@@ -21132,6 +21170,17 @@ function calculateDoorHeaderQuote() {
 
     const config = doorHeaderConfig[type];
     const fontConfig = fontTypeConfig[fontType];
+
+    // 检查配置是否存在
+    if (!config) {
+        showToast('❌ 门头类型配置不存在，请刷新页面重试', 'error');
+        return;
+    }
+    if (!fontConfig) {
+        showToast('❌ 字体类型配置不存在，请刷新页面重试', 'error');
+        return;
+    }
+
     const options = { charCount, charSize, floor, edge, thickness, topExtend, bottomExtend, topMaterial, bottomMaterial, frameType, enableSplit, splitMode, splitRatio, splitRatioTB, frameTypeNew, frameWidth, frameDepth, wallWashLight, leftMaterial, rightMaterial, topInnerMaterial, bottomInnerMaterial, outerFrameMaterial, innerFrameMaterial, frameMaterial, innerMaterial };
     const wasteMultiplier = 1 + wasteRate / 100;
     const markupMultiplier = 1 + markup / 100;
@@ -21710,8 +21759,8 @@ function renderDoorHeaderResult(result) {
         summaryHtml = `
         <div style="margin-bottom:0.75rem;">
             <div style="font-weight:600;color:#92400e;font-size:0.8125rem;margin-bottom:0.375rem;">📦 材料用量汇总（合并同类项）</div>
-            <div style="border:1px dashed #fcd34d;border-radius:var(--radius);overflow:hidden;">
-                <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
+            <div style="border:1px dashed #fcd34d;border-radius:var(--radius);overflow-x:auto;-webkit-overflow-scrolling:touch;">
+                <table style="width:100%;min-width:450px;border-collapse:collapse;font-size:0.75rem;">
                     <thead style="background:#fffbeb;">
                         <tr>
                             <th style="padding:0.375rem 0.5rem;text-align:left;">材料名称</th>
@@ -21775,8 +21824,8 @@ function renderDoorHeaderResult(result) {
             </div>
             ${timelineHtml}
             ${summaryHtml}
-            <div style="border:1px solid #fcd34d;border-radius:var(--radius);overflow:hidden;margin-bottom:0.75rem;">
-                <table style="width:100%;border-collapse:collapse;font-size:0.8125rem;">
+            <div style="border:1px solid #fcd34d;border-radius:var(--radius);overflow-x:auto;margin-bottom:0.75rem;-webkit-overflow-scrolling:touch;">
+                <table style="width:100%;min-width:500px;border-collapse:collapse;font-size:0.8125rem;">
                     <thead style="background:#fef3c7;">
                         <tr>
                             <th style="padding:0.5rem;text-align:left;font-size:0.75rem;">材料名称</th>
@@ -22041,6 +22090,25 @@ function saveDoorHeaderAsTemplate() {
     }, 100);
 
     showToast('已加载到模板编辑，请保存', 'success');
+}
+
+// 门头类型变更时的处理函数
+function onDoorHeaderTypeChange() {
+    const type = document.getElementById('doorHeaderType').value;
+    const config = doorHeaderConfig[type];
+    if (config) {
+        // 更新预览显示
+        const sizePreview = document.getElementById('doorHeaderSizePreview');
+        if (sizePreview) {
+            const width = parseFloat(document.getElementById('doorHeaderWidth').value) || 0;
+            const height = parseFloat(document.getElementById('doorHeaderHeight').value) || 0;
+            if (width > 0 && height > 0) {
+                sizePreview.textContent = (width * height).toFixed(2) + ' ㎡';
+            } else {
+                sizePreview.textContent = '—';
+            }
+        }
+    }
 }
 
 // 重置门头报价表单
@@ -27312,13 +27380,19 @@ function addNewSeal(){
             ctx.drawImage(img, 0, 0, width, height);
             const compressedDataUrl = canvas.toDataURL('image/png', 0.9);
             const seal={ id:Date.now(), name:name, image:compressedDataUrl, createdAt:new Date().toISOString() };
-            appData.seals.push(seal); 
-            appData.systemSettings.selectedSealId=seal.id; 
-            saveData(); 
+            appData.seals.push(seal);
+            appData.systemSettings.selectedSealId=seal.id;
+            saveData();
             renderSealGrid();
-            document.getElementById('newSealName').value=''; 
-            document.getElementById('newSealImage').value=''; 
+            document.getElementById('newSealName').value='';
+            document.getElementById('newSealImage').value='';
             document.getElementById('newSealPreview').style.display='none';
+            showToast('✅ 印章添加成功', 'success');
+            // 刷新报价预览（如果已打开）
+            const preview = document.getElementById('quotePreview');
+            if (preview && !preview.classList.contains('hidden')) {
+                generateQuotePreview();
+            }
         };
         img.src = e.target.result;
     };
@@ -27339,16 +27413,26 @@ function deleteSeal(sid){
             if(grid) grid.innerHTML = '';
             renderSealGrid();
             showToast('印章已删除', 'info');
+            // 刷新报价预览（如果已打开）
+            const preview = document.getElementById('quotePreview');
+            if (preview && !preview.classList.contains('hidden')) {
+                generateQuotePreview();
+            }
         } catch(e) {
             console.error('删除印章出错:', e);
             showToast('删除过程中出现错误', 'error');
         }
     });
 }
-function selectSeal(sid){ 
-    appData.systemSettings.selectedSealId=sid; 
-    saveData(); 
-    renderSealGrid(); 
+function selectSeal(sid){
+    appData.systemSettings.selectedSealId=sid;
+    saveData();
+    renderSealGrid();
+    // 刷新报价预览（如果已打开）
+    const preview = document.getElementById('quotePreview');
+    if (preview && !preview.classList.contains('hidden')) {
+        generateQuotePreview();
+    }
 }
 function renderSealGrid(){
     const c=document.getElementById('sealGrid');
@@ -27465,6 +27549,11 @@ function saveSignature(){
     }
     renderSignatureGrid();
     showToast('签名已保存！', 'success');
+    // 刷新报价预览（如果已打开）
+    const preview = document.getElementById('quotePreview');
+    if (preview && !preview.classList.contains('hidden')) {
+        generateQuotePreview();
+    }
 }
 function renderSignatureGrid(){
     const c = document.getElementById('signatureGrid');
@@ -27494,6 +27583,11 @@ function deleteSignature(id){
                 if(grid) grid.innerHTML = '';
                 renderSignatureGrid();
                 showToast('签名已删除', 'success');
+                // 刷新报价预览（如果已打开）
+                const preview = document.getElementById('quotePreview');
+                if (preview && !preview.classList.contains('hidden')) {
+                    generateQuotePreview();
+                }
             }
         } catch(e) {
             console.error('删除签名出错:', e);
@@ -27513,8 +27607,15 @@ function saveSystemSettings(){
     appData.systemSettings.defaultDiscountRate=parseFloat(document.getElementById('defaultDiscountRate').value||100);
     appData.systemSettings.quoteValidDays=parseInt(document.getElementById('quoteValidDays').value||7);
     createAutoBackup();
-    saveData(); 
-    alert('设置保存成功！');
+    saveData();
+    showToast('✅ 设置保存成功', 'success');
+    // 刷新报价预览（如果已打开）
+    const preview = document.getElementById('quotePreview');
+    if (preview && !preview.classList.contains('hidden')) {
+        generateQuotePreview();
+    }
+    // 重新计算当前报价单
+    calculateTotals();
 }
 
 function loadSystemSettings(){
@@ -31704,29 +31805,14 @@ function importProducts(event){
         try{ 
             const p=JSON.parse(e.target.result); 
             if(Array.isArray(p)){ 
-                let imported=0, skipped=0, updated=0, linkedImages=0;
+                let imported=0, skipped=0, updated=0;
                 
-                // 预检查 IndexedDB 中的图片
-                const preCheckImages = async () => {
-                    if (idbInitialized && IDB.isSupported()) {
-                        for (const product of p) {
-                            if (product.imageLocation === 'indexeddb' && product.imageRef) {
-                                try {
-                                    const exists = await IDB.imageExists(product.imageRef);
-                                    if (exists) {
-                                        linkedImages++;
-                                    }
-                                } catch (e) {
-                                    console.warn('检查图片存在失败:', e);
-                                }
-                            }
-                        }
-                    }
-                };
-                
-                preCheckImages().then(() => {
-                    const mode = prompt(`请选择导入方式：\n1. 替换（清空现有数据）\n2. 合并（保留现有，添加新数据）\n3. 更新（按名称匹配更新）\n\n检测到 ${linkedImages} 个可自动链接的图片\n\n请输入数字 1/2/3`, '2');
-                    if(!mode) return;
+                // 直接提示用户选择导入方式，不再预检查图片（避免卡住）
+                const mode = prompt(`请选择导入方式：\n1. 替换（清空现有数据）\n2. 合并（保留现有，添加新数据）\n3. 更新（按名称匹配更新）\n\n请输入数字 1/2/3`, '2');
+                if(!mode) {
+                    showToast('导入已取消', 'info');
+                    return;
+                }
                     
                     // 处理产品导入
                     const processProducts = () => {
@@ -31775,13 +31861,23 @@ function importProducts(event){
                     // 执行产品处理
                     processProducts();
                     
+                    // 自动创建缺失的分类
+                    if (!appData.categories) appData.categories = [];
+                    newProducts.forEach(p => {
+                        if (p.category) {
+                            const catName = p.category.split('/')[0].trim();
+                            if (catName && !appData.categories.some(c => c.name === catName)) {
+                                appData.categories.push({ name: catName });
+                            }
+                        }
+                    });
+                    
                     saveDataImmediately(); 
                     renderProducts(); 
                     updateCategoryFilter(); 
                     populateQuoteProductList();
                     showToast(`✅ 导入完成！新增: ${imported}, 更新: ${updated}, 跳过: ${skipped}`, 'success');
                     addToHistory('导入产品', `新增${imported}个，更新${updated}个`);
-                });
         } else throw new Error('格式错误：需要数组格式'); 
         }catch(err){ 
             showToast('导入失败：'+err.message, 'error'); 
@@ -32098,7 +32194,7 @@ function exportToXLSX(data, headers, filename, sheetName) {
     if (!window.XLSX) {
         alert('正在加载Excel处理库，请稍后...');
         var script = document.createElement('script');
-        script.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
+        script.src = 'https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
         script.onload = function() { exportToXLSX(data, headers, filename, sheetName); };
         document.head.appendChild(script);
         return;
@@ -32124,8 +32220,11 @@ function importFromXLSX(file, headers, callback) {
     if (!window.XLSX) { 
         alert('正在加载Excel处理库，请稍后...'); 
         var script = document.createElement('script'); 
-        script.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js'; 
+        script.src = 'https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; 
         script.onload = function() { importFromXLSX(file, headers, callback); }; 
+        script.onerror = function() { 
+            alert('Excel处理库加载失败，请检查网络连接后重试'); 
+        };
         document.head.appendChild(script); 
         return; 
     }
@@ -32304,7 +32403,19 @@ function importProductsXLSX(event) {
                     appData.products.push(p); 
                 } 
             }); 
-        } 
+        }
+        
+        // 自动创建缺失的分类
+        if (!appData.categories) appData.categories = [];
+        newProducts.forEach(function(p) {
+            if (p.category) {
+                var catName = p.category.split('/')[0].trim();
+                if (catName && !appData.categories.some(function(c) { return c.name === catName; })) {
+                    appData.categories.push({ name: catName });
+                }
+            }
+        });
+        
         saveDataImmediately(); 
         renderProducts(); 
         updateCategoryFilter(); 
@@ -32317,7 +32428,7 @@ function exportTemplatesXLSX() {
     if (!window.XLSX) { 
         alert('正在加载Excel处理库，请稍后...'); 
         var script = document.createElement('script'); 
-        script.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js'; 
+        script.src = 'https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; 
         script.onload = function() { exportTemplatesXLSX(); }; 
         document.head.appendChild(script); 
         return; 
@@ -32353,7 +32464,7 @@ function importTemplatesXLSX(event) {
     if (!window.XLSX) { 
         alert('正在加载Excel处理库，请稍后...'); 
         var script = document.createElement('script'); 
-        script.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js'; 
+        script.src = 'https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; 
         script.onload = function() { importTemplatesXLSX(event); }; 
         document.head.appendChild(script); 
         return; 
