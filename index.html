@@ -7315,7 +7315,7 @@ var DataManager = {
                             <button class="btn btn-primary btn-xs" onclick="verifyAdminPassword()" style="white-space:nowrap;padding:0.25rem 0.5rem;font-size:0.6875rem;height:28px;line-height:1;">验证</button>
                             <button class="btn btn-outline btn-xs" onclick="logoutAdmin()" style="white-space:nowrap;display:none;padding:0.25rem 0.5rem;font-size:0.6875rem;height:28px;line-height:1;" id="logoutAdminBtn">退出</button>
                         </div>
-                        <div id="passwordError" style="display:none;margin-top:0.375rem;font-size:0.6875rem;color:#dc2626;">❌ 密码错误</div>
+                        <div id="adminPasswordError" style="display:none;margin-top:0.375rem;font-size:0.6875rem;color:#dc2626;">❌ 密码错误</div>
                     </div>
                 </div>
                 <div style="background:#f0fdf4;border-radius:var(--radius);padding:0.5rem;font-size:0.6875rem;color:#064e3b;">
@@ -14956,8 +14956,8 @@ function openImageRecognitionModal(){
             <h3 style="margin-bottom:1rem;">📷 AI图像识别</h3>
             
             <div style="border:2px dashed var(--gray-300);border-radius:var(--radius);padding:2rem;text-align:center;background:#f9fafb;">
-                <input type="file" id="imageUpload" accept="image/*" hidden onchange="handleImageRecognitionUpload(event)">
-                <button class="btn btn-primary" onclick="document.getElementById('imageUpload').click()" style="margin-bottom:1rem;">
+                <input type="file" id="imageRecognitionUpload" accept="image/*" hidden onchange="handleImageRecognitionUpload(event)">
+                <button class="btn btn-primary" onclick="document.getElementById('imageRecognitionUpload').click()" style="margin-bottom:1rem;">
                     📸 上传图片识别产品
                 </button>
                 <div style="font-size:0.8125rem;color:#6b7280;">支持 JPG、PNG 格式</div>
@@ -27709,7 +27709,7 @@ function updateAutoLoginToggle() {
 
 function verifyAdminPassword() {
     const input = document.getElementById('adminPasswordInput');
-    const error = document.getElementById('passwordError');
+    const error = document.getElementById('adminPasswordError');
     
     if (!input) return;
     
@@ -27766,7 +27766,7 @@ function updateIdentityUI(isAdminMode) {
     const logoutBtn = document.getElementById('logoutAdminBtn');
     const verifyBtn = document.querySelector('button[onclick="verifyAdminPassword()"]');
     const passwordInput = document.getElementById('adminPasswordInput');
-    const error = document.getElementById('passwordError');
+    const error = document.getElementById('adminPasswordError');
     
     if (badge) {
         badge.textContent = isAdminMode ? '✅ 高级身份' : '🔒 普通身份';
