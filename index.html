@@ -32022,18 +32022,18 @@ function exportAllData(){
                         backupTime: new Date().toISOString(),
                         version: 'v3.1'
                     };
-                    downloadFile(JSON.stringify(fullBackup, null, 2), `ad-quote-v3.1-backup-${new Date().toISOString().slice(0,10)}.json`, 'application/json');
+                    downloadFile(JSON.stringify(fullBackup, null, 2), `ad-quote-backup-${new Date().toISOString().slice(0,10)}.json`, 'application/json');
                     hideLoadingToast();
                     showToast(`✅ 数据导出成功！包含 ${images.length} 张图片`, 'success');
                 }).catch(function(e) {
                     console.error('获取图片失败:', e);
                     // 如果 IndexedDB 操作失败，回退到只导出 appData
-                    downloadFile(JSON.stringify(appData, null, 2), `ad-quote-v2-backup-${new Date().toISOString().slice(0,10)}.json`, 'application/json');
+                    downloadFile(JSON.stringify(appData, null, 2), `ad-quote-backup-${new Date().toISOString().slice(0,10)}.json`, 'application/json');
                     hideLoadingToast();
                     showToast('✅ 数据导出成功！', 'success');
                 });
             } else {
-                downloadFile(JSON.stringify(appData, null, 2), `ad-quote-v2-backup-${new Date().toISOString().slice(0,10)}.json`, 'application/json');
+                downloadFile(JSON.stringify(appData, null, 2), `ad-quote-backup-${new Date().toISOString().slice(0,10)}.json`, 'application/json');
                 hideLoadingToast();
                 showToast('✅ 数据导出成功！', 'success');
             }
