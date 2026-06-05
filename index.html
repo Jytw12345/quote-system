@@ -4382,25 +4382,51 @@ var safeStorage = {
             confirmText: '确定',
             cancelText: '取消',
             showCancel: true,
-            callback: null
+            callback: null,
+            allowHtml: false  // 新增：是否允许 HTML 内容
         };
         var opts = Object.assign({}, defaults, options);
 
-        document.getElementById('customModalIcon').textContent = opts.icon;
-        document.getElementById('customModalTitle').textContent = opts.title;
-        document.getElementById('customModalMessage').innerHTML = escapeHtml(opts.message);
+        // 检查必要的 DOM 元素是否存在
+        var modalIcon = document.getElementById('customModalIcon');
+        var modalTitle = document.getElementById('customModalTitle');
+        var modalMessage = document.getElementById('customModalMessage');
+        var modalFooter = document.getElementById('customModalFooter');
+        var modal = document.getElementById('customModal');
+
+        if (!modalIcon || !modalTitle || !modalMessage || !modalFooter || !modal) {
+            console.error('Modal elements not found, waiting for DOM to load...');
+            // 如果 DOM 还没加载完成，等待加载后再显示
+            if (document.readyState !== 'complete') {
+                setTimeout(function() {
+                    showModal(options);
+                }, 100);
+            } else {
+                console.error('Modal elements not found even after DOM loaded');
+                alert(opts.title + '\n' + opts.message);
+            }
+            return;
+        }
+
+        modalIcon.textContent = opts.icon;
+        modalTitle.textContent = opts.title;
+        // 根据 allowHtml 选项决定是否转义
+        if (opts.allowHtml) {
+            modalMessage.innerHTML = opts.message;
+        } else {
+            modalMessage.innerHTML = escapeHtml(opts.message);
+        }
 
         modalCallback = opts.callback;
 
-        var footer = document.getElementById('customModalFooter');
-        footer.innerHTML = '';
+        modalFooter.innerHTML = '';
 
         if (opts.showCancel) {
             var cancelBtn = document.createElement('button');
             cancelBtn.className = 'btn btn-outline';
             cancelBtn.textContent = opts.cancelText;
             cancelBtn.onclick = window.globalCloseModal;
-            footer.appendChild(cancelBtn);
+            modalFooter.appendChild(cancelBtn);
         }
 
         var confirmBtn = document.createElement('button');
@@ -4408,9 +4434,9 @@ var safeStorage = {
         confirmBtn.textContent = opts.confirmText;
         confirmBtn.id = 'modalConfirmBtn';
         confirmBtn.onclick = window.globalConfirmModal;
-        footer.appendChild(confirmBtn);
+        modalFooter.appendChild(confirmBtn);
 
-        document.getElementById('customModal').classList.add('active');
+        modal.classList.add('active');
         document.addEventListener('keydown', window.globalHandleKeydown);
     }
     
@@ -7319,13 +7345,17 @@ var DataManager = {
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
                             <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                <label style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队名称</label>
+                                <input type="text" id="teamName" placeholder="团队名称" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem; background: #f8fafc;" readonly>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                                 <label style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队成员名称</label>
                                 <input type="text" id="teamUserName" placeholder="例如：张三" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem;" onchange="saveTeamUserName()">
                             </div>
-                            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                <label style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队Gist ID</label>
-                                <input type="text" id="teamGistId" placeholder="团队Gist ID" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem;" onchange="saveTeamGistId()">
-                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.5rem;">
+                            <label style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队Gist ID</label>
+                            <input type="text" id="teamGistId" placeholder="团队Gist ID" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem;" onchange="saveTeamGistId()">
                         </div>
                         <div style="font-size: 0.75rem; font-weight: 500; color: #475569; margin-bottom: 0.375rem;">选择同步数据类型：</div>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.375rem;">
@@ -9606,6 +9636,7 @@ function fixAppDataCompat() {
         batchSyncEnabled: false, bandwidthAdaptive: true, retryCount: 0, maxRetries: 3,
         // 团队功能相关设置
         teamEnabled: false,
+        teamName: '',
         teamUserName: '',
         teamUserId: '',
         teamGistId: '',
@@ -28238,7 +28269,7 @@ function restoreBackup(key) {
 
 // ===== 云同步功能（GitHub Gist）=====
 let syncTimer = null;
-let isSyncing = false;
+var isSyncing = false;
 
 // 构建团队活动日志（用于上传）
 function buildSyncActivityLog() {
@@ -28320,10 +28351,10 @@ function clearSyncLog() {
 
 // 显示同步进度
 function showSyncProgress(text, percent) {
-    const container = document.getElementById('syncProgressContainer');
-    const textEl = document.getElementById('syncProgressText');
-    const percentEl = document.getElementById('syncProgressPercent');
-    const barEl = document.getElementById('syncProgressBar');
+    var container = document.getElementById('syncProgressContainer');
+    var textEl = document.getElementById('syncProgressText');
+    var percentEl = document.getElementById('syncProgressPercent');
+    var barEl = document.getElementById('syncProgressBar');
     if (!container) return;
     container.style.display = 'block';
     if (textEl) textEl.textContent = text;
@@ -28333,13 +28364,13 @@ function showSyncProgress(text, percent) {
 
 // 隐藏同步进度
 function hideSyncProgress() {
-    const container = document.getElementById('syncProgressContainer');
+    var container = document.getElementById('syncProgressContainer');
     if (container) container.style.display = 'none';
 }
 
 // 切换Token可见性
 function toggleTokenVisibility() {
-    const input = document.getElementById('gistToken');
+    var input = document.getElementById('gistToken');
     if (!input) return;
     input.type = input.type === 'password' ? 'text' : 'password';
 }
@@ -28899,7 +28930,7 @@ function syncNow() {
         if (serverTime <= localTime && !buildIncrementalSyncPayload().hasChanges) {
             showToast('✅ 数据已是最新，无需同步', 'success');
             addSyncLog('info', '数据已是最新，无需同步');
-            return;
+            return { skipped: true };
         }
         
         // 有差异，先合并云端更新
@@ -28913,18 +28944,21 @@ function syncNow() {
         showSyncProgress('上传本地变更...', 80);
         return gistUploadWithRetry();
     })
-    .then(function() {
-        showSyncProgress('同步完成', 100);
-        showToast('✅ 同步成功！', 'success');
-        addSyncLog('success', '同步完成');
-        updateCloudSyncStatus();
+    .then(function(result) {
+        if (!result || !result.skipped) {
+            showSyncProgress('同步完成', 100);
+            showToast('✅ 同步成功！', 'success');
+            addSyncLog('success', '同步完成');
+            updateCloudSyncStatus();
+        }
     })
     .catch(function(err) {
         console.error('同步失败:', err);
         showToast('❌ 同步失败: ' + err.message, 'error');
         addSyncLog('error', '同步失败: ' + err.message);
     })
-    .finally(function() {
+    .then(function() {
+        // 模拟 finally 块，确保 isSyncing 被重置
         isSyncing = false;
         setTimeout(hideSyncProgress, 500);
     });
@@ -29188,7 +29222,7 @@ function prepareProductsForSync(products) {
         
         // 如果没有需要处理的图片，直接返回
         if (productsNeedingImage.length === 0) {
-            resolve(products.map(p => ({ ...p })));
+            resolve(products.map(function(p) { return Object.assign({}, p); }));
             return;
         }
         
@@ -29196,7 +29230,7 @@ function prepareProductsForSync(products) {
         
         productsNeedingImage.forEach(function(product, index) {
             // 复制产品对象
-            var productCopy = { ...product };
+            var productCopy = Object.assign({}, product);
             
             // 从IndexedDB读取图片
             if (idbInitialized && IDB.isSupported() && product.imageId) {
@@ -29272,12 +29306,6 @@ function prepareProductsForSync(products) {
 
 function gistUploadFull() {
     return new Promise(function(resolve, reject) {
-        if (isSyncing) {
-            reject(new Error('正在同步中，请稍候'));
-            return;
-        }
-        isSyncing = true;
-        
         var startTime = Date.now();
         var strategy = adaptSyncStrategy();
         
@@ -29294,6 +29322,7 @@ function gistUploadFull() {
         // 先准备产品图片数据
         prepareProductsForSync(appData.products)
         .then(function(productsWithImages) {
+            showSyncProgress('正在打包数据...', 30);
             // 根据团队共享设置过滤数据
             // 注意：当数据类型不共享时，使用undefined而不是空数组，
             // 这样在合并时可以保留云端已有数据
@@ -29366,17 +29395,20 @@ function gistUploadFull() {
             };
             var promise;
             if (gistId) {
+                showSyncProgress('正在上传到云端...', 60);
                 promise = gistApi('/gists/' + gistId, {
                     method: 'PATCH',
                     body: JSON.stringify(gistData)
                 });
             } else {
+                showSyncProgress('正在创建云端备份...', 60);
                 promise = gistApi('/gists', {
                     method: 'POST',
                     body: JSON.stringify(gistData)
                 });
             }
             promise.then(function(res) {
+                showSyncProgress('正在处理响应...', 80);
                 if (!res.ok) {
                     if (res.status === 401) throw new Error('Token 无效');
                     if (res.status === 404) {
@@ -29389,6 +29421,7 @@ function gistUploadFull() {
                 return res.json();
             })
             .then(function(gist) {
+                showSyncProgress('正在保存同步状态...', 90);
                 if (!appData.systemSettings.gistId) {
                     appData.systemSettings.gistId = gist.id;
                     addSyncLog('success', '创建新的云端备份: ' + gist.id);
@@ -29397,6 +29430,7 @@ function gistUploadFull() {
                 appData.systemSettings.lastIncrementalSyncTime = appData.systemSettings.lastSyncTime;
                 saveDataImmediately();
                 isSyncing = false;
+                showSyncProgress('上传完成', 100);
                 resolve();
             })
             .catch(function(err) {
@@ -29453,6 +29487,12 @@ function proceedWithUpload() {
     var useIncremental = appData.systemSettings.incrementalSyncEnabled && 
                          appData.systemSettings.lastIncrementalSyncTime;
     
+    // 重置同步状态
+    function resetSync() {
+        isSyncing = false;
+        setTimeout(hideSyncProgress, 500);
+    }
+    
     if (useIncremental) {
         addSyncLog('info', '开始增量上传...');
         gistUploadIncremental()
@@ -29464,44 +29504,45 @@ function proceedWithUpload() {
             
             // 发送桌面通知
             sendSyncNotification('✅ 同步成功', '增量上传完成：新增 ' + stats.added + ' 条，更新 ' + stats.updated + ' 条');
+            
+            resetSync();
         })
         .catch(function(err) {
-            console.error('增量上传失败:', err);
-            showToast('❌ 增量上传失败，尝试全量上传: ' + err.message, 'warning');
-            addSyncLog('warning', '增量上传失败，回退到全量上传: ' + err.message);
-            return gistUploadFull();
-        })
-        .then(function() {
-            if (arguments.length > 0) {
+            console.error('增量上传失败，尝试全量上传:', err);
+            addSyncLog('info', '增量上传失败，回退到全量上传');
+            
+            // 增量上传失败，回退到全量上传
+            showSyncProgress('增量上传失败，尝试全量上传...', 30);
+            gistUploadFull()
+            .then(function() {
                 showSyncProgress('上传完成', 100);
                 showToast('✅ 全量上传成功！', 'success');
                 addSyncLog('success', '全量上传成功');
                 updateCloudSyncStatus();
-                
-                // 发送桌面通知
                 sendSyncNotification('✅ 全量同步成功', '数据已成功上传到云端');
-            }
-        })
-        .catch(function(err) {
-            console.error('Gist上传失败:', err);
-            showToast('❌ 上传失败: ' + err.message, 'error');
-            addSyncLog('error', '上传失败: ' + err.message);
-            
-            // 发送失败通知
-            sendSyncNotification('❌ 同步失败', '上传失败: ' + err.message);
-        })
-        .finally(function() {
-            isSyncing = false;
-            setTimeout(hideSyncProgress, 500);
+            })
+            .catch(function(err2) {
+                console.error('全量上传也失败:', err2);
+                showToast('❌ 上传失败: ' + err2.message, 'error');
+                addSyncLog('error', '上传失败: ' + err2.message);
+                sendSyncNotification('❌ 同步失败', '上传失败: ' + err2.message);
+            })
+            .then(resetSync);
         });
     } else {
         addSyncLog('info', '开始全量上传...');
+        showSyncProgress('正在准备上传数据...', 20);
         gistUploadFull()
         .then(function() {
             showSyncProgress('上传完成', 100);
             showToast('✅ 全量上传成功！', 'success');
             addSyncLog('success', '全量上传成功');
             updateCloudSyncStatus();
+            
+            // 发送桌面通知
+            sendSyncNotification('✅ 全量同步成功', '数据已成功上传到云端');
+            
+            resetSync();
         })
         .catch(function(err) {
             console.error('Gist上传失败:', err);
@@ -29510,10 +29551,8 @@ function proceedWithUpload() {
             
             // 发送失败通知
             sendSyncNotification('❌ 同步失败', '上传失败: ' + err.message);
-        })
-        .finally(function() {
-            isSyncing = false;
-            setTimeout(hideSyncProgress, 500);
+            
+            resetSync();
         });
     }
 }
@@ -29605,7 +29644,8 @@ function gistUploadIncremental() {
         })
         .then(function(existingGist) {
             // 获取现有数据
-            var existingContent = existingGist.files['quote-data.json']?.content || '{}';
+            var quoteDataFile = existingGist.files && existingGist.files['quote-data.json'];
+            var existingContent = (quoteDataFile && quoteDataFile.content) || '{}';
             var existingData = JSON.parse(existingContent);
             
             // 合并增量变化到现有数据
@@ -29919,8 +29959,8 @@ function getSyncStats() {
 
 // 历史版本查看
 async function showSyncHistory() {
-    const token = appData.systemSettings.gistToken || document.getElementById('gistToken').value.trim();
-    const gistId = appData.systemSettings.gistId || '';
+    var token = appData.systemSettings.gistToken || document.getElementById('gistToken').value.trim();
+    var gistId = appData.systemSettings.gistId || '';
     
     if (!token || !gistId) {
         showToast('请先配置 GitHub Token 和 Gist ID', 'warning');
@@ -29930,39 +29970,35 @@ async function showSyncHistory() {
     showToast('📜 正在获取历史版本...', 'info');
     
     try {
-        const response = await gistApi(`/gists/${gistId}/commits`);
+        var response = await gistApi('/gists/' + gistId + '/commits');
         if (!response.ok) {
             throw new Error('获取历史失败: HTTP ' + response.status);
         }
         
-        const commits = await response.json();
+        var commits = await response.json();
         
         if (!commits || commits.length === 0) {
             showToast('暂无历史版本记录', 'info');
             return;
         }
         
-        let historyHtml = '<div style="padding:0.5rem;font-size:0.875rem;">';
-        historyHtml += `<div style="font-weight:600;margin-bottom:0.75rem;color:var(--gray-800);">📜 Gist 历史版本 (共 ${commits.length} 条)</div>`;
+        var historyHtml = '<div style="padding:0.5rem;font-size:0.875rem;">';
+        historyHtml += '<div style="font-weight:600;margin-bottom:0.75rem;color:var(--gray-800);">📜 Gist 历史版本 (共 ' + commits.length + ' 条)</div>';
         
-        commits.forEach((commit, index) => {
-            const date = new Date(commit.committed_at);
-            const author = commit.author && commit.author.login ? commit.author.login : '未知';
-            const version = commits.length - index;
+        commits.forEach(function(commit, index) {
+            var date = new Date(commit.committed_at);
+            var author = commit.author && commit.author.login ? commit.author.login : '未知';
+            var version = commits.length - index;
             
-            historyHtml += `
-                <div style="border-bottom:1px solid var(--gray-100);padding:0.5rem 0;display:flex;justify-content:space-between;align-items:center;">
-                    <div>
-                        <div style="font-weight:500;color:var(--gray-800);">版本 ${version}</div>
-                        <div style="font-size:0.75rem;color:var(--gray-500);">
-                            ${date.toLocaleString()} · ${author}
-                        </div>
-                    </div>
-                    <button class="btn btn-xs btn-outline" onclick="restoreFromHistory('${commit.version}')">
-                        🔄 恢复此版本
-                    </button>
-                </div>
-            `;
+            historyHtml += '<div style="border-bottom:1px solid var(--gray-100);padding:0.5rem 0;display:flex;justify-content:space-between;align-items:center;">';
+            historyHtml += '<div>';
+            historyHtml += '<div style="font-weight:500;color:var(--gray-800);">版本 ' + version + '</div>';
+            historyHtml += '<div style="font-size:0.75rem;color:var(--gray-500);">';
+            historyHtml += date.toLocaleString() + ' · ' + author;
+            historyHtml += '</div>';
+            historyHtml += '</div>';
+            historyHtml += '<button class="btn btn-xs btn-outline" onclick="restoreFromHistory(\'' + commit.version + '\')">🔄 恢复此版本</button>';
+            historyHtml += '</div>';
         });
         
         historyHtml += '</div>';
@@ -29971,7 +30007,8 @@ async function showSyncHistory() {
             title: '📜 同步历史版本',
             message: historyHtml,
             type: 'alert',
-            showCancel: false
+            showCancel: false,
+            allowHtml: true
         });
     } catch (err) {
         console.error('获取历史版本失败:', err);
@@ -29981,8 +30018,8 @@ async function showSyncHistory() {
 
 // 从历史版本恢复
 async function restoreFromHistory(versionId) {
-    const token = appData.systemSettings.gistToken;
-    const gistId = appData.systemSettings.gistId;
+    var token = appData.systemSettings.gistToken;
+    var gistId = appData.systemSettings.gistId;
     
     if (!confirm('确定要恢复到此历史版本吗？当前数据将被覆盖！')) {
         return;
@@ -29991,19 +30028,19 @@ async function restoreFromHistory(versionId) {
     showToast('⏳ 正在恢复历史版本...', 'info');
     
     try {
-        const response = await gistApi(`/gists/${gistId}/${versionId}`);
+        var response = await gistApi('/gists/' + gistId + '/' + versionId);
         if (!response.ok) {
             throw new Error('获取历史版本失败: HTTP ' + response.status);
         }
         
-        const gist = await response.json();
-        const file = gist.files && gist.files['quote-data.json'];
+        var gist = await response.json();
+        var file = gist.files && gist.files['quote-data.json'];
         
         if (!file || !file.content) {
             throw new Error('历史版本数据格式不正确');
         }
         
-        const data = JSON.parse(file.content);
+        var data = JSON.parse(file.content);
         if (!data.data) {
             throw new Error('历史版本数据格式不正确');
         }
@@ -30084,7 +30121,8 @@ function showSelectiveSync() {
         title: '📋 选择性同步',
         message: html,
         type: 'alert',
-        showCancel: false
+        showCancel: false,
+        allowHtml: true
     });
 }
 
@@ -30187,8 +30225,8 @@ function detectConflicts(serverData, localSyncTime) {
 
 // 独立的冲突检测入口（手动触发时使用）
 async function detectConflictsManual() {
-    const token = appData.systemSettings.gistToken;
-    const gistId = appData.systemSettings.gistId;
+    var token = appData.systemSettings.gistToken;
+    var gistId = appData.systemSettings.gistId;
     
     if (!token || !gistId) {
         showToast('请先配置同步', 'warning');
@@ -30198,22 +30236,22 @@ async function detectConflictsManual() {
     showToast('🔍 正在检测数据冲突...', 'info');
     
     try {
-        const response = await gistApi(`/gists/${gistId}`);
+        var response = await gistApi('/gists/' + gistId);
         if (!response.ok) {
             throw new Error('获取云端数据失败');
         }
         
-        const gist = await response.json();
-        const file = gist.files && gist.files['quote-data.json'];
+        var gist = await response.json();
+        var file = gist.files && gist.files['quote-data.json'];
         
         if (!file || !file.content) {
             showToast('云端无数据，无需检测冲突', 'info');
             return;
         }
         
-        const cloudData = JSON.parse(file.content);
-        const localSyncTime = new Date(appData.systemSettings.lastSyncTime || 0);
-        const conflicts = detectConflicts(cloudData.data || {}, localSyncTime);
+        var cloudData = JSON.parse(file.content);
+        var localSyncTime = new Date(appData.systemSettings.lastSyncTime || 0);
+        var conflicts = detectConflicts(cloudData.data || {}, localSyncTime);
         
         if (conflicts.length === 0) {
             showToast('✅ 未检测到数据冲突', 'success');
@@ -30803,6 +30841,7 @@ function loadTeamSettings() {
     var teamSettingsPanelEl = document.getElementById('teamSettingsPanel');
     var teamActivityPanelEl = document.getElementById('teamActivityPanel');
     var teamMembersPanelEl = document.getElementById('teamMembersPanel');
+    var teamNameEl = document.getElementById('teamName');
     var teamUserNameEl = document.getElementById('teamUserName');
     var teamGistIdEl = document.getElementById('teamGistId');
     var shareProductsEl = document.getElementById('shareProducts');
@@ -30820,6 +30859,7 @@ function loadTeamSettings() {
     if (teamSettingsPanelEl) teamSettingsPanelEl.style.display = teamEnabled ? 'block' : 'none';
     if (teamActivityPanelEl) teamActivityPanelEl.style.display = teamEnabled ? 'block' : 'none';
     if (teamMembersPanelEl) teamMembersPanelEl.style.display = teamEnabled ? 'block' : 'none';
+    if (teamNameEl) teamNameEl.value = appData.systemSettings.teamName || '';
     if (teamUserNameEl) teamUserNameEl.value = appData.systemSettings.teamUserName || '';
     if (teamGistIdEl) teamGistIdEl.value = appData.systemSettings.teamGistId || '';
     if (shareProductsEl) shareProductsEl.checked = teamDataSharing.products !== false;
@@ -31110,7 +31150,7 @@ function createTeam() {
     var teamName = prompt('请输入团队名称：', '我的团队');
     if (!teamName) return;
     
-    showLoadingToast('正在创建团队...');
+    showToast('正在创建团队...', 'loading');
     
     // 创建一个新的 Gist 作为团队数据存储
     var url = 'https://api.github.com/gists';
@@ -31163,34 +31203,60 @@ function createTeam() {
         body: JSON.stringify(payload)
     })
     .then(function(response) {
-        if (!response.ok) throw new Error('创建失败');
+        if (!response.ok) {
+            return response.text().then(function(text) {
+                throw new Error('创建失败: ' + (text || 'HTTP ' + response.status));
+            });
+        }
         return response.json();
     })
     .then(function(data) {
         var gistId = data.id;
+        if (!gistId) {
+            throw new Error('未能获取 Gist ID');
+        }
+        
         appData.systemSettings.gistId = gistId;
         appData.systemSettings.teamGistId = gistId;
         appData.systemSettings.teamEnabled = true;
+        appData.systemSettings.teamName = teamName;
         
         saveData();
+        
+        // 使用 hideLoadingToast 更新状态为成功
         hideLoadingToast('团队创建成功！', 'success');
         
         // 更新 UI
         if (document.getElementById('teamGistId')) {
             document.getElementById('teamGistId').value = gistId;
         }
+        if (document.getElementById('teamName')) {
+            document.getElementById('teamName').value = teamName;
+        }
         
-        showToast('团队创建成功！Gist ID: ' + gistId, 'success');
         addSyncLog('info', '创建团队成功: ' + teamName + ' (Gist ID: ' + gistId + ')');
         
         // 提示用户分享 Gist ID
         setTimeout(function() {
-            alert('团队创建成功！\n\n请将以下 Gist ID 分享给团队成员，让他们加入团队：\n\n' + gistId);
-        }, 500);
+            showModal({
+                title: '🎉 团队创建成功！',
+                message: '<div style="padding: 1rem;">' +
+                         '<p>团队 "' + escapeHtml(teamName) + '" 创建成功！</p>' +
+                         '<p style="margin-top: 1rem;">您的团队 Gist ID 是：</p>' +
+                         '<div style="background: #f3f4f6; padding: 0.75rem; border-radius: 0.5rem; font-family: monospace; word-break: break-all; margin: 1rem 0;">' +
+                         gistId +
+                         '</div>' +
+                         '<p style="margin-top: 1rem;">请将此 Gist ID 分享给团队成员，他们可以使用「加入团队」功能加入您的团队。</p>' +
+                         '</div>',
+                type: 'alert',
+                showCancel: false,
+                allowHtml: true
+            });
+        }, 300);
     })
     .catch(function(error) {
-        hideLoadingToast('创建团队失败', 'error');
-        showToast('创建团队失败: ' + error.message, 'error');
+        // 使用 hideLoadingToast 更新状态为错误
+        hideLoadingToast('创建团队失败: ' + error.message, 'error');
         addSyncLog('error', '创建团队失败: ' + error.message);
     });
 }
@@ -31205,7 +31271,7 @@ function joinTeam() {
         return;
     }
     
-    showLoadingToast('正在验证团队 Gist...');
+    showToast('正在验证团队 Gist...', 'loading');
     
     var url = 'https://api.github.com/gists/' + gistId;
     var headers = {
@@ -31218,7 +31284,11 @@ function joinTeam() {
         headers: headers
     })
     .then(function(response) {
-        if (!response.ok) throw new Error('无法访问该 Gist');
+        if (!response.ok) {
+            return response.text().then(function(text) {
+                throw new Error('无法访问该 Gist: ' + (text || 'HTTP ' + response.status));
+            });
+        }
         return response.json();
     })
     .then(function(data) {
@@ -31239,30 +31309,50 @@ function joinTeam() {
             appData.systemSettings.gistId = gistId;
             appData.systemSettings.teamGistId = gistId;
             appData.systemSettings.teamEnabled = true;
+            appData.systemSettings.teamName = jsonData.team.teamName || '未命名团队';
             
             saveData();
-            hideLoadingToast('加入团队成功！', 'success');
+            
+            // 使用 hideLoadingToast 更新状态为成功
+            hideLoadingToast('成功加入团队！', 'success');
             
             // 更新 UI
             if (document.getElementById('teamGistId')) {
                 document.getElementById('teamGistId').value = gistId;
             }
+            if (document.getElementById('teamName')) {
+                document.getElementById('teamName').value = jsonData.team.teamName || '未命名团队';
+            }
             
-            showToast('成功加入团队: ' + (jsonData.team.teamName || '团队'), 'success');
             addSyncLog('info', '加入团队成功 (Gist ID: ' + gistId + ')');
+            
+            // 显示加入成功的弹窗
+            setTimeout(function() {
+                showModal({
+                    title: '✅ 成功加入团队',
+                    message: '<div style="padding: 1rem;">' +
+                             '<p>您已成功加入团队：<strong>' + escapeHtml(jsonData.team.teamName || '团队') + '</strong></p>' +
+                             '<p style="margin-top: 1rem;">Gist ID: <code>' + gistId + '</code></p>' +
+                             '<p style="margin-top: 1rem;">正在同步团队数据...</p>' +
+                             '</div>',
+                    type: 'alert',
+                    showCancel: false,
+                    allowHtml: true
+                });
+            }, 300);
             
             // 立即同步获取团队数据
             setTimeout(function() {
                 syncNow();
-            }, 500);
+            }, 800);
             
         } catch (e) {
             throw new Error('数据格式无效: ' + e.message);
         }
     })
     .catch(function(error) {
-        hideLoadingToast('加入团队失败', 'error');
-        showToast('加入团队失败: ' + error.message, 'error');
+        // 使用 hideLoadingToast 更新状态为错误
+        hideLoadingToast('加入团队失败: ' + error.message, 'error');
         addSyncLog('error', '加入团队失败: ' + error.message);
     });
 }
