@@ -1772,7 +1772,144 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
     }
 }
 
-/* 手机端新建报价单工具栏按钮精简 */
+/* 模板项目列表紧凑布局 */
+.template-item-row {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1fr 0.8fr 0.6fr 0.8fr auto;
+    gap: 0.375rem;
+    align-items: center;
+    padding: 0.5rem;
+    background: #f9fafb;
+    border-radius: 6px;
+    margin-bottom: 0.375rem;
+    border: 1px solid #e5e7eb;
+}
+
+.template-item-row .form-group {
+    margin-bottom: 0;
+}
+
+.template-item-row .form-group label {
+    font-size: 0.6875rem;
+    color: #6b7280;
+    margin-bottom: 0.125rem;
+    font-weight: 500;
+}
+
+.template-item-row .form-group input,
+.template-item-row .form-group select {
+    padding: 0.25rem 0.375rem;
+    font-size: 0.75rem;
+    height: 28px;
+}
+
+.template-item-row .form-group input::placeholder {
+    font-size: 0.6875rem;
+}
+
+/* 手机端模板编辑模态框优化 */
+@media (max-width: 768px) {
+    #templateModal .modal-content {
+        max-width: 100% !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        max-height: 100vh !important;
+    }
+    
+    #templateModal .form-grid {
+        gap: 0.5rem;
+    }
+    
+    #templateModal .form-group {
+        margin-bottom: 0.375rem;
+    }
+    
+    #templateModal .form-group label {
+        font-size: 0.8125rem;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+    
+    #templateModal input[type="text"],
+    #templateModal input[type="number"],
+    #templateModal select,
+    #templateModal textarea {
+        padding: 0.625rem;
+        font-size: 14px;
+        min-height: 40px;
+    }
+    
+    #templateModal textarea {
+        min-height: 80px;
+    }
+    
+    /* 项目列表移动端布局 */
+    .template-item-row {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.375rem;
+        padding: 0.625rem;
+    }
+    
+    .template-item-row > .form-group:first-child {
+        grid-column: 1 / -1;
+    }
+    
+    .template-item-row > .form-group:last-child {
+        grid-column: 1 / -1;
+        text-align: center;
+    }
+    
+    .template-item-row .form-group input,
+    .template-item-row .form-group select {
+        height: 36px;
+        font-size: 0.8125rem;
+    }
+    
+    .template-item-row .form-group label {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    #templateModal .modal-body {
+        padding: 0.75rem;
+    }
+    
+    #templateModal .modal-header {
+        padding: 0.75rem;
+    }
+    
+    #templateModal .modal-footer {
+        padding: 0.75rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    #templateModal .modal-footer .btn {
+        width: 100%;
+    }
+    
+    /* 模板名称行移动端堆叠 */
+    #templateModal [style*="display:flex"][style*="gap:0.75rem"] {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+    
+    #templateModal [style*="display:flex"][style*="gap:0.75rem"] .form-group {
+        width: 100% !important;
+        flex: none !important;
+    }
+    
+    /* 项目列表移动端单列 */
+    .template-item-row {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .template-item-row > .form-group:first-child,
+    .template-item-row > .form-group:last-child {
+        grid-column: auto;
+    }
+}
 @media (max-width: 576px) {
     #builder .section-title > div {
         display: flex !important;
@@ -7627,37 +7764,43 @@ var DataManager = {
     </div>
     <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('templateDetailModal')">关闭</button><button class="btn btn-primary" id="templateDetailUseBtn" onclick="useTemplateFromDetail()">📥 使用模板</button></div>
 </div></div>
-<div id="templateModal" class="modal"><div class="modal-content">
+<div id="templateModal" class="modal"><div class="modal-content" style="max-width:1100px;">
     <div class="modal-header"><h3 class="modal-title" id="templateModalTitle">新建模板</h3><button class="modal-close" onclick="closeModal('templateModal')">&times;</button></div>
     <div class="modal-body">
         <form id="templateForm" class="form-grid">
             <input type="hidden" id="templateId">
-            <div class="form-group full-width"><label>模板名称 *</label><input type="text" id="templateName" required placeholder="例如：开业庆典全套广告报价"></div>
-            <div class="form-group"><label>模板分类</label><select id="templateCategory" style="width:100%;padding:0.5rem;"><option value="">无分类</option><option value="文化墙-党建">文化墙-党建</option><option value="文化墙-企业">文化墙-企业</option><option value="文化墙-校园">文化墙-校园</option><option value="文化墙-社区">文化墙-社区</option><option value="庆典活动">庆典活动</option><option value="展览展示">展览展示</option><option value="广告制作">广告制作</option><option value="标识标牌">标识标牌</option><option value="印刷喷绘">印刷喷绘</option><option value="其他">其他</option></select></div>
-            <div class="form-group" style="display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" id="templateFavorite" style="width:auto;"><label style="margin:0;font-weight:normal;">⭐ 收藏此模板（常用模板）</label></div>
+            <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;" class="full-width">
+                <div class="form-group" style="flex:2;min-width:200px;"><label>模板名称 *</label><input type="text" id="templateName" required placeholder="例如：开业庆典全套广告报价"></div>
+                <div class="form-group" style="flex:1;min-width:140px;"><label>模板分类</label><select id="templateCategory" style="width:100%;padding:0.5rem;"><option value="">无分类</option><option value="文化墙-党建">文化墙-党建</option><option value="文化墙-企业">文化墙-企业</option><option value="文化墙-校园">文化墙-校园</option><option value="文化墙-社区">文化墙-社区</option><option value="庆典活动">庆典活动</option><option value="展览展示">展览展示</option><option value="广告制作">广告制作</option><option value="标识标牌">标识标牌</option><option value="印刷喷绘">印刷喷绘</option><option value="其他">其他</option></select></div>
+                <div class="form-group" style="flex:0;white-space:nowrap;display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" id="templateFavorite" style="width:auto;"><label style="margin:0;font-weight:normal;font-size:0.875rem;">⭐ 收藏</label></div>
+            </div>
             <div class="form-group full-width"><label>模板描述</label><textarea id="templateDescription" placeholder="描述这个模板适用场景"></textarea></div>
             <div class="form-group full-width"><label>案例介绍（成功案例详细信息）</label><textarea id="templateCaseInfo" placeholder="介绍成功案例的背景、效果、客户评价等信息"></textarea></div>
             <div class="form-group full-width">
                 <label>📷 案例照片（可添加多张）</label>
+                <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;align-items:center;">
+                    <input type="text" id="templatePhotoUrlInput" placeholder="输入图片URL（http://或https://开头）" style="flex:1;padding:0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.875rem;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="addTemplatePhotoByUrl()">🔗 添加URL图片</button>
+                </div>
                 <div id="templatePhotosContainer" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;min-height:80px;border:2px dashed #e5e7eb;border-radius:var(--radius);padding:0.5rem;">
                     <label class="btn btn-outline btn-sm" style="padding:1rem;cursor:pointer;">
                         <input type="file" id="templatePhotoUpload" accept="image/*" multiple hidden onchange="addTemplatePhotos(event)">
-                        + 添加照片
+                        + 本地上传
                     </label>
                 </div>
             </div>
             <div class="form-group full-width">
                 <h4 style="margin-bottom:0.375rem;font-size:0.9375rem;">项目列表</h4>
-                <div id="templateItemsList"><div class="template-item-row form-grid">
-                    <div class="form-group"><label>项目名称</label><input type="text" class="template-item-name" placeholder="项目名称" style="width:120px;"></div>
+                <div id="templateItemsList"><div class="template-item-row">
+                    <div class="form-group"><label>项目名称</label><input type="text" class="template-item-name" placeholder="项目名称"></div>
                     <div class="form-group"><label>规格参数</label><input type="text" class="template-item-spec" placeholder="尺寸/材质"></div>
-                    <div class="form-group"><label>备注</label><input type="text" class="template-item-note" placeholder="备注信息"></div>
-                    <div class="form-group"><label>成本价</label><input type="number" class="template-item-cost" step="0.01" min="0"></div>
+                    <div class="form-group"><label>备注</label><input type="text" class="template-item-note" placeholder="备注"></div>
+                    <div class="form-group"><label>成本</label><input type="number" class="template-item-cost" step="0.01" min="0" placeholder="0"></div>
                     <div class="form-group"><label>数量</label><input type="number" class="template-item-qty" min="1" value="1"></div>
-                    <div class="form-group"><label>单价</label><input type="number" class="template-item-price" step="0.01" min="0"></div>
-                    <div style="align-self:end;"><button type="button" class="btn btn-danger" onclick="removeTemplateItem(this)">删除</button></div>
+                    <div class="form-group"><label>单价</label><input type="number" class="template-item-price" step="0.01" min="0" placeholder="0"></div>
+                    <div class="form-group"><button type="button" class="btn btn-danger btn-sm" onclick="removeTemplateItem(this)">删除</button></div>
                 </div></div>
-                <button type="button" class="btn btn-outline" onclick="addTemplateItemRow()" style="margin-top:0.75rem;">➕ 添加项目</button>
+                <button type="button" class="btn btn-outline" onclick="addTemplateItemRow()" style="margin-top:0.5rem;">➕ 添加项目</button>
             </div>
         </form>
     </div>
@@ -11434,7 +11577,10 @@ function generateQuotePreview(){
     const hg=getHeaderGradient();
     const hc=getHeaderTextColor();
     let selSeal=null;
-    if(settings.selectedSealId&&appData.seals&&appData.seals.length) selSeal=appData.seals.find(s=>s.id===settings.selectedSealId);
+    if(settings.selectedSealId&&appData.seals&&appData.seals.length){
+        selSeal=appData.seals.find(s=>s.id==settings.selectedSealId);
+        if(!selSeal) selSeal=appData.seals.find(s=>String(s.id)===String(settings.selectedSealId));
+    }
     const sp=settings.sealPosition||{bottom:80,right:80};
     const sip=settings.signaturePosition||{bottom:40,right:20};
     const sh=selSeal?`<div class="quote-seal draggable-element" id="previewSeal" data-type="seal" style="position:absolute;bottom:${sp.bottom}px;right:${sp.right}px;width:120px;height:120px;opacity:0.9;cursor:move;z-index:10;"><img src="${selSeal.image}" alt="${selSeal.name}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;"></div>`:'';
@@ -13174,7 +13320,9 @@ function calculateProductPrice() {
 }
 
 function openEditProductModal(pid){
-    const p=appData.products.find(x=>x.id===pid); if(!p) return;
+    let p=appData.products.find(x=>x.id==pid); 
+    if(!p) p=appData.products.find(x=>String(x.id)===String(pid)); 
+    if(!p) return;
     document.getElementById('productModalTitle').textContent='编辑产品';
     document.getElementById('productId').value=p.id;
     document.getElementById('productName').value=p.name;
@@ -13655,7 +13803,8 @@ function handleBatchImageUpload(input){
     input.value = '';
 }
 function removeImageFromProduct(productId){
-    const product = appData.products.find(p => p.id === productId);
+    let product = appData.products.find(p => p.id == productId);
+    if(!product) product = appData.products.find(p => String(p.id) === String(productId));
     if(product){
         const imageId = product.imageId;
         product.image = null;
@@ -13764,8 +13913,12 @@ function saveProduct(){
     
     // 先保存产品数据
     if(id){
-        p.id=parseInt(id);
-        const idx=appData.products.findIndex(x=>x.id===parseInt(id));
+        p.id=parseInt(id) || id; // 保留原始类型
+        let idx=appData.products.findIndex(x=>x.id==p.id);
+        if(idx === -1){
+            idx=appData.products.findIndex(x=>String(x.id)===String(id));
+            if(idx !== -1) p.id=appData.products[idx].id; // 保留原ID类型
+        }
         if(idx === -1){
             showToast('产品不存在或已被删除', 'error');
             return;
@@ -13847,7 +14000,8 @@ function saveProduct(){
     finalizeSave();
 }
 function deleteProduct(pid){
-    const product = appData.products.find(p => p.id === pid);
+    let product = appData.products.find(p => p.id == pid);
+    if(!product) product = appData.products.find(p => String(p.id) === String(pid));
     if(!product) return;
     var productName = product.name;
     showConfirmDialog('确定删除产品"' + productName + '"吗？删除后可从回收站恢复。', () => {
@@ -13855,8 +14009,8 @@ function deleteProduct(pid){
             if(!appData.recycleBin) appData.recycleBin = { products: [], customers: [], templates: [], deletedAt: null };
             appData.recycleBin.products.push({ ...product, deletedAt: new Date().toISOString() });
             appData.recycleBin.deletedAt = new Date().toISOString();
-            appData.products = appData.products.filter(p => p.id !== pid);
-            appData.favoriteIds = appData.favoriteIds.filter(id => id !== pid);
+            appData.products = appData.products.filter(p => p.id != pid && String(p.id) !== String(pid));
+            appData.favoriteIds = appData.favoriteIds.filter(id => String(id) !== String(pid) && id != pid);
             // 添加团队活动记录
             addTeamActivity('delete', 'product', productName, 'removed', pid);
             productCache.clear();
@@ -14252,7 +14406,8 @@ function undoLastPriceAdjust(){
         return;
     }
     lastLog.undoData.forEach(undo => {
-        const p = appData.products.find(prod => prod.id === undo.id);
+        let p = appData.products.find(prod => prod.id == undo.id);
+        if(!p) p = appData.products.find(prod => String(prod.id) === String(undo.id));
         if(p) p.sellingPrice = undo.price;
     });
     saveData();
@@ -14262,7 +14417,7 @@ function undoLastPriceAdjust(){
 }
 
 function addToQuote(pid){
-    const p=appData.products.find(x=>x.id===pid); if(!p) return;
+    let p=appData.products.find(x=>x.id==pid); if(!p) p=appData.products.find(x=>String(x.id)===String(pid)); if(!p) return;
     // 如果是按面积或尺寸计算的产品，调用 addProductToQuote 处理尺寸输入
     if (p.calcType === 'area' || p.calcType === 'size') {
         addProductToQuote(p);
@@ -14734,7 +14889,8 @@ function getRandomItem(arr){
 
 // 显示智能备注建议
 function showRemarkSuggestions(productId){
-    const product = appData.products.find(p => p.id === productId);
+    let product = appData.products.find(p => p.id == productId);
+    if(!product) product = appData.products.find(p => String(p.id) === String(productId));
     if(!product) return;
     
     // 根据产品类型获取建议
@@ -15043,7 +15199,8 @@ async function simulateImageRecognition(file){
         const container = document.getElementById('recognitionProducts');
         if(results.products.length > 0){
             container.innerHTML = results.products.map(p => {
-                const product = appData.products.find(pr => pr.id === p.productId);
+                let product = appData.products.find(pr => pr.id == p.productId);
+                if(!product) product = appData.products.find(pr => String(pr.id) === String(p.productId));
                 if(!product) return '';
             
             return `
@@ -24821,7 +24978,8 @@ function findSimilarProducts() {
 
 // 选择相似产品添加到报价
 function selectSimilarProduct(productId) {
-    const product = appData.products.find(p => p.id === productId);
+    let product = appData.products.find(p => p.id == productId);
+    if(!product) product = appData.products.find(p => String(p.id) === String(productId));
     if (!product) return;
     
     addQuoteItem({
@@ -25601,7 +25759,8 @@ function generatePricingRecommendation(product){
 }
 
 function showPricingRecommendation(productId){
-    const product = appData.products.find(p => p.id === productId);
+    let product = appData.products.find(p => p.id == productId);
+    if(!product) product = appData.products.find(p => String(p.id) === String(productId));
     if(!product) return;
     
     const recommendation = generatePricingRecommendation(product);
@@ -26051,18 +26210,61 @@ function removeTemplatePhoto(photoId) {
     });
 }
 
+// 通过URL添加模板图片
+function addTemplatePhotoByUrl() {
+    const urlInput = document.getElementById('templatePhotoUrlInput');
+    const url = urlInput.value.trim();
+    
+    if (!url) {
+        showToast('请输入图片URL', 'warning');
+        return;
+    }
+    
+    if (!/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|svg|bmp|ico|avif)(\?.*)?$/i.test(url) && !/^https?:\/\/.+/i.test(url)) {
+        showToast('请输入有效的图片URL（http://或https://开头）', 'warning');
+        return;
+    }
+    
+    const container = document.getElementById('templatePhotosContainer');
+    const photoId = Date.now();
+    const photoName = url.split('/').pop().split('?')[0] || '网络图片';
+    
+    const photoData = {
+        id: photoId,
+        data: url,
+        name: photoName,
+        isUrl: true
+    };
+    currentTemplatePhotos.push(photoData);
+    
+    const photoDiv = document.createElement('div');
+    photoDiv.className = 'template-photo-item';
+    photoDiv.style.position = 'relative';
+    photoDiv.innerHTML = `
+        <img src="${url}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" alt="${photoName}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjZTllOWU5Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiIGZvbnQtc2l6ZT0iMTIiPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4='">
+        <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:white;font-size:0.625rem;padding:2px 4px;border-radius:0 0 8px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">🔗 ${photoName}</div>
+        <button class="btn btn-danger btn-xs" style="position:absolute;top:-4px;right:-4px;" onclick="removeTemplatePhoto(${photoId})">✕</button>
+    `;
+    container.insertBefore(photoDiv, container.lastChild);
+    
+    urlInput.value = '';
+    showToast('已添加URL图片', 'success');
+}
+
 function openAddTemplateModal(){
     currentTemplatePhotos = [];
     document.getElementById('templateModalTitle').textContent='新建模板';
     document.getElementById('templateForm').reset();
     document.getElementById('templateId').value='';
+    const urlInput = document.getElementById('templatePhotoUrlInput');
+    if (urlInput) urlInput.value = '';
     const isAdmin = isAdminMode();
-    const costField = isAdmin ? '<div class="form-group"><label>成本价</label><input type="number" class="template-item-cost" step="0.01" min="0"></div>' : '';
-    document.getElementById('templateItemsList').innerHTML='<div class="template-item-row form-grid"><div class="form-group"><label>项目名称</label><input type="text" class="template-item-name" placeholder="项目名称" style="width:120px;"></div><div class="form-group"><label>规格参数</label><input type="text" class="template-item-spec" placeholder="尺寸/材质"></div><div class="form-group"><label>备注</label><input type="text" class="template-item-note" placeholder="备注信息"></div>' + costField + '<div class="form-group"><label>数量</label><input type="number" class="template-item-qty" min="1" value="1"></div><div class="form-group"><label>单价</label><input type="number" class="template-item-price" step="0.01" min="0"></div><div style="align-self:end;"><button type="button" class="btn btn-danger" onclick="removeTemplateItem(this)">删除</button></div></div>';
+    const costField = isAdmin ? '<div class="form-group"><label>成本</label><input type="number" class="template-item-cost" step="0.01" min="0" placeholder="0"></div>' : '';
+    document.getElementById('templateItemsList').innerHTML='<div class="template-item-row"><div class="form-group"><label>项目名称</label><input type="text" class="template-item-name" placeholder="项目名称"></div><div class="form-group"><label>规格参数</label><input type="text" class="template-item-spec" placeholder="尺寸/材质"></div><div class="form-group"><label>备注</label><input type="text" class="template-item-note" placeholder="备注"></div>' + costField + '<div class="form-group"><label>数量</label><input type="number" class="template-item-qty" min="1" value="1"></div><div class="form-group"><label>单价</label><input type="number" class="template-item-price" step="0.01" min="0" placeholder="0"></div><div class="form-group"><button type="button" class="btn btn-danger btn-sm" onclick="removeTemplateItem(this)">删除</button></div></div>';
     document.getElementById('templatePhotosContainer').innerHTML = `
         <label class="btn btn-outline btn-sm" style="padding:1rem;cursor:pointer;">
             <input type="file" id="templatePhotoUpload" accept="image/*" multiple hidden onchange="addTemplatePhotos(event)">
-            + 添加照片
+            + 本地上传
         </label>
     `;
     // 禁用页面滚动，防止滑动导致问题
@@ -26076,7 +26278,12 @@ function openAddTemplateModal(){
     }, 50);
 }
 function openEditTemplateModal(tid){
-    const t=appData.templates.find(x=>x.id===tid); if(!t) return;
+    // 尝试用数字和字符串两种方式查找模板
+    let t=appData.templates.find(x=>x.id==tid);
+    if(!t){
+        t=appData.templates.find(x=>String(x.id)===String(tid));
+    }
+    if(!t) return;
     document.getElementById('templateModalTitle').textContent='编辑模板';
     document.getElementById('templateId').value=t.id;
     document.getElementById('templateName').value=t.name;
@@ -26084,27 +26291,34 @@ function openEditTemplateModal(tid){
     document.getElementById('templateFavorite').checked=t.isFavorite||false;
     document.getElementById('templateDescription').value=t.description||'';
     document.getElementById('templateCaseInfo').value=t.caseInfo||'';
+    const urlInput = document.getElementById('templatePhotoUrlInput');
+    if (urlInput) urlInput.value = '';
     const isAdmin = isAdminMode();
-    const costField = isAdmin ? '<div class="form-group"><label>成本价</label><input type="number" class="template-item-cost" step="0.01" min="0" value="${item.cost||0}"></div>' : '';
-    document.getElementById('templateItemsList').innerHTML=t.items.map(item=>`<div class="template-item-row form-grid">
+    const costField = isAdmin ? '<div class="form-group"><label>成本</label><input type="number" class="template-item-cost" step="0.01" min="0" value="${item.cost||0}" placeholder="0"></div>' : '';
+    document.getElementById('templateItemsList').innerHTML=t.items.map(item=>`<div class="template-item-row">
         <div class="form-group"><label>项目名称</label><input type="text" class="template-item-name" value="${item.name}" placeholder="项目名称"></div>
         <div class="form-group"><label>规格参数</label><input type="text" class="template-item-spec" value="${item.spec||''}" placeholder="尺寸/材质"></div>
-        <div class="form-group"><label>备注</label><input type="text" class="template-item-note" value="${item.note||''}" placeholder="备注信息"></div>
+        <div class="form-group"><label>备注</label><input type="text" class="template-item-note" value="${item.note||''}" placeholder="备注"></div>
         ${costField}
         <div class="form-group"><label>数量</label><input type="number" class="template-item-qty" min="1" value="${item.qty||1}"></div>
-        <div class="form-group"><label>单价</label><input type="number" class="template-item-price" step="0.01" min="0" value="${item.price}"></div>
-        <div style="align-self:end;"><button type="button" class="btn btn-danger" onclick="removeTemplateItem(this)">删除</button></div>
+        <div class="form-group"><label>单价</label><input type="number" class="template-item-price" step="0.01" min="0" value="${item.price}" placeholder="0"></div>
+        <div class="form-group"><button type="button" class="btn btn-danger btn-sm" onclick="removeTemplateItem(this)">删除</button></div>
     </div>`).join('');
     
     // 加载照片
     currentTemplatePhotos = t.photos ? [...t.photos].map((p, i) => ({ ...p, id: p.id || (Date.now() + i) })) : [];
     const photosContainer = document.getElementById('templatePhotosContainer');
-    let photosHtml = t.photos ? t.photos.map((p, i) => `
+    let photosHtml = t.photos ? t.photos.map((p, i) => {
+        const isUrl = p.isUrl || (p.data && /^https?:\/\//.test(p.data));
+        const errorFallback = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjZTllOWU5Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiIGZvbnQtc2l6ZT0iMTIiPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4=';
+        return `
         <div class="template-photo-item" style="position:relative;">
-            <img src="${p.data}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" alt="${p.name}">
+            <img src="${p.data}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" alt="${p.name}" onerror="this.src='${errorFallback}'">
+            ${isUrl ? '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:white;font-size:0.625rem;padding:2px 4px;border-radius:0 0 8px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">🔗 ' + (p.name || 'URL图片') + '</div>' : ''}
             <button class="btn btn-danger btn-xs" style="position:absolute;top:-4px;right:-4px;" onclick="removeTemplatePhoto(${Date.now() + i})">✕</button>
         </div>
-    `).join('') : '';
+    `;
+    }).join('') : '';
     photosHtml += `
         <label class="btn btn-outline btn-sm" style="padding:1rem;cursor:pointer;">
             <input type="file" id="templatePhotoUpload" accept="image/*" multiple hidden onchange="addTemplatePhotos(event)">
@@ -26117,10 +26331,10 @@ function openEditTemplateModal(tid){
 }
 function addTemplateItemRow(){
     const c=document.getElementById('templateItemsList');
-    const d=document.createElement('div'); d.className='template-item-row form-grid';
+    const d=document.createElement('div'); d.className='template-item-row';
     const isAdmin = isAdminMode();
-    const costField = isAdmin ? '<div class="form-group"><label>成本价</label><input type="number" class="template-item-cost" step="0.01" min="0"></div>' : '';
-    d.innerHTML='<div class="form-group"><label>项目名称</label><input type="text" class="template-item-name" placeholder="项目名称" style="width:120px;"></div><div class="form-group"><label>规格参数</label><input type="text" class="template-item-spec" placeholder="尺寸/材质"></div><div class="form-group"><label>备注</label><input type="text" class="template-item-note" placeholder="备注信息"></div>' + costField + '<div class="form-group"><label>数量</label><input type="number" class="template-item-qty" min="1" value="1"></div><div class="form-group"><label>单价</label><input type="number" class="template-item-price" step="0.01" min="0"></div><div style="align-self:end;"><button type="button" class="btn btn-danger" onclick="removeTemplateItem(this)">删除</button></div>';
+    const costField = isAdmin ? '<div class="form-group"><label>成本</label><input type="number" class="template-item-cost" step="0.01" min="0" placeholder="0"></div>' : '';
+    d.innerHTML='<div class="form-group"><label>项目名称</label><input type="text" class="template-item-name" placeholder="项目名称"></div><div class="form-group"><label>规格参数</label><input type="text" class="template-item-spec" placeholder="尺寸/材质"></div><div class="form-group"><label>备注</label><input type="text" class="template-item-note" placeholder="备注"></div>' + costField + '<div class="form-group"><label>数量</label><input type="number" class="template-item-qty" min="1" value="1"></div><div class="form-group"><label>单价</label><input type="number" class="template-item-price" step="0.01" min="0" placeholder="0"></div><div class="form-group"><button type="button" class="btn btn-danger btn-sm" onclick="removeTemplateItem(this)">删除</button></div>';
     c.appendChild(d);
 }
 function removeTemplateItem(btn){ const row=btn.closest('.template-item-row'); if(document.querySelectorAll('.template-item-row').length>1) row.remove(); else alert('至少保留一个项目'); }
@@ -26149,7 +26363,14 @@ function saveTemplate(){
     if(!items.length){ showToast('请至少添加一个项目', 'warning'); return; }
     if(id){ 
         t.id=parseInt(id); 
-        const idx=appData.templates.findIndex(x=>x.id===parseInt(id)); 
+        let idx=appData.templates.findIndex(x=>x.id==parseInt(id)); 
+        // 如果findIndex失败，尝试用字符串比较
+        if(idx === -1){
+            idx = appData.templates.findIndex(x => String(x.id) === String(id));
+            if(idx !== -1){
+                t.id = appData.templates[idx].id; // 保留原ID类型
+            }
+        }
         if(idx === -1){
             alert('模板不存在或已被删除');
             return;
@@ -26167,7 +26388,10 @@ function saveTemplate(){
 let currentViewingTemplateId = null;
 
 function viewTemplateDetail(tid) {
-    const t = appData.templates.find(x => x.id === tid);
+    let t = appData.templates.find(x => x.id === tid);
+    if(!t){
+        t = appData.templates.find(x => String(x.id) === String(tid));
+    }
     if (!t) return;
     
     currentViewingTemplateId = tid;
@@ -26371,7 +26595,11 @@ function openPhotoViewer(index) {
 }
 
 function deleteTemplate(tid){
-    var template = appData.templates.find(t => t.id === tid);
+    // 尝试用数字和字符串两种方式查找模板
+    let template = appData.templates.find(t => t.id == tid);
+    if(!template){
+        template = appData.templates.find(t => String(t.id) === String(tid));
+    }
     if (!template) return;
     var templateName = template.name;
     showConfirmDialog('确定删除模板"' + templateName + '"吗？删除后可从回收站恢复。', () => {
@@ -26379,7 +26607,7 @@ function deleteTemplate(tid){
             if(!appData.recycleBin) appData.recycleBin = { products: [], customers: [], templates: [], deletedAt: null };
             appData.recycleBin.templates.push({ ...template, deletedAt: new Date().toISOString() });
             appData.recycleBin.deletedAt = new Date().toISOString();
-            appData.templates = appData.templates.filter(t => t.id !== tid);
+            appData.templates = appData.templates.filter(t => t.id != tid && String(t.id) !== String(tid));
             addTeamActivity('delete', 'template', templateName, 'removed', tid);
             saveDataImmediately();
             renderTemplates();
@@ -26392,16 +26620,24 @@ function deleteTemplate(tid){
     });
 }
 function toggleTemplateFavorite(tid){
-    const t = appData.templates.find(x => x.id === tid);
-    if(t){
-        t.isFavorite = !t.isFavorite;
-        saveDataImmediately();
-        renderTemplates();
-        showToast(t.isFavorite ? '已添加收藏 ⭐' : '已取消收藏', 'success');
+    // 尝试用数字和字符串两种方式查找模板
+    let t = appData.templates.find(x => x.id == tid);
+    if(!t){
+        t = appData.templates.find(x => String(x.id) === String(tid));
     }
+    if(!t) return;
+    t.isFavorite = !t.isFavorite;
+    saveDataImmediately();
+    renderTemplates();
+    showToast(t.isFavorite ? '已添加收藏 ⭐' : '已取消收藏', 'success');
 }
 function useTemplate(tid){
-    const t=appData.templates.find(x=>x.id===tid); if(!t) return;
+    // 尝试用数字和字符串两种方式查找模板
+    let t=appData.templates.find(x=>x.id==tid);
+    if(!t){
+        t=appData.templates.find(x=>String(x.id)===String(tid));
+    }
+    if(!t) return;
     const hasItems = appData.currentQuote.items.length > 0;
     let clearCurrent = true;
     if(hasItems){
@@ -26483,7 +26719,9 @@ function openAddCustomerModal(){
     openModal('customerModal');
 }
 function openEditCustomerModal(cid){
-    const c=appData.customers.find(x=>x.id==cid); if(!c) return;
+    let c=appData.customers.find(x=>x.id==cid); 
+    if(!c) c=appData.customers.find(x=>String(x.id)===String(cid)); 
+    if(!c) return;
     document.getElementById('customerModalTitle').textContent='编辑客户';
     document.getElementById('customerId').value=c.id;
     document.getElementById('customerName').value=c.name;
@@ -26519,8 +26757,13 @@ function saveCustomer(){
         return;
     }
     if(id){
-        c.id=id;
-        const idx=appData.customers.findIndex(x=>x.id==id);
+        c.id=parseInt(id) || id; // 尝试转换类型
+        let idx=appData.customers.findIndex(x=>x.id==c.id || String(x.id)===String(c.id));
+        if(idx === -1){
+            // 尝试用原始id查找
+            idx=appData.customers.findIndex(x=>String(x.id)===String(id));
+            if(idx !== -1) c.id=appData.customers[idx].id; // 保留原ID类型
+        }
         if(idx === -1){
             alert('客户不存在或已被删除');
             return;
@@ -26546,7 +26789,7 @@ function saveCustomer(){
     addToHistory('保存客户', '客户: ' + c.name);
 }
 function deleteCustomer(cid){
-    var customer = appData.customers.find(c => c.id == cid);
+    var customer = appData.customers.find(c => c.id == cid || String(c.id) === String(cid));
     if (!customer) return;
     var customerName = customer.name;
     showConfirmDialog('确定删除客户"' + customerName + '"吗？删除后可从回收站恢复。', () => {
@@ -26554,7 +26797,7 @@ function deleteCustomer(cid){
             if(!appData.recycleBin) appData.recycleBin = { products: [], customers: [], templates: [], deletedAt: null };
             appData.recycleBin.customers.push({ ...customer, deletedAt: new Date().toISOString() });
             appData.recycleBin.deletedAt = new Date().toISOString();
-            appData.customers = appData.customers.filter(c => c.id != cid);
+            appData.customers = appData.customers.filter(c => c.id != cid && String(c.id) !== String(cid));
             addTeamActivity('delete', 'customer', customerName, 'removed', cid);
             saveDataImmediately();
             renderCustomers();
@@ -26566,7 +26809,7 @@ function deleteCustomer(cid){
     });
 }
 function useCustomer(cid){
-    const c=appData.customers.find(x=>x.id==cid); if(!c) return;
+    let c=appData.customers.find(x=>x.id==cid); if(!c) c=appData.customers.find(x=>String(x.id)===String(cid)); if(!c) return;
     document.getElementById('quoteClientName').value=c.name;
     document.getElementById('quoteClientContactPerson').value=c.contactPerson||'';
     document.getElementById('quoteClientPhone').value=c.phone||'';
@@ -29877,7 +30120,7 @@ function detectConflicts(serverData, localSyncTime) {
     
     // 检测产品冲突
     (serverData.products || []).forEach(cloudProduct => {
-        const localProduct = appData.products.find(p => p.id === cloudProduct.id);
+        const localProduct = appData.products.find(p => String(p.id) === String(cloudProduct.id));
         if (localProduct) {
             const cloudTime = new Date(cloudProduct.updatedAt || 0);
             const localTime = new Date(localProduct.updatedAt || 0);
@@ -29899,7 +30142,7 @@ function detectConflicts(serverData, localSyncTime) {
     
     // 检测模板冲突
     (serverData.templates || []).forEach(cloudTemplate => {
-        const localTemplate = appData.templates.find(t => t.id === cloudTemplate.id);
+        const localTemplate = appData.templates.find(t => String(t.id) === String(cloudTemplate.id));
         if (localTemplate) {
             const cloudTime = new Date(cloudTemplate.updatedAt || 0);
             const localTime = new Date(localTemplate.updatedAt || 0);
@@ -29920,7 +30163,7 @@ function detectConflicts(serverData, localSyncTime) {
     
     // 检测客户冲突
     (serverData.customers || []).forEach(cloudCustomer => {
-        const localCustomer = appData.customers.find(c => c.id === cloudCustomer.id);
+        const localCustomer = appData.customers.find(c => String(c.id) === String(cloudCustomer.id));
         if (localCustomer) {
             const cloudTime = new Date(cloudCustomer.updatedAt || 0);
             const localTime = new Date(localCustomer.updatedAt || 0);
@@ -31405,9 +31648,13 @@ function mergeSyncData(serverData) {
                            (serverData.signatures === undefined ? [] : (serverData.signatures || []));
     
     // 合并产品（带团队追踪信息）
-    var localProducts = new Map(appData.products.map(function(p) { return [p.id, p]; }));
+    var localProducts = new Map(appData.products.map(function(p) { return [String(p.id), p]; }));
     serverProducts.forEach(function(sp) {
-        var lp = localProducts.get(sp.id);
+        var lp = localProducts.get(String(sp.id));
+        if (!lp) {
+            // 尝试用宽松比较查找
+            lp = appData.products.find(function(p) { return p.id == sp.id; });
+        }
         if (!lp) {
             appData.products.push(sp);
             stats.added++;
@@ -31415,7 +31662,7 @@ function mergeSyncData(serverData) {
             var serverUpdated = new Date(sp.updatedAt || 0);
             var localUpdated = new Date(lp.updatedAt || 0);
             if (serverUpdated > localUpdated) {
-                var idx = appData.products.findIndex(function(p) { return p.id === sp.id; });
+                var idx = appData.products.findIndex(function(p) { return String(p.id) === String(sp.id); });
                 if (idx >= 0) {
                     // 记录变更来源（用于UI显示）
                     if (isTeamData && sp.lastModifiedBy) {
@@ -31429,9 +31676,13 @@ function mergeSyncData(serverData) {
     });
     
     // 合并模板
-    var localTemplates = new Map(appData.templates.map(function(t) { return [t.id, t]; }));
+    var localTemplates = new Map(appData.templates.map(function(t) { return [String(t.id), t]; }));
     serverTemplates.forEach(function(st) {
-        var lt = localTemplates.get(st.id);
+        var lt = localTemplates.get(String(st.id));
+        if (!lt) {
+            // 尝试用宽松比较查找
+            lt = appData.templates.find(function(t) { return t.id == st.id; });
+        }
         if (!lt) {
             appData.templates.push(st);
             stats.added++;
@@ -31439,7 +31690,7 @@ function mergeSyncData(serverData) {
             var serverUpdated = new Date(st.updatedAt || 0);
             var localUpdated = new Date(lt.updatedAt || 0);
             if (serverUpdated > localUpdated) {
-                var idx = appData.templates.findIndex(function(t) { return t.id === st.id; });
+                var idx = appData.templates.findIndex(function(t) { return String(t.id) === String(st.id); });
                 if (idx >= 0) appData.templates[idx] = st;
                 stats.updated++;
             }
@@ -31447,9 +31698,13 @@ function mergeSyncData(serverData) {
     });
     
     // 合并客户
-    var localCustomers = new Map(appData.customers.map(function(c) { return [c.id, c]; }));
+    var localCustomers = new Map(appData.customers.map(function(c) { return [String(c.id), c]; }));
     serverCustomers.forEach(function(sc) {
-        var lc = localCustomers.get(sc.id);
+        var lc = localCustomers.get(String(sc.id));
+        if (!lc) {
+            // 尝试用宽松比较查找
+            lc = appData.customers.find(function(c) { return c.id == sc.id; });
+        }
         if (!lc) {
             appData.customers.push(sc);
             stats.added++;
@@ -31457,7 +31712,7 @@ function mergeSyncData(serverData) {
             var serverUpdated = new Date(sc.updatedAt || 0);
             var localUpdated = new Date(lc.updatedAt || 0);
             if (serverUpdated > localUpdated) {
-                var idx = appData.customers.findIndex(function(c) { return c.id === sc.id; });
+                var idx = appData.customers.findIndex(function(c) { return String(c.id) === String(sc.id); });
                 if (idx >= 0) appData.customers[idx] = sc;
                 stats.updated++;
             }
@@ -31466,9 +31721,9 @@ function mergeSyncData(serverData) {
     
     // 合并报价历史（只添加本地没有的）
     if (serverQuoteHistory && serverQuoteHistory.length > 0) {
-        var localHistory = new Map(appData.quoteHistory.map(function(h) { return [h.id, h]; }));
+        var localHistory = new Map(appData.quoteHistory.map(function(h) { return [String(h.id), h]; }));
         serverQuoteHistory.forEach(function(sh) {
-            if (!localHistory.has(sh.id)) {
+            if (!localHistory.has(String(sh.id))) {
                 appData.quoteHistory.push(sh);
                 stats.added++;
             }
@@ -31477,9 +31732,9 @@ function mergeSyncData(serverData) {
     
     // 合并印章
     if (serverSeals && serverSeals.length > 0) {
-        var localSeals = new Map((appData.seals || []).map(function(s) { return [s.id, s]; }));
+        var localSeals = new Map((appData.seals || []).map(function(s) { return [String(s.id), s]; }));
         serverSeals.forEach(function(ss) {
-            var ls = localSeals.get(ss.id);
+            var ls = localSeals.get(String(ss.id));
             if (!ls) {
                 if (!appData.seals) appData.seals = [];
                 appData.seals.push(ss);
@@ -31488,7 +31743,7 @@ function mergeSyncData(serverData) {
                 var serverUpdated = new Date(ss.updatedAt || 0);
                 var localUpdated = new Date(ls.updatedAt || 0);
                 if (serverUpdated > localUpdated) {
-                    var idx = (appData.seals || []).findIndex(function(s) { return s.id === ss.id; });
+                    var idx = (appData.seals || []).findIndex(function(s) { return String(s.id) === String(ss.id); });
                     if (idx >= 0) appData.seals[idx] = ss;
                     stats.updated++;
                 }
@@ -31498,9 +31753,9 @@ function mergeSyncData(serverData) {
     
     // 合并签名
     if (serverSignatures && serverSignatures.length > 0) {
-        var localSigs = new Map((appData.signatures || []).map(function(s) { return [s.id, s]; }));
+        var localSigs = new Map((appData.signatures || []).map(function(s) { return [String(s.id), s]; }));
         serverSignatures.forEach(function(ss) {
-            var ls = localSigs.get(ss.id);
+            var ls = localSigs.get(String(ss.id));
             if (!ls) {
                 if (!appData.signatures) appData.signatures = [];
                 appData.signatures.push(ss);
@@ -31509,7 +31764,7 @@ function mergeSyncData(serverData) {
                 var serverUpdated = new Date(ss.updatedAt || 0);
                 var localUpdated = new Date(ls.updatedAt || 0);
                 if (serverUpdated > localUpdated) {
-                    var idx = (appData.signatures || []).findIndex(function(s) { return s.id === ss.id; });
+                    var idx = (appData.signatures || []).findIndex(function(s) { return String(s.id) === String(ss.id); });
                     if (idx >= 0) appData.signatures[idx] = ss;
                     stats.updated++;
                 }
@@ -31825,7 +32080,7 @@ function importProducts(event){
                             p.forEach(x => {
                                 if(!validateProductImport(x)){ skipped++; return; }
                                 const normalized = normalizeProduct(x);
-                                const existing = appData.products.find(e => e.id === normalized.id || e.name === normalized.name);
+                                const existing = appData.products.find(e => String(e.id) === String(normalized.id) || e.name === normalized.name);
                                 if(!existing){
                                     normalized.id = Date.now() + Math.random();
                                     // 自动链接图片
@@ -31950,7 +32205,7 @@ function importTemplates(event){
             if(Array.isArray(t)){ 
                 if(confirm('是否替换现有模板库？取消则合并导入')) appData.templates=t; 
                 else t.forEach(x=>{ 
-                    if(!appData.templates.find(e=>e.id===x.id)) appData.templates.push(x); 
+                    if(!appData.templates.find(e=>e.id==x.id || String(e.id)===String(x.id))) appData.templates.push(x); 
                 }); 
                 saveDataImmediately(); 
                 renderTemplates(); 
@@ -31973,7 +32228,7 @@ function importCustomers(event){
             if(Array.isArray(c)){ 
                 if(confirm('是否替换现有客户库？取消则合并导入')) appData.customers=c; 
                 else c.forEach(x=>{ 
-                    if(!appData.customers.find(e=>e.id===x.id)) appData.customers.push(x); 
+                    if(!appData.customers.find(e=>e.id==x.id || String(e.id)===String(x.id))) appData.customers.push(x); 
                 }); 
                 saveDataImmediately(); 
                 renderCustomers(); 
