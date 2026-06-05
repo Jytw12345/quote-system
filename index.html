@@ -502,7 +502,7 @@
         .product-card.large { width: 240px; min-height: 260px; }
         .product-image { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: var(--gray-100); flex-shrink: 0; }
         .product-card.large .product-image { aspect-ratio: 16/10; }
-        .product-image img { width: 100%; height: 100%; object-fit: cover; }
+        .product-image img { width: 100% !important; height: 100% !important; object-fit: cover !important; max-width: 100% !important; max-height: 100% !important; }
         .product-info { padding: 0.5rem; flex: 1; display: flex; flex-direction: column; }
         .product-card.large .product-info { padding: 0.75rem; }
         .product-name { font-weight: 600; font-size: 0.8125rem; margin-bottom: 0.25rem; color: var(--gray-800); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.25rem; }
@@ -526,7 +526,7 @@
         .product-card.tile { background: white !important; border: 1px solid var(--gray-200) !important; border-radius: var(--radius-lg) !important; padding: 1rem !important; transition: all 0.2s ease !important; box-shadow: var(--shadow-sm) !important; height: 100% !important; display: flex !important; flex-direction: column !important; overflow: visible !important; }
         .product-card.tile:hover { border-color: var(--primary) !important; box-shadow: var(--shadow-md) !important; transform: translateY(-2px) !important; }
         .product-card.tile .product-image.tile { aspect-ratio: 16/9 !important; border-radius: var(--radius) !important; margin-bottom: 0.75rem !important; overflow: hidden !important; background: var(--gray-100) !important; }
-        .product-card.tile .product-image.tile img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+        .product-card.tile .product-image.tile img { width: 100% !important; height: 100% !important; object-fit: cover !important; max-width: 100% !important; max-height: 100% !important; }
         .product-card.tile .product-info.tile { padding: 0 !important; display: flex !important; flex-direction: column !important; gap: 0.5rem !important; flex: 1 !important; }
         .product-card.tile .product-name.tile { font-size: 1.0625rem !important; font-weight: 600 !important; margin-bottom: 0.25rem !important; color: var(--gray-800) !important; white-space: normal !important; overflow: visible !important; text-overflow: unset !important; }
         .product-card.tile .product-breadcrumb.tile { display: block !important; font-size: 0.75rem !important; color: var(--gray-500) !important; margin-bottom: 0.5rem !important; }
@@ -748,8 +748,8 @@
         .client-info-block { background: var(--gray-50); padding: 0.75rem; border-radius: var(--radius); font-size: 0.875rem; }
         @media (max-width: 640px) { .quote-client-info { grid-template-columns: 1fr; } }
         .hidden { display: none !important; }
-        .product-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--gray-200); }
-        .no-image-placeholder { width: 48px; height: 48px; background: var(--gray-100); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; color: var(--gray-400); font-size: 0.6875rem; }
+        .product-thumb { width: 48px !important; height: 48px !important; object-fit: cover !important; border-radius: var(--radius); border: 1px solid var(--gray-200); }
+        .no-image-placeholder { width: 48px !important; height: 48px !important; background: var(--gray-100); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; color: var(--gray-400); font-size: 0.6875rem; }
         .quote-footer { background: var(--gray-50); padding: 1.5rem 2rem; border-top: 1px solid var(--gray-200); display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; font-size: 0.875rem; }
         @media (max-width: 640px) { .quote-footer { grid-template-columns: 1fr; padding: 1rem; } }
         .notes-block { background: #fef3c7; border-left: 4px solid var(--accent); padding: 0.75rem; border-radius: 0 var(--radius) var(--radius) 0; margin: 1rem 0; font-size: 0.875rem; }
@@ -4659,6 +4659,49 @@ var safeStorage = {
         div.textContent = str;
         return div.innerHTML;
     }
+    
+    // 安全渲染产品图片（全局函数）
+    window.renderProductImage = function(imageUrl, altText, options) {
+        // 确保 imageUrl 是有效的字符串
+        if (!imageUrl || typeof imageUrl !== 'string' || imageUrl.length === 0) {
+            return '<div class="no-image-placeholder">无图</div>';
+        }
+        
+        options = options || {};
+        const style = options.style || '';
+        const className = options.className || '';
+        const isUrl = /^https?:\/\//i.test(imageUrl);
+        
+        // 简单转义 HTML 特殊字符
+        const safeAlt = (altText || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        
+        // 对于 base64 图片，不需要转义 data: URL
+        // 对于普通 URL，只需要确保引号正确
+        let safeSrc = imageUrl;
+        if (!isUrl && imageUrl.indexOf('data:') === 0) {
+            // data: URL 是安全的，不需要处理
+        } else if (!isUrl) {
+            // 其他非 URL，需要转义引号
+            safeSrc = imageUrl.replace(/"/g, '&quot;');
+        }
+        
+        // 构建 class 属性
+        const classAttr = className ? ' class="' + className + '"' : '';
+        
+        // 确保 style 中包含尺寸限制
+        const finalStyle = style || 'max-width:100%;height:auto;';
+        
+        // 如果是报价单中的图片，添加提示
+        const titleAttr = className === 'product-thumb' ? ' title="点击替换图片"' : '';
+        
+        if (isUrl) {
+            // URL图片：添加crossOrigin属性
+            return '<img' + classAttr + ' src="' + safeSrc + '" alt="' + safeAlt + '" loading="lazy" crossOrigin="anonymous" style="' + finalStyle + '"' + titleAttr + ' onerror="this.style.opacity=0">';
+        } else {
+            // Base64或其他本地图片
+            return '<img' + classAttr + ' src="' + safeSrc + '" alt="' + safeAlt + '" loading="lazy" style="' + finalStyle + '"' + titleAttr + '>';
+        }
+    };
     
     // 表单验证工具
     var FormValidator = {
@@ -10274,30 +10317,29 @@ function clearDraftQuote() {
 var saveDataTimer = null;
 
 function saveData(){
-    // 防抖保存
+    // 防抖保存 - 使用较长的延迟避免频繁保存
     if (saveDataTimer) clearTimeout(saveDataTimer);
     saveDataTimer = setTimeout(function() {
         try {
-            if (idbInitialized && IDB.isSupported()) {
-                saveToIndexedDB().catch(function(e) {
-                    console.error('IndexedDB保存失败:', e);
-                });
-            }
+            // 只保存到 localStorage，跳过耗时的 IndexedDB
             saveToLocalStorage();
+            console.log('数据已保存到 localStorage');
         } catch(e) {
             console.error('保存失败:', e);
         }
-    }, 500);
+    }, 800);
 }
 
 // 立即保存数据（不使用防抖），用于导入等关键操作
 function saveDataImmediately() {
     try {
-        if (idbInitialized && IDB.isSupported()) {
-            saveToIndexedDB().catch(function(e) {
-                console.error('IndexedDB保存失败:', e);
-            });
+        // 清除防抖定时器，避免重复保存
+        if (saveDataTimer) {
+            clearTimeout(saveDataTimer);
+            saveDataTimer = null;
         }
+        
+        // 只保存到 localStorage，跳过耗时的 IndexedDB
         saveToLocalStorage();
         console.log('数据已立即保存');
     } catch(e) {
@@ -10381,9 +10423,9 @@ function saveToIndexedDB() {
 
 function saveToLocalStorage() {
     try {
-        // 存储完整数据到 localStorage，作为 IndexedDB 的备份
-        // 这样即使 IndexedDB 保存失败，刷新页面后数据也不会丢失
-        var saveData = {
+        // 优化：分离元数据和图片数据，避免序列化大量base64图片导致卡顿
+        // 1. 保存元数据（不包含图片）
+        var metaData = {
             version: appData.version || '1.0',
             systemSettings: appData.systemSettings || {},
             charPricingConfig: appData.charPricingConfig || {},
@@ -10391,8 +10433,6 @@ function saveToLocalStorage() {
             favoriteIds: appData.favoriteIds || [],
             photoAlbums: appData.photoAlbums || [],
             dataTimestamp: new Date().toISOString(),
-            // 备份关键数据
-            products: appData.products || [],
             customers: appData.customers || [],
             templates: appData.templates || [],
             quoteHistory: appData.quoteHistory || [],
@@ -10400,7 +10440,10 @@ function saveToLocalStorage() {
             categories: appData.categories || []
         };
         
-        var str = JSON.stringify(saveData);
+        // 2. 保存产品数据，保留原样
+        metaData.products = appData.products || [];
+        
+        var str = JSON.stringify(metaData);
         console.log('localStorage 存储数据大小:', (str.length/1024).toFixed(1), 'KB');
         
         if (window.safeSetItem) {
@@ -11157,7 +11200,7 @@ function populateQuoteProductList(){
         div.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div style="display:flex;align-items:center;gap:0.375rem;">
-                    ${p.image?`<img src="${escapeHtml(p.image)}" class="product-thumb" loading="lazy">`:'<div class="no-image-placeholder">无图</div>'}
+                    ${p.image ? renderProductImage(p.image, p.name || '', { className: 'product-thumb' }) : '<div class="no-image-placeholder">无图</div>'}
                     <div>
                         <div style="font-weight:500;font-size:0.8125rem;">${escapeHtml(p.name)}</div>
                         ${isAdminMode() ? `<div style="font-size:0.6875rem;color:var(--gray-500);">${escapeHtml(catText)} · 成本¥${p.costPrice||0} / 售价¥${p.sellingPrice}/${escapeHtml(p.unit||'项')}</div>` : `<div style="font-size:0.6875rem;color:var(--gray-500);">${escapeHtml(catText)} · 售价¥${p.sellingPrice}/${escapeHtml(p.unit||'项')}</div>`}
@@ -11310,7 +11353,7 @@ function renderQuoteItems(){
         const itemCost = item.cost || 0;
         const itemQty = item.qty || 1;
         const itemPrice = item.price || 0;
-        const ih=item.image?`<img src="${escapeHtml(item.image)}" class="product-thumb" alt="${escapeHtml(itemName)}" data-img-id="${escapeHtml(String(itemId))}" style="cursor:pointer;" loading="lazy">`:`<div class="no-image-placeholder" data-img-id="${escapeHtml(String(itemId))}" style="cursor:pointer;">无图</div>`;
+        const ih = item.image ? renderProductImage(item.image, itemName || '', { className: 'product-thumb', style: 'cursor:pointer;' }) : `<div class="no-image-placeholder" data-img-id="${escapeHtml(String(itemId))}" style="cursor:pointer;" title="点击添加图片">无图</div>`;
         const div = document.createElement('div');
         div.className = 'quote-item-row';
         div.dataset.index = idx;
@@ -11593,7 +11636,7 @@ function generateQuotePreview(){
         const it = (qty * price * (dr / 100)).toFixed(2);
         let row = `<tr><td style="text-align:center;padding:0.75rem;border-bottom:1px solid #eee;font-weight:600;width:50px;">${idx+1}</td>`;
         if(colVis.image !== false) {
-            const ic = item.image ? `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;"><img src="${item.image}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;border:1px solid #eee;cursor:pointer;" data-preview-img-id="${item.id}" title="点击替换图片"></td>` : `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;cursor:pointer;color:var(--gray-400);" data-preview-img-id="${item.id}" title="点击添加图片">点击添加</td>`;
+            const ic = item.image ? `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;">${renderProductImage(item.image, item.name || '', { style: 'width:50px !important;height:50px !important;object-fit:cover !important;border-radius:4px;border:1px solid #eee;cursor:pointer;' })}</td>` : `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;cursor:pointer;color:var(--gray-400);" data-preview-img-id="${item.id}" title="点击添加图片">点击添加</td>`;
             row += ic;
         }
         row += `<td style="text-align:left;padding:0.75rem;border-bottom:1px solid #eee;width:150px;"><div><strong>${item.name}</strong></div></td>`;
@@ -11632,7 +11675,7 @@ function generateQuotePreview(){
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
             const bgColor = idx%2===0 ? '#ffffff' : '#f8fafc';
             const productImage = item.image 
-                ? `<img src="${item.image}" style="width:140px;height:105px;object-fit:cover;border:1px solid #ddd;">`
+                ? `<img src="${item.image}" style="width:140px !important;height:105px !important;object-fit:cover;border:1px solid #ddd;max-width:140px;max-height:105px;" crossOrigin="anonymous">`
                 : `<div style="width:140px;height:105px;background:#f5f5f5;border:1px solid #ddd;display:flex;align-items:center;justify-content:center;color:#999;font-size:1.5rem;">暂无图片</div>`;
             
             return `
@@ -11791,7 +11834,7 @@ function generateQuotePreview(){
             const itemPrice = item.price || 0;
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
             const productImage = item.image 
-                ? `<img src="${item.image}" style="width:100%;height:220px;object-fit:cover;border-radius:6px;">`
+                ? `<img src="${item.image}" style="width:100% !important;height:220px !important;object-fit:cover;border-radius:6px;max-height:220px;" crossOrigin="anonymous">`
                 : `<div style="width:100%;height:220px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:3rem;">暂无图片</div>`;
             
             return `
@@ -11962,7 +12005,7 @@ function generateQuotePreview(){
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
             let row = `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:0.75rem 1rem;text-align:center;font-size:0.9rem;color:#666;">${idx+1}</td>`;
             if(colVis.image !== false) {
-                const productImage = item.image ? `<img src="${item.image}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;border:1px solid #ddd;">` : '<span style="color:#999;">-</span>';
+                const productImage = item.image ? renderProductImage(item.image, item.name || '', { style: 'width:50px !important;height:50px !important;object-fit:cover !important;border-radius:4px;border:1px solid #ddd;' }) : '<span style="color:#999;">-</span>';
                 row += `<td style="padding:0.75rem 1rem;text-align:center;">${productImage}</td>`;
             }
             row += `<td style="padding:0.75rem 1rem;text-align:left;font-size:0.95rem;color:#1f2937;font-weight:500;">${item.name}</td>`;
@@ -12129,7 +12172,7 @@ function generateQuotePreview(){
             let bg=idx%2===0?'#fff':'#f8fafc';
             let row = `<tr style="background:${bg};"><td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:0.8rem;">${idx+1}</td>`;
             if(colVis.image !== false) {
-                let ic=item.image?`<img src="${item.image}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">`:'-';
+                let ic = item.image ? renderProductImage(item.image, item.name || '', { style: 'width:40px !important;height:40px !important;object-fit:cover !important;border-radius:4px;' }) : '-';
                 row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;">${ic}</td>`;
             }
             row += `<td style="padding:0.6rem 0.5rem;text-align:left;border-bottom:1px solid #e2e8f0;font-size:0.85rem;font-weight:500;">${item.name}</td>`;
@@ -12220,7 +12263,7 @@ function generateQuotePreview(){
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
             let row = `<tr><td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:0.75rem;">${idx+1}</td>`;
             if(colVis.image !== false) {
-                let ic=item.image?`<img src="${item.image}" style="width:35px;height:35px;object-fit:cover;border:1px solid #ddd;">`:'';
+                let ic = item.image ? renderProductImage(item.image, item.name || '', { style: 'width:35px !important;height:35px !important;object-fit:cover !important;border:1px solid #ddd;' }) : '';
                 row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;">${ic}</td>`;
             }
             row += `<td style="padding:0.5rem;border:1px solid #333;text-align:left;font-size:0.8rem;word-break:break-all;">${item.name}</td>`;
@@ -12278,7 +12321,7 @@ function generateQuotePreview(){
                     <span style="display:inline-flex;width:22px;height:22px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border-radius:50%;font-size:0.65rem;font-weight:600;align-items:center;justify-content:center;">${idx+1}</span>
                 </td>`;
             if(colVis.image !== false) {
-                let ic=item.image?`<img src="${item.image}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;">`:`<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
+                let ic = item.image ? renderProductImage(item.image, item.name || '', { style: 'width:40px !important;height:40px !important;object-fit:cover !important;border-radius:4px;border:1px solid #e5e7eb;' }) : `<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
                 row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">${ic}</td>`;
             }
             row += `<td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;">
@@ -14018,10 +14061,13 @@ function saveProduct(){
         // 清除产品缓存
         clearProductCache();
         saveDataImmediately(); // 使用立即保存确保数据持久化
-        renderProducts();
-        updateCategoryFilter();
+        // 批量更新UI，减少重渲染次数
+        requestAnimationFrame(function() {
+            renderProducts();
+            updateCategoryFilter();
+            populateQuoteProductList();
+        });
         closeModal('productModal');
-        populateQuoteProductList();
         addToHistory('保存产品', '产品: ' + p.name);
         hideLoadingToast('产品保存成功！', 'success');
     };
@@ -15237,7 +15283,7 @@ async function simulateImageRecognition(file){
             return `
                 <div style="display:flex;align-items:center;gap:1rem;padding:0.75rem;border:1px solid var(--gray-200);border-radius:var(--radius);margin-bottom:0.5rem;">
                     <div style="width:60px;height:60px;background:#f3f4f6;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        ${product.image ? `<img src="${product.image}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius);"/>` : '📦'}
+                        ${product.image ? `<img src="${product.image}" style="width:60px !important;height:60px !important;object-fit:cover;border-radius:var(--radius);max-width:60px;max-height:60px;" crossOrigin="anonymous"/>` : '📦'}
                     </div>
                     <div style="flex:1;min-width:0;">
                         <div style="font-weight:600;">${escapeHtml(product.name)}</div>
@@ -26109,7 +26155,7 @@ function renderProducts(useSmartResults = false){
         const costPrice = p.costPrice !== undefined ? p.costPrice : (p.cost || 0);
         const profit = sellingPrice - costPrice;
         const pp = costPrice ? ((profit / costPrice) * 100).toFixed(0) : 0;
-        const ih = p.image ? `<img src="${p.image}" alt="${escapeHtml(p.name || '')}" loading="lazy">` : '<span>暂无图片</span>';
+        const ih = p.image ? renderProductImage(p.image, p.name || '', { className: '', style: 'width:100%;height:100%;object-fit:cover;' }) : '<span>暂无图片</span>';
         const catText = p.category || p.category1 || '';
         const isSelected = batchSelectedIds.includes(p.id);
         const isTileMode = productViewMode === 'tile';
@@ -31869,11 +31915,26 @@ function mergeSyncData(serverData) {
         appData.favoriteIds = Array.from(merged);
     }
     
-    // 合并分类
+    // 合并分类（去重处理）
     if (serverData.categories && serverData.categories.length > 0) {
-        var localCats = new Set(appData.categories || []);
-        serverData.categories.forEach(function(cat) { localCats.add(cat); });
-        appData.categories = Array.from(localCats);
+        // 将本地分类转换为名称集合进行去重
+        var localCatNames = new Set();
+        (appData.categories || []).forEach(function(cat) {
+            // 兼容对象格式 { name: '分类名' } 和字符串格式 '分类名'
+            var catName = typeof cat === 'object' ? cat.name : cat;
+            if (catName) localCatNames.add(catName);
+        });
+        
+        // 添加服务器分类（同样处理格式）
+        serverData.categories.forEach(function(cat) {
+            var catName = typeof cat === 'object' ? cat.name : cat;
+            if (catName) localCatNames.add(catName);
+        });
+        
+        // 转换回标准格式 [{ name: '分类名' }, ...]
+        appData.categories = Array.from(localCatNames).map(function(name) {
+            return { name: name };
+        });
     }
     
     // 合并字符计算价格配置（团队共享，云端覆盖本地）
@@ -35057,7 +35118,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ===== 图片点击和按钮处理 =====
 function initImageClickHandlers(){
     document.getElementById('quoteItemsList').addEventListener('click', function(e){
-        // 处理图片点击
+        // 处理无图占位符点击
         const imgTarget = e.target.closest('[data-img-id]');
         if(imgTarget){
             e.stopPropagation();
@@ -35069,6 +35130,26 @@ function initImageClickHandlers(){
                 renderQuoteItems();
                 calculateTotals();
             });
+            return;
+        }
+
+        // 处理已有图片点击（替换图片）
+        const imgElement = e.target.closest('.product-thumb');
+        if(imgElement || e.target.closest('img.product-thumb')){
+            e.stopPropagation();
+            const itemDiv = e.target.closest('.quote-item-row');
+            if(itemDiv){
+                const idx = parseInt(itemDiv.dataset.index);
+                const item = appData.currentQuote.items[idx];
+                if(item){
+                    openImagePicker(function(compressed){
+                        updateQuoteItem(item.id, 'image', compressed);
+                        renderQuoteItems();
+                        calculateTotals();
+                        showToast('图片已替换', 'success');
+                    });
+                }
+            }
             return;
         }
 
@@ -35105,6 +35186,7 @@ function initImageClickHandlers(){
     const previewEl = document.getElementById('quotePreview');
     if(previewEl){ 
         previewEl.addEventListener('click', function(e){ 
+            // 处理无图占位符点击
             const target = e.target.closest('[data-preview-img-id]'); 
             if(target){ 
                 e.stopPropagation(); 
@@ -35116,7 +35198,32 @@ function initImageClickHandlers(){
                     renderQuoteItems(); 
                     generateQuotePreview(); 
                 }); 
-            } 
+                return;
+            }
+            
+            // 处理已有图片点击（替换图片）
+            const imgElement = e.target.closest('img');
+            if(imgElement && imgElement.style.cursor === 'pointer'){
+                e.stopPropagation();
+                // 找到对应的报价项目
+                const row = e.target.closest('tr');
+                if(row){
+                    const rows = Array.from(previewEl.querySelectorAll('tr'));
+                    const itemRows = rows.filter(r => r.querySelector('img'));
+                    const rowIdx = itemRows.indexOf(row);
+                    if(rowIdx >= 0 && rowIdx < appData.currentQuote.items.length){
+                        const item = appData.currentQuote.items[rowIdx];
+                        if(item){
+                            openImagePicker(function(compressed){ 
+                                updateQuoteItem(item.id, 'image', compressed); 
+                                renderQuoteItems(); 
+                                generateQuotePreview();
+                                showToast('图片已替换', 'success');
+                            });
+                        }
+                    }
+                }
+            }
         }); 
     }
 }
