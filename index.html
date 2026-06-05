@@ -4694,13 +4694,8 @@ var safeStorage = {
         // 如果是报价单中的图片，添加提示
         const titleAttr = className === 'product-thumb' ? ' title="点击替换图片"' : '';
         
-        if (isUrl) {
-            // URL图片：添加crossOrigin属性
-            return '<img' + classAttr + ' src="' + safeSrc + '" alt="' + safeAlt + '" loading="lazy" crossOrigin="anonymous" style="' + finalStyle + '"' + titleAttr + ' onerror="this.style.opacity=0">';
-        } else {
-            // Base64或其他本地图片
-            return '<img' + classAttr + ' src="' + safeSrc + '" alt="' + safeAlt + '" loading="lazy" style="' + finalStyle + '"' + titleAttr + '>';
-        }
+        // 不使用 crossOrigin，避免 CORS 限制
+        return '<img' + classAttr + ' src="' + safeSrc + '" alt="' + safeAlt + '" loading="lazy" style="' + finalStyle + '"' + titleAttr + ' onerror="this.style.opacity=0">';
     };
     
     // 表单验证工具
