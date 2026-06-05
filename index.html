@@ -7305,7 +7305,7 @@ var DataManager = {
                     <div style="display:flex;flex-direction:column;gap:0.25rem;">
                         <label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">GitHub Token</label>
                         <div style="position:relative;">
-                            <input type="password" id="gistToken" placeholder="ghp_xxxxxxxxxxxx" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;">
+                            <input type="password" id="gistToken" placeholder="ghp_xxxxxxxxxxxx" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;" onchange="saveGistToken()">
                             <button type="button" class="btn btn-xs btn-outline" style="position:absolute;right:4px;top:0;bottom:0;margin:auto;width:1.75rem;min-width:0!important;min-height:0!important;height:1.75rem!important;display:flex;align-items:center;justify-content:center;box-sizing:border-box;" onclick="toggleTokenVisibility()">👁️</button>
                         </div>
                     </div>
@@ -28414,6 +28414,25 @@ function toggleTokenVisibility() {
     var input = document.getElementById('gistToken');
     if (!input) return;
     input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+// 保存GitHub Token
+function saveGistToken() {
+    var tokenEl = document.getElementById('gistToken');
+    if (!tokenEl) return;
+    var token = tokenEl.value.trim();
+    
+    if (token) {
+        // 验证token格式（应该是40位十六进制字符串或以ghp_开头的格式）
+        if (token.length < 10) {
+            showToast('Token 长度太短，请检查输入', 'warning');
+            return;
+        }
+        
+        appData.systemSettings.gistToken = token;
+        saveData();
+        showToast('Token 已保存', 'success');
+    }
 }
 
 function gistApi(path, options) {
