@@ -730,9 +730,10 @@
             .import-export input { font-size: 0.65rem !important; padding: 0.2rem 0.2rem !important; height: auto !important; box-sizing: border-box; width: 100%; }
             .import-export .action-buttons .btn { padding: 0.2rem 0.12rem !important; font-size: 0.48rem !important; white-space: nowrap; line-height: 1.2; }
             /* 产品库搜索框手机端样式优化 */
-            .import-export .search-box-container input { height: 28px !important; font-size: 0.65rem !important; padding: 0.15rem 0.5rem !important; }
-            .import-export .search-box-container .btn-xs { height: 28px !important; font-size: 0.55rem !important; padding: 0.1rem 0.3rem !important; }
-            .import-export .action-buttons .btn-sm { height: 28px !important; min-height: 28px !important; }
+            .import-export .search-box-container { overflow: visible !important; }
+            .import-export .search-box-container input { height: 26px !important; font-size: 0.6rem !important; padding: 0.1rem 1.6rem 0.1rem 0.35rem !important; }
+            .import-export .btn.clear-search-btn { height: 26px !important; min-height: 26px !important; max-height: 26px !important; width: auto !important; font-size: 0.65rem !important; padding: 0 8px !important; margin: 0 !important; line-height: 26px !important; box-sizing: border-box !important; border: 1px solid #d1d5db !important; background: #f9fafb !important; color: #374151 !important; }
+            .import-export .action-buttons .btn-sm { height: 26px !important; min-height: 26px !important; max-height: 26px !important; padding: 0 6px !important; font-size: 0.6rem !important; }
             /* 产品分类标签手机端优化 */
             .category-cards-container { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
             .category-cards-container::-webkit-scrollbar { height: 4px; }
@@ -5589,7 +5590,7 @@ var DataManager = {
                 <!-- 搜索区域 -->
                 <div style="width:45%;min-width:35%;max-width:45%;position:relative;" class="search-box-container">
                     <input type="text" id="productSearch" placeholder="🔍 搜索产品..." oninput="smartSearchProducts()" style="width:100%;padding:0.45rem 3rem 0.45rem 0.625rem;font-size:0.875rem;height:36px;">
-                    <button class="btn btn-outline btn-xs" onclick="clearSmartSearch()" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);padding:0.15rem 0.4rem;font-size:0.65rem;height:22px;">清除</button>
+                    <button class="btn btn-outline btn-xs clear-search-btn" onclick="clearSmartSearch()" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);height:26px !important;min-height:26px !important;max-height:26px !important;padding:0 8px !important;margin:0 !important;font-size:0.65rem !important;line-height:26px !important;box-sizing:border-box !important;border:1px solid #d1d5db !important;background:#f9fafb !important;min-width:36px !important;width:auto !important;color:#374151 !important;">清除</button>
                 </div>
                 
                 <!-- 功能按钮组 -->
@@ -11719,7 +11720,7 @@ function generateQuotePreview(){
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
             const bgColor = idx%2===0 ? '#ffffff' : '#f8fafc';
             const productImage = item.image 
-                ? `<img src="${item.image}" style="width:140px !important;height:105px !important;object-fit:cover;border:1px solid #ddd;max-width:140px;max-height:105px;" crossOrigin="anonymous">`
+                ? `<img src="${item.image}" style="width:140px !important;height:105px !important;object-fit:cover;border:1px solid #ddd;max-width:140px;max-height:105px;" onerror="this.style.opacity=0.5;this.title='图片加载失败'">`
                 : `<div style="width:140px;height:105px;background:#f5f5f5;border:1px solid #ddd;display:flex;align-items:center;justify-content:center;color:#999;font-size:1.5rem;">暂无图片</div>`;
             
             return `
@@ -11878,7 +11879,7 @@ function generateQuotePreview(){
             const itemPrice = item.price || 0;
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
             const productImage = item.image 
-                ? `<img src="${item.image}" style="width:100% !important;height:220px !important;object-fit:cover;border-radius:6px;max-height:220px;" crossOrigin="anonymous">`
+                ? `<img src="${item.image}" style="width:100% !important;height:220px !important;object-fit:cover;border-radius:6px;max-height:220px;" onerror="this.style.opacity=0.5;this.title='图片加载失败'">`
                 : `<div style="width:100%;height:220px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:3rem;">暂无图片</div>`;
             
             return `
@@ -15327,7 +15328,7 @@ async function simulateImageRecognition(file){
             return `
                 <div style="display:flex;align-items:center;gap:1rem;padding:0.75rem;border:1px solid var(--gray-200);border-radius:var(--radius);margin-bottom:0.5rem;">
                     <div style="width:60px;height:60px;background:#f3f4f6;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        ${product.image ? `<img src="${product.image}" style="width:60px !important;height:60px !important;object-fit:cover;border-radius:var(--radius);max-width:60px;max-height:60px;" crossOrigin="anonymous"/>` : '📦'}
+                        ${product.image ? `<img src="${product.image}" style="width:60px !important;height:60px !important;object-fit:cover;border-radius:var(--radius);max-width:60px;max-height:60px;" onerror="this.style.opacity=0.5"/>` : '📦'}
                     </div>
                     <div style="flex:1;min-width:0;">
                         <div style="font-weight:600;">${escapeHtml(product.name)}</div>
