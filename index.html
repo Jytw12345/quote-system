@@ -1304,8 +1304,6 @@
         z-index: 9999 !important;
         max-height: 60vh !important;
         position: fixed !important;
-        top: auto !important;
-        bottom: auto !important;
         box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
     }
     
@@ -32579,18 +32577,19 @@ function handleHeaderGlobalSearch(keyword) {
 }
 
 function positionHeaderSearchResults(container, searchInput) {
-    if (!searchInput) return;
-    
-    const rect = searchInput.getBoundingClientRect();
     const isMobile = window.innerWidth <= 640;
     
     if (isMobile) {
-        const headerHeight = document.querySelector('header')?.offsetHeight || 100;
-        container.style.top = (headerHeight + window.scrollY + 10) + 'px';
-        container.style.left = '1rem';
-        container.style.right = '1rem';
-        container.style.width = 'calc(100vw - 2rem)';
-    } else {
+        // 移动端：搜索结果显示在标题栏下方的主界面区域
+        const header = document.querySelector('header');
+        const headerBottom = header ? header.offsetHeight : 120;
+        container.style.top = (headerBottom + 10) + 'px';
+        container.style.left = '0';
+        container.style.right = '0';
+        container.style.width = 'auto';
+    } else if (searchInput) {
+        // 桌面端：搜索结果显示在搜索框下方
+        const rect = searchInput.getBoundingClientRect();
         container.style.top = (rect.bottom + window.scrollY + 5) + 'px';
         container.style.left = 'auto';
         container.style.right = (window.innerWidth - rect.right + window.scrollX) + 'px';
