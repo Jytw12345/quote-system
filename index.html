@@ -322,6 +322,8 @@
             padding: 1rem 1.5rem;
             margin-bottom: 0.75rem;
             box-shadow: var(--shadow-xl);
+            position: relative;
+            z-index: 100;
         }
         .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; }
         h1 {
@@ -5211,7 +5213,7 @@ var DataManager = {
                 <button class="btn btn-outline btn-sm" onclick="switchTab('history')">📜 报价历史</button>
                 <button class="btn btn-outline btn-sm" onclick="switchTab('analytics')">📈 数据分析</button>
                 <input type="text" id="headerGlobalSearch" placeholder="🔍 全局搜索..." oninput="handleHeaderGlobalSearch(this.value)" style="padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-300);border-radius:var(--radius);width:180px;">
-                <div id="headerSearchResults" style="position:absolute;top:100%;right:0;background:white;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow-lg);max-height:400px;overflow-y:auto;width:320px;display:none;z-index:1000;"></div>
+                <div id="headerSearchResults" style="position:absolute;top:100%;right:0;background:white;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow-lg);max-height:400px;overflow-y:auto;width:320px;display:none;z-index:9999;"></div>
             </div>
         </div>
     </header>
@@ -5418,7 +5420,7 @@ var DataManager = {
                             <div style="flex:1;min-width:120px;position:relative;">
                                 <div style="font-size:0.7rem;color:var(--gray-500);margin-bottom:0.2rem;">客户公司 *</div>
                                 <input type="text" id="quoteClientName" placeholder="必填" style="width:100%;padding:0.3rem 0.4rem;font-size:0.75rem;border:1px solid var(--gray-200);border-radius:var(--radius);" autocomplete="off" oninput="handleClientNameInput(this.value)" onblur="setTimeout(()=>hideClientSuggestions(),200)" onfocus="handleClientNameInput(this.value)">
-                                <div id="clientSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow-md);z-index:1000;max-height:200px;overflow-y:auto;"></div>
+                                <div id="clientSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow-md);z-index:9999;max-height:200px;overflow-y:auto;"></div>
                             </div>
                             <div style="flex:0.7;min-width:90px;">
                                 <div style="font-size:0.7rem;color:var(--gray-500);margin-bottom:0.2rem;">联系人</div>
@@ -5472,7 +5474,7 @@ var DataManager = {
                         </div>
                         <button class="btn btn-primary btn-sm" onclick="quickAddSearchProduct()" style="padding:0.5rem 1rem;flex-shrink:0;">➕ 添加</button>
                     </div>
-                    <div id="quickSearchResults" class="quick-search-results" style="display:none;position:fixed;top:auto;left:auto;background:white;border:2px solid var(--primary);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:1000;max-height:350px;overflow-y:auto;width:calc(100% - 2rem);max-width:500px;"></div>
+                    <div id="quickSearchResults" class="quick-search-results" style="display:none;position:fixed;top:auto;left:auto;background:white;border:2px solid var(--primary);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:9999;max-height:350px;overflow-y:auto;width:calc(100% - 2rem);max-width:500px;"></div>
                     <div id="quoteItemsContainer" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
                         <div class="quote-item-row" id="quoteItemHeader" style="font-weight:600;background:var(--gray-50);font-size:0.6875rem;padding:0.625rem;">
                             <div class="header-col header-col-1" style="display:flex;align-items:center;justify-content:center;height:32px;"><span class="quote-item-number" style="cursor:default;">序号</span></div>
@@ -7599,6 +7601,8 @@ var DataManager = {
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
                         <button class="btn btn-sm" style="background: #f59e0b; color: white;" onclick="findDuplicateProducts()">🔎 查找重复产品</button>
                         <button class="btn btn-sm" style="background: #dc2626; color: white;" onclick="confirmRemoveDuplicates()">🗑️ 一键去重</button>
+                        <button class="btn btn-sm" style="background: #8b5cf6; color: white;" onclick="findDuplicateTemplates()">📋 查找重复模板</button>
+                        <button class="btn btn-sm" style="background: #7c3aed; color: white;" onclick="confirmRemoveDuplicateTemplates()">🗑️ 删除重复模板</button>
                     </div>
                     <div id="duplicateCheckResult" style="font-size: 0.75rem; color: #92400e; display: none;"></div>
                 </div>
@@ -8415,11 +8419,33 @@ let operationLog = [];
 let lastUndoState = null; // 用于比较是否真的发生了变化
 const MAX_UNDO_STEPS = 50;
 const MAX_LOG_ENTRIES = 100;
+const MAX_UNDO_MEMORY = 2 * 1024 * 1024; // 限制撤销栈总内存占用 2MB
+let undoMemoryUsage = 0; // 跟踪撤销栈内存使用
 let undoDebounceTimer = null;
 const UNDO_DEBOUNCE_MS = 500; // 防抖延迟
 
 function generateUniqueId(){
     return ++idCounter;
+}
+
+// 计算字符串占用内存（字节数，UTF-16）
+function getStringMemorySize(str) {
+    return str ? str.length * 2 : 0;
+}
+
+// 估算 JSON 字符串压缩后的大小（粗略估算为原始大小的 30%）
+function estimateCompressedSize(str) {
+    return Math.ceil(getStringMemorySize(str) * 0.3);
+}
+
+// 清理撤销栈直到内存满足限制
+function pruneUndoStackIfNeeded() {
+    while (undoStack.length > 0 && undoMemoryUsage > MAX_UNDO_MEMORY) {
+        const removed = undoStack.shift();
+        if (removed && removed.state) {
+            undoMemoryUsage -= estimateCompressedSize(removed.state);
+        }
+    }
 }
 
 function saveToUndoStack(action, description){
@@ -8429,12 +8455,34 @@ function saveToUndoStack(action, description){
     if(lastUndoState === currentState){
         return;
     }
+    
+    const stateSize = estimateCompressedSize(currentState);
+    
+    // 如果单个状态就超过限制，不保存
+    if (stateSize > MAX_UNDO_MEMORY) {
+        console.warn('撤销状态过大，跳过保存:', stateSize);
+        lastUndoState = currentState;
+        return;
+    }
+    
     lastUndoState = currentState;
 
+    // 更新内存使用量
+    undoMemoryUsage += stateSize;
+    
     undoStack.push({ action, description, state: currentState, timestamp: new Date().toISOString() });
+    
+    // 超过步数限制时删除最旧的
     if(undoStack.length > MAX_UNDO_STEPS){
-        undoStack.shift();
+        const removed = undoStack.shift();
+        if (removed && removed.state) {
+            undoMemoryUsage -= estimateCompressedSize(removed.state);
+        }
     }
+    
+    // 检查内存限制
+    pruneUndoStackIfNeeded();
+    
     redoStack = [];
     updateUndoRedoButtons();
 }
@@ -8500,6 +8548,9 @@ function undo(){
     const currentState = JSON.stringify(appData.currentQuote);
     redoStack.push({ action: 'undo', description: '撤销', state: currentState, timestamp: new Date().toISOString() });
     const lastAction = undoStack.pop();
+    if (lastAction && lastAction.state) {
+        undoMemoryUsage -= estimateCompressedSize(lastAction.state);
+    }
     try {
         appData.currentQuote = JSON.parse(lastAction.state);
         renderQuoteItems();
@@ -8517,6 +8568,8 @@ function redo(){
     }
     const currentState = JSON.stringify(appData.currentQuote);
     undoStack.push({ action: 'redo', description: '重做', state: currentState, timestamp: new Date().toISOString() });
+    undoMemoryUsage += estimateCompressedSize(currentState);
+    pruneUndoStackIfNeeded();
     const nextAction = redoStack.pop();
     try {
         appData.currentQuote = JSON.parse(nextAction.state);
@@ -8579,12 +8632,20 @@ function undoToIndex(index){
     const currentState = JSON.stringify(appData.currentQuote);
     redoStack.push({ action: 'undo', description: '撤销', state: currentState, timestamp: new Date().toISOString() });
 
-    // 移除 index 之后的所有状态
+    // 移除 index 之后的所有状态，并更新内存使用量
     const removed = undoStack.splice(index + 1);
+    removed.forEach(function(item) {
+        if (item && item.state) {
+            undoMemoryUsage -= estimateCompressedSize(item.state);
+        }
+    });
     lastUndoState = JSON.stringify(appData.currentQuote);
 
     // 恢复到指定位置
     const targetState = undoStack.pop();
+    if (targetState && targetState.state) {
+        undoMemoryUsage -= estimateCompressedSize(targetState.state);
+    }
     try {
         appData.currentQuote = JSON.parse(targetState.state);
         lastUndoState = JSON.stringify(appData.currentQuote);
@@ -8601,6 +8662,7 @@ function undoToIndex(index){
 // 清空撤销历史
 function clearUndoHistory(){
     undoStack = [];
+    undoMemoryUsage = 0;
     lastUndoState = JSON.stringify(appData.currentQuote);
     updateUndoRedoButtons();
     closeModal('undoHistoryModal');
@@ -9533,6 +9595,7 @@ function hideLoader() {
 }
 
 var activeObjectURLs = []; // 记录所有创建的 objectURL 用于清理
+const MAX_OBJECT_URLS = 500; // 防止内存泄漏，限制最大数量
 
 // 页面卸载时清理所有 objectURL，防止内存泄漏
 window.addEventListener('beforeunload', cleanupObjectURLs);
@@ -9564,6 +9627,12 @@ function cleanupObjectURLs() {
 function replaceImageURL(oldUrl, newUrl) {
     cleanupSingleObjectURL(oldUrl);
     if (newUrl) {
+        // 如果超过限制，先清理一半
+        if (activeObjectURLs.length >= MAX_OBJECT_URLS) {
+            console.warn('ObjectURL数量超过限制，执行紧急清理');
+            const toRemove = activeObjectURLs.splice(0, Math.floor(MAX_OBJECT_URLS / 2));
+            toRemove.forEach(function(url) { try { URL.revokeObjectURL(url); } catch(e) {} });
+        }
         activeObjectURLs.push(newUrl);
     }
     return newUrl;
@@ -9593,6 +9662,11 @@ function getProductImageUrl(product) {
         if (product.imageId && idbInitialized && IDB.isSupported()) {
             IDB.getImage(product.imageId).then(function(url) {
                 if (url) {
+                    // 如果超过限制，先清理一半
+                    if (activeObjectURLs.length >= MAX_OBJECT_URLS) {
+                        const toRemove = activeObjectURLs.splice(0, Math.floor(MAX_OBJECT_URLS / 2));
+                        toRemove.forEach(function(u) { try { URL.revokeObjectURL(u); } catch(e) {} });
+                    }
                     activeObjectURLs.push(url); // 记录以便清理
                     resolve(url);
                 } else {
@@ -10450,17 +10524,31 @@ function clearDraftQuote() {
 }
 
 var saveDataTimer = null;
+var saveDataLock = false; // 保存锁，防止数据竞争
 
 function saveData(){
+    // 如果正在保存，等本次保存完成后再保存
+    if (saveDataLock) {
+        // 延长防抖延迟，等当前保存完成
+        if (saveDataTimer) clearTimeout(saveDataTimer);
+        saveDataTimer = setTimeout(function() {
+            saveData();
+        }, 1000);
+        return;
+    }
+    
     // 防抖保存 - 使用较长的延迟避免频繁保存
     if (saveDataTimer) clearTimeout(saveDataTimer);
     saveDataTimer = setTimeout(function() {
         try {
+            saveDataLock = true;
             // 只保存到 localStorage，跳过耗时的 IndexedDB
             saveToLocalStorage();
             console.log('数据已保存到 localStorage');
         } catch(e) {
             console.error('保存失败:', e);
+        } finally {
+            saveDataLock = false;
         }
     }, 800);
 }
@@ -10474,11 +10562,23 @@ function saveDataImmediately() {
             saveDataTimer = null;
         }
         
+        // 如果有正在进行的保存，等待其完成
+        if (saveDataLock) {
+            // 等待最多2秒后强制保存
+            const waitStart = Date.now();
+            while (saveDataLock && (Date.now() - waitStart < 2000)) {
+                // busy wait - 不推荐但简单有效
+            }
+        }
+        
+        saveDataLock = true;
         // 只保存到 localStorage，跳过耗时的 IndexedDB
         saveToLocalStorage();
         console.log('数据已立即保存');
     } catch(e) {
         console.error('保存失败:', e);
+    } finally {
+        saveDataLock = false;
     }
 }
 
@@ -10581,15 +10681,45 @@ function saveToLocalStorage() {
         var str = JSON.stringify(metaData);
         console.log('localStorage 存储数据大小:', (str.length/1024).toFixed(1), 'KB');
         
+        // 检查 localStorage 剩余空间
+        var estimatedSize = str.length * 2; // UTF-16 编码
+        var currentUsage = getLocalStorageUsage();
+        var maxSize = 5 * 1024 * 1024; // 假设 5MB 限制
+        
+        if (currentUsage + estimatedSize > maxSize) {
+            console.warn('localStorage 空间不足，跳过保存。当前使用:', currentUsage, '新增:', estimatedSize);
+            showToast('本地存储空间不足，数据未保存', 'warning');
+            return false;
+        }
+        
         if (window.safeSetItem) {
             window.safeSetItem('adQuoteAppData', str);
         } else {
             localStorage.setItem('adQuoteAppData', str);
         }
+        return true;
     } catch(e) {
-        console.error('localStorage保存失败:', e);
-        // 不弹出警告，因为主要数据已保存在IDB中
+        if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_FILE_CROSS_ORIGIN_BLOCKED') {
+            console.error('localStorage 配额已满:', e);
+            showToast('本地存储空间已满，数据未保存', 'error');
+        } else {
+            console.error('localStorage保存失败:', e);
+        }
+        return false;
     }
+}
+
+// 获取 localStorage 大约使用量
+function getLocalStorageUsage() {
+    var total = 0;
+    try {
+        for (var key in localStorage) {
+            if (localStorage.hasOwnProperty(key)) {
+                total += localStorage.getItem(key).length * 2; // UTF-16
+            }
+        }
+    } catch(e) {}
+    return total;
 }
 // 压缩数据中的图片 base64 - 修复异步问题
 function compressImagesInData(obj) {
@@ -27967,6 +28097,11 @@ function initSignaturePad(){
     let drawing = false;
     let lastX = 0, lastY = 0;
 
+    // 保存事件处理器引用，用于移除
+    if (!canvas._signatureHandlers) {
+        canvas._signatureHandlers = {};
+    }
+    
     function startDraw(e){
         drawing = true;
         const rect = canvas.getBoundingClientRect();
@@ -28000,6 +28135,28 @@ function initSignaturePad(){
     function stopDraw(){
         drawing = false;
     }
+    function cancelDraw(){
+        drawing = false;
+    }
+    
+    // 移除旧的事件监听器，防止重复绑定
+    if (canvas._signatureHandlers.startDraw) {
+        canvas.removeEventListener('mousedown', canvas._signatureHandlers.startDraw);
+        canvas.removeEventListener('mousemove', canvas._signatureHandlers.draw);
+        canvas.removeEventListener('mouseup', canvas._signatureHandlers.stopDraw);
+        canvas.removeEventListener('mouseleave', canvas._signatureHandlers.stopDraw);
+        canvas.removeEventListener('touchstart', canvas._signatureHandlers.startDraw);
+        canvas.removeEventListener('touchmove', canvas._signatureHandlers.draw);
+        canvas.removeEventListener('touchend', canvas._signatureHandlers.stopDraw);
+        canvas.removeEventListener('touchcancel', canvas._signatureHandlers.cancelDraw);
+    }
+    
+    // 保存处理器引用
+    canvas._signatureHandlers.startDraw = startDraw;
+    canvas._signatureHandlers.draw = draw;
+    canvas._signatureHandlers.stopDraw = stopDraw;
+    canvas._signatureHandlers.cancelDraw = cancelDraw;
+    
     canvas.addEventListener('mousedown', startDraw);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDraw);
@@ -28007,6 +28164,7 @@ function initSignaturePad(){
     canvas.addEventListener('touchstart', startDraw);
     canvas.addEventListener('touchmove', draw);
     canvas.addEventListener('touchend', stopDraw);
+    canvas.addEventListener('touchcancel', cancelDraw);
 }
 function clearSignature(){
     const canvas = document.getElementById('signatureCanvas');
@@ -28808,6 +28966,112 @@ function removeDuplicateProducts(duplicates) {
 
     showToast('✅ 去重成功！删除了 ' + removedCount + ' 个重复产品', 'success');
     addSyncLog('success', '去重完成：删除 ' + removedCount + ' 个产品，保留 ' + keptCount + ' 个');
+
+    return removedCount;
+}
+
+// ==================== 模板重复检测功能 ====================
+
+// 查找重复模板（按名称精确匹配）
+function findDuplicateTemplates() {
+    var resultDiv = document.getElementById('duplicateCheckResult');
+    if (!appData.templates || appData.templates.length === 0) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '暂无模板数据';
+        showToast('暂无模板数据', 'warning');
+        return [];
+    }
+
+    var nameMap = new Map();
+    var duplicates = [];
+
+    appData.templates.forEach(function(t) {
+        if (!t.name || !t.name.trim()) return;
+        var name = t.name.trim().toLowerCase();
+        if (nameMap.has(name)) {
+            nameMap.get(name).push(t);
+        } else {
+            nameMap.set(name, [t]);
+        }
+    });
+
+    nameMap.forEach(function(templates, name) {
+        if (templates.length > 1) {
+            duplicates.push({
+                name: templates[0].name,
+                templates: templates.sort(function(a, b) {
+                    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+                })
+            });
+        }
+    });
+
+    // 按重复数量排序
+    duplicates.sort(function(a, b) { return b.templates.length - a.templates.length; });
+
+    // 显示结果
+    resultDiv.style.display = 'block';
+    if (duplicates.length === 0) {
+        resultDiv.innerHTML = '✅ 未发现重复模板，数据很健康！';
+        showToast('✅ 未发现重复模板', 'success');
+    } else {
+        var totalDup = duplicates.reduce(function(sum, d) { return sum + d.templates.length - 1; }, 0);
+        resultDiv.innerHTML = '⚠️ 发现 <strong>' + duplicates.length + '</strong> 组共 <strong>' + totalDup + '</strong> 个重复模板<br>' +
+            '点击"删除重复模板"可自动保留最新版本';
+        showToast('发现 ' + duplicates.length + ' 组重复模板', 'warning');
+    }
+
+    addSyncLog('info', '模板查重完成：发现 ' + duplicates.length + ' 组重复模板');
+    return duplicates;
+}
+
+// 确认删除重复模板操作
+function confirmRemoveDuplicateTemplates() {
+    var duplicates = findDuplicateTemplates();
+    if (duplicates.length === 0) {
+        return;
+    }
+
+    var totalDup = duplicates.reduce(function(sum, d) { return sum + d.templates.length - 1; }, 0);
+    var msg = '确定要删除 ' + totalDup + ' 个重复模板吗？\n\n' +
+        '去重规则：\n' +
+        '• 保留最新创建的模板（按创建时间判断）\n' +
+        '• 删除所有其他重复的模板';
+
+    if (confirm(msg)) {
+        removeDuplicateTemplates(duplicates);
+    }
+}
+
+// 执行删除重复模板
+function removeDuplicateTemplates(duplicates) {
+    var originalCount = appData.templates.length;
+    
+    // 收集所有需要删除的模板ID
+    var idsToRemove = new Set();
+    duplicates.forEach(function(group) {
+        // 跳过第一个（最新的），标记其余的为删除
+        for (var i = 1; i < group.templates.length; i++) {
+            idsToRemove.add(String(group.templates[i].id));
+        }
+    });
+
+    // 删除重复模板
+    appData.templates = appData.templates.filter(function(t) {
+        return !idsToRemove.has(String(t.id));
+    });
+
+    var keptCount = appData.templates.length;
+    var removedCount = originalCount - keptCount;
+    var resultDiv = document.getElementById('duplicateCheckResult');
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '✅ 模板去重完成！已删除 <strong>' + removedCount + '</strong> 个重复模板，保留 <strong>' + keptCount + '</strong> 个最新版本';
+
+    showToast('✅ 模板去重成功！删除了 ' + removedCount + ' 个重复模板', 'success');
+    addSyncLog('success', '模板去重完成：删除 ' + removedCount + ' 个模板，保留 ' + keptCount + ' 个');
+
+    // 保存数据
+    saveData();
 
     return removedCount;
 }
@@ -36352,10 +36616,10 @@ window.addEventListener('beforeunload', function() {
     cleanupObjectURLs();
 });
 
-// 定期清理（每小时一次）
+// 定期清理（每10分钟一次），防止内存泄漏
 var objectURLCleanupTimer = setInterval(function() {
     cleanupObjectURLs();
-}, 3600000);
+}, 600000); // 10分钟
 
 // ===== 页面卸载时清理定时器 =====
 window.addEventListener('beforeunload', function() {
