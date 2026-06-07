@@ -1304,7 +1304,8 @@
         z-index: 9999 !important;
         max-height: 60vh !important;
         position: fixed !important;
-        top: 16vh !important;
+        top: auto !important;
+        bottom: auto !important;
         box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
     }
     
@@ -32514,6 +32515,8 @@ function globalSearch() {
 // 顶部导航栏全局搜索处理函数
 function handleHeaderGlobalSearch(keyword) {
     const container = document.getElementById('headerSearchResults');
+    const searchInput = document.getElementById('headerGlobalSearch');
+    
     if (!keyword || keyword.length < 2) {
         container.style.display = 'none';
         return;
@@ -32544,6 +32547,7 @@ function handleHeaderGlobalSearch(keyword) {
 
     if (!results.length) {
         container.innerHTML = `<div style="padding:1rem;text-align:center;color:var(--gray-500);">未找到匹配结果</div>`;
+        positionHeaderSearchResults(container, searchInput);
         container.style.display = 'block';
         return;
     }
@@ -32570,7 +32574,28 @@ function handleHeaderGlobalSearch(keyword) {
     });
 
     container.innerHTML = html;
+    positionHeaderSearchResults(container, searchInput);
     container.style.display = 'block';
+}
+
+function positionHeaderSearchResults(container, searchInput) {
+    if (!searchInput) return;
+    
+    const rect = searchInput.getBoundingClientRect();
+    const isMobile = window.innerWidth <= 640;
+    
+    if (isMobile) {
+        const headerHeight = document.querySelector('header')?.offsetHeight || 100;
+        container.style.top = (headerHeight + window.scrollY + 10) + 'px';
+        container.style.left = '1rem';
+        container.style.right = '1rem';
+        container.style.width = 'calc(100vw - 2rem)';
+    } else {
+        container.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+        container.style.left = 'auto';
+        container.style.right = (window.innerWidth - rect.right + window.scrollX) + 'px';
+        container.style.width = '320px';
+    }
 }
 
 // 点击其他地方关闭搜索结果
