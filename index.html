@@ -31590,12 +31590,6 @@ function renderTeamMembersList() {
 
     var activities = appData.systemSettings.teamActivityLog || [];
 
-    if (activities.length === 0) {
-        container.innerHTML = '<div style="color: #6ee7b7; text-align: center;">暂无成员活动记录</div>';
-        showToast('暂无成员活动记录', 'info');
-        return;
-    }
-
     // 分析活动日志，提取成员信息
     var memberMap = new Map();
 
@@ -31625,14 +31619,31 @@ function renderTeamMembersList() {
         member.activities.push(activity.type + '_' + activity.dataType);
     });
 
+    // 添加当前用户到成员列表（即使没有活动记录）
+    var currentUserId = appData.systemSettings.teamUserId || getDeviceId();
+    var currentUserName = appData.systemSettings.teamUserName || '我';
+    
+    if (!memberMap.has(currentUserId)) {
+        memberMap.set(currentUserId, {
+            userId: currentUserId,
+            userName: currentUserName,
+            lastActivityTime: new Date().toISOString(),
+            activityCount: 0,
+            activities: []
+        });
+    }
+
     // 转换为数组并排序（按最后活动时间）
     var members = Array.from(memberMap.values());
     members.sort(function(a, b) {
         return new Date(b.lastActivityTime) - new Date(a.lastActivityTime);
     });
 
-    // 当前用户ID
-    var currentUserId = appData.systemSettings.teamUserId || getDeviceId();
+    if (members.length === 0) {
+        container.innerHTML = '<div style="color: #6ee7b7; text-align: center;">暂无成员活动记录</div>';
+        showToast('暂无成员活动记录', 'info');
+        return;
+    }
 
     // 生成HTML
     var html = '<div style="display: flex; flex-direction: column; gap: 0.5rem;">';
@@ -31838,6 +31849,13 @@ function joinTeam() {
     var gistId = prompt('请输入团队 Gist ID：');
     if (!gistId) return;
     
+    // 要求输入团队成员名称
+    var teamUserName = prompt('请输入您在团队中的名称（例如：张三）：');
+    if (!teamUserName || teamUserName.trim() === '') {
+        showToast('请输入团队成员名称', 'error');
+        return;
+    }
+    
     if (!appData.systemSettings.gistToken) {
         showToast('请先配置 GitHub Access Token', 'error');
         return;
@@ -31882,6 +31900,7 @@ function joinTeam() {
             appData.systemSettings.teamGistId = gistId;
             appData.systemSettings.teamEnabled = true;
             appData.systemSettings.teamName = jsonData.team.teamName || '未命名团队';
+            appData.systemSettings.teamUserName = teamUserName.trim();  // 保存成员名称
             
             saveData();
             
@@ -31895,6 +31914,9 @@ function joinTeam() {
             if (document.getElementById('teamName')) {
                 document.getElementById('teamName').value = jsonData.team.teamName || '未命名团队';
             }
+            if (document.getElementById('teamUserName')) {
+                document.getElementById('teamUserName').value = teamUserName.trim();
+            }
             
             addSyncLog('info', '加入团队成功 (Gist ID: ' + gistId + ')');
             
@@ -31904,6 +31926,7 @@ function joinTeam() {
                     title: '✅ 成功加入团队',
                     message: '<div style="padding: 1rem;">' +
                              '<p>您已成功加入团队：<strong>' + escapeHtml(jsonData.team.teamName || '团队') + '</strong></p>' +
+                             '<p style="margin-top: 0.5rem;">您的成员名称：<strong>' + escapeHtml(teamUserName) + '</strong></p>' +
                              '<p style="margin-top: 1rem;">Gist ID: <code>' + gistId + '</code></p>' +
                              '<p style="margin-top: 1rem;">正在同步团队数据...</p>' +
                              '</div>',
@@ -31917,6 +31940,9 @@ function joinTeam() {
             setTimeout(function() {
                 syncNow();
             }, 800);
+            
+            // 添加加入团队的活动记录
+            addTeamActivity('join', 'system', teamUserName.trim());
             
         } catch (e) {
             throw new Error('数据格式无效: ' + e.message);
