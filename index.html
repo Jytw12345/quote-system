@@ -31589,10 +31589,26 @@ function renderTeamMembersList() {
     if (!container) return;
 
     var activities = appData.systemSettings.teamActivityLog || [];
+    var serverMembers = appData.systemSettings.teamMembers || [];
 
     // 分析活动日志，提取成员信息
     var memberMap = new Map();
 
+    // 先从服务器端成员列表添加
+    serverMembers.forEach(function(member) {
+        if (member.userId) {
+            memberMap.set(member.userId, {
+                userId: member.userId,
+                userName: member.userName || member.userId || '未知用户',
+                lastActivityTime: member.joinedAt || new Date().toISOString(),
+                activityCount: 0,
+                activities: [],
+                fromServer: true
+            });
+        }
+    });
+
+    // 再从活动日志中补充/更新成员信息
     activities.forEach(function(activity) {
         var userId = activity.userId || 'unknown';
         var userName = activity.userName || activity.userId || '未知用户';
@@ -31603,7 +31619,8 @@ function renderTeamMembersList() {
                 userName: userName,
                 lastActivityTime: activity.time,
                 activityCount: 0,
-                activities: []
+                activities: [],
+                fromServer: false
             });
         }
 
@@ -31629,7 +31646,8 @@ function renderTeamMembersList() {
             userName: currentUserName,
             lastActivityTime: new Date().toISOString(),
             activityCount: 0,
-            activities: []
+            activities: [],
+            fromServer: false
         });
     }
 
@@ -31640,8 +31658,8 @@ function renderTeamMembersList() {
     });
 
     if (members.length === 0) {
-        container.innerHTML = '<div style="color: #6ee7b7; text-align: center;">暂无成员活动记录</div>';
-        showToast('暂无成员活动记录', 'info');
+        container.innerHTML = '<div style="color: #6ee7b7; text-align: center;">暂无团队成员</div>';
+        showToast('暂无团队成员', 'info');
         return;
     }
 
@@ -31754,7 +31772,8 @@ function createTeam() {
             createdBy: appData.systemSettings.teamUserName || '未命名用户',
             userId: appData.systemSettings.teamUserId || getDeviceId(),
             userName: appData.systemSettings.teamUserName || '未命名用户',
-            syncChangeTracking: true
+            syncChangeTracking: true,
+            members: []  // 团队成员列表
         },
         data: {
             products: [],
@@ -31936,6 +31955,24 @@ function joinTeam() {
                 });
             }, 300);
             
+            // 添加当前用户到服务器端的成员列表
+            var currentUserId = appData.systemSettings.teamUserId || getDeviceId();
+            var members = jsonData.team.members || [];
+            
+            // 检查是否已存在
+            var exists = members.some(function(m) { return m.userId === currentUserId; });
+            if (!exists) {
+                members.push({
+                    userId: currentUserId,
+                    userName: teamUserName.trim(),
+                    joinedAt: new Date().toISOString()
+                });
+                jsonData.team.members = members;
+                
+                // 更新服务器端数据
+                updateTeamMembers(gistId, jsonData);
+            }
+            
             // 立即同步获取团队数据
             setTimeout(function() {
                 syncNow();
@@ -31958,6 +31995,38 @@ function joinTeam() {
 // 暴露到 window 确保 HTML 中 onclick 可以调用
 window.createTeam = createTeam;
 window.joinTeam = joinTeam;
+
+// 更新团队成员列表
+function updateTeamMembers(gistId, teamData) {
+    var url = 'https://api.github.com/gists/' + gistId;
+    var headers = {
+        'Authorization': 'token ' + appData.systemSettings.gistToken,
+        'Accept': 'application/vnd.github.v3+json'
+    };
+    
+    var payload = {
+        files: {
+            'quotation_data.json': {
+                content: JSON.stringify(teamData)
+            }
+        }
+    };
+    
+    fetch(url, {
+        method: 'PATCH',
+        headers: headers,
+        body: JSON.stringify(payload)
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('更新团队成员失败');
+        }
+        addSyncLog('info', '团队成员列表已更新');
+    })
+    .catch(function(error) {
+        addSyncLog('error', '更新团队成员失败: ' + error.message);
+    });
+}
 
 // 保存团队 Gist ID
 function saveTeamGistId() {
@@ -32301,6 +32370,11 @@ function mergeSyncData(serverData) {
     // 检查是否是团队数据（schemaVersion 4+）
     var isTeamData = serverData.team && serverData.team.enabled;
     var currentUserId = appData.systemSettings.teamUserId || getDeviceId();
+    
+    // 保存服务器端的成员列表
+    if (isTeamData && serverData.team.members) {
+        appData.systemSettings.teamMembers = serverData.team.members;
+    }
     
     // 合并团队活动日志
     if (isTeamData && serverData.activityLog && serverData.activityLog.length > 0) {
