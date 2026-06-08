@@ -9958,6 +9958,7 @@ function fixAppDataCompat() {
     if(!appData.systemSettings.teamUserId) appData.systemSettings.teamUserId = getDeviceId();
     if(!appData.systemSettings.teamDataSharing) appData.systemSettings.teamDataSharing = { products: true, templates: true, customers: true, quoteHistory: false, seals: false, signatures: false };
     if(!appData.systemSettings.teamActivityLog) appData.systemSettings.teamActivityLog = [];
+    if(!appData.systemSettings.teamMembers) appData.systemSettings.teamMembers = [];
     if(appData.systemSettings.syncChangeTracking === undefined) appData.systemSettings.syncChangeTracking = true;
     if(!appData.systemSettings.gistToken) appData.systemSettings.gistToken = '';
     if(!appData.systemSettings.gistId) appData.systemSettings.gistId = '';
@@ -31580,7 +31581,45 @@ function clearTeamActivityLog() {
 
 // 刷新团队成员列表
 function refreshTeamMembers() {
-    renderTeamMembersList();
+    // 先同步获取最新的团队数据
+    if (appData.systemSettings.teamEnabled && appData.systemSettings.gistId && appData.systemSettings.gistToken) {
+        showToast('正在获取团队成员...', 'loading');
+        
+        var url = 'https://api.github.com/gists/' + appData.systemSettings.gistId;
+        var headers = {
+            'Authorization': 'token ' + appData.systemSettings.gistToken,
+            'Accept': 'application/vnd.github.v3+json'
+        };
+        
+        fetch(url, {
+            method: 'GET',
+            headers: headers
+        })
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('无法获取团队数据');
+            }
+            return response.json();
+        })
+        .then(function(data) {
+            var fileContent = data.files['quotation_data.json'];
+            if (fileContent) {
+                var jsonData = JSON.parse(fileContent.content);
+                if (jsonData.team && jsonData.team.members) {
+                    appData.systemSettings.teamMembers = jsonData.team.members;
+                    saveData();
+                }
+            }
+            renderTeamMembersList();
+            hideLoadingToast('刷新成功', 'success');
+        })
+        .catch(function() {
+            renderTeamMembersList();
+            hideLoadingToast('刷新失败，显示本地数据', 'error');
+        });
+    } else {
+        renderTeamMembersList();
+    }
 }
 
 // 渲染团队成员列表
@@ -31773,7 +31812,11 @@ function createTeam() {
             userId: appData.systemSettings.teamUserId || getDeviceId(),
             userName: appData.systemSettings.teamUserName || '未命名用户',
             syncChangeTracking: true,
-            members: []  // 团队成员列表
+            members: [{
+                userId: appData.systemSettings.teamUserId || getDeviceId(),
+                userName: appData.systemSettings.teamUserName || '未命名用户',
+                joinedAt: new Date().toISOString()
+            }]  // 团队成员列表，包含创建者
         },
         data: {
             products: [],
