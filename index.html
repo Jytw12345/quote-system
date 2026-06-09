@@ -7837,9 +7837,9 @@ function safeExecuteAsync(fn, defaultVal) {
                 <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #bae6fd;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <div style="font-size: 0.8125rem; font-weight: 600; color: #0369a1;">👥 团队功能</div>
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <label style="display: inline-flex; align-items: center; gap: 0.375rem; cursor: pointer;">
                             <span style="font-size: 0.75rem; color: #64748b;">启用团队同步</span>
-                            <input type="checkbox" id="teamEnabled" onchange="toggleTeamSettings()" style="width: 1rem; height: 1rem;">
+                            <input type="checkbox" id="teamEnabled" onchange="toggleTeamSettings()" style="width: 1rem; height: 1rem; flex-shrink: 0; flex-basis: 1rem; appearance: auto; -webkit-appearance: checkbox; min-width: 1rem; min-height: 1rem;">
                         </label>
                     </div>
                     <div id="teamSettingsPanel" style="display: none;">
@@ -7901,7 +7901,7 @@ function safeExecuteAsync(fn, defaultVal) {
                 <div id="teamActivityPanel" style="background: var(--gray-50); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; display: none;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <div style="font-size: 0.8125rem; font-weight: 600; color: var(--gray-700);">👥 团队活动</div>
-                        <button class="btn btn-xs btn-outline" onclick="clearTeamActivityLog()">清空</button>
+                        <button class="btn btn-xs btn-outline" onclick="clearTeamActivityLog()" style="flex: none; max-width: 60px; width: auto; min-width: auto; white-space: nowrap;">清空</button>
                     </div>
                     <div id="teamActivityLogContainer" style="max-height: 120px; overflow-y: auto; font-size: 0.7rem; color: var(--gray-600);">
                         <div style="color: var(--gray-400); text-align: center;">暂无团队活动记录</div>
@@ -7912,7 +7912,7 @@ function safeExecuteAsync(fn, defaultVal) {
                 <div id="teamMembersPanel" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #6ee7b7;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <div style="font-size: 0.8125rem; font-weight: 600; color: #047857;">👥 团队成员</div>
-                        <button class="btn btn-xs btn-outline" onclick="refreshTeamMembers()">🔄 刷新</button>
+                        <button class="btn btn-xs btn-outline" onclick="refreshTeamMembers()" style="flex: none; max-width: 70px; width: auto; min-width: auto; white-space: nowrap;">🔄 刷新</button>
                     </div>
                     <div id="teamMembersList" style="font-size: 0.75rem; color: #065f46;">
                         <div style="color: #6ee7b7; text-align: center;">点击"刷新"查看团队成员</div>
@@ -7941,6 +7941,9 @@ function safeExecuteAsync(fn, defaultVal) {
                     <button class="btn btn-outline btn-sm" onclick="gistPullProducts()">📦 更新产品价格</button>
                     <button class="btn btn-outline btn-sm" onclick="showSyncHistory()">📜 历史版本</button>
                     <button class="btn btn-outline btn-sm" onclick="showSelectiveSync()">📋 选择性同步</button>
+                    <button class="btn btn-outline btn-sm" onclick="viewCloudData()">👁️ 查看云端数据</button>
+                    <button class="btn btn-outline btn-sm" onclick="fixCloudData()">🔧 修复云端重复</button>
+                    <button class="btn btn-danger btn-sm" onclick="clearCloudData()">🗑️ 清空云端数据</button>
                 </div>
                 
                 <!-- 同步进度条 -->
@@ -7958,7 +7961,7 @@ function safeExecuteAsync(fn, defaultVal) {
                 <div style="border-top:1px solid var(--gray-200);padding-top:1rem;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
                         <h4 style="font-size:0.875rem;font-weight:600;color:var(--gray-700);">📋 同步日志</h4>
-                        <button class="btn btn-xs btn-outline" onclick="clearSyncLog()">清空日志</button>
+                        <button class="btn btn-xs btn-outline" onclick="clearSyncLog()" style="flex: none; max-width: 70px; width: auto; min-width: auto; white-space: nowrap;">清空日志</button>
                     </div>
                     <div id="syncLogContainer" style="max-height:150px;overflow-y:auto;background:var(--gray-50);border-radius:var(--radius);padding:0.5rem;font-size:0.75rem;color:var(--gray-600);">
                         <div style="color:var(--gray-400);text-align:center;">暂无同步记录</div>
@@ -29714,13 +29717,22 @@ function renderSyncLog() {
     let html = '';
     logs.forEach(log => {
         const icon = log.type === 'success' ? '✅' : log.type === 'error' ? '❌' : log.type === 'info' ? 'ℹ️' : '🔄';
-        html += `<div style="display:flex;gap:0.5rem;margin-bottom:0.25rem;">
+        html += `<div style="display:flex;gap:0.5rem;margin-bottom:0.25rem;align-items:center;">
             <span>${icon}</span>
             <span style="color:var(--gray-500);font-size:0.65rem;">${log.time}</span>
-            <span>${log.message}</span>
+            <span style="flex:1;">${log.message}</span>
+            <button class="btn btn-xs btn-outline" style="padding:0.125rem 0.375rem;font-size:0.6rem;flex: none; max-width: 50px; width: auto; min-width: auto; white-space: nowrap;" onclick="deleteSyncLog(${log.id})">删除</button>
         </div>`;
     });
     container.innerHTML = html;
+}
+
+// 删除单条同步日志
+function deleteSyncLog(logId) {
+    const logs = getSyncLog();
+    const filteredLogs = logs.filter(log => log.id !== logId);
+    localStorage.setItem('syncLog', JSON.stringify(filteredLogs));
+    renderSyncLog();
 }
 
 // 清空同步日志
@@ -30990,8 +31002,9 @@ function proceedWithUpload() {
     isSyncing = true;
     showSyncProgress('正在上传数据...', 50);
     
-    var useIncremental = appData.systemSettings.incrementalSyncEnabled && 
-                         appData.systemSettings.lastIncrementalSyncTime;
+    // 强制全量上传：清空云端后需要重新上传所有数据
+    // 增量上传只适用于正常同步场景
+    var useIncremental = false;
     
     // 重置同步状态
     function resetSync() {
@@ -31496,7 +31509,10 @@ async function showSyncHistory() {
         }
         
         var historyHtml = '<div style="padding:0.5rem;font-size:0.875rem;">';
-        historyHtml += '<div style="font-weight:600;margin-bottom:0.75rem;color:var(--gray-800);">📜 Gist 历史版本 (共 ' + commits.length + ' 条)</div>';
+        historyHtml += '<div style="font-weight:600;margin-bottom:0.5rem;color:var(--gray-800);">📜 Gist 历史版本 (共 ' + commits.length + ' 条)</div>';
+        historyHtml += '<div style="background:#fef3c7;border-radius:0.25rem;padding:0.5rem;font-size:0.7rem;color:#92400e;margin-bottom:0.75rem;">';
+        historyHtml += '💡 提示：由于 GitHub Gist 平台限制，无法单独删除历史版本。如需清理历史记录，请使用「清空云端数据」功能。';
+        historyHtml += '</div>';
         
         commits.forEach(function(commit, index) {
             var date = new Date(commit.committed_at);
@@ -32008,7 +32024,7 @@ function importData() {
                 if (confirm('确定要导入数据吗？当前数据将被合并覆盖！')) {
                     if (importData.data.products) {
                         importData.data.products.forEach(p => {
-                            const idx = appData.products.findIndex(item => item.id === p.id);
+                            const idx = appData.products.findIndex(item => String(item.id) === String(p.id));
                             if (idx >= 0) {
                                 appData.products[idx] = p;
                             } else {
@@ -32018,7 +32034,7 @@ function importData() {
                     }
                     if (importData.data.customers) {
                         importData.data.customers.forEach(c => {
-                            const idx = appData.customers.findIndex(item => item.id === c.id);
+                            const idx = appData.customers.findIndex(item => String(item.id) === String(c.id));
                             if (idx >= 0) {
                                 appData.customers[idx] = c;
                             } else {
@@ -32028,7 +32044,7 @@ function importData() {
                     }
                     if (importData.data.templates) {
                         importData.data.templates.forEach(t => {
-                            const idx = appData.templates.findIndex(item => item.id === t.id);
+                            const idx = appData.templates.findIndex(item => String(item.id) === String(t.id));
                             if (idx >= 0) {
                                 appData.templates[idx] = t;
                             } else {
@@ -32065,6 +32081,374 @@ function importData() {
     };
     input.click();
 }
+
+// ==================== 云端数据管理功能 ====================
+
+// 查看云端数据统计
+function viewCloudData() {
+    var token = appData.systemSettings.gistToken;
+    var gistId = appData.systemSettings.gistId;
+    
+    if (!token || !gistId) {
+        showToast('请先配置云同步', 'warning');
+        return;
+    }
+    
+    showToast('📡 正在获取云端数据...', 'loading', 10000);
+    
+    gistApi('/gists/' + gistId)
+    .then(function(res) {
+        if (!res.ok) throw new Error('获取云端数据失败: HTTP ' + res.status);
+        return res.json();
+    })
+    .then(function(gist) {
+        var file = gist.files && gist.files['quote-data.json'];
+        if (!file || !file.content) {
+            showToast('云端数据为空或格式不正确', 'info');
+            return;
+        }
+        
+        var data = JSON.parse(file.content);
+        var cloudData = data.data || {};
+        
+        var stats = {
+            products: cloudData.products ? cloudData.products.length : 0,
+            customers: cloudData.customers ? cloudData.customers.length : 0,
+            templates: cloudData.templates ? cloudData.templates.length : 0,
+            uploadTime: data.uploadTime ? new Date(data.uploadTime).toLocaleString() : '未知',
+            deviceId: data.deviceId || '未知设备'
+        };
+        
+        // 检测重复数据
+        var duplicateInfo = detectCloudDuplicates(cloudData);
+        
+        var htmlContent = `
+            <div style="padding: 0.5rem;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <div style="background: #eff6ff; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                        <div style="font-size: 1.25rem; font-weight: 600; color: #1e40af;">${stats.products}</div>
+                        <div style="font-size: 0.7rem; color: #64748b;">产品数量</div>
+                    </div>
+                    <div style="background: #f0fdf4; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                        <div style="font-size: 1.25rem; font-weight: 600; color: #16a34a;">${stats.customers}</div>
+                        <div style="font-size: 0.7rem; color: #64748b;">客户数量</div>
+                    </div>
+                    <div style="background: #fef3c7; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                        <div style="font-size: 1.25rem; font-weight: 600; color: #d97706;">${stats.templates}</div>
+                        <div style="font-size: 0.7rem; color: #64748b;">模板数量</div>
+                    </div>
+                </div>
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
+                    <div style="margin-bottom: 0.25rem;">📅 最后上传时间: ${stats.uploadTime}</div>
+                    <div>🖥️ 上传设备: ${stats.deviceId}</div>
+                </div>`;
+        
+        if (duplicateInfo.hasDuplicates) {
+            htmlContent += `
+                <div style="border-top: 1px solid #e2e8f0; margin-top: 0.5rem; padding-top: 0.5rem;">
+                    <div style="font-size: 0.8125rem; font-weight: 500; color: #dc2626; margin-bottom: 0.375rem;">⚠️ 检测到重复数据</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">`;
+            if (duplicateInfo.duplicateProducts > 0) {
+                htmlContent += `<div>• 重复产品: ${duplicateInfo.duplicateProducts} 个</div>`;
+            }
+            if (duplicateInfo.duplicateCustomers > 0) {
+                htmlContent += `<div>• 重复客户: ${duplicateInfo.duplicateCustomers} 个</div>`;
+            }
+            if (duplicateInfo.duplicateTemplates > 0) {
+                htmlContent += `<div>• 重复模板: ${duplicateInfo.duplicateTemplates} 个</div>`;
+            }
+            htmlContent += `</div>
+                <div style="font-size: 0.7rem; color: #f59e0b; margin-top: 0.375rem;">建议使用「修复云端重复数据」功能清理</div>
+                </div>`;
+        } else {
+            htmlContent += `
+                <div style="border-top: 1px solid #e2e8f0; margin-top: 0.5rem; padding-top: 0.5rem;">
+                    <div style="font-size: 0.8125rem; font-weight: 500; color: #16a34a;">✅ 未检测到重复数据</div>
+                </div>`;
+        }
+        
+        htmlContent += '</div>';
+        
+        showModal({
+            title: '☁️ 云端数据统计',
+            message: htmlContent,
+            icon: '📊',
+            type: 'info',
+            confirmText: '关闭',
+            showCancel: false,
+            allowHtml: true
+        });
+    })
+    .catch(function(err) {
+        console.error('查看云端数据失败:', err);
+        showToast('❌ 获取失败: ' + err.message, 'error');
+    });
+}
+
+// 检测云端数据重复项
+function detectCloudDuplicates(cloudData) {
+    var result = {
+        hasDuplicates: false,
+        duplicateProducts: 0,
+        duplicateCustomers: 0,
+        duplicateTemplates: 0
+    };
+    
+    // 检测产品重复
+    if (cloudData.products && cloudData.products.length > 0) {
+        var productIds = new Set();
+        cloudData.products.forEach(p => {
+            var idStr = String(p.id);
+            if (productIds.has(idStr)) {
+                result.duplicateProducts++;
+            }
+            productIds.add(idStr);
+        });
+    }
+    
+    // 检测客户重复
+    if (cloudData.customers && cloudData.customers.length > 0) {
+        var customerIds = new Set();
+        cloudData.customers.forEach(c => {
+            var idStr = String(c.id);
+            if (customerIds.has(idStr)) {
+                result.duplicateCustomers++;
+            }
+            customerIds.add(idStr);
+        });
+    }
+    
+    // 检测模板重复
+    if (cloudData.templates && cloudData.templates.length > 0) {
+        var templateIds = new Set();
+        cloudData.templates.forEach(t => {
+            var idStr = String(t.id);
+            if (templateIds.has(idStr)) {
+                result.duplicateTemplates++;
+            }
+            templateIds.add(idStr);
+        });
+    }
+    
+    result.hasDuplicates = result.duplicateProducts > 0 || 
+                          result.duplicateCustomers > 0 || 
+                          result.duplicateTemplates > 0;
+    
+    return result;
+}
+
+// 修复云端重复数据
+function fixCloudData() {
+    var token = appData.systemSettings.gistToken;
+    var gistId = appData.systemSettings.gistId;
+    
+    if (!token || !gistId) {
+        showToast('请先配置云同步', 'warning');
+        return;
+    }
+    
+    if (!confirm('⚠️ 确认修复云端重复数据？\n\n此操作将删除云端数据中的重复项，保留首次出现的数据。\n建议先导出数据备份！')) {
+        return;
+    }
+    
+    showToast('🔧 正在修复云端数据...', 'loading', 15000);
+    
+    gistApi('/gists/' + gistId)
+    .then(function(res) {
+        if (!res.ok) throw new Error('获取云端数据失败: HTTP ' + res.status);
+        return res.json();
+    })
+    .then(function(gist) {
+        var file = gist.files && gist.files['quote-data.json'];
+        if (!file || !file.content) {
+            showToast('云端数据为空，无需修复', 'info');
+            return;
+        }
+        
+        var data = JSON.parse(file.content);
+        var cloudData = data.data || {};
+        
+        // 去重前的数量
+        var beforeCounts = {
+            products: cloudData.products ? cloudData.products.length : 0,
+            customers: cloudData.customers ? cloudData.customers.length : 0,
+            templates: cloudData.templates ? cloudData.templates.length : 0
+        };
+        
+        // 去重处理
+        if (cloudData.products) {
+            var productIdSet = new Set();
+            cloudData.products = cloudData.products.filter(p => {
+                var idStr = String(p.id);
+                if (productIdSet.has(idStr)) return false;
+                productIdSet.add(idStr);
+                return true;
+            });
+        }
+        
+        if (cloudData.customers) {
+            var customerIdSet = new Set();
+            cloudData.customers = cloudData.customers.filter(c => {
+                var idStr = String(c.id);
+                if (customerIdSet.has(idStr)) return false;
+                customerIdSet.add(idStr);
+                return true;
+            });
+        }
+        
+        if (cloudData.templates) {
+            var templateIdSet = new Set();
+            cloudData.templates = cloudData.templates.filter(t => {
+                var idStr = String(t.id);
+                if (templateIdSet.has(idStr)) return false;
+                templateIdSet.add(idStr);
+                return true;
+            });
+        }
+        
+        // 更新时间戳
+        data.uploadTime = new Date().toISOString();
+        
+        // 去重后的数量
+        var afterCounts = {
+            products: cloudData.products ? cloudData.products.length : 0,
+            customers: cloudData.customers ? cloudData.customers.length : 0,
+            templates: cloudData.templates ? cloudData.templates.length : 0
+        };
+        
+        // 计算删除的重复项数量
+        var removedCounts = {
+            products: beforeCounts.products - afterCounts.products,
+            customers: beforeCounts.customers - afterCounts.customers,
+            templates: beforeCounts.templates - afterCounts.templates
+        };
+        
+        // 上传修复后的数据
+        return gistApi('/gists/' + gistId, {
+            method: 'PATCH',
+            body: JSON.stringify({
+                files: {
+                    'quote-data.json': { content: JSON.stringify(data, null, 2) }
+                }
+            })
+        })
+        .then(function(res) {
+            if (!res.ok) throw new Error('上传修复数据失败: HTTP ' + res.status);
+            return { removedCounts, afterCounts };
+        });
+    })
+    .then(function(result) {
+        if (result) {
+            var htmlContent = `
+                <div style="padding: 0.5rem;">
+                    <div style="font-size: 0.8125rem; font-weight: 500; color: #16a34a; margin-bottom: 0.5rem;">✅ 云端数据修复完成</div>
+                    
+                    <div style="margin-bottom: 0.5rem;">
+                        <div style="font-size: 0.75rem; font-weight: 500; color: #dc2626; margin-bottom: 0.25rem;">删除的重复项:</div>
+                        <div style="font-size: 0.75rem; color: #64748b; padding-left: 0.5rem;">`;
+            
+            if (result.removedCounts.products > 0) {
+                htmlContent += `<div>• 产品: ${result.removedCounts.products} 个</div>`;
+            }
+            if (result.removedCounts.customers > 0) {
+                htmlContent += `<div>• 客户: ${result.removedCounts.customers} 个</div>`;
+            }
+            if (result.removedCounts.templates > 0) {
+                htmlContent += `<div>• 模板: ${result.removedCounts.templates} 个</div>`;
+            }
+            if (result.removedCounts.products === 0 && result.removedCounts.customers === 0 && result.removedCounts.templates === 0) {
+                htmlContent += `<div>• 无重复数据需要删除</div>`;
+            }
+            
+            htmlContent += `</div>
+                    </div>
+                    
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 0.5rem;">
+                        <div style="font-size: 0.75rem; font-weight: 500; color: #1e40af; margin-bottom: 0.25rem;">修复后剩余:</div>
+                        <div style="font-size: 0.75rem; color: #64748b; padding-left: 0.5rem;">
+                            <div>• 产品: ${result.afterCounts.products} 个</div>
+                            <div>• 客户: ${result.afterCounts.customers} 个</div>
+                            <div>• 模板: ${result.afterCounts.templates} 个</div>
+                        </div>
+                    </div>
+                </div>`;
+            
+            showModal({
+                title: '🔧 修复结果',
+                message: htmlContent,
+                icon: '✅',
+                type: 'success',
+                confirmText: '关闭',
+                showCancel: false,
+                allowHtml: true
+            });
+            addSyncLog('success', '修复云端重复数据完成');
+        }
+    })
+    .catch(function(err) {
+        console.error('修复云端数据失败:', err);
+        showToast('❌ 修复失败: ' + err.message, 'error');
+    });
+}
+
+// 清空云端数据
+function clearCloudData() {
+    var token = appData.systemSettings.gistToken;
+    var gistId = appData.systemSettings.gistId;
+    
+    if (!token || !gistId) {
+        showToast('请先配置云同步', 'warning');
+        return;
+    }
+    
+    if (!confirm('⚠️ 危险操作！\n\n此操作将清空云端所有数据，且无法恢复！\n\n建议先导出数据备份！\n\n确定继续吗？')) {
+        return;
+    }
+    
+    // 必须验证管理员密码
+    var inputPassword = prompt('请输入管理员密码以确认清空云端数据：');
+    if (!inputPassword) {
+        showToast('操作已取消', 'info');
+        return;
+    }
+    
+    if (inputPassword !== adminPassword) {
+        showToast('❌ 密码错误，操作已取消', 'error');
+        return;
+    }
+    
+    showToast('🗑️ 正在清空云端数据...', 'loading', 10000);
+    
+    gistApi('/gists/' + gistId, {
+        method: 'PATCH',
+        body: JSON.stringify({
+            files: {
+                'quote-data.json': { content: JSON.stringify({ 
+                    version: '3.1',
+                    uploadTime: new Date().toISOString(),
+                    deviceId: getDeviceId(),
+                    data: {
+                        products: [],
+                        customers: [],
+                        templates: [],
+                        quoteHistory: []
+                    }
+                }, null, 2) }
+            }
+        })
+    })
+    .then(function(res) {
+        if (!res.ok) throw new Error('清空失败: HTTP ' + res.status);
+        showToast('✅ 云端数据已清空', 'success');
+        addSyncLog('success', '手动清空云端数据');
+    })
+    .catch(function(err) {
+        console.error('清空云端数据失败:', err);
+        showToast('❌ 清空失败: ' + err.message, 'error');
+    });
+}
+
+// ==================== 云端数据管理功能结束 ====================
 
 // 同步诊断工具
 function runSyncDiagnostic() {
@@ -33307,35 +33691,35 @@ function applyOfflineChanges() {
         switch (change.type) {
             case 'product':
                 if (change.action === 'add') {
-                    var existing = appData.products.find(p => p.id === change.data.id);
+                    var existing = appData.products.find(p => String(p.id) === String(change.data.id));
                     if (!existing) appData.products.push(change.data);
                 } else if (change.action === 'update') {
-                    var idx = appData.products.findIndex(p => p.id === change.data.id);
+                    var idx = appData.products.findIndex(p => String(p.id) === String(change.data.id));
                     if (idx >= 0) appData.products[idx] = change.data;
                 } else if (change.action === 'delete') {
-                    appData.products = appData.products.filter(p => p.id !== change.data.id);
+                    appData.products = appData.products.filter(p => String(p.id) !== String(change.data.id));
                 }
                 break;
             case 'customer':
                 if (change.action === 'add') {
-                    var existing = appData.customers.find(c => c.id === change.data.id);
+                    var existing = appData.customers.find(c => String(c.id) === String(change.data.id));
                     if (!existing) appData.customers.push(change.data);
                 } else if (change.action === 'update') {
-                    var idx = appData.customers.findIndex(c => c.id === change.data.id);
+                    var idx = appData.customers.findIndex(c => String(c.id) === String(change.data.id));
                     if (idx >= 0) appData.customers[idx] = change.data;
                 } else if (change.action === 'delete') {
-                    appData.customers = appData.customers.filter(c => c.id !== change.data.id);
+                    appData.customers = appData.customers.filter(c => String(c.id) !== String(change.data.id));
                 }
                 break;
             case 'template':
                 if (change.action === 'add') {
-                    var existing = appData.templates.find(t => t.id === change.data.id);
+                    var existing = appData.templates.find(t => String(t.id) === String(change.data.id));
                     if (!existing) appData.templates.push(change.data);
                 } else if (change.action === 'update') {
-                    var idx = appData.templates.findIndex(t => t.id === change.data.id);
+                    var idx = appData.templates.findIndex(t => String(t.id) === String(change.data.id));
                     if (idx >= 0) appData.templates[idx] = change.data;
                 } else if (change.action === 'delete') {
-                    appData.templates = appData.templates.filter(t => t.id !== change.data.id);
+                    appData.templates = appData.templates.filter(t => String(t.id) !== String(change.data.id));
                 }
                 break;
         }
