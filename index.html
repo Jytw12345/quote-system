@@ -907,7 +907,7 @@
             }
             
             /* 产品库搜索框手机端样式优化 */
-            .import-export .search-box-container { flex: 4 1 auto; min-width: 200px; max-width: none; }
+            .import-export .search-box-container { flex: 3 1 auto; min-width: 180px; max-width: none; }
             .import-export .action-buttons { flex-shrink: 0; display: flex !important; gap: 0.05rem !important; flex-wrap: nowrap !important; }
             .import-export .action-buttons .btn { padding: 0.2rem 0.12rem !important; font-size: 0.48rem !important; white-space: nowrap; line-height: 1.2; }
             .import-export .search-box-container { overflow: visible !important; }
@@ -6186,7 +6186,7 @@ function safeExecuteAsync(fn, defaultVal) {
             </div>
             <div class="import-export" style="display:flex;flex-wrap:nowrap;gap:0.5rem;align-items:center;">
                 <!-- 搜索区域 -->
-                <div style="flex:4;min-width:200px;max-width:none;position:relative;" class="search-box-container">
+                <div style="flex:3;min-width:140px;max-width:none;position:relative;" class="search-box-container">
                     <input type="text" id="productSearch" placeholder="🔍 搜索产品..." oninput="smartSearchProducts()" style="width:100%;padding:0.45rem 3rem 0.45rem 0.625rem;font-size:0.875rem;height:36px;">
                     <button class="btn btn-outline btn-xs clear-search-btn" onclick="clearSmartSearch()" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);height:26px !important;min-height:26px !important;max-height:26px !important;padding:0 8px !important;margin:0 !important;font-size:0.65rem !important;line-height:26px !important;box-sizing:border-box !important;border:1px solid #d1d5db !important;background:#f9fafb !important;min-width:36px !important;width:auto !important;color:#374151 !important;">清除</button>
                 </div>
