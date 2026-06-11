@@ -4359,6 +4359,32 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
             grid-template-columns: repeat(3, 80px) !important;
         }
     }
+    
+    /* 历史报价按钮响应式布局 */
+    @media (max-width: 768px) {
+        .history-actions {
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            gap: 0.1875rem !important;
+            justify-content: flex-start !important;
+        }
+        .history-actions .btn {
+            width: auto !important;
+            min-width: 80px !important;
+            flex: 0 1 auto !important;
+            white-space: nowrap !important;
+            text-align: center !important;
+            padding: 0.3125rem 0.5rem !important;
+            font-size: 0.75rem !important;
+        }
+        .history-actions .btn:nth-child(1) {
+            flex: 0 1 auto !important;
+            white-space: nowrap !important;
+        }
+        .history-actions .btn:nth-child(1)::after {
+            content: "" !important;
+        }
+    }
 </style>
 </head>
 <body>
@@ -6046,6 +6072,23 @@ function safeExecuteAsync(fn, defaultVal) {
                         <div class="quote-stat-row"><span>税费：</span><span id="quoteTax">¥0.00</span></div>
                         <div class="quote-stat-row total"><span>最终总计：</span><span id="quoteTotal">¥0.00</span></div>
                     </div>
+                    
+                    <!-- 编辑历史报价时显示状态选择 -->
+                    <div id="editingStatusPanel" style="display:none;background:#f8f9fa;border-radius:var(--radius);padding:0.75rem;margin-bottom:1rem;border:1px solid #e9ecef;">
+                        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+                            <span style="font-weight:600;color:#495057;">📋 报价状态：</span>
+                            <select id="editingStatusSelect" class="btn btn-sm" style="font-size:0.875rem;">
+                                <option value="pending">⏳ 待跟进</option>
+                                <option value="quoted">📤 已报价</option>
+                                <option value="ordered">✅ 已通过</option>
+                                <option value="cancelled">❌ 已拒绝</option>
+                                <option value="expired">⏰ 已过期</option>
+                            </select>
+                        </div>
+                        <div style="font-size:0.75rem;color:#6c757d;">
+                            💡 修改状态后，保存报价时会同时更新历史记录的状态
+                        </div>
+                    </div>
                     <div class="btn-group mobile-bottom-buttons" id="mobileBtnGrid" style="position:sticky;bottom:0;background:white;padding:0.5rem;margin:0;margin-top:0.5rem;gap:0.375rem;z-index:10;border-top:1px solid var(--gray-200);justify-content:flex-start;align-items:center;">
                         <button class="btn btn-primary" onclick="addEmptyQuoteItem()">➕ 添加项目</button>
                         <button class="btn btn-success" onclick="saveCurrentQuoteToHistory()">💾 保存报价</button>
@@ -6261,18 +6304,41 @@ function safeExecuteAsync(fn, defaultVal) {
                 </div>
                 <div id="aiAssistantContent">
                     <!-- AI功能标签页 -->
-                    <div style="display:flex;flex-wrap:wrap;gap:0.375rem;margin-bottom:0.75rem;">
-                        <button class="btn btn-sm btn-outline" onclick="switchAIFeature('quote')" id="aiBtnQuote" style="color:#92400e;">📝 智能报价</button>
-                        <button class="btn btn-sm btn-outline" onclick="switchAIFeature('doorHeader')" id="aiBtnDoorHeader" style="color:#92400e;">🚪 门头报价</button>
-                        <button class="btn btn-sm btn-outline" onclick="switchAIFeature('cultureWall')" id="aiBtnCultureWall" style="color:#92400e;">🎨 文化空间报价</button>
-                        <button class="btn btn-sm btn-outline" onclick="switchAIFeature('pricing')" id="aiBtnPricing" style="color:#92400e;">💰 定价建议</button>
-                        <button class="btn btn-sm btn-outline" onclick="switchAIFeature('desc')" id="aiBtnDesc" style="color:#92400e;">📝 描述生成</button>
-                        <button class="btn btn-sm btn-outline" onclick="switchAIFeature('script')" id="aiBtnScript" style="color:#92400e;">💬 话术生成</button>
-                        <button class="btn btn-sm btn-outline" onclick="switchAIFeature('profit')" id="aiBtnProfit" style="color:#92400e;">📊 利润分析</button>
-                        <button class="btn btn-sm btn-outline" onclick="switchAIFeature('similar')" id="aiBtnSimilar" style="color:#92400e;">🔗 相似产品</button>
-                        <button class="btn btn-sm btn-outline" onclick="switchAIFeature('competitor')" id="aiBtnCompetitor" style="color:#92400e;">🏢 竞品分析</button>
-                        <button class="btn btn-sm btn-outline" onclick="switchAIFeature('customer')" id="aiBtnCustomer" style="color:#92400e;">👤 客户画像</button>
+                    <div class="ai-buttons-container" style="display:flex;flex-wrap:wrap;gap:0.375rem;margin-bottom:0.75rem;">
+                        <button class="btn btn-sm btn-outline ai-assistant-btn" onclick="switchAIFeature('quote')" id="aiBtnQuote" style="color:#92400e;">📝 智能报价</button>
+                        <button class="btn btn-sm btn-outline ai-assistant-btn" onclick="switchAIFeature('doorHeader')" id="aiBtnDoorHeader" style="color:#92400e;">🚪 门头报价</button>
+                        <button class="btn btn-sm btn-outline ai-assistant-btn" onclick="switchAIFeature('cultureWall')" id="aiBtnCultureWall" style="color:#92400e;">🎨 文化空间报价</button>
+                        <button class="btn btn-sm btn-outline ai-assistant-btn" onclick="switchAIFeature('pricing')" id="aiBtnPricing" style="color:#92400e;">💰 定价建议</button>
+                        <button class="btn btn-sm btn-outline ai-assistant-btn" onclick="switchAIFeature('desc')" id="aiBtnDesc" style="color:#92400e;">📝 描述生成</button>
+                        <button class="btn btn-sm btn-outline ai-assistant-btn" onclick="switchAIFeature('profit')" id="aiBtnProfit" style="color:#92400e;">📊 利润分析</button>
                     </div>
+                    
+                    <!-- 响应式布局样式 -->
+                    <style>
+                        @media (max-width: 768px) {
+                            .ai-buttons-container {
+                                display: grid !important;
+                                grid-template-columns: repeat(3, 1fr) !important;
+                                gap: 0.25rem !important;
+                            }
+                            .ai-assistant-btn {
+                                font-size: 0.75rem !important;
+                                padding: 0.375rem 0.25rem !important;
+                                white-space: nowrap !important;
+                                overflow: hidden !important;
+                                text-overflow: ellipsis !important;
+                            }
+                        }
+                        @media (max-width: 480px) {
+                            .ai-buttons-container {
+                                grid-template-columns: repeat(3, 1fr) !important;
+                            }
+                            .ai-assistant-btn {
+                                font-size: 0.6875rem !important;
+                                padding: 0.25rem 0.125rem !important;
+                            }
+                        }
+                    </style>
                     
                     <!-- 智能报价 -->
                     <div id="aiPanelQuote" class="ai-panel">
@@ -7498,9 +7564,11 @@ function safeExecuteAsync(fn, defaultVal) {
                 <input type="text" id="historySearch" placeholder="搜索客户名称或报价标题..." oninput="renderHistory()" style="flex:1;min-width:180px;">
                 <select id="historyStatusFilter" onchange="renderHistory()" style="padding:0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.875rem;">
                     <option value="">全部状态</option>
-                    <option value="pending">待处理</option>
-                    <option value="approved">已通过</option>
-                    <option value="rejected">已拒绝</option>
+                    <option value="pending">⏳ 待跟进</option>
+                    <option value="quoted">📤 已报价</option>
+                    <option value="ordered">✅ 已通过</option>
+                    <option value="cancelled">❌ 已拒绝</option>
+                    <option value="expired">⏰ 已过期</option>
                 </select>
             </div>
             <div id="historyList"></div>
@@ -8795,6 +8863,14 @@ function safeExecuteAsync(fn, defaultVal) {
         <div id="versionHistoryContent"></div>
     </div>
     <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('versionHistoryModal')">关闭</button></div>
+</div></div>
+
+<!-- 版本详情模态框 -->
+<div id="versionDetailModal" class="modal"><div class="modal-content" style="max-width:800px;">
+    <div class="modal-header"><h3 class="modal-title">📋 版本详情</h3><button class="modal-close" onclick="closeModal('versionDetailModal')">&times;</button></div>
+    <div class="modal-body">
+        <div id="versionDetailModalContent"></div>
+    </div>
 </div></div>
 
 <!-- 版本对比模态框 -->
@@ -11406,87 +11482,9 @@ function initDefaultData() {
     appData.customers = [];
     appData.quoteHistory = [];
     
-    // 添加文化墙专用的默认模板
-    if (!appData.templates || appData.templates.length === 0) {
-        appData.templates = [
-            {
-                id: Date.now() + 1,
-                name: '党建文化墙模板',
-                category: '文化墙-党建',
-                description: '适用于政府机关、事业单位、企业党建文化墙制作',
-                caseInfo: '经典案例：某街道办事处党建文化墙，总面积120平方，获得客户一致好评',
-                favorite: true,
-                items: [
-                    { name: '主背景墙', spec: '8×3米，PVC+UV打印', note: '核心展示区', cost: 6000, qty: 1, price: 10000 },
-                    { name: '党员风采展示', spec: '4×2米，亚克力卡槽', note: '展示党员照片和事迹', cost: 2000, qty: 1, price: 3500 },
-                    { name: '入党誓词', spec: '2×1.5米，立体字', note: '不锈钢立体字', cost: 1500, qty: 1, price: 2600 },
-                    { name: '党建标语', spec: '0.6×2米，UV打印', note: '多组标语牌', cost: 800, qty: 4, price: 1400 },
-                    { name: 'LED氛围灯', spec: '50米，暖白光', note: '夜间照明效果', cost: 1000, qty: 1, price: 1800 },
-                    { name: '设计费', spec: '全套设计方案', note: '3D效果图+平面设计', cost: 2000, qty: 1, price: 3500 },
-                    { name: '安装费', spec: '专业安装团队', note: '含辅材', cost: 2000, qty: 1, price: 3500 }
-                ],
-                photos: [],
-                createdAt: new Date().toISOString()
-            },
-            {
-                id: Date.now() + 2,
-                name: '企业文化墙模板',
-                category: '文化墙-企业',
-                description: '适用于企业前台、走廊、会议室文化墙展示',
-                caseInfo: '经典案例：某科技公司企业文化墙，总面积80平方，展现企业形象',
-                favorite: true,
-                items: [
-                    { name: '企业LOGO墙', spec: '5×2.5米，立体字', note: '企业形象核心展示', cost: 4000, qty: 1, price: 7000 },
-                    { name: '企业发展历程', spec: '6×2米，PVC+UV打印', note: '展示企业成长史', cost: 3000, qty: 1, price: 5200 },
-                    { name: '团队风采展示', spec: '4×2米，亚克力卡槽', note: '员工照片墙', cost: 1800, qty: 1, price: 3200 },
-                    { name: '企业价值观', spec: '1.5×1米×4块，立体字', note: '核心价值观展示', cost: 2000, qty: 1, price: 3500 },
-                    { name: '荣誉展示区', spec: '3×2米，亚克力展示架', note: '摆放奖杯证书', cost: 1200, qty: 1, price: 2200 },
-                    { name: '设计费', spec: '全套设计方案', note: '3D效果图+平面设计', cost: 1800, qty: 1, price: 3200 },
-                    { name: '安装费', spec: '专业安装团队', note: '含辅材', cost: 1500, qty: 1, price: 2700 }
-                ],
-                photos: [],
-                createdAt: new Date().toISOString()
-            },
-            {
-                id: Date.now() + 3,
-                name: '校园文化墙模板',
-                category: '文化墙-校园',
-                description: '适用于学校走廊、楼梯、图书馆、教学楼等文化建设',
-                caseInfo: '经典案例：某小学文化墙建设，总面积200平方，包含走廊、楼梯、图书馆等多个区域',
-                favorite: true,
-                items: [
-                    { name: '主入口主题墙', spec: '10×4米，PVC+UV打印', note: '学校形象展示', cost: 8000, qty: 1, price: 14000 },
-                    { name: '励志名言展示', spec: '1.2×2米/块，立体字', note: '每层楼2-3块', cost: 1200, qty: 6, price: 2100 },
-                    { name: '学生作品展示区', spec: '6×2米，磁性展示板', note: '定期更新学生作品', cost: 2500, qty: 1, price: 4400 },
-                    { name: '校史文化长廊', spec: '15×2.5米，UV打印', note: '学校历史展示', cost: 5000, qty: 1, price: 8800 },
-                    { name: '功能室标识', spec: '0.4×0.6米/块，亚克力', note: '各教室、办公室标识', cost: 80, qty: 30, price: 150 },
-                    { name: '设计费', spec: '全套设计方案', note: '3D效果图+平面设计', cost: 3000, qty: 1, price: 5300 },
-                    { name: '安装费', spec: '专业安装团队', note: '含辅材', cost: 3000, qty: 1, price: 5300 }
-                ],
-                photos: [],
-                createdAt: new Date().toISOString()
-            },
-            {
-                id: Date.now() + 4,
-                name: '社区文化墙模板',
-                category: '文化墙-社区',
-                description: '适用于街道社区、居委会、小区等文化建设',
-                caseInfo: '经典案例：某街道社区文化建设，包含户外宣传栏、室内文化墙等',
-                favorite: true,
-                items: [
-                    { name: '户外宣传栏', spec: '6×3米，铝合金框架', note: '防雨防晒，定期更新内容', cost: 4500, qty: 2, price: 8000 },
-                    { name: '社区公示栏', spec: '4×1.5米，亚克力', note: '通知公告展示', cost: 2000, qty: 1, price: 3600 },
-                    { name: '邻里风采展示', spec: '5×2米，磁性展示板', note: '展示社区活动、好人好事', cost: 2000, qty: 1, price: 3600 },
-                    { name: '传统文化展示', spec: '4×2米，PVC+UV打印', note: '弘扬中华优秀传统文化', cost: 2500, qty: 1, price: 4500 },
-                    { name: '社区服务指南', spec: '2×1.5米，亚克力', note: '便民服务信息', cost: 800, qty: 1, price: 1500 },
-                    { name: 'LED电子屏', spec: '3×1米，户外P4', note: '动态信息展示', cost: 8000, qty: 1, price: 14500 },
-                    { name: '设计费', spec: '全套设计方案', note: '3D效果图+平面设计', cost: 2500, qty: 1, price: 4500 },
-                    { name: '安装费', spec: '专业安装团队', note: '含辅材', cost: 3000, qty: 1, price: 5500 }
-                ],
-                photos: [],
-                createdAt: new Date().toISOString()
-            }
-        ];
+    // 初始化空模板库，不添加默认模板
+    if (!appData.templates) {
+        appData.templates = [];
     }
 }
 function applyDefaults(){
@@ -12405,6 +12403,15 @@ function clearCurrentQuote(){
     if(appData.currentQuote && appData.currentQuote.items && appData.currentQuote.items.length > 0){
         saveToUndoStackImmediate('清空报价单', '清空报价单');
     }
+    
+    // 清理编辑历史报价的状态
+    if (appData.currentQuote) {
+        delete appData.currentQuote.editingHistoryId;
+        delete appData.currentQuote.editingHistoryStatus;
+    }
+    
+    // 隐藏状态编辑面板
+    hideEditingStatusPanel();
 
     if(!appData.currentQuote || !appData.currentQuote.items || !appData.currentQuote.items.length || confirm('确定要清空当前报价所有项目吗？')){
         // BUG修复：导入后清空不仅要清空items，还要清空表单
@@ -12496,10 +12503,71 @@ function saveCurrentQuoteToHistory() {
         }],
         version: 1
     };
-    appData.quoteHistory.unshift(historyItem);
-    if (appData.quoteHistory && appData.quoteHistory.length > 200) {
-        appData.quoteHistory = appData.quoteHistory.slice(0, 200);
+    // 检查是否正在编辑历史报价
+    if (appData.currentQuote && appData.currentQuote.editingHistoryId) {
+        // 更新现有的历史报价
+        const existingQuote = appData.quoteHistory.find(q => q.id === appData.currentQuote.editingHistoryId);
+        if (existingQuote) {
+            // 更新基本信息
+            existingQuote.clientName = clientName || '未命名客户';
+            existingQuote.title = title || '未命名报价';
+            existingQuote.quoteNumber = quoteNumber || '';
+            existingQuote.paymentMethod = getPaymentMethod();
+            existingQuote.items = JSON.parse(JSON.stringify(appData.currentQuote.items));
+            existingQuote.mainImages = JSON.parse(JSON.stringify(appData.currentQuote.mainImages || []));
+            existingQuote.showNotes = appData.currentQuote.showNotes !== false;
+            existingQuote.totalCost = tc;
+            existingQuote.totalBeforeDiscount = st;
+            existingQuote.finalTotal = total;
+            existingQuote.taxRate = tr;
+            existingQuote.discountRate = dr;
+            existingQuote.priceMode = pm;
+            existingQuote.updatedAt = new Date().toISOString();
+            
+            // 更新状态
+            const newStatus = document.getElementById('editingStatusSelect')?.value || existingQuote.status;
+            if (newStatus !== appData.currentQuote.editingHistoryStatus) {
+                existingQuote.status = newStatus;
+            }
+            
+            // 添加版本记录
+            const versionNote = `修改了报价内容${newStatus !== appData.currentQuote.editingHistoryStatus ? `和状态` : ''}`;
+            const newVersion = {
+                versionNumber: (existingQuote.version || 0) + 1,
+                createdAt: new Date().toISOString(),
+                changes: versionNote,
+                clientName: existingQuote.clientName,
+                title: existingQuote.title,
+                quoteNumber: existingQuote.quoteNumber,
+                paymentMethod: existingQuote.paymentMethod,
+                items: JSON.parse(JSON.stringify(existingQuote.items)),
+                mainImages: JSON.parse(JSON.stringify(existingQuote.mainImages || [])),
+                showNotes: existingQuote.showNotes,
+                totalCost: existingQuote.totalCost,
+                totalBeforeDiscount: existingQuote.totalBeforeDiscount,
+                finalTotal: existingQuote.finalTotal,
+                taxRate: existingQuote.taxRate,
+                discountRate: existingQuote.discountRate,
+                priceMode: existingQuote.priceMode
+            };
+            if (!existingQuote.versions) existingQuote.versions = [];
+            existingQuote.versions.push(newVersion);
+            existingQuote.version = newVersion.versionNumber;
+            
+            showToast('报价已更新到历史记录！', 'success');
+        }
+        
+        // 清理编辑状态
+        hideEditingStatusPanel();
+    } else {
+        // 创建新的历史报价
+        appData.quoteHistory.unshift(historyItem);
+        if (appData.quoteHistory && appData.quoteHistory.length > 200) {
+            appData.quoteHistory = appData.quoteHistory.slice(0, 200);
+        }
+        showToast('报价已保存到历史记录！', 'success');
     }
+    
     if(clientName && clientName !== '未命名客户'){
         const customer = appData.customers && appData.customers.find(c => c.name === clientName);
         if(customer){
@@ -12512,7 +12580,6 @@ function saveCurrentQuoteToHistory() {
     renderHistory();
     renderCustomers();
     clearDraftQuote();
-    showToast('报价已保存到历史记录！', 'success');
 }
 function toggleColumnVisibility(column, checked){
     const settings = JSON.parse(localStorage.getItem('quoteColumnHidden') || '{}');
@@ -29066,7 +29133,7 @@ function renderCustomerQuoteHistory(customer) {
     
     sortedQuotes.forEach((quote, index) => {
         const date = new Date(quote.createdAt).toLocaleDateString();
-        const statusLabels = { pending: '待跟进', quoted: '已报价', ordered: '已下单', cancelled: '已取消', expired: '已过期' };
+        const statusLabels = { pending: '⏳ 待跟进', quoted: '📤 已报价', ordered: '✅ 已通过', cancelled: '❌ 已拒绝', expired: '⏰ 已过期' };
         const statusColors = { pending: 'var(--gray-500)', quoted: 'var(--blue-500)', ordered: 'var(--green-500)', cancelled: 'var(--red-500)', expired: 'var(--orange-500)' };
         
         html += `
@@ -29078,7 +29145,15 @@ function renderCustomerQuoteHistory(customer) {
                     </div>
                 </div>
                 <div style="display:flex;gap:0.5rem;align-items:center;">
-                    <span class="badge" style="background:${statusColors[quote.status] || 'var(--gray-500)'};font-size:0.7rem;">${statusLabels[quote.status] || '待跟进'}</span>
+                    <div style="display:flex;gap:0.25rem;align-items:center;">
+                        <select class="btn btn-xs" onchange="updateQuoteStatus(${quote.id}, this.value)" style="font-size:0.7rem;padding:0.25rem 0.375rem;">
+                            <option value="pending" ${quote.status === 'pending' ? 'selected' : ''}>待跟进</option>
+                            <option value="quoted" ${quote.status === 'quoted' ? 'selected' : ''}>已报价</option>
+                            <option value="ordered" ${quote.status === 'ordered' ? 'selected' : ''}>已通过</option>
+                            <option value="cancelled" ${quote.status === 'cancelled' ? 'selected' : ''}>已拒绝</option>
+                            <option value="expired" ${quote.status === 'expired' ? 'selected' : ''}>已过期</option>
+                        </select>
+                    </div>
                     <button class="btn btn-outline btn-xs" onclick="loadHistoryQuote(${quote.id})">📝 编辑</button>
                 </div>
             </div>
@@ -29412,7 +29487,7 @@ function renderHistory() {
         const date = new Date(h.createdAt).toLocaleString();
         const expiryInfo = getExpiryInfo(h.expiryDate);
         const versionCount = h.versions ? h.versions.length : 1;
-        const statusLabels = { pending: '待跟进', quoted: '已报价', ordered: '已下单', cancelled: '已取消', expired: '已过期' };
+        const statusLabels = { pending: '⏳ 待跟进', quoted: '📤 已报价', ordered: '✅ 已通过', cancelled: '❌ 已拒绝', expired: '⏰ 已过期' };
         const statusColors = { pending: 'var(--gray-500)', quoted: 'var(--blue-500)', ordered: 'var(--green-500)', cancelled: 'var(--red-500)', expired: 'var(--orange-500)' };
         
         div.innerHTML = `
@@ -29426,12 +29501,12 @@ function renderHistory() {
                         <span style="color:var(--gray-400);">📦 v${h.version || versionCount}</span>
                     </div>
                 </div>
-                <div class="btn-group history-actions">
-                    <button class="btn btn-primary btn-sm" onclick="loadHistoryQuote(${h.id})">📝 编辑</button>
-                    <button class="btn btn-outline btn-sm" onclick="cloneHistoryQuote(${h.id})">📋 克隆</button>
-                    <button class="btn btn-outline btn-sm" onclick="viewQuoteVersions(${h.id})">📜 版本</button>
-                    ${expiryInfo.canRenew ? `<button class="btn btn-warning btn-sm" onclick="renewQuoteExpiry(${h.id})">🔄 续期</button>` : ''}
-                    <button class="btn btn-danger btn-sm" onclick="deleteHistoryQuote(${h.id})">🗑️ 删除</button>
+                <div class="btn-group history-actions" style="display:flex;flex-wrap:wrap;gap:0.25rem;">
+                    <button class="btn btn-primary btn-sm" onclick="loadHistoryQuote(${h.id})" style="min-width:120px;font-size:0.75rem;">✏️ 编辑</button>
+                    <button class="btn btn-outline btn-sm" onclick="cloneHistoryQuote(${h.id})" style="min-width:100px;font-size:0.75rem;">📋 副本</button>
+                    <button class="btn btn-outline btn-sm" onclick="viewQuoteVersions(${h.id})" style="min-width:100px;font-size:0.75rem;">📜 版本</button>
+                    ${expiryInfo.canRenew ? `<button class="btn btn-warning btn-sm" onclick="renewQuoteExpiry(${h.id})" style="min-width:80px;font-size:0.75rem;">🔄 续期</button>` : ''}
+                    <button class="btn btn-danger btn-sm" onclick="deleteHistoryQuote(${h.id})" style="min-width:60px;padding:0.25rem 0.25rem;font-size:0.75rem;">🗑️ 删除</button>
                 </div>
             </div>
             <div class="history-meta">
@@ -29693,14 +29768,108 @@ function viewVersionDetails(quoteId, versionNumber) {
     const version = (quote.versions || []).find(v => v.versionNumber === versionNumber);
     if (!version) return;
     
-    closeModal('versionHistoryModal');
+    // 创建版本详情弹窗内容
+    let html = `
+        <div style="max-height:600px;overflow-y:auto;">
+            <div style="margin-bottom:1.5rem;">
+                <h3 style="margin-bottom:0.5rem;">版本 ${versionNumber} 详情</h3>
+                <p style="font-size:0.875rem;color:var(--gray-500);">
+                    创建时间：${new Date(version.createdAt).toLocaleString()}<br/>
+                    变更说明：${version.changes || '无'}
+                </p>
+            </div>
+            
+            <div style="margin-bottom:1rem;">
+                <h4 style="margin-bottom:0.5rem;">基本信息</h4>
+                <div style="font-size:0.875rem;">
+                    <div><strong>客户名称：</strong>${version.clientName || quote.clientName || '未命名客户'}</div>
+                    <div><strong>报价标题：</strong>${version.title || quote.title || '未命名报价'}</div>
+                    <div><strong>报价编号：</strong>${version.quoteNumber || quote.quoteNumber || '无'}</div>
+                    <div><strong>付款方式：</strong>${version.paymentMethod || quote.paymentMethod || '未选择'}</div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom:1rem;">
+                <h4 style="margin-bottom:0.5rem;">价格信息</h4>
+                <div style="font-size:0.875rem;">
+                    <div><strong>折扣率：</strong>${version.discountRate || quote.discountRate || 100}%</div>
+                    <div><strong>税率：</strong>${version.taxRate || quote.taxRate || 0}%</div>
+                    <div><strong>价格模式：</strong>${version.priceMode === 'ex' ? '不含税' : '含税'}</div>
+                    <div><strong>总成本：</strong>¥${version.totalCost ? version.totalCost.toFixed(2) : '0.00'}</div>
+                    <div><strong>折扣前总计：</strong>¥${version.totalBeforeDiscount ? version.totalBeforeDiscount.toFixed(2) : '0.00'}</div>
+                    <div><strong>最终总计：</strong>¥${version.finalTotal ? version.finalTotal.toFixed(2) : '0.00'}</div>
+                </div>
+            </div>
+            
+            <div>
+                <h4 style="margin-bottom:0.5rem;">报价项目</h4>
+                <div style="font-size:0.875rem;">
+    `;
+    
+    const items = version.items || [];
+    if (items.length === 0) {
+        html += '<div style="text-align:center;padding:1rem;color:var(--gray-500);">暂无报价项目</div>';
+    } else {
+        html += '<div style="border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;">';
+        html += '<div style="display:grid;grid-template-columns:3fr 1fr 1fr 1fr;background:var(--gray-50);padding:0.5rem;font-weight:600;font-size:0.75rem;">';
+        html += '<div>项目名称</div><div>数量</div><div>单价</div><div>小计</div>';
+        html += '</div>';
+        
+        items.forEach(item => {
+            const subtotal = item.qty * item.price;
+            html += `<div style="display:grid;grid-template-columns:3fr 1fr 1fr 1fr;padding:0.5rem;border-top:1px solid var(--gray-200);font-size:0.75rem;">`;
+            html += `<div>${item.name || '未命名项目'}</div>`;
+            html += `<div style="text-align:right;">${item.qty}</div>`;
+            html += `<div style="text-align:right;">¥${item.price.toFixed(2)}</div>`;
+            html += `<div style="text-align:right;font-weight:600;">¥${subtotal.toFixed(2)}</div>`;
+            html += `</div>`;
+        });
+        
+        html += '</div>';
+    }
+    
+    html += `
+                </div>
+            </div>
+            
+            <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1.5rem;">
+                <button class="btn btn-outline btn-sm" onclick="closeModal('versionDetailModal')">关闭</button>
+                <button class="btn btn-primary btn-sm" onclick="loadVersionToEditor(${quoteId}, ${versionNumber})">加载到编辑器</button>
+            </div>
+        </div>
+    `;
+    
+    // 显示版本详情弹窗
+    const modalContent = document.getElementById('versionDetailModalContent');
+    if (modalContent) {
+        modalContent.innerHTML = html;
+        openModal('versionDetailModal');
+    }
+}
+
+// 加载版本到编辑器
+function loadVersionToEditor(quoteId, versionNumber) {
+    const quote = appData.quoteHistory.find(h => h.id === quoteId);
+    if (!quote) return;
+    
+    const version = (quote.versions || []).find(v => v.versionNumber === versionNumber);
+    if (!version) return;
+    
+    closeModal('versionDetailModal');
+    
+    // 清除编辑状态标记
+    if (appData.currentQuote) {
+        delete appData.currentQuote.editingHistoryId;
+        delete appData.currentQuote.editingHistoryStatus;
+    }
     
     appData.currentQuote.items = JSON.parse(JSON.stringify(version.items || []));
     appData.currentQuote.mainImages = version.mainImages || [];
     appData.currentQuote.showNotes = version.showNotes !== undefined ? version.showNotes : true;
     document.getElementById('quoteClientName').value = version.clientName || quote.clientName;
-    document.getElementById('quoteTitle').value = version.title || quote.title;
-    document.getElementById('quoteNumber').value = version.quoteNumber || quote.quoteNumber || '';
+    document.getElementById('quoteTitle').value = (version.title || quote.title || '未命名报价') + ' (版本副本)';
+    document.getElementById('quoteNumber').value = '';
+    generateQuoteNumber();
     setPaymentMethod(version.paymentMethod || quote.paymentMethod || '');
     document.getElementById('discountRate').value = version.discountRate || quote.discountRate || 100;
     document.getElementById('taxRate').value = version.taxRate || quote.taxRate || 0;
@@ -29715,12 +29884,66 @@ function viewVersionDetails(quoteId, versionNumber) {
     
     showToast(`已加载版本 ${versionNumber} 的数据`, 'info');
 }
+
+function showEditingStatusPanel(currentStatus) {
+    const panel = document.getElementById('editingStatusPanel');
+    const select = document.getElementById('editingStatusSelect');
+    if (!panel || !select) return;
+    
+    select.value = currentStatus || 'pending';
+    panel.style.display = 'block';
+}
+
+function hideEditingStatusPanel() {
+    const panel = document.getElementById('editingStatusPanel');
+    if (!panel) return;
+    
+    panel.style.display = 'none';
+    if (appData.currentQuote) {
+        delete appData.currentQuote.editingHistoryId;
+        delete appData.currentQuote.editingHistoryStatus;
+    }
+}
+
+function updateQuoteStatus(quoteId, newStatus) {
+    const quote = appData.quoteHistory.find(q => q.id === quoteId);
+    if (!quote) return;
+    
+    const oldStatus = quote.status;
+    quote.status = newStatus;
+    quote.updatedAt = new Date().toISOString();
+    
+    // 添加版本记录
+    const statusLabels = { pending: '⏳ 待跟进', quoted: '📤 已报价', ordered: '✅ 已通过', cancelled: '❌ 已拒绝', expired: '⏰ 已过期' };
+    const versionNote = `状态从「${statusLabels[oldStatus]}」改为「${statusLabels[newStatus]}」`;
+    
+    if (!quote.versions) quote.versions = [];
+    const newVersion = {
+        versionNumber: (quote.version || 0) + 1,
+        createdAt: new Date().toISOString(),
+        changes: versionNote,
+        ...JSON.parse(JSON.stringify(quote))
+    };
+    quote.versions.push(newVersion);
+    quote.version = newVersion.versionNumber;
+    
+    saveDataImmediately();
+    renderHistory();
+    showToast(`状态已更新为：${statusLabels[newStatus]}`, 'success');
+}
+
 function loadHistoryQuote(hid) {
     const h = appData.quoteHistory.find(x => x.id === hid);
     if (!h) return;
+    
+    // 编辑前添加确认提示
+    if (!confirm("⚠️ 编辑后将覆盖原历史记录，是否继续？\n\n若要保留原记录，请使用'新建副本'功能。")) return;
+    
     appData.currentQuote.items = JSON.parse(JSON.stringify(h.items));
     appData.currentQuote.mainImages = h.mainImages || [];
     appData.currentQuote.showNotes = h.showNotes !== undefined ? h.showNotes : true;
+    appData.currentQuote.editingHistoryId = hid; // 记录正在编辑的历史报价ID
+    appData.currentQuote.editingHistoryStatus = h.status; // 记录原始状态
     document.getElementById('quoteClientName').value = h.clientName;
     document.getElementById('quoteTitle').value = h.title;
     document.getElementById('quoteNumber').value = h.quoteNumber || '';
@@ -29734,15 +29957,29 @@ function loadHistoryQuote(hid) {
     updateMainImagesPreview();
     calculateTotals();
     switchTab('builder');
+    
+    // 显示状态编辑选项
+    showEditingStatusPanel(h.status);
+    showToast('进入编辑模式，保存后将覆盖原历史记录', 'info');
 }
 function cloneHistoryQuote(hid) {
     const h = appData.quoteHistory.find(x => x.id === hid);
     if (!h) return;
+    
+    // 清除编辑状态标记
+    if (appData.currentQuote) {
+        delete appData.currentQuote.editingHistoryId;
+        delete appData.currentQuote.editingHistoryStatus;
+    }
+    
     appData.currentQuote.items = h.items.map(item => {
         return {...item, id: generateUniqueId()};
     });
+    appData.currentQuote.mainImages = h.mainImages || [];
+    appData.currentQuote.showNotes = h.showNotes !== undefined ? h.showNotes : true;
+    
     document.getElementById('quoteClientName').value = h.clientName;
-    document.getElementById('quoteTitle').value = (h.title || '') + ' 副本';
+    document.getElementById('quoteTitle').value = (h.title || '未命名报价') + ' (副本)';
     document.getElementById('quoteNumber').value = '';
     generateQuoteNumber();
     setPaymentMethod(h.paymentMethod || '');
@@ -29752,9 +29989,14 @@ function cloneHistoryQuote(hid) {
     const defaultPriceMode = appData.systemSettings.defaultPriceMode || 'in';
     const pmRadio = document.querySelector(`input[name="priceMode"][value="${defaultPriceMode}"]`);
     if (pmRadio) pmRadio.checked = true;
+    
     renderQuoteItems();
     calculateTotals();
     switchTab('builder');
+    
+    // 隐藏状态编辑面板
+    hideEditingStatusPanel();
+    showToast('已创建报价副本，可以修改后保存为新报价', 'success');
 }
 function deleteHistoryQuote(hid) {
     if (confirm('确定删除这条历史记录吗？')) {
@@ -32367,30 +32609,62 @@ function gistUpload() {
         return;
     }
     
-    // 保护机制：如果本地数据为空且云端已有数据，先提示下载
+    // 检查本地数据是否为空
     var hasLocalData = appData.products.length > 0 || 
                        appData.customers.length > 0 || 
                        appData.templates.length > 0 || 
                        appData.categories.length > 0;
     
-    var hasCloudData = appData.systemSettings.gistId && appData.systemSettings.lastSyncTime;
+    // 检查云端数据状态
+    var token = appData.systemSettings.gistToken;
+    var gistId = appData.systemSettings.gistId;
     
-    if (!hasLocalData && hasCloudData) {
-        showModal({
-            title: '⚠️ 数据保护提醒',
-            message: '<p>检测到您的本地数据为空，但云端已有数据。</p><p>如果继续上传，云端的所有数据将被清空！</p><p>建议先点击「下载数据」获取团队数据，确认后再进行上传。</p>',
-            type: 'confirm',
-            confirmText: '我知道了，先下载',
-            cancelText: '仍然上传（清空云端）'
-        }).then(function(confirmed) {
-            if (confirmed) {
-                gistFetch();
+    if (!hasLocalData && gistId && token) {
+        // 先检查云端数据是否真的为空
+        gistApi('/gists/' + gistId)
+        .then(function(res) {
+            if (!res.ok) throw new Error('检查云端数据失败');
+            return res.json();
+        })
+        .then(function(gist) {
+            var cloudHasData = false;
+            if (gist.files['quote-data.json']) {
+                try {
+                    var data = JSON.parse(gist.files['quote-data.json'].content);
+                    cloudHasData = data.data && (data.data.products.length > 0 || 
+                                               data.data.customers.length > 0 || 
+                                               data.data.templates.length > 0);
+                } catch (e) {
+                    cloudHasData = false;
+                }
+            }
+            
+            if (cloudHasData) {
+                // 云端有数据，本地为空，提示下载
+                showModal({
+                    title: '⚠️ 数据保护提醒',
+                    message: '<p>检测到您的本地数据为空，但云端已有数据。</p><p>如果继续上传，云端的所有数据将被清空！</p><p>建议先点击「下载数据」获取团队数据，确认后再进行上传。</p>',
+                    type: 'confirm',
+                    confirmText: '我知道了，先下载',
+                    cancelText: '仍然上传（清空云端）'
+                }).then(function(confirmed) {
+                    if (confirmed) {
+                        gistFetch();
+                    } else {
+                        proceedWithUpload();
+                    }
+                });
             } else {
-                // 用户确认要清空上传
+                // 云端也为空，直接上传
                 proceedWithUpload();
             }
+        })
+        .catch(function() {
+            // 检查失败，直接上传
+            proceedWithUpload();
         });
-        return;
+    } else {
+        proceedWithUpload();
     }
     
     proceedWithUpload();
@@ -32746,27 +33020,57 @@ function gistPullProducts() {
         return res.json();
     })
     .then(function(gist) {
-        var file = gist.files && gist.files['products-price.json'];
-        if (!file || !file.content) throw new Error('云端无产品价格文件');
-        var data = JSON.parse(file.content);
-        if (!data.products) throw new Error('数据格式不正确');
+        // 优先从quote-data.json获取完整产品数据
+        var productData = null;
+        if (gist.files['quote-data.json']) {
+            var syncData = JSON.parse(gist.files['quote-data.json'].content);
+            if (syncData && syncData.data && syncData.data.products) {
+                productData = syncData.data.products;
+            }
+        } 
+        // 如果没有完整数据，再尝试从products-price.json获取
+        else if (gist.files['products-price.json']) {
+            var priceFile = JSON.parse(gist.files['products-price.json'].content);
+            if (priceFile && priceFile.products) {
+                productData = priceFile.products;
+            }
+        }
+        
+        if (!productData) throw new Error('云端无产品数据');
+        
         var updated = 0, added = 0;
-        data.products.forEach(function(sp) {
+        productData.forEach(function(sp) {
             var idx = appData.products.findIndex(function(p) { return p.id === sp.id; });
             if (idx >= 0) {
                 var needUpdate = false;
+                // 比较更多字段
                 if (appData.products[idx].cost !== sp.cost) { appData.products[idx].cost = sp.cost; needUpdate = true; }
                 if (appData.products[idx].price !== sp.price) { appData.products[idx].price = sp.price; needUpdate = true; }
                 if (sp.name && appData.products[idx].name !== sp.name) { appData.products[idx].name = sp.name; needUpdate = true; }
+                if (sp.category1 && appData.products[idx].category1 !== sp.category1) { appData.products[idx].category1 = sp.category1; needUpdate = true; }
+                if (sp.category2 && appData.products[idx].category2 !== sp.category2) { appData.products[idx].category2 = sp.category2; needUpdate = true; }
+                if (sp.unit && appData.products[idx].unit !== sp.unit) { appData.products[idx].unit = sp.unit; needUpdate = true; }
+                if (sp.description && appData.products[idx].description !== sp.description) { appData.products[idx].description = sp.description; needUpdate = true; }
+                // 根据时间戳判断是否需要更新
+                if (sp.updatedAt && (!appData.products[idx].updatedAt || new Date(sp.updatedAt) > new Date(appData.products[idx].updatedAt))) {
+                    needUpdate = true;
+                }
                 if (needUpdate) {
-                    appData.products[idx].updatedAt = new Date().toISOString();
+                    appData.products[idx].updatedAt = sp.updatedAt || new Date().toISOString();
                     updated++;
                 }
             } else {
+                // 新增产品
                 appData.products.push({
-                    id: sp.id, name: sp.name, category1: sp.category1 || '', category2: sp.category2 || '',
-                    cost: sp.cost, price: sp.price, unit: sp.unit || '', description: sp.description || '',
-                    updatedAt: new Date().toISOString()
+                    id: sp.id, 
+                    name: sp.name || '未命名产品', 
+                    category1: sp.category1 || '', 
+                    category2: sp.category2 || '',
+                    cost: sp.cost || 0, 
+                    price: sp.price || 0, 
+                    unit: sp.unit || '', 
+                    description: sp.description || '',
+                    updatedAt: sp.updatedAt || new Date().toISOString()
                 });
                 added++;
             }
@@ -33817,28 +34121,40 @@ function clearCloudData() {
     
     showToast('🗑️ 正在清空云端数据...', 'loading', 10000);
     
+    // 清空所有相关文件
+    var filesToClear = {
+        'quote-data.json': { content: JSON.stringify({ 
+            version: '3.4',
+            uploadTime: new Date().toISOString(),
+            deviceId: getDeviceId(),
+            data: {
+                products: [],
+                customers: [],
+                templates: [],
+                quoteHistory: []
+            }
+        }, null, 2) },
+        'products-price.json': { content: JSON.stringify({
+            updateTime: new Date().toISOString(),
+            deviceId: getDeviceId(),
+            products: []
+        }, null, 2) },
+        'version-history.json': { content: JSON.stringify([], null, 2) }
+    };
+    
     gistApi('/gists/' + gistId, {
         method: 'PATCH',
-        body: JSON.stringify({
-            files: {
-                'quote-data.json': { content: JSON.stringify({ 
-                    version: '3.4',
-                    uploadTime: new Date().toISOString(),
-                    deviceId: getDeviceId(),
-                    data: {
-                        products: [],
-                        customers: [],
-                        templates: [],
-                        quoteHistory: []
-                    }
-                }, null, 2) }
-            }
-        })
+        body: JSON.stringify({ files: filesToClear })
     })
     .then(function(res) {
         if (!res.ok) throw new Error('清空失败: HTTP ' + res.status);
         showToast('✅ 云端数据已清空', 'success');
         addSyncLog('success', '手动清空云端数据');
+        
+        // 重置本地同步状态
+        appData.systemSettings.lastSyncTime = null;
+        appData.systemSettings.lastIncrementalSyncTime = null;
+        saveDataImmediately();
     })
     .catch(function(err) {
         console.error('清空云端数据失败:', err);
@@ -35299,24 +35615,68 @@ function mergeSyncData(serverData) {
         }
     });
     
-    // 合并模板
+    // 合并模板 - 增强去重逻辑
     var localTemplates = new Map(appData.templates.map(function(t) { return [String(t.id), t]; }));
+    // 按名称创建映射用于去重
+    var localTemplateNames = new Map(appData.templates.map(function(t) { return [t.name ? t.name.toLowerCase() : '']; }));
+    
     serverTemplates.forEach(function(st) {
         var lt = localTemplates.get(String(st.id));
-        if (!lt) {
-            // 尝试用宽松比较查找
-            lt = appData.templates.find(function(t) { return t.id == st.id; });
+        
+        // 如果ID匹配失败，尝试按名称匹配
+        if (!lt && st.name) {
+            lt = appData.templates.find(function(t) { 
+                return t.name && t.name.toLowerCase() === st.name.toLowerCase(); 
+            });
         }
+        
+        // 如果名称匹配也失败，尝试按内容相似度匹配
+        if (!lt && st.items && st.items.length > 0) {
+            lt = appData.templates.find(function(t) {
+                if (!t.items || t.items.length !== st.items.length) return false;
+                
+                // 比较项目名称和规格的相似度
+                var matchCount = 0;
+                var totalItems = Math.max(st.items.length, t.items.length);
+                
+                st.items.forEach(function(sItem) {
+                    var found = t.items.find(function(tItem) {
+                        return sItem.name && tItem.name && 
+                               sItem.name.toLowerCase() === tItem.name.toLowerCase() &&
+                               sItem.spec && tItem.spec &&
+                               sItem.spec.toLowerCase() === tItem.spec.toLowerCase();
+                    });
+                    if (found) matchCount++;
+                });
+                
+                // 匹配度超过70%认为是相同模板
+                return matchCount / totalItems > 0.7;
+            });
+        }
+        
         if (!lt) {
             appData.templates.push(st);
+            localTemplates.set(String(st.id), st);
+            if (st.name) {
+                localTemplateNames.set(st.name.toLowerCase(), st);
+            }
             stats.added++;
         } else {
             var serverUpdated = new Date(st.updatedAt || 0);
             var localUpdated = new Date(lt.updatedAt || 0);
             if (serverUpdated > localUpdated) {
-                var idx = appData.templates.findIndex(function(t) { return String(t.id) === String(st.id); });
-                if (idx >= 0) appData.templates[idx] = st;
-                stats.updated++;
+                var idx = appData.templates.findIndex(function(t) { 
+                    return String(t.id) === String(st.id) || 
+                           (t.name && st.name && t.name.toLowerCase() === st.name.toLowerCase());
+                });
+                if (idx >= 0) {
+                    appData.templates[idx] = st;
+                    localTemplates.set(String(st.id), st);
+                    if (st.name) {
+                        localTemplateNames.set(st.name.toLowerCase(), st);
+                    }
+                    stats.updated++;
+                }
             }
         }
     });
