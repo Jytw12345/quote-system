@@ -14550,6 +14550,11 @@ function updateSigPosition(prop, value){
     if(sig) sig.style[prop] = value;
     saveData();
 }
+// 检测是否为Electron环境
+function isElectron() {
+    return window.electronAPI !== undefined;
+}
+
 // BUG修复：增加锁防止递归调用
 function exportPDF(){
     if (pdfExportLock) return;
@@ -14759,10 +14764,46 @@ function exportPDF(){
                 }
             }
             
-            pdf.save('报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.pdf');
-            if(clone.parentNode) clone.parentNode.removeChild(clone);
-            pdfExportLock = false;
-            console.log('PDF exported successfully');
+            // 生成PDF数据
+            const pdfData = pdf.output('arraybuffer');
+            const defaultFilename = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.pdf';
+            
+            // 检测是否为Electron环境
+            if (isElectron()) {
+                // 使用Electron的保存对话框
+                window.electronAPI.showSaveDialog({
+                    title: '保存PDF报价单',
+                    defaultPath: defaultFilename,
+                    filters: [
+                        { name: 'PDF文件', extensions: ['pdf'] },
+                        { name: '所有文件', extensions: ['*'] }
+                    ]
+                }).then(result => {
+                    if (!result.canceled && result.filePath) {
+                        // 保存文件
+                        window.electronAPI.saveFile(result.filePath, pdfData).then(() => {
+                            showToast('PDF报价单已保存到: ' + result.filePath, 'success');
+                        }).catch(err => {
+                            console.error('保存文件失败:', err);
+                            showToast('保存PDF报价单失败', 'error');
+                        });
+                    }
+                    if(clone.parentNode) clone.parentNode.removeChild(clone);
+                    pdfExportLock = false;
+                    console.log('PDF exported successfully');
+                }).catch(err => {
+                    console.error('显示保存对话框失败:', err);
+                    showToast('显示保存对话框失败', 'error');
+                    if(clone.parentNode) clone.parentNode.removeChild(clone);
+                    pdfExportLock = false;
+                });
+            } else {
+                // 浏览器环境使用默认下载
+                pdf.save(defaultFilename);
+                if(clone.parentNode) clone.parentNode.removeChild(clone);
+                pdfExportLock = false;
+                console.log('PDF exported successfully');
+            }
         }).catch(function(err) {
             console.error('html2canvas error:', err);
             if(clone.parentNode) clone.parentNode.removeChild(clone);
@@ -14843,17 +14884,51 @@ function exportJPG(){
         html2canvas(clone, opt).then(function(canvas) {
             // 转换为JPG
             var imgData = canvas.toDataURL('image/jpeg', 0.92);
-            
-            // 创建下载链接
-            var link = document.createElement('a');
             var fileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.jpg';
-            link.download = fileName;
-            link.href = imgData;
-            link.click();
             
-            if(clone.parentNode) clone.parentNode.removeChild(clone);
-            jpgExportLock = false;
-            showToast('JPG图片已导出', 'success');
+            // 检测是否为Electron环境
+            if (isElectron()) {
+                // 转换为Buffer
+                const base64Data = imgData.replace(/^data:image\/jpeg;base64,/, '');
+                const buffer = Buffer.from(base64Data, 'base64');
+                
+                // 使用Electron的保存对话框
+                window.electronAPI.showSaveDialog({
+                    title: '保存JPG报价单',
+                    defaultPath: fileName,
+                    filters: [
+                        { name: 'JPG图片', extensions: ['jpg', 'jpeg'] },
+                        { name: '所有文件', extensions: ['*'] }
+                    ]
+                }).then(result => {
+                    if (!result.canceled && result.filePath) {
+                        // 保存文件
+                        window.electronAPI.saveFile(result.filePath, buffer).then(() => {
+                            showToast('JPG报价单已保存到: ' + result.filePath, 'success');
+                        }).catch(err => {
+                            console.error('保存文件失败:', err);
+                            showToast('保存JPG报价单失败', 'error');
+                        });
+                    }
+                    if(clone.parentNode) clone.parentNode.removeChild(clone);
+                    jpgExportLock = false;
+                }).catch(err => {
+                    console.error('显示保存对话框失败:', err);
+                    showToast('显示保存对话框失败', 'error');
+                    if(clone.parentNode) clone.parentNode.removeChild(clone);
+                    jpgExportLock = false;
+                });
+            } else {
+                // 浏览器环境使用默认下载
+                var link = document.createElement('a');
+                link.download = fileName;
+                link.href = imgData;
+                link.click();
+                
+                if(clone.parentNode) clone.parentNode.removeChild(clone);
+                jpgExportLock = false;
+                showToast('JPG图片已导出', 'success');
+            }
         }).catch(function(err) {
             console.error('html2canvas error:', err);
             if(clone.parentNode) clone.parentNode.removeChild(clone);
@@ -14997,9 +15072,39 @@ function exportXLS(){
     XLSX.utils.book_append_sheet(wb, ws, '报价单');
     
     var filename = '报价单_' + (quote.clientName || '客户') + '_' + new Date().toISOString().slice(0, 10) + '.xlsx';
-    XLSX.writeFile(wb, filename);
     
-    showToast('XLSX 导出成功！', 'success');
+    // 检测是否为Electron环境
+    if (isElectron()) {
+        // 生成Excel数据
+        const excelData = XLSX.write(wb, { bookType: 'xlsx', type: 'arraybuffer' });
+        
+        // 使用Electron的保存对话框
+        window.electronAPI.showSaveDialog({
+            title: '保存Excel报价单',
+            defaultPath: filename,
+            filters: [
+                { name: 'Excel文件', extensions: ['xlsx', 'xls'] },
+                { name: '所有文件', extensions: ['*'] }
+            ]
+        }).then(result => {
+            if (!result.canceled && result.filePath) {
+                // 保存文件
+                window.electronAPI.saveFile(result.filePath, excelData).then(() => {
+                    showToast('Excel报价单已保存到: ' + result.filePath, 'success');
+                }).catch(err => {
+                    console.error('保存文件失败:', err);
+                    showToast('保存Excel报价单失败', 'error');
+                });
+            }
+        }).catch(err => {
+            console.error('显示保存对话框失败:', err);
+            showToast('显示保存对话框失败', 'error');
+        });
+    } else {
+        // 浏览器环境使用默认下载
+        XLSX.writeFile(wb, filename);
+        showToast('XLSX 导出成功！', 'success');
+    }
 }
 function saveAsTemplate(){
     appData.currentQuote.clientName=document.getElementById('quoteClientName').value;
