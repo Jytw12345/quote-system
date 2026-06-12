@@ -42257,6 +42257,39 @@ if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/quote-system/sw.js')
                 .then(function(registration) {
                     console.log('[SW] 注册成功:', registration.scope);
+                    
+                    // 监听 Service Worker 更新
+                    registration.addEventListener('updatefound', function() {
+                        var newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', function() {
+                            if (newWorker.state === 'installed') {
+                                if (navigator.serviceWorker.controller) {
+                                    showUpdateNotification();
+                                }
+                            }
+                        });
+                    });
+                    
+                    // 监听来自 Service Worker 的消息
+                    navigator.serviceWorker.addEventListener('message', function(event) {
+                        if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
+                            showUpdateNotification(event.data.version);
+                        }
+                    });
+                    
+                    // 定时检查更新（每5分钟）
+                    setInterval(function() {
+                        if (navigator.serviceWorker.controller) {
+                            navigator.serviceWorker.controller.postMessage({ type: 'CHECK_FOR_UPDATE' });
+                        }
+                    }, 5 * 60 * 1000);
+                    
+                    // 页面加载时检查一次更新
+                    setTimeout(function() {
+                        if (navigator.serviceWorker.controller) {
+                            navigator.serviceWorker.controller.postMessage({ type: 'CHECK_FOR_UPDATE' });
+                        }
+                    }, 5000);
                 })
                 .catch(function(error) {
                     console.log('[SW] 注册失败:', error);
@@ -42264,6 +42297,15 @@ if ('serviceWorker' in navigator) {
         });
     } else {
         console.log('[SW] 当前环境不支持 PWA（需要 HTTPS 或 localhost），已跳过 Service Worker 注册');
+    }
+}
+
+function showUpdateNotification(version) {
+    if (window.updateNotificationShown) return;
+    window.updateNotificationShown = true;
+    
+    if (confirm('📣 检测到新版本' + (version ? ' v' + version : '') + '，是否立即更新？')) {
+        window.location.reload();
     }
 }
 
