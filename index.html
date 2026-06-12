@@ -42258,38 +42258,21 @@ if ('serviceWorker' in navigator) {
                 .then(function(registration) {
                     console.log('[SW] 注册成功:', registration.scope);
                     
-                    // 监听 Service Worker 更新
+                    // 监听 Service Worker 更新（只有当 sw.js 文件真正改变时才触发）
                     registration.addEventListener('updatefound', function() {
                         var newWorker = registration.installing;
                         newWorker.addEventListener('statechange', function() {
-                            if (newWorker.state === 'installed') {
-                                if (navigator.serviceWorker.controller) {
-                                    showUpdateNotification();
-                                }
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // 新的 Service Worker 已安装，提示用户更新
+                                showUpdateNotification();
                             }
                         });
                     });
                     
-                    // 监听来自 Service Worker 的消息
-                    navigator.serviceWorker.addEventListener('message', function(event) {
-                        if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
-                            showUpdateNotification(event.data.version);
-                        }
-                    });
-                    
-                    // 定时检查更新（每5分钟）
-                    setInterval(function() {
-                        if (navigator.serviceWorker.controller) {
-                            navigator.serviceWorker.controller.postMessage({ type: 'CHECK_FOR_UPDATE' });
-                        }
-                    }, 5 * 60 * 1000);
-                    
-                    // 页面加载时检查一次更新
-                    setTimeout(function() {
-                        if (navigator.serviceWorker.controller) {
-                            navigator.serviceWorker.controller.postMessage({ type: 'CHECK_FOR_UPDATE' });
-                        }
-                    }, 5000);
+                    // 检查是否有等待中的 Service Worker
+                    if (registration.waiting) {
+                        showUpdateNotification();
+                    }
                 })
                 .catch(function(error) {
                     console.log('[SW] 注册失败:', error);
@@ -42300,11 +42283,20 @@ if ('serviceWorker' in navigator) {
     }
 }
 
-function showUpdateNotification(version) {
-    if (window.updateNotificationShown) return;
-    window.updateNotificationShown = true;
+function showUpdateNotification() {
+    // 检查是否已经提示过（使用 sessionStorage 防止当前会话重复提示）
+    if (sessionStorage.getItem('swUpdatePrompted')) return;
+    sessionStorage.setItem('swUpdatePrompted', 'true');
     
-    if (confirm('📣 检测到新版本' + (version ? ' v' + version : '') + '，是否立即更新？')) {
+    if (confirm('📣 检测到新版本，是否立即更新？')) {
+        // 清除所有缓存
+        if ('caches' in window) {
+            caches.keys().then(function(names) {
+                names.forEach(function(name) {
+                    caches.delete(name);
+                });
+            });
+        }
         window.location.reload();
     }
 }
