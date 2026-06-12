@@ -4479,6 +4479,20 @@ if (!DEBUG) {
     console.log = console.warn = console.error = console.info = function() {};
 }
 
+// ===== 工具函数：安全的ID比较 =====
+function isSameId(id1, id2) {
+    // 如果两个值完全相等，直接返回true
+    if (id1 === id2) return true;
+    // 如果都是数字类型，直接比较
+    if (typeof id1 === 'number' && typeof id2 === 'number') return id1 === id2;
+    // 否则转换为字符串比较
+    return String(id1) === String(id2);
+}
+
+function filterById(list, excludeId) {
+    return list.filter(item => !isSameId(item.id, excludeId));
+}
+
 // ===== 全局配置常量 - 字符价格相关 =====
 
 // 材质中文名称映射
@@ -6107,6 +6121,7 @@ function safeExecuteAsync(fn, defaultVal) {
                         <button class="btn btn-outline" onclick="exportJPG(true)">🖼️ 导出JPG</button>
                         <button class="btn btn-outline" onclick="exportXLS()">📊 导出XLS</button>
                         <button class="btn btn-outline" onclick="toggleColumnWidthPanel()">📐 列宽</button>
+                        <button class="btn btn-outline" onclick="showQuoteAnalysis()">📊 智能分析</button>
                     </div>
                     <div id="columnWidthPanel" class="hidden" style="margin-top:1rem;padding:0.5rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;">
                         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
@@ -12923,12 +12938,16 @@ function addProductToQuote(product){
         if (product.calcType === 'area' || product.calcType === 'size') {
             showSizeInputModal(product, function(width, height) {
                 addProductToQuoteWithSize(product, width, height);
+                // 添加后显示推荐产品
+                showProductRecommendations(product.id);
             });
             return true; // 异步处理，先返回true
         }
         
         // 普通产品直接添加（没有尺寸）
         addProductToQuoteWithSize(product, 0, 0);
+        // 添加后显示推荐产品
+        showProductRecommendations(product.id);
         return true;
     } catch(e) {
         console.error('addProductToQuote error:', e);
@@ -13122,11 +13141,22 @@ function removeQuoteItem(iid){
         showToast('数据错误', 'error');
         return;
     }
-    const numId = typeof iid === 'string' ? parseFloat(iid) : iid;
-    const item = appData.currentQuote.items.find(i => i.id === numId || i.id === iid);
+    // 找到要删除的项目
+    const item = appData.currentQuote.items.find(i => isSameId(i.id, iid));
     const itemName = item ? item.name : '项目';
     saveToUndoStack('删除项目', '删除: ' + itemName);
-    appData.currentQuote.items=appData.currentQuote.items.filter(item=>item.id!==numId && item.id!==iid);
+    
+    // 使用 isSameId 进行精确匹配，只删除一个项目
+    let deleted = false;
+    appData.currentQuote.items = appData.currentQuote.items.filter(item => {
+        if (deleted) return true; // 已经删除了一个，保留其他所有
+        if (isSameId(item.id, iid)) {
+            deleted = true;
+            return false; // 删除这个
+        }
+        return true;
+    });
+    
     renderQuoteItems();
     calculateTotals();
     saveDraftQuote();
@@ -13135,8 +13165,7 @@ function removeQuoteItem(iid){
 function updateQuoteItem(iid,field,value){
     try {
         if(!appData.currentQuote || !appData.currentQuote.items) return;
-        const numId = typeof iid === 'string' ? parseFloat(iid) : iid;
-        const item=appData.currentQuote.items.find(i=>i.id===numId || i.id===iid);
+        const item=appData.currentQuote.items.find(i=>isSameId(i.id,iid));
         if(item){
             const oldValue = item[field];
             if(field==='qty'||field==='price'||field==='cost') item[field]=parseFloat(value)||0;
@@ -13301,8 +13330,8 @@ function renderQuoteItems(){
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">单价</span><input type="number" step="0.01" min="0" value="${Number(itemPrice).toFixed(2)}" onchange="updateQuoteItem(${itemIdQuoted},'price',this.value)" onwheel="return false;" class="no-spin" style="width:70px;-moz-appearance:textfield;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">小计</span><span id="subtotal-${itemId}" style="font-weight:600;color:var(--primary);font-size:0.8125rem;">¥${Number(it).toFixed(2)}</span></div>
             <div class="quote-item-actions" style="display:flex;gap:0.5rem;align-items:center;flex-shrink:0;justify-content:flex-end;width:100%;">
-                <button class="btn btn-success btn-icon" onclick="saveQuoteItemToProduct(${itemIdQuoted})" title="保存到产品库">💾</button>
-                <button class="btn btn-danger btn-icon" onclick="removeQuoteItem(${itemIdQuoted})">🗑️</button>
+                <button class="btn btn-success btn-icon" onclick="event.stopPropagation();saveQuoteItemToProduct(${itemIdQuoted})" title="保存到产品库">💾</button>
+                <button class="btn btn-danger btn-icon" onclick="event.stopPropagation();removeQuoteItem(${itemIdQuoted})">🗑️</button>
             </div>`;
         fragment.appendChild(div);
     });
@@ -16624,8 +16653,8 @@ function deleteProduct(pid){
             if(!appData.recycleBin) appData.recycleBin = { products: [], customers: [], templates: [], deletedAt: null };
             appData.recycleBin.products.push({ ...product, deletedAt: new Date().toISOString() });
             appData.recycleBin.deletedAt = new Date().toISOString();
-            appData.products = appData.products.filter(p => p.id != pid && String(p.id) !== String(pid));
-            appData.favoriteIds = appData.favoriteIds.filter(id => String(id) !== String(pid) && id != pid);
+            appData.products = filterById(appData.products, pid);
+            appData.favoriteIds = appData.favoriteIds.filter(id => !isSameId(id, pid));
             // 添加团队活动记录
             addTeamActivity('delete', 'product', productName, 'removed', pid);
             productCache.clear();
@@ -25647,7 +25676,7 @@ function loadFromHistory(id) {
 
 function deleteFromHistory(id) {
     const history = getHistory();
-    const filtered = history.filter(h => h.id !== id);
+    const filtered = history.filter(h => !isSameId(h.id, id));
     localStorage.setItem(HISTORY_KEY, JSON.stringify(filtered));
     showToast('已删除', 'success');
     showDoorHeaderHistory();
@@ -28717,7 +28746,7 @@ function addTemplatePhotos(event) {
 }
 
 function removeTemplatePhoto(photoId) {
-    currentTemplatePhotos = currentTemplatePhotos.filter(p => p.id !== photoId);
+    currentTemplatePhotos = filterById(currentTemplatePhotos, photoId);
     const container = document.getElementById('templatePhotosContainer');
     const photoItems = container.querySelectorAll('.template-photo-item');
     photoItems.forEach(item => {
@@ -29124,7 +29153,7 @@ function deleteTemplate(tid){
             if(!appData.recycleBin) appData.recycleBin = { products: [], customers: [], templates: [], deletedAt: null };
             appData.recycleBin.templates.push({ ...template, deletedAt: new Date().toISOString() });
             appData.recycleBin.deletedAt = new Date().toISOString();
-            appData.templates = appData.templates.filter(t => t.id != tid && String(t.id) !== String(tid));
+            appData.templates = filterById(appData.templates, tid);
             addTeamActivity('delete', 'template', templateName, 'removed', tid);
             saveDataImmediately();
             renderTemplates();
@@ -29653,7 +29682,7 @@ function deleteCustomer(cid){
             if(!appData.recycleBin) appData.recycleBin = { products: [], customers: [], templates: [], deletedAt: null };
             appData.recycleBin.customers.push({ ...customer, deletedAt: new Date().toISOString() });
             appData.recycleBin.deletedAt = new Date().toISOString();
-            appData.customers = appData.customers.filter(c => c.id != cid && String(c.id) !== String(cid));
+            appData.customers = filterById(appData.customers, cid);
             addTeamActivity('delete', 'customer', customerName, 'removed', cid);
             saveDataImmediately();
             renderCustomers();
@@ -30290,7 +30319,7 @@ function cloneHistoryQuote(hid) {
 }
 function deleteHistoryQuote(hid) {
     if (confirm('确定删除这条历史记录吗？')) {
-        appData.quoteHistory = appData.quoteHistory.filter(h => h.id !== hid);
+        appData.quoteHistory = filterById(appData.quoteHistory, hid);
         saveData();
         renderHistory();
     }
@@ -30744,6 +30773,10 @@ function renderAnalytics() {
         });
         html += `</tbody></table></div></div>`;
     }
+    
+    // 添加智能客户分类
+    html += renderCustomerClassification();
+    
     container.innerHTML = html;
     if (sortedKeys.length > 0 && typeof Chart !== 'undefined') {
         drawMonthlyChart(sortedKeys, monthlyData);
@@ -30807,6 +30840,369 @@ function drawMonthlyChart(sortedKeys, monthlyData) {
 function refreshAnalytics() {
     renderAnalytics();
 }
+
+// ===== 智能客户分类 =====
+function classifyCustomers() {
+    const customerStats = {};
+    
+    appData.quoteHistory.forEach(h => {
+        if (!h.clientName || h.clientName === '未命名客户') return;
+        
+        if (!customerStats[h.clientName]) {
+            customerStats[h.clientName] = {
+                count: 0,
+                revenue: 0,
+                profit: 0,
+                lastOrder: h.createdAt
+            };
+        }
+        customerStats[h.clientName].count++;
+        customerStats[h.clientName].revenue += h.finalTotal;
+        customerStats[h.clientName].profit += (h.finalTotal - h.totalCost);
+        if (h.createdAt > customerStats[h.clientName].lastOrder) {
+            customerStats[h.clientName].lastOrder = h.createdAt;
+        }
+    });
+    
+    const customers = Object.entries(customerStats).map(([name, stats]) => {
+        const avgOrderValue = stats.count > 0 ? stats.revenue / stats.count : 0;
+        const daysSinceLastOrder = stats.lastOrder ? 
+            Math.floor((new Date() - new Date(stats.lastOrder)) / (1000 * 60 * 60 * 24)) : 999;
+        
+        let level = 'potential';
+        let levelLabel = '潜在客户';
+        let levelColor = '#6b7280';
+        
+        // VIP客户：高消费 + 高频次
+        if (stats.revenue >= 10000 && stats.count >= 5 && daysSinceLastOrder <= 30) {
+            level = 'vip';
+            levelLabel = 'VIP客户';
+            levelColor = '#f59e0b';
+        }
+        // 优质客户：中等消费
+        else if (stats.revenue >= 5000 || stats.count >= 3) {
+            level = 'gold';
+            levelLabel = '优质客户';
+            levelColor = '#16a34a';
+        }
+        // 普通客户
+        else if (stats.revenue > 0) {
+            level = 'normal';
+            levelLabel = '普通客户';
+            levelColor = '#3b82f6';
+        }
+        
+        return { name, ...stats, avgOrderValue, daysSinceLastOrder, level, levelLabel, levelColor };
+    });
+    
+    return customers.sort((a, b) => b.revenue - a.revenue);
+}
+
+function renderCustomerClassification() {
+    const customers = classifyCustomers();
+    if (customers.length === 0) return '';
+    
+    const vipCount = customers.filter(c => c.level === 'vip').length;
+    const goldCount = customers.filter(c => c.level === 'gold').length;
+    const normalCount = customers.filter(c => c.level === 'normal').length;
+    const potentialCount = customers.filter(c => c.level === 'potential').length;
+    
+    let html = `
+        <div class="chart-container">
+            <h3>🏷️ 智能客户分类</h3>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1rem;">
+                <div style="background:#fef3c7;border-radius:var(--radius);padding:0.75rem;text-align:center;">
+                    <div style="font-size:1.5rem;font-weight:700;color:#d97706;">${vipCount}</div>
+                    <div style="font-size:0.75rem;color:#d97706;">VIP客户</div>
+                </div>
+                <div style="background:#dcfce7;border-radius:var(--radius);padding:0.75rem;text-align:center;">
+                    <div style="font-size:1.5rem;font-weight:700;color:#16a34a;">${goldCount}</div>
+                    <div style="font-size:0.75rem;color:#16a34a;">优质客户</div>
+                </div>
+                <div style="background:#dbeafe;border-radius:var(--radius);padding:0.75rem;text-align:center;">
+                    <div style="font-size:1.5rem;font-weight:700;color:#3b82f6;">${normalCount}</div>
+                    <div style="font-size:0.75rem;color:#3b82f6;">普通客户</div>
+                </div>
+                <div style="background:#f3f4f6;border-radius:var(--radius);padding:0.75rem;text-align:center;">
+                    <div style="font-size:1.5rem;font-weight:700;color:#6b7280;">${potentialCount}</div>
+                    <div style="font-size:0.75rem;color:#6b7280;">潜在客户</div>
+                </div>
+            </div>
+            <div style="max-height:300px;overflow-y:auto;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;padding:0.5rem;border-bottom:2px solid var(--gray-200);">等级</th>
+                            <th style="text-align:left;padding:0.5rem;border-bottom:2px solid var(--gray-200);">客户名称</th>
+                            <th style="text-align:right;padding:0.5rem;border-bottom:2px solid var(--gray-200);">报价次数</th>
+                            <th style="text-align:right;padding:0.5rem;border-bottom:2px solid var(--gray-200);">总营收</th>
+                            <th style="text-align:right;padding:0.5rem;border-bottom:2px solid var(--gray-200);">平均订单</th>
+                            <th style="text-align:right;padding:0.5rem;border-bottom:2px solid var(--gray-200);">最近下单</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+    
+    customers.forEach(customer => {
+        const levelBadge = customer.level === 'vip' ? '👑' : 
+                          customer.level === 'gold' ? '⭐' : 
+                          customer.level === 'normal' ? '👤' : '🔍';
+        
+        html += `
+            <tr>
+                <td style="padding:0.5rem;border-bottom:1px solid var(--gray-100);">
+                    <span style="color:${customer.levelColor};font-weight:600;">${levelBadge} ${customer.levelLabel}</span>
+                </td>
+                <td style="padding:0.5rem;border-bottom:1px solid var(--gray-100);">${customer.name}</td>
+                <td style="text-align:right;padding:0.5rem;border-bottom:1px solid var(--gray-100);">${customer.count}</td>
+                <td style="text-align:right;padding:0.5rem;border-bottom:1px solid var(--gray-100);font-weight:600;color:var(--primary);">¥${customer.revenue.toFixed(0)}</td>
+                <td style="text-align:right;padding:0.5rem;border-bottom:1px solid var(--gray-100);">¥${customer.avgOrderValue.toFixed(0)}</td>
+                <td style="text-align:right;padding:0.5rem;border-bottom:1px solid var(--gray-100);">${customer.daysSinceLastOrder}天前</td>
+            </tr>
+        `;
+    });
+    
+    html += `</tbody></table></div></div>`;
+    return html;
+}
+
+// ===== 智能产品推荐 =====
+function getRelatedProducts(productId, limit = 5) {
+    if (!appData.currentQuote || !appData.currentQuote.items) return [];
+    
+    const currentProduct = appData.products.find(p => p.id === productId);
+    if (!currentProduct) return [];
+    
+    const category1 = currentProduct.category1;
+    const category2 = currentProduct.category2;
+    
+    // 找出常一起出现的产品
+    const coOccurrence = {};
+    
+    appData.quoteHistory.forEach(quote => {
+        if (!quote.items) return;
+        
+        const hasTarget = quote.items.some(item => item.productId === productId || item.name === currentProduct.name);
+        if (!hasTarget) return;
+        
+        quote.items.forEach(item => {
+            if (item.productId !== productId && item.name !== currentProduct.name) {
+                const key = item.productId || item.name;
+                coOccurrence[key] = (coOccurrence[key] || 0) + 1;
+            }
+        });
+    });
+    
+    // 获取推荐产品列表
+    const recommendations = [];
+    Object.entries(coOccurrence).forEach(([key, count]) => {
+        const product = appData.products.find(p => p.id == key || p.name === key);
+        if (product && !appData.currentQuote.items.some(i => i.productId === product.id)) {
+            recommendations.push({ product, score: count });
+        }
+    });
+    
+    // 添加同类别产品
+    appData.products.forEach(product => {
+        if (product.id !== productId && 
+            !recommendations.some(r => r.product.id === product.id) &&
+            !appData.currentQuote.items.some(i => i.productId === product.id)) {
+            
+            let score = 0;
+            if (product.category1 === category1) score += 2;
+            if (product.category2 === category2) score += 1;
+            
+            if (score > 0) {
+                recommendations.push({ product, score: score + Math.random() });
+            }
+        }
+    });
+    
+    return recommendations
+        .sort((a, b) => b.score - a.score)
+        .slice(0, limit)
+        .map(r => r.product);
+}
+
+function showProductRecommendations(productId) {
+    const related = getRelatedProducts(productId);
+    if (related.length === 0) return;
+    
+    let html = `<div style="padding:0.5rem;">
+        <div style="font-size:0.8125rem;font-weight:500;color:#374151;margin-bottom:0.5rem;">💡 推荐搭配</div>
+        <div style="display:flex;flex-wrap:gap:0.5rem;">`;
+    
+    related.forEach(product => {
+        html += `
+            <button 
+                class="btn btn-outline btn-sm" 
+                style="margin-right:0.5rem;margin-bottom:0.5rem;"
+                onclick="addProductToQuote(${product.id})"
+            >
+                ${product.name} (¥${product.sellingPrice})
+            </button>
+        `;
+    });
+    
+    html += `</div></div>`;
+    
+    const recBar = document.getElementById('aiRecommendationsBar');
+    if (recBar) {
+        recBar.innerHTML = html;
+        recBar.style.display = 'block';
+    }
+}
+
+// ===== 智能报价分析 =====
+function analyzeQuoteHealth() {
+    if (!appData.currentQuote || !appData.currentQuote.items) {
+        return { status: 'empty', score: 0, issues: [], suggestions: [] };
+    }
+    
+    const items = appData.currentQuote.items;
+    const totalCost = appData.currentQuote.totalCost || 0;
+    const totalPrice = appData.currentQuote.finalTotal || 0;
+    
+    let score = 100;
+    const issues = [];
+    const suggestions = [];
+    
+    // 检查项目数量
+    if (items.length === 0) {
+        issues.push('报价单为空');
+        score -= 30;
+    } else if (items.length === 1) {
+        suggestions.push('考虑添加更多相关产品');
+        score -= 5;
+    }
+    
+    // 检查利润率
+    if (totalCost > 0) {
+        const margin = ((totalPrice - totalCost) / totalCost * 100);
+        if (margin < 20) {
+            issues.push(`利润率过低 (${margin.toFixed(1)}%)`);
+            score -= 25;
+        } else if (margin < 30) {
+            suggestions.push(`利润率偏低，建议调整定价 (当前 ${margin.toFixed(1)}%)`);
+            score -= 10;
+        } else if (margin > 80) {
+            suggestions.push('利润率很高，可能影响竞争力');
+            score -= 5;
+        }
+    }
+    
+    // 检查重复产品
+    const productCount = {};
+    items.forEach(item => {
+        const key = item.productId || item.name;
+        productCount[key] = (productCount[key] || 0) + 1;
+    });
+    
+    Object.entries(productCount).forEach(([name, count]) => {
+        if (count > 1) {
+            suggestions.push(`产品 "${name}" 重复添加了 ${count} 次`);
+            score -= 5;
+        }
+    });
+    
+    // 检查未填写项
+    items.forEach((item, index) => {
+        if (!item.name || item.name.trim() === '') {
+            issues.push(`第 ${index + 1} 项产品名称为空`);
+            score -= 10;
+        }
+        if (!item.price || item.price <= 0) {
+            issues.push(`第 ${index + 1} 项产品价格未设置`);
+            score -= 15;
+        }
+    });
+    
+    // 检查客户信息
+    if (!appData.currentQuote.clientName || appData.currentQuote.clientName === '未命名客户') {
+        suggestions.push('建议填写客户名称');
+        score -= 5;
+    }
+    
+    let status = 'excellent';
+    if (score >= 80) status = 'excellent';
+    else if (score >= 60) status = 'good';
+    else if (score >= 40) status = 'warning';
+    else status = 'danger';
+    
+    return { status, score: Math.max(0, score), issues, suggestions };
+}
+
+function showQuoteAnalysis() {
+    const analysis = analyzeQuoteHealth();
+    
+    const statusColors = {
+        excellent: '#16a34a',
+        good: '#3b82f6',
+        warning: '#f59e0b',
+        danger: '#dc2626'
+    };
+    
+    const statusLabels = {
+        excellent: '✅ 优秀',
+        good: '👍 良好',
+        warning: '⚠️ 需优化',
+        danger: '❌ 有问题'
+    };
+    
+    let html = `
+        <div style="background:white;border-radius:var(--radius);padding:0.75rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+                <div style="font-size:0.8125rem;font-weight:500;color:#374151;">📊 报价单健康度分析</div>
+                <div style="font-weight:600;color:${statusColors[analysis.status]};">${statusLabels[analysis.status]}</div>
+            </div>
+            <div style="margin-bottom:0.75rem;">
+                <div style="height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;">
+                    <div style="height:100%;width:${analysis.score}%;background:${statusColors[analysis.status]};border-radius:4px;"></div>
+                </div>
+                <div style="text-align:right;font-size:0.75rem;color:#9ca3af;margin-top:0.25rem;">得分: ${analysis.score}/100</div>
+            </div>
+    `;
+    
+    if (analysis.issues.length > 0) {
+        html += `
+            <div style="margin-bottom:0.5rem;">
+                <div style="font-size:0.75rem;font-weight:500;color:#dc2626;margin-bottom:0.25rem;">🚨 问题清单:</div>
+                <ul style="font-size:0.75rem;color:#6b7280;margin:0;padding-left:1rem;">
+        `;
+        analysis.issues.forEach(issue => {
+            html += `<li>• ${issue}</li>`;
+        });
+        html += `</ul></div>`;
+    }
+    
+    if (analysis.suggestions.length > 0) {
+        html += `
+            <div>
+                <div style="font-size:0.75rem;font-weight:500;color:#3b82f6;margin-bottom:0.25rem;">💡 优化建议:</div>
+                <ul style="font-size:0.75rem;color:#6b7280;margin:0;padding-left:1rem;">
+        `;
+        analysis.suggestions.forEach(suggestion => {
+            html += `<li>• ${suggestion}</li>`;
+        });
+        html += `</ul></div>`;
+    }
+    
+    if (analysis.issues.length === 0 && analysis.suggestions.length === 0) {
+        html += `<div style="font-size:0.75rem;color:#16a34a;text-align:center;">🎉 报价单完美，无需优化</div>`;
+    }
+    
+    html += `</div>`;
+    
+    showModal({
+        title: '📊 报价单分析',
+        message: html,
+        type: 'info',
+        confirmText: '关闭',
+        showCancel: false,
+        allowHtml: true
+    });
+}
+
 // ===== 系统设置 =====
 function selectPrintStyle(style){
     if(!style) style='classic';
@@ -30952,7 +31348,7 @@ function deleteSeal(sid){
     var sealName = seal.name || '印章';
     showConfirmDialog('确定删除印章"' + sealName + '"吗？此操作不可恢复。', () => {
         try {
-            appData.seals = appData.seals.filter(s => s.id !== sid);
+            appData.seals = filterById(appData.seals, sid);
             if(appData.systemSettings.selectedSealId === sid)
                 appData.systemSettings.selectedSealId = appData.seals.length ? appData.seals[0].id : null;
             saveData();
@@ -31156,7 +31552,7 @@ function deleteSignature(id){
     showConfirmDialog('确定删除此签名吗？此操作不可恢复。', () => {
         try {
             if(appData.signatures) {
-                appData.signatures = appData.signatures.filter(s => s.id !== id);
+                appData.signatures = filterById(appData.signatures, id);
                 saveData();
                 // 强制刷新签名列表
                 const grid = document.getElementById('signatureGrid');
@@ -31660,7 +32056,7 @@ function renderSyncLog() {
 // 删除单条同步日志
 function deleteSyncLog(logId) {
     const logs = getSyncLog();
-    const filteredLogs = logs.filter(log => log.id !== logId);
+    const filteredLogs = logs.filter(log => !isSameId(log.id, logId));
     localStorage.setItem('syncLog', JSON.stringify(filteredLogs));
     renderSyncLog();
 }
@@ -35701,7 +36097,7 @@ function applyOfflineChanges() {
                     var idx = appData.products.findIndex(p => String(p.id) === String(change.data.id));
                     if (idx >= 0) appData.products[idx] = change.data;
                 } else if (change.action === 'delete') {
-                    appData.products = appData.products.filter(p => String(p.id) !== String(change.data.id));
+                    appData.products = filterById(appData.products, change.data.id);
                 }
                 break;
             case 'customer':
@@ -35712,7 +36108,7 @@ function applyOfflineChanges() {
                     var idx = appData.customers.findIndex(c => String(c.id) === String(change.data.id));
                     if (idx >= 0) appData.customers[idx] = change.data;
                 } else if (change.action === 'delete') {
-                    appData.customers = appData.customers.filter(c => String(c.id) !== String(change.data.id));
+                    appData.customers = filterById(appData.customers, change.data.id);
                 }
                 break;
             case 'template':
@@ -35723,7 +36119,7 @@ function applyOfflineChanges() {
                     var idx = appData.templates.findIndex(t => String(t.id) === String(change.data.id));
                     if (idx >= 0) appData.templates[idx] = change.data;
                 } else if (change.action === 'delete') {
-                    appData.templates = appData.templates.filter(t => String(t.id) !== String(change.data.id));
+                    appData.templates = filterById(appData.templates, change.data.id);
                 }
                 break;
         }
@@ -41120,7 +41516,7 @@ function saveSmartTemplate() {
 function deleteSmartTemplate(id) {
     if (!confirm('确定要删除这个模板吗？')) return;
     
-    smartTemplates = smartTemplates.filter(t => t.id !== id);
+    smartTemplates = filterById(smartTemplates, id);
     saveSmartTemplates();
     renderSmartTemplateList();
     renderCalcPreset();
@@ -42205,8 +42601,7 @@ function saveQuoteItemToProduct(itemId) {
         showToast('数据错误', 'error');
         return;
     }
-    const numId = typeof itemId === 'string' ? parseFloat(itemId) : itemId;
-    const item = appData.currentQuote.items.find(i => i.id === numId || i.id === itemId);
+    const item = appData.currentQuote.items.find(i => isSameId(i.id, itemId));
     if (!item) {
         showToast('未找到该报价项目', 'error');
         return;
