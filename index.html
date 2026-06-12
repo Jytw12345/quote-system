@@ -6078,7 +6078,7 @@ function safeExecuteAsync(fn, defaultVal) {
                     <div class="quote-total-section">
                         <div class="quote-stat-row stat-cost cost-stat-row sensitive-data"><span>总成本：</span><span id="totalCost">¥0.00</span></div>
                         <div class="quote-stat-row stat-profit profit-stat-row sensitive-data"><span>预计利润：</span><span id="totalProfit">¥0.00</span></div>
-                        <div class="quote-stat-row margin-stat-row sensitive-data"><span>利润率：</span><span class="stat-margin" id="profitMargin">0%</span></div>
+                        <div class="quote-stat-row margin-stat-row sensitive-data"><span>利润率：</span><span class="stat-margin" id="profitMargin">0%</span><button class="btn btn-xs btn-outline" style="margin-left:0.5rem;" onclick="showQuoteAnalysis()">📊 分析</button></div>
                         <div class="quote-stat-row"><span>折扣前总计：</span><span id="quoteSubtotal">¥0.00</span></div>
                         <div class="quote-stat-row" id="tierDiscountRow" style="display:none;"><span>批量折扣：</span><span id="tierDiscountAmount">-¥0.00</span></div>
                         <div class="quote-stat-row" id="discountRow" style="display:none;"><span>折扣金额：</span><span id="discountAmount">-¥0.00</span></div>
@@ -6121,7 +6121,6 @@ function safeExecuteAsync(fn, defaultVal) {
                         <button class="btn btn-outline" onclick="exportJPG(true)">🖼️ 导出JPG</button>
                         <button class="btn btn-outline" onclick="exportXLS()">📊 导出XLS</button>
                         <button class="btn btn-outline" onclick="toggleColumnWidthPanel()">📐 列宽</button>
-                        <button class="btn btn-outline" onclick="showQuoteAnalysis()">📊 智能分析</button>
                     </div>
                     <div id="columnWidthPanel" class="hidden" style="margin-top:1rem;padding:0.5rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;">
                         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
@@ -31060,8 +31059,29 @@ function analyzeQuoteHealth() {
     }
     
     const items = appData.currentQuote.items;
-    const totalCost = appData.currentQuote.totalCost || 0;
-    const totalPrice = appData.currentQuote.finalTotal || 0;
+    // 如果 totalCost 不存在，直接从 items 计算
+    let totalCost = appData.currentQuote.totalCost;
+    if (totalCost === undefined || totalCost === null) {
+        totalCost = items.reduce((sum, item) => sum + (item.qty * (item.cost || 0)), 0);
+    }
+    // 如果 finalTotal 不存在，直接从 items 计算（包含折扣和税率）
+    let totalPrice = appData.currentQuote.finalTotal;
+    if (totalPrice === undefined || totalPrice === null || totalPrice === 0) {
+        const subtotal = items.reduce((sum, item) => sum + (item.qty * (item.price || 0)), 0);
+        const dr = parseFloat(document.getElementById('discountRate')?.value || 100);
+        const tr = parseFloat(document.getElementById('taxRate')?.value || 0);
+        const pm = document.querySelector('input[name="priceMode"]:checked')?.value || 'ex';
+        let discounted = subtotal * (dr / 100);
+        if (tr > 0) {
+            if (pm === 'ex') {
+                totalPrice = discounted + (discounted * (tr / 100));
+            } else {
+                totalPrice = discounted;
+            }
+        } else {
+            totalPrice = discounted;
+        }
+    }
     
     let score = 100;
     const issues = [];
@@ -31079,7 +31099,13 @@ function analyzeQuoteHealth() {
     // 检查利润率
     if (totalCost > 0) {
         const margin = ((totalPrice - totalCost) / totalCost * 100);
-        if (margin < 20) {
+        if (margin < 0) {
+            issues.push(`⚠️ 亏损警告：利润率为负 (${margin.toFixed(1)}%)，售价低于成本！`);
+            score -= 40;
+        } else if (margin < 10) {
+            issues.push(`利润率极低 (${margin.toFixed(1)}%)，几乎无利润`);
+            score -= 30;
+        } else if (margin < 20) {
             issues.push(`利润率过低 (${margin.toFixed(1)}%)`);
             score -= 25;
         } else if (margin < 30) {
@@ -31089,6 +31115,10 @@ function analyzeQuoteHealth() {
             suggestions.push('利润率很高，可能影响竞争力');
             score -= 5;
         }
+    } else if (totalPrice > 0) {
+        // 如果成本为0但有售价，提醒用户检查成本设置
+        suggestions.push('成本未设置或为0，建议检查成本配置');
+        score -= 10;
     }
     
     // 检查重复产品
@@ -31105,15 +31135,73 @@ function analyzeQuoteHealth() {
         }
     });
     
-    // 检查未填写项
+    // 检查单个项目的详细问题
     items.forEach((item, index) => {
+        const itemIndex = index + 1;
+        
+        // 产品名称
         if (!item.name || item.name.trim() === '') {
-            issues.push(`第 ${index + 1} 项产品名称为空`);
+            issues.push(`第 ${itemIndex} 项产品名称为空`);
             score -= 10;
         }
+        
+        // 价格检查
         if (!item.price || item.price <= 0) {
-            issues.push(`第 ${index + 1} 项产品价格未设置`);
+            issues.push(`第 ${itemIndex} 项产品价格未设置或无效`);
             score -= 15;
+        } else if (item.price < 0) {
+            issues.push(`第 ${itemIndex} 项产品价格为负数 (¥${item.price})`);
+            score -= 20;
+        }
+        
+        // 成本检查
+        if (item.cost < 0) {
+            issues.push(`第 ${itemIndex} 项产品成本为负数 (¥${item.cost})`);
+            score -= 15;
+        }
+        
+        // 数量检查
+        if (!item.qty || item.qty <= 0) {
+            issues.push(`第 ${itemIndex} 项产品数量未设置或无效`);
+            score -= 10;
+        } else if (item.qty < 0) {
+            issues.push(`第 ${itemIndex} 项产品数量为负数 (${item.qty})`);
+            score -= 15;
+        } else if (item.qty > 1000 && item.qty < 10000) {
+            suggestions.push(`第 ${itemIndex} 项产品数量较大 (${item.qty})，请确认是否正确`);
+            score -= 3;
+        } else if (item.qty >= 10000) {
+            issues.push(`第 ${itemIndex} 项产品数量异常过大 (${item.qty})`);
+            score -= 10;
+        }
+        
+        // 单个产品利润检查
+        const itemCost = item.cost || 0;
+        const itemPrice = item.price || 0;
+        if (itemCost > 0 && itemPrice > 0) {
+            const itemMargin = ((itemPrice - itemCost) / itemCost * 100);
+            if (itemMargin < 0) {
+                issues.push(`第 ${itemIndex} 项 "${item.name || '产品'}" 售价低于成本，单条亏损 ¥${(itemCost - itemPrice).toFixed(2)}`);
+                score -= 15;
+            } else if (itemMargin < 10) {
+                suggestions.push(`第 ${itemIndex} 项 "${item.name || '产品'}" 利润率较低 (${itemMargin.toFixed(1)}%)`);
+                score -= 5;
+            }
+        } else if (itemPrice > 0 && itemCost === 0) {
+            suggestions.push(`第 ${itemIndex} 项 "${item.name || '产品'}" 成本未设置`);
+            score -= 3;
+        }
+        
+        // 缺少规格说明
+        if (!item.spec || item.spec.trim() === '') {
+            suggestions.push(`第 ${itemIndex} 项产品缺少规格说明`);
+            score -= 2;
+        }
+        
+        // 缺少单位
+        if (!item.unit || item.unit.trim() === '') {
+            suggestions.push(`第 ${itemIndex} 项产品缺少单位信息`);
+            score -= 2;
         }
     });
     
@@ -31121,6 +31209,50 @@ function analyzeQuoteHealth() {
     if (!appData.currentQuote.clientName || appData.currentQuote.clientName === '未命名客户') {
         suggestions.push('建议填写客户名称');
         score -= 5;
+    }
+    
+    // 检查报价单号
+    const quoteNumber = document.getElementById('quoteNumber')?.value || '';
+    if (!quoteNumber || quoteNumber.trim() === '') {
+        suggestions.push('建议填写报价单号便于追踪');
+        score -= 5;
+    }
+    
+    // 检查客户联系电话
+    const clientPhone = document.getElementById('quoteClientPhone')?.value || '';
+    if (!clientPhone || clientPhone.trim() === '') {
+        suggestions.push('建议填写客户联系电话');
+        score -= 3;
+    }
+    
+    // 检查折扣率
+    const discountRate = parseFloat(document.getElementById('discountRate')?.value || 100);
+    if (discountRate < 0) {
+        issues.push(`折扣率为负数 (${discountRate}%)，请检查设置`);
+        score -= 15;
+    } else if (discountRate > 100) {
+        issues.push(`折扣率超过100% (${discountRate}%)，将导致负价`);
+        score -= 20;
+    } else if (discountRate < 50) {
+        suggestions.push(`折扣力度较大 (${discountRate}%)，请确认是否正确`);
+        score -= 5;
+    }
+    
+    // 检查税率
+    const taxRate = parseFloat(document.getElementById('taxRate')?.value || 0);
+    if (taxRate < 0) {
+        issues.push(`税率为负数 (${taxRate}%)，请检查设置`);
+        score -= 10;
+    } else if (taxRate > 50) {
+        issues.push(`税率异常高 (${taxRate}%)，请确认是否正确`);
+        score -= 15;
+    }
+    
+    // 检查临时项目
+    const tempItems = items.filter(item => typeof item.id === 'string' && item.id.startsWith('temp_'));
+    if (tempItems.length > 0) {
+        issues.push(`存在 ${tempItems.length} 个临时项目，请确认是否需要保留`);
+        score -= 10;
     }
     
     let status = 'excellent';
