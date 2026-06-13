@@ -644,7 +644,7 @@
         @media (max-width: 768px) { 
             .template-list { grid-template-columns: 1fr; }
             .template-grid { grid-template-columns: 1fr; } 
-            #viewToggleBtn { display: none !important; }
+            #templateViewToggleBtn { display: none !important; }
         }
         
         /* 分页控件样式 */
@@ -718,10 +718,10 @@
                 font-size: 0.6875rem;
             }
         }
-        .template-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 1rem; transition: all 0.2s ease; box-shadow: var(--shadow-sm); height: 100%; display: flex; flex-direction: column; }
+        .template-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 1rem; transition: all 0.2s ease; box-shadow: var(--shadow-sm); height: 100%; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
         .template-card:hover { border-color: var(--primary); box-shadow: var(--shadow-md); transform: translateY(-2px); }
-        .template-name { font-size: 1.0625rem; font-weight: 600; color: var(--gray-800); margin-bottom: 0.25rem; }
-        .template-desc { color: var(--gray-600); font-size: 0.8125rem; margin-bottom: 0.5rem; flex: 1; }
+        .template-name { font-size: 1.0625rem; font-weight: 600; color: var(--gray-800); margin-bottom: 0.25rem; word-break: break-word; overflow-wrap: anywhere; }
+        .template-desc { color: var(--gray-600); font-size: 0.8125rem; margin-bottom: 0.5rem; flex: 1; word-break: break-word; overflow-wrap: anywhere; }
         .template-meta { display: flex; gap: 0.75rem; font-size: 0.75rem; color: var(--gray-500); margin-bottom: 0.75rem; flex-wrap: wrap; }
         .template-total { display: flex; justify-content: space-between; align-items: center; padding-top: 0.75rem; border-top: 2px solid var(--gray-200); font-size: 0.9375rem; margin-top: auto; }
         .template-total-label { font-weight: 600; }
@@ -5906,17 +5906,17 @@ function safeExecuteAsync(fn, defaultVal) {
                     <h3 style="margin-top:1rem;" class="mobile-hide">🧮 智能计算器</h3>
                     <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.75rem;margin-top:0.5rem;" class="mobile-hide">
                         <div class="form-group" style="margin-bottom:0.5rem;">
-                            <label style="font-size:0.75rem;">💡 智能推荐 - 输入项目名称自动填充</label>
+                            <label for="calcItemName" style="font-size:0.75rem;">💡 智能推荐 - 输入项目名称自动填充</label>
                             <input type="text" id="calcItemName" placeholder="例如：喷绘布 / X展架 / 易拉宝" oninput="autoSmartFill()" style="width:100%;padding:0.25rem;font-size:0.75rem;">
                             <div id="calcSuggestions" style="display:none;"></div>
                         </div>
                         <div class="form-group" style="margin-bottom:0.5rem;">
-                            <label style="font-size:0.75rem;">🗣️ 自然语言输入 - 直接说话就能算</label>
+                            <label for="naturalLanguageInput" style="font-size:0.75rem;">🗣️ 自然语言输入 - 直接说话就能算</label>
                             <input type="text" id="naturalLanguageInput" placeholder="例如：5个LED发光字 50厘米 / 3个不锈钢立体字 80cm" oninput="parseNaturalLanguage()" style="width:100%;padding:0.25rem;font-size:0.75rem;background:linear-gradient(135deg, #fef3c7 0%, #fce7f3 100%);">
                             <div id="naturalLanguageResult" style="display:none;font-size:0.625rem;margin-top:0.25rem;padding:0.25rem;background:rgba(34,197,94,0.1);border-radius:4px;color:#15803d;"></div>
                         </div>
                         <div class="form-group" style="margin-bottom:0.5rem;">
-                            <label style="font-size:0.75rem;">计算类型</label>
+                            <label for="calcType" style="font-size:0.75rem;">计算类型</label>
                             <select id="calcType" onchange="updateCalcInputs()" style="width:100%;padding:0.375rem;font-size:0.75rem;">
                                 <option value="square">□ 平方计算（长×宽）</option>
                                 <option value="cubic">◼ 立方计算（长×宽×高）</option>
@@ -5926,7 +5926,7 @@ function safeExecuteAsync(fn, defaultVal) {
                         </div>
                         <div class="form-group" style="margin-bottom:0.5rem;">
                             <div style="display:flex;justify-content:space-between;align-items:center;">
-                                <label style="font-size:0.75rem;">📦 常用规格（含单价）</label>
+                                <label for="calcPreset" style="font-size:0.75rem;">📦 常用规格（含单价）</label>
                                 <button class="btn btn-xs btn-outline" onclick="openSmartTemplateManager()" style="padding:0.2rem 0.4rem;font-size:0.65rem;">⚙️ 管理模板</button>
                             </div>
                             <select id="calcPreset" onchange="applySmartPreset()" style="width:100%;padding:0.375rem;font-size:0.75rem;">
@@ -5936,19 +5936,19 @@ function safeExecuteAsync(fn, defaultVal) {
                         <div id="calcInputs">
                             <!-- 通用尺寸输入 -->
                             <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr;gap:0.25rem;margin-bottom:0.5rem;">
-                                <div><label style="font-size:0.6875rem;">长 (m)</label><input type="text" id="calcLength" placeholder="0" oninput="normalizeDimensionInput('calcLength');calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;"></div>
-                                <div><label style="font-size:0.6875rem;">宽 (m)</label><input type="text" id="calcWidth" placeholder="0" oninput="normalizeDimensionInput('calcWidth');calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;"></div>
-                                <div id="heightInput2"><label style="font-size:0.6875rem;">高 (m)</label><input type="text" id="calcHeight" placeholder="0" oninput="normalizeDimensionInput('calcHeight');calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;"></div>
+                                <div><label for="calcLength" style="font-size:0.6875rem;">长 (m)</label><input type="text" id="calcLength" placeholder="0" oninput="normalizeDimensionInput('calcLength');calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;"></div>
+                                <div><label for="calcWidth" style="font-size:0.6875rem;">宽 (m)</label><input type="text" id="calcWidth" placeholder="0" oninput="normalizeDimensionInput('calcWidth');calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;"></div>
+                                <div id="heightInput2"><label for="calcHeight" style="font-size:0.6875rem;">高 (m)</label><input type="text" id="calcHeight" placeholder="0" oninput="normalizeDimensionInput('calcHeight');calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;"></div>
                             </div>
                             <!-- 字符计算专用输入 -->
                             <div id="characterInputs" style="display:none;">
                                 <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr;gap:0.25rem;margin-bottom:0.5rem;">
-                                    <div><label style="font-size:0.6875rem;">字高 (cm)</label><input type="number" id="charHeight" placeholder="50" oninput="calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;"></div>
-                                    <div><label style="font-size:0.6875rem;">字宽 (cm)</label><input type="number" id="charWidth" placeholder="40" oninput="calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;"></div>
-                                    <div><label style="font-size:0.6875rem;">字数</label><input type="number" id="charCount" value="1" min="1" oninput="calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;"></div>
+                                    <div><label for="charHeight" style="font-size:0.6875rem;">字高 (cm)</label><input type="number" id="charHeight" placeholder="50" oninput="calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;"></div>
+                                    <div><label for="charWidth" style="font-size:0.6875rem;">字宽 (cm)</label><input type="number" id="charWidth" placeholder="40" oninput="calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;"></div>
+                                    <div><label for="charCount" style="font-size:0.6875rem;">字数</label><input type="number" id="charCount" value="1" min="1" oninput="calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;"></div>
                                 </div>
                                 <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:0.25rem;margin-bottom:0.5rem;">
-                                    <div><label style="font-size:0.6875rem;">材质</label>
+                                    <div><label for="charMaterial" style="font-size:0.6875rem;">材质</label>
                                         <select id="charMaterial" onchange="calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;">
                                             <option value="acrylic">亚克力</option>
                                             <option value="stainless">不锈钢</option>
@@ -5962,7 +5962,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                             <option value="铝板冲孔字">铝板冲孔字</option>
                                         </select>
                                     </div>
-                                    <div><label style="font-size:0.6875rem;">工艺</label>
+                                    <div><label for="charProcess" style="font-size:0.6875rem;">工艺</label>
                                         <select id="charProcess" onchange="calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;">
                                             <option value="plane">平面雕刻</option>
                                             <option value="bevel">斜边雕刻</option>
@@ -5983,25 +5983,25 @@ function safeExecuteAsync(fn, defaultVal) {
                         </div>
                         <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:0.375rem;margin-bottom:0.5rem;">
                             <div class="form-group" style="margin-bottom:0;">
-                                <label style="font-size:0.6875rem;">单价 (<span id="priceUnit">元/㎡</span>)</label>
+                                <label for="calcUnitPrice" style="font-size:0.6875rem;">单价 (<span id="priceUnit">元/㎡</span>)</label>
                                 <input type="number" id="calcUnitPrice" step="0.01" min="0" placeholder="0" oninput="calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;">
                             </div>
                             <div class="form-group" style="margin-bottom:0;">
-                                <label style="font-size:0.6875rem;">成本价 (元/㎡)</label>
+                                <label for="calcCostPrice" style="font-size:0.6875rem;">成本价 (元/㎡)</label>
                                 <input type="number" id="calcCostPrice" step="0.01" min="0" placeholder="成本" oninput="calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;">
                             </div>
                         </div>
                         <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr;gap:0.25rem;margin-bottom:0.5rem;">
                             <div class="form-group" style="margin-bottom:0;">
-                                <label style="font-size:0.6875rem;">损耗率 (%)</label>
+                                <label for="calcWaste" style="font-size:0.6875rem;">损耗率 (%)</label>
                                 <input type="number" id="calcWaste" value="0" step="1" min="0" max="50" placeholder="0" oninput="calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;">
                             </div>
                             <div class="form-group" style="margin-bottom:0;">
-                                <label style="font-size:0.6875rem;">利润率 (%)</label>
+                                <label for="calcProfit" style="font-size:0.6875rem;">利润率 (%)</label>
                                 <input type="number" id="calcProfit" value="0" step="1" min="0" max="200" placeholder="0" oninput="calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;">
                             </div>
                             <div class="form-group" style="margin-bottom:0;" id="calcQtyInput">
-                                <label style="font-size:0.6875rem;">数量</label>
+                                <label for="calcQty" style="font-size:0.6875rem;">数量</label>
                                 <input type="number" id="calcQty" value="1" step="1" min="1" placeholder="1" oninput="calculatePrice()" style="width:100%;padding:0.25rem;font-size:0.75rem;">
                             </div>
                         </div>
@@ -6028,7 +6028,7 @@ function safeExecuteAsync(fn, defaultVal) {
                             </div>
                         </div>
                         <div class="form-group" style="margin-bottom:0.5rem;">
-                            <label style="font-size:0.75rem;">📜 最近计算（点击复用）</label>
+                            <div style="font-size:0.75rem;">📜 最近计算（点击复用）</div>
                             <div id="calcHistoryList" style="max-height:80px;overflow-y:auto;font-size:0.65rem;background:white;border:1px solid var(--gray-200);border-radius:var(--radius);padding:0.375rem;">
                                 <div style="color:var(--gray-400);">暂无记录</div>
                             </div>
@@ -6036,7 +6036,7 @@ function safeExecuteAsync(fn, defaultVal) {
                         <!-- 批量尺寸计算 -->
                         <div class="form-group" style="margin-bottom:0.5rem;">
                             <div style="display:flex;justify-content:space-between;align-items:center;">
-                                <label style="font-size:0.75rem;">📊 批量尺寸计算</label>
+                                <div style="font-size:0.75rem;">📊 批量尺寸计算</div>
                                 <button class="btn btn-xs btn-outline" onclick="toggleBatchCalc()" style="padding:0.2rem 0.4rem;font-size:0.65rem;" id="batchCalcToggle">展开</button>
                             </div>
                             <div id="batchCalcArea" style="display:none;margin-top:0.375rem;">
@@ -6052,7 +6052,7 @@ function safeExecuteAsync(fn, defaultVal) {
                         <!-- 常用尺寸收藏 -->
                         <div class="form-group" style="margin-bottom:0.5rem;">
                             <div style="display:flex;justify-content:space-between;align-items:center;">
-                                <label style="font-size:0.75rem;">⭐ 常用尺寸收藏</label>
+                                <div style="font-size:0.75rem;">⭐ 常用尺寸收藏</div>
                                 <button class="btn btn-xs btn-outline" onclick="openFavoriteManager()" style="padding:0.2rem 0.4rem;font-size:0.65rem;">➕ 添加当前</button>
                             </div>
                             <div id="favoriteSizes" style="display:flex;gap:0.25rem;flex-wrap:wrap;margin-top:0.25rem;"></div>
@@ -6141,11 +6141,11 @@ function safeExecuteAsync(fn, defaultVal) {
                     <div id="quoteItemsContainer" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
                         <div class="quote-item-row" id="quoteItemHeader" style="font-weight:600;background:var(--gray-50);font-size:0.6875rem;padding:0.625rem;">
                             <div class="header-col header-col-1" style="display:flex;align-items:center;justify-content:center;height:32px;"><span class="quote-item-number" style="cursor:default;">序号</span></div>
-                            <div class="header-col header-col-2" style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">图片</span><input type="checkbox" onchange="toggleColumnVisibility('image', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
+                            <div class="header-col header-col-2" style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">图片</span><input type="checkbox" id="toggleColumnImage" onchange="toggleColumnVisibility('image', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
                             <div class="header-col header-col-3" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">项目名称</span></div>
-                            <div class="header-col header-col-4" style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">规格参数</span><input type="checkbox" onchange="toggleColumnVisibility('spec', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
+                            <div class="header-col header-col-4" style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">规格参数</span><input type="checkbox" id="toggleColumnSpec" onchange="toggleColumnVisibility('spec', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
                             <div class="header-col header-col-5" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">单位</span></div>
-                            <div class="header-col header-col-6" style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">备注</span><input type="checkbox" onchange="toggleColumnVisibility('note', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
+                            <div class="header-col header-col-6" style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:32px;"><span class="column-label">备注</span><input type="checkbox" id="toggleColumnNote" onchange="toggleColumnVisibility('note', this.checked)" title="勾选后可隐藏此列" style="width:12px;height:12px;cursor:pointer;"></div>
                             <div class="cost-price-column header-col header-col-7 sensitive-data" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">成本价</span></div>
                             <div class="header-col header-col-8" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">数量</span></div>
                             <div class="header-col header-col-9" style="display:flex;flex-direction:column;align-items:center;gap:2px;height:32px;justify-content:center;"><span class="column-label">单价</span></div>
@@ -6156,14 +6156,14 @@ function safeExecuteAsync(fn, defaultVal) {
                     </div>
                     <div class="quote-settings" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; padding: 10px 0; font-size: 0.85rem;">
                         <div style="flex: 0 0 auto; display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;">
-                            <label style="font-size: inherit; font-weight: 600; margin: 0;">计价模式:</label>
+                            <span style="font-size: inherit; font-weight: 600; margin: 0;">计价模式:</span>
                             <div class="radio-group" style="display: flex; gap: 15px; align-items: center; flex-wrap: nowrap;">
                                 <label class="radio-item" style="display: flex; align-items: center; gap: 4px; font-size: inherit; font-weight: normal; margin: 0;"><input type="radio" name="priceMode" value="in" checked onchange="calculateTotals()"><span>含税价</span></label>
                                 <label class="radio-item" style="display: flex; align-items: center; gap: 4px; font-size: inherit; font-weight: normal; margin: 0;"><input type="radio" name="priceMode" value="ex" onchange="calculateTotals()"><span>未税价</span></label>
                             </div>
                         </div>
                         <div style="flex: 0 0 auto; display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;">
-                            <label style="font-size: inherit; font-weight: 600; margin: 0;">税率(%):</label>
+                            <label for="taxRate" style="font-size: inherit; font-weight: 600; margin: 0;">税率(%):</label>
                             <input type="number" id="taxRate" min="0" max="100" step="0.1" value="13" oninput="validateAndCalculate('taxRate', 0, 100)" style="width: 65px; padding: 5px 8px; font-size: inherit;">
                         </div>
                         <div style="flex: 0 0 auto; display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;">
@@ -6172,12 +6172,12 @@ function safeExecuteAsync(fn, defaultVal) {
                             </label>
                         </div>
                         <div style="flex: 0 0 auto; display: flex; align-items: center; gap: 10px;">
-                            <label style="font-size: inherit; font-weight: 600; margin: 0; white-space: nowrap;">折扣(%):</label>
+                            <label for="discountRate" style="font-size: inherit; font-weight: 600; margin: 0; white-space: nowrap;">折扣(%):</label>
                             <input type="number" id="discountRate" min="0" max="100" step="0.1" value="100" oninput="validateAndCalculate('discountRate', 0, 100)" style="width: 65px; padding: 5px 8px; font-size: inherit;">
                             <span style="font-size: inherit; color: #666;">(100=不打折)</span>
                         </div>
                         <div style="flex: 0 1 auto; display: flex; align-items: center; gap: 6px; min-width: 0;">
-                            <label style="font-size: inherit; font-weight: 600; margin: 0; white-space: nowrap; flex-shrink:0;">付款方式:</label>
+                            <label for="paymentMethod" style="font-size: inherit; font-weight: 600; margin: 0; white-space: nowrap; flex-shrink:0;">付款方式:</label>
                             <select id="paymentMethod" onchange="handlePaymentMethodChange()" style="padding: 5px 8px; font-size: inherit; border: 1px solid #ddd; border-radius: 4px; flex-shrink:0;">
                                 <option value="">请选择</option>
                                 <option value="全款预付">全款预付</option>
@@ -6254,84 +6254,84 @@ function safeExecuteAsync(fn, defaultVal) {
                         </div>
                         <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.4rem;" id="columnWidthInputs">
                             <div class="col-width-item">
-                                <label style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;display:block;">序号</label>
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">序号</div>
                                 <div style="display:flex;align-items:center;gap:0.5rem;">
                                     <input type="range" id="cw-index" min="20" max="80" value="50" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('index',this.value)">
                                     <input type="number" id="cw-index-num" value="50" min="20" max="80" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('index',this.value)">
                                 </div>
                             </div>
                             <div class="col-width-item">
-                                <label style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;display:block;">图片</label>
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">图片</div>
                                 <div style="display:flex;align-items:center;gap:0.5rem;">
                                     <input type="range" id="cw-image" min="30" max="120" value="60" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('image',this.value)">
                                     <input type="number" id="cw-image-num" value="60" min="30" max="120" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('image',this.value)">
                                 </div>
                             </div>
                             <div class="col-width-item">
-                                <label style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;display:block;">项目名称</label>
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">项目名称</div>
                                 <div style="display:flex;align-items:center;gap:0.5rem;">
                                     <input type="range" id="cw-name" min="80" max="300" value="150" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('name',this.value)">
                                     <input type="number" id="cw-name-num" value="150" min="80" max="300" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('name',this.value)">
                                 </div>
                             </div>
                             <div class="col-width-item">
-                                <label style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;display:block;">规格</label>
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">规格</div>
                                 <div style="display:flex;align-items:center;gap:0.5rem;">
                                     <input type="range" id="cw-spec" min="80" max="300" value="120" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('spec',this.value)">
                                     <input type="number" id="cw-spec-num" value="120" min="80" max="300" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('spec',this.value)">
                                 </div>
                             </div>
                             <div class="col-width-item">
-                                <label style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;display:block;">单位</label>
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">单位</div>
                                 <div style="display:flex;align-items:center;gap:0.5rem;">
                                     <input type="range" id="cw-unit" min="30" max="100" value="60" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('unit',this.value)">
                                     <input type="number" id="cw-unit-num" value="60" min="30" max="100" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('unit',this.value)">
                                 </div>
                             </div>
                             <div class="col-width-item">
-                                <label style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;display:block;">备注</label>
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">备注</div>
                                 <div style="display:flex;align-items:center;gap:0.5rem;">
                                     <input type="range" id="cw-note" min="60" max="200" value="100" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('note',this.value)">
                                     <input type="number" id="cw-note-num" value="100" min="60" max="200" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('note',this.value)">
                                 </div>
                             </div>
                             <div class="col-width-item">
-                                <label style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;display:block;">数量</label>
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">数量</div>
                                 <div style="display:flex;align-items:center;gap:0.5rem;">
                                     <input type="range" id="cw-qty" min="40" max="100" value="60" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('qty',this.value)">
                                     <input type="number" id="cw-qty-num" value="60" min="40" max="100" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('qty',this.value)">
                                 </div>
                             </div>
                             <div class="col-width-item">
-                                <label style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;display:block;">单价</label>
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">单价</div>
                                 <div style="display:flex;align-items:center;gap:0.5rem;">
                                     <input type="range" id="cw-price" min="60" max="150" value="100" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('price',this.value)">
                                     <input type="number" id="cw-price-num" value="100" min="60" max="150" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('price',this.value)">
                                 </div>
                             </div>
                             <div class="col-width-item">
-                                <label style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;display:block;">小计</label>
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">小计</div>
                                 <div style="display:flex;align-items:center;gap:0.5rem;">
                                     <input type="range" id="cw-subtotal" min="60" max="150" value="100" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('subtotal',this.value)">
                                     <input type="number" id="cw-subtotal-num" value="100" min="60" max="150" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('subtotal',this.value)">
                                 </div>
                             </div>
                             <div class="col-width-item">
-                                <label style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;display:block;">上边距</label>
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">上边距</div>
                                 <div style="display:flex;align-items:center;gap:0.5rem;">
                                     <input type="range" id="cw-marginTop" min="0" max="50" value="10" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('marginTop',this.value)">
                                     <input type="number" id="cw-marginTop-num" value="10" min="0" max="50" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('marginTop',this.value)">
                                 </div>
                             </div>
                             <div class="col-width-item">
-                                <label style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;display:block;">页边距</label>
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">页边距</div>
                                 <div style="display:flex;align-items:center;gap:0.5rem;">
                                     <input type="range" id="cw-marginSides" min="5" max="30" value="15" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('marginSides',this.value)">
                                     <input type="number" id="cw-marginSides-num" value="15" min="5" max="30" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('marginSides',this.value)">
                                 </div>
                             </div>
                             <div class="col-width-item">
-                                <label style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;display:block;">行高</label>
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">行高</div>
                                 <div style="display:flex;align-items:center;gap:0.5rem;">
                                     <input type="range" id="cw-lineHeight" min="10" max="40" value="20" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('lineHeight',this.value)">
                                     <input type="number" id="cw-lineHeight-num" value="20" min="10" max="40" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('lineHeight',this.value)">
@@ -6377,7 +6377,7 @@ function safeExecuteAsync(fn, defaultVal) {
                 <div style="display:flex;gap:0.25rem;flex-shrink:0;" class="action-buttons">
                     <button class="btn btn-success btn-sm" onclick="openImageRecognitionModal()" title="上传图片识别产品">📷识别</button>
                     <button class="btn btn-outline btn-sm" id="favoritesFilterBtn" onclick="toggleFavoritesFilter()" title="只看收藏">⭐收藏</button>
-                    <button class="btn btn-outline btn-sm" id="viewToggleBtn" onclick="toggleProductView()" title="切换视图">🔄视图</button>
+                    <button class="btn btn-outline btn-sm" id="productViewToggleBtn" onclick="toggleProductView()" title="切换视图">🔄视图</button>
                 </div>
             </div>
             <!-- 分类卡片区域 -->
@@ -6423,57 +6423,80 @@ function safeExecuteAsync(fn, defaultVal) {
                 <div style="display:flex;align-items:center;gap:0.375rem;flex:2 1 auto;min-width:0;">
                     <!-- 搜索框 - 占满可用空间 -->
                     <div style="flex:1 1 auto;min-width:0;">
-                        <input type="text" id="templateSearch" placeholder="🔍 搜索..." oninput="searchTemplates()" style="width:100%;padding:0.5rem 0.75rem;font-size:0.8125rem;height:36px;">
+                        <input type="text" id="templateSearch" placeholder="🔍 搜索..." oninput="searchTemplates()" class="template-search-input">
                     </div>
                     <!-- 主要操作按钮 -->
                     <div style="display:flex;gap:0.375rem;flex-shrink:0;">
-                        <button class="btn btn-primary template-action-btn" onclick="openAddTemplateModal()" style="padding:0.5rem 0.75rem;font-size:0.8125rem;height:36px;">➕ 新建模板</button>
-                        <button class="btn btn-warning template-action-btn" onclick="openQuoteRecognitionModal()" style="padding:0.5rem 0.75rem;font-size:0.8125rem;height:36px;">📷 识别报价单</button>
+                        <button class="btn btn-primary template-action-btn" onclick="openAddTemplateModal()">➕ 新建模板</button>
+                        <button class="btn btn-warning template-action-btn" onclick="openQuoteRecognitionModal()">📷 识别报价单</button>
                     </div>
                 </div>
                 
                 <!-- 视图切换按钮 - 单独一行显示 -->
                 <div style="display:flex;justify-content:flex-end;flex:1 1 auto;">
-                    <button class="btn btn-outline" id="viewToggleBtn" onclick="toggleTemplateView()" style="padding:0.5rem 0.75rem;font-size:0.8125rem;height:36px;">📋 切换视图</button>
+                    <button class="btn btn-outline template-action-btn" id="templateViewToggleBtn" onclick="toggleTemplateView()">📋 切换视图</button>
                 </div>
             </div>
             
             <!-- 响应式样式 -->
             <style>
+                .template-search-input {
+                    width: 100%;
+                    padding: 0.5rem 0.75rem;
+                    font-size: 0.8125rem;
+                    height: 36px;
+                    box-sizing: border-box;
+                    border: 1px solid var(--gray-300);
+                    border-radius: var(--radius);
+                }
                 .template-action-btn {
-                    padding: 0.375rem 0.5rem;
-                    font-size: 0.75rem;
+                    padding: 0.5rem 0.75rem !important;
+                    font-size: 0.8125rem !important;
+                    height: 36px !important;
+                    min-height: 36px !important;
                     flex-shrink: 0;
                     white-space: nowrap;
+                    box-sizing: border-box;
                 }
                 @media (max-width: 768px) {
-                    .template-action-btn {
-                        padding: 0.3rem 0.4rem;
-                        font-size: 0.7rem;
-                    }
-                    #templateSearch {
-                        font-size: 0.75rem !important;
+                    .template-action-btn,
+                    .template-search-input {
                         padding: 0.3rem 0.5rem !important;
-                    }
-                    #viewToggleBtn {
-                        padding: 0.3rem 0.4rem;
-                        font-size: 0.7rem;
+                        font-size: 0.75rem !important;
+                        height: 32px !important;
+                        min-height: 32px !important;
                     }
                 }
                 @media (max-width: 480px) {
-                    .template-action-btn {
-                        padding: 0.25rem 0.3rem;
-                        font-size: 0.65rem;
-                    }
-                    #templateSearch {
-                        font-size: 0.7rem !important;
+                    .template-action-btn,
+                    .template-search-input {
                         padding: 0.25rem 0.4rem !important;
+                        font-size: 0.7rem !important;
+                        height: 28px !important;
+                        min-height: 28px !important;
                     }
-                    #viewToggleBtn {
-                        padding: 0.25rem 0.3rem;
-                        font-size: 0.65rem;
+                }
+                @media (max-width: 400px) {
+                    /* 头部按钮只显示图标 */
+                    .template-action-btn {
+                        padding: 0.25rem 0.35rem !important;
+                        font-size: 1rem !important;
+                        height: 28px !important;
+                        min-height: 28px !important;
                     }
-
+                    .template-action-btn span:not(.btn-icon) {
+                        display: none;
+                    }
+                    .template-search-input {
+                        padding: 0.25rem 0.35rem !important;
+                        font-size: 0.7rem !important;
+                        height: 28px !important;
+                    }
+                    /* 卡片按钮缩小字体但保留文字 */
+                    .template-card-actions .btn {
+                        padding: 0.2rem 0.25rem !important;
+                        font-size: 0.75rem !important;
+                    }
                 }
             </style>
             
@@ -6512,6 +6535,11 @@ function safeExecuteAsync(fn, defaultVal) {
                                 overflow: hidden !important;
                                 text-overflow: ellipsis !important;
                             }
+                            /* 智能报价输入框 */
+                            #aiQuoteInput {
+                                font-size: 0.875rem !important;
+                                min-height: 80px !important;
+                            }
                         }
                         @media (max-width: 480px) {
                             .ai-buttons-container {
@@ -6520,6 +6548,12 @@ function safeExecuteAsync(fn, defaultVal) {
                             .ai-assistant-btn {
                                 font-size: 0.6875rem !important;
                                 padding: 0.25rem 0.125rem !important;
+                            }
+                            /* 智能报价输入框 - 显示三行 */
+                            #aiQuoteInput {
+                                font-size: 0.8125rem !important;
+                                min-height: 90px !important;
+                                line-height: 1.4 !important;
                             }
                         }
                     </style>
@@ -6557,11 +6591,11 @@ function safeExecuteAsync(fn, defaultVal) {
                                     <!-- 尺寸信息 -->
                                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:0.75rem;margin-bottom:0.5rem;">
                                         <div>
-                                            <label style="display:block;margin-bottom:0.25rem;">门头宽度(米)</label>
+                                            <label for="imgQuoteWidth" style="display:block;margin-bottom:0.25rem;">门头宽度(米)</label>
                                             <input type="number" id="imgQuoteWidth" placeholder="如:3" step="0.1" min="0.1" style="width:100%;padding:0.25rem;border:1px solid #fcd34d;border-radius:4px;font-size:0.75rem;">
                                         </div>
                                         <div>
-                                            <label style="display:block;margin-bottom:0.25rem;">门头高度(米)</label>
+                                            <label for="imgQuoteHeight" style="display:block;margin-bottom:0.25rem;">门头高度(米)</label>
                                             <input type="number" id="imgQuoteHeight" placeholder="如:1.2" step="0.1" min="0.1" style="width:100%;padding:0.25rem;border:1px solid #fcd34d;border-radius:4px;font-size:0.75rem;">
                                         </div>
                                     </div>
@@ -6569,18 +6603,18 @@ function safeExecuteAsync(fn, defaultVal) {
                                     <!-- 字信息 -->
                                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:0.75rem;margin-bottom:0.5rem;">
                                         <div>
-                                            <label style="display:block;margin-bottom:0.25rem;">字数量</label>
+                                            <label for="imgQuoteCharCount" style="display:block;margin-bottom:0.25rem;">字数量</label>
                                             <input type="number" id="imgQuoteCharCount" placeholder="如:4" min="1" style="width:100%;padding:0.25rem;border:1px solid #fcd34d;border-radius:4px;font-size:0.75rem;">
                                         </div>
                                         <div>
-                                            <label style="display:block;margin-bottom:0.25rem;">字大小(cm)</label>
+                                            <label for="imgQuoteCharSize" style="display:block;margin-bottom:0.25rem;">字大小(cm)</label>
                                             <input type="number" id="imgQuoteCharSize" placeholder="如:40" min="5" style="width:100%;padding:0.25rem;border:1px solid #fcd34d;border-radius:4px;font-size:0.75rem;">
                                         </div>
                                     </div>
                                     
                                     <!-- 字类型 -->
                                     <div style="font-size:0.75rem;margin-bottom:0.5rem;">
-                                        <label style="display:block;margin-bottom:0.25rem;">📝 字类型（选择图片中的字样式）</label>
+                                        <div style="display:block;margin-bottom:0.25rem;">📝 字类型（选择图片中的字样式）</div>
                                         <div style="display:flex;flex-wrap:wrap;gap:0.25rem;">
                                             <label class="btn btn-xs btn-outline material-option" style="color:#92400e;cursor:pointer;" onclick="selectMaterialOption(this, 'fontType')">
                                                 <input type="radio" name="fontType" value="led_exposed" style="display:none;"> 外露灯珠字
@@ -6608,7 +6642,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                     
                                     <!-- 底板材质 -->
                                     <div style="font-size:0.75rem;margin-bottom:0.5rem;">
-                                        <label style="display:block;margin-bottom:0.25rem;">🪟 底板材质（选择图片中的底板）</label>
+                                        <div style="display:block;margin-bottom:0.25rem;">🪟 底板材质（选择图片中的底板）</div>
                                         <div style="display:flex;flex-wrap:wrap;gap:0.25rem;">
                                             <label class="btn btn-xs btn-outline material-option" style="color:#0891b2;cursor:pointer;" onclick="selectMaterialOption(this, 'baseMaterial')">
                                                 <input type="radio" name="baseMaterial" value="aluminum_plastic" style="display:none;"> 铝塑板
@@ -6648,7 +6682,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                     
                                     <!-- 其他组成部分 -->
                                     <div style="font-size:0.75rem;margin-bottom:0.5rem;">
-                                        <label style="display:block;margin-bottom:0.25rem;">🔧 其他组成部分（多选）</label>
+                                        <div style="display:block;margin-bottom:0.25rem;">🔧 其他组成部分（多选）</div>
                                         <div style="display:flex;flex-wrap:wrap;gap:0.25rem;">
                                             <label class="btn btn-xs btn-outline material-option" style="color:#16a34a;cursor:pointer;" onclick="toggleComponentOption(this)">
                                                 <input type="checkbox" name="components" value="light" style="display:none;"> ✨ LED灯带
@@ -6688,7 +6722,7 @@ function safeExecuteAsync(fn, defaultVal) {
                             <div style="font-size:0.8125rem;color:#92400e;margin-bottom:0.5rem;">🚪 输入门头尺寸，自动计算用料明细和费用</div>
                             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.5rem;">
                                 <div>
-                                    <label style="font-size:0.75rem;color:#92400e;display:block;margin-bottom:0.25rem;">门头类型</label>
+                                    <label for="doorHeaderType" style="font-size:0.75rem;color:#92400e;display:block;margin-bottom:0.25rem;">门头类型</label>
                                     <select id="doorHeaderType" onchange="onDoorHeaderTypeChange()" style="width:100%;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid #fcd34d;border-radius:var(--radius);">
                                         <optgroup label="💡 常见门头（经济实用）">
                                             <option value="led_channel_letter" title="【优势】亮度高、寿命长、视觉效果好 | 【应用】餐饮、零售、便利店、超市 | 【行业】服务业通用">发光字门头</option>
@@ -6743,7 +6777,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                     </select>
                                 </div>
                                 <div>
-                                    <label style="font-size:0.75rem;color:#92400e;display:block;margin-bottom:0.25rem;">字体类型</label>
+                                    <label for="doorHeaderFontType" style="font-size:0.75rem;color:#92400e;display:block;margin-bottom:0.25rem;">字体类型</label>
                                     <select id="doorHeaderFontType" style="width:100%;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid #fcd34d;border-radius:var(--radius);">
                                         <optgroup label="💡 发光字">
                                             <option value="led_exposed" title="【优势】亮度最高、寿命长、防水性好 | 【应用】楼顶大字、店面招牌、户外标识 | 【行业】通用">外露发光字</option>
@@ -6784,23 +6818,23 @@ function safeExecuteAsync(fn, defaultVal) {
                                 <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.375rem;font-weight:600;">📐 基础参数</div>
                                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;gap:0.25rem;" class="door-header-basic">
                                     <div>
-                                        <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">门头宽度(米)</label>
+                                        <label for="doorHeaderWidth" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">门头宽度(米)</label>
                                         <input type="number" id="doorHeaderWidth" placeholder="3.5" step="0.1" min="0.1" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;" oninput="updateDoorHeaderPreview()">
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">门头高度(米)</label>
+                                        <label for="doorHeaderHeight" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">门头高度(米)</label>
                                         <input type="number" id="doorHeaderHeight" placeholder="1.2" step="0.1" min="0.1" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;" oninput="updateDoorHeaderPreview()">
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">字数</label>
+                                        <label for="doorHeaderCharCount" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">字数</label>
                                         <input type="number" id="doorHeaderCharCount" placeholder="4" min="1" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;" oninput="updateDoorHeaderPreview()">
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">字高(cm)</label>
+                                        <label for="doorHeaderCharSize" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">字高(cm)</label>
                                         <input type="number" id="doorHeaderCharSize" placeholder="40" min="5" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;" oninput="updateDoorHeaderPreview()">
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">楼层</label>
+                                        <label for="doorHeaderFloor" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">楼层</label>
                                         <select id="doorHeaderFloor" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;" onchange="updateDoorHeaderPreview()">
                                             <option value="1">1楼</option>
                                             <option value="2">2楼</option>
@@ -6808,7 +6842,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                         </select>
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">包边</label>
+                                        <label for="doorHeaderEdge" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">包边</label>
                                         <select id="doorHeaderEdge" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                             <option value="yes">是</option>
                                             <option value="no">否</option>
@@ -6833,19 +6867,19 @@ function safeExecuteAsync(fn, defaultVal) {
                                 <div style="font-size:0.75rem;color:#0891b2;margin-bottom:0.375rem;font-weight:600;">📏 延伸区域</div>
                                 <div style="display:grid;grid-template-columns:repeat(6, 1fr);gap:0.25rem;">
                                     <div>
-                                        <label style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">探出(米)</label>
+                                        <label for="doorHeaderThickness" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">探出(米)</label>
                                         <input type="number" id="doorHeaderThickness" placeholder="0.3" step="0.1" min="0" max="1" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">顶部延伸</label>
+                                        <label for="doorHeaderTopExtend" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">顶部延伸</label>
                                         <input type="number" id="doorHeaderTopExtend" placeholder="0.4" step="0.1" min="0" max="2" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">底部延伸</label>
+                                        <label for="doorHeaderBottomExtend" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">底部延伸</label>
                                         <input type="number" id="doorHeaderBottomExtend" placeholder="0.3" step="0.1" min="0" max="2" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">顶部材质</label>
+                                        <label for="doorHeaderTopMaterial" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">顶部材质</label>
                                         <select id="doorHeaderTopMaterial" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
                                             <option value="aluminum_plastic">铝塑板</option>
                                             <option value="acrylic">亚克力板</option>
@@ -6864,7 +6898,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                         </select>
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">底部材质</label>
+                                        <label for="doorHeaderBottomMaterial" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">底部材质</label>
                                         <select id="doorHeaderBottomMaterial" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
                                             <option value="aluminum_plastic">铝塑板</option>
                                             <option value="acrylic">亚克力板</option>
@@ -6883,7 +6917,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                         </select>
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">框架类型</label>
+                                        <label for="doorHeaderFrameType" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">框架类型</label>
                                         <select id="doorHeaderFrameType" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
                                             <option value="steel">方管铁架</option>
                                             <option value="wood">木龙骨</option>
@@ -6904,7 +6938,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                 <div id="splitPanelOptions" style="display:none;">
                                     <div style="display:grid;grid-template-columns:1fr;gap:0.25rem;margin-bottom:0.25rem;">
                                         <div>
-                                            <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">分区模式</label>
+                                            <label for="doorHeaderSplitMode" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">分区模式</label>
                                             <select id="doorHeaderSplitMode" onchange="toggleSplitMode()" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                                 <option value="left-right">左右分区</option>
                                                 <option value="top-bottom">上下分区</option>
@@ -6916,7 +6950,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                     <div id="splitModeLeftRight">
                                         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.25rem;">
                                             <div>
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">分区比例</label>
+                                                <label for="doorHeaderSplitRatio" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">分区比例</label>
                                                 <select id="doorHeaderSplitRatio" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                                     <option value="50">左50% / 右50%</option>
                                                     <option value="60">左60% / 右40%</option>
@@ -6926,7 +6960,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                                 </select>
                                             </div>
                                             <div>
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">左侧材质</label>
+                                                <label for="doorHeaderLeftMaterial" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">左侧材质</label>
                                                 <select id="doorHeaderLeftMaterial" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                                     <option value="aluminum_plastic">铝塑板</option>
                                                     <option value="acrylic">亚克力板</option>
@@ -6946,7 +6980,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                                 </select>
                                             </div>
                                             <div>
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">右侧材质</label>
+                                                <label for="doorHeaderRightMaterial" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">右侧材质</label>
                                                 <select id="doorHeaderRightMaterial" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                                     <option value="aluminum_plastic">铝塑板</option>
                                                     <option value="acrylic">亚克力板</option>
@@ -6971,7 +7005,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                     <div id="splitModeTopBottom" style="display:none;">
                                         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.25rem;">
                                             <div>
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">分区比例</label>
+                                                <label for="doorHeaderSplitRatioTB" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">分区比例</label>
                                                 <select id="doorHeaderSplitRatioTB" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                                     <option value="50">上50% / 下50%</option>
                                                     <option value="60">上60% / 下40%</option>
@@ -6981,7 +7015,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                                 </select>
                                             </div>
                                             <div>
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">上部材质</label>
+                                                <label for="doorHeaderTopInnerMaterial" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">上部材质</label>
                                                 <select id="doorHeaderTopInnerMaterial" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                                     <option value="aluminum_plastic">铝塑板</option>
                                                     <option value="acrylic">亚克力板</option>
@@ -7001,7 +7035,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                                 </select>
                                             </div>
                                             <div>
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">下部材质</label>
+                                                <label for="doorHeaderBottomInnerMaterial" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">下部材质</label>
                                                 <select id="doorHeaderBottomInnerMaterial" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                                     <option value="aluminum_plastic">铝塑板</option>
                                                     <option value="acrylic">亚克力板</option>
@@ -7026,7 +7060,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                     <div id="splitModeFrameInner" style="display:none;">
                                         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.25rem;">
                                             <div>
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">边框类型</label>
+                                                <label for="doorHeaderFrameTypeNew" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">边框类型</label>
                                                 <select id="doorHeaderFrameTypeNew" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                                     <option value="full">四边全包</option>
                                                     <option value="three">三边半包(上+左+右)</option>
@@ -7034,17 +7068,17 @@ function safeExecuteAsync(fn, defaultVal) {
                                                 </select>
                                             </div>
                                             <div>
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">外圈宽度(米)</label>
+                                                <label for="doorHeaderFrameWidth" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">外圈宽度(米)</label>
                                                 <input type="number" id="doorHeaderFrameWidth" placeholder="0.2" step="0.05" min="0.05" max="1" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                             </div>
                                             <div>
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">里圈深度(米)</label>
+                                                <label for="doorHeaderFrameDepth" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">里圈深度(米)</label>
                                                 <input type="number" id="doorHeaderFrameDepth" placeholder="0.05" step="0.01" min="0.02" max="0.3" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                             </div>
                                         </div>
                                         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.25rem;margin-top:0.25rem;">
                                             <div>
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">外圈材质</label>
+                                                <label for="doorHeaderOuterFrameMaterial" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">外圈材质</label>
                                                 <select id="doorHeaderOuterFrameMaterial" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                                     <option value="aluminum_plastic">铝塑板</option>
                                                     <option value="acrylic">亚克力板</option>
@@ -7064,7 +7098,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                                 </select>
                                             </div>
                                             <div>
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">里圈材质</label>
+                                                <label for="doorHeaderInnerFrameMaterial" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">里圈材质</label>
                                                 <select id="doorHeaderInnerFrameMaterial" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                                     <option value="aluminum_plastic">铝塑板</option>
                                                     <option value="acrylic">亚克力板</option>
@@ -7084,7 +7118,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                                 </select>
                                             </div>
                                             <div>
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">洗墙灯</label>
+                                                <label for="doorHeaderWallWashLight" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">洗墙灯</label>
                                                 <select id="doorHeaderWallWashLight" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                                     <option value="none">无</option>
                                                     <option value="warm">暖光洗墙灯</option>
@@ -7095,7 +7129,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                         </div>
                                         <div style="display:grid;grid-template-columns:1fr;gap:0.25rem;margin-top:0.25rem;">
                                             <div>
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">内部材质</label>
+                                                <label for="doorHeaderInnerMaterial" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">内部材质</label>
                                                 <select id="doorHeaderInnerMaterial" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                                     <option value="aluminum_plastic">铝塑板</option>
                                                     <option value="acrylic">亚克力板</option>
@@ -7123,7 +7157,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                 <div style="font-size:0.75rem;color:#7c3aed;margin-bottom:0.375rem;font-weight:600;">⚙️ 材料等级</div>
                                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.25rem;">
                                     <div>
-                                        <label style="font-size:0.625rem;color:#7c3aed;display:block;margin-bottom:0.1rem;">金属材料</label>
+                                        <label for="doorHeaderMetalGrade" style="font-size:0.625rem;color:#7c3aed;display:block;margin-bottom:0.1rem;">金属材料</label>
                                         <select id="doorHeaderMetalGrade" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #e9d5ff;border-radius:3px;">
                                             <option value="standard">标准(201不锈钢)</option>
                                             <option value="premium">优质(304不锈钢)</option>
@@ -7131,7 +7165,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                         </select>
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#7c3aed;display:block;margin-bottom:0.1rem;">面板材料</label>
+                                        <label for="doorHeaderPanelGrade" style="font-size:0.625rem;color:#7c3aed;display:block;margin-bottom:0.1rem;">面板材料</label>
                                         <select id="doorHeaderPanelGrade" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #e9d5ff;border-radius:3px;">
                                             <option value="standard">标准级</option>
                                             <option value="premium">优等级</option>
@@ -7139,7 +7173,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                         </select>
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#7c3aed;display:block;margin-bottom:0.1rem;">LED芯片</label>
+                                        <label for="doorHeaderLEDGrade" style="font-size:0.625rem;color:#7c3aed;display:block;margin-bottom:0.1rem;">LED芯片</label>
                                         <select id="doorHeaderLEDGrade" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #e9d5ff;border-radius:3px;">
                                             <option value="standard">普通芯片</option>
                                             <option value="premium">高亮芯片</option>
@@ -7229,15 +7263,15 @@ function safeExecuteAsync(fn, defaultVal) {
                                     <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.25rem;font-weight:600;">📝 第二字体（小字，可选）</div>
                                     <div class="font-option-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 1.4fr;gap:0.25rem;">
                                         <div>
-                                            <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">小字数量</label>
+                                            <label for="doorHeaderCharCount2" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">小字数量</label>
                                             <input type="number" id="doorHeaderCharCount2" placeholder="8" min="0" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                         </div>
                                         <div>
-                                            <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">小字高度(cm)</label>
+                                            <label for="doorHeaderCharSize2" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">小字高度(cm)</label>
                                             <input type="number" id="doorHeaderCharSize2" placeholder="20" min="5" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                         </div>
                                         <div>
-                                            <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">小字类型</label>
+                                            <label for="doorHeaderFontType2" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">小字类型</label>
                                             <select id="doorHeaderFontType2" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                                 <option value="none">无小字</option>
                                                 <option value="led_channel">亚克力发光字</option>
@@ -7254,15 +7288,15 @@ function safeExecuteAsync(fn, defaultVal) {
                                     <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.25rem;font-weight:600;">📝 第三字体（辅助字，可选）</div>
                                     <div class="font-option-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 1.4fr;gap:0.25rem;">
                                         <div>
-                                            <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">辅助字数量</label>
+                                            <label for="doorHeaderCharCount3" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">辅助字数量</label>
                                             <input type="number" id="doorHeaderCharCount3" placeholder="12" min="0" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                         </div>
                                         <div>
-                                            <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">辅助字高度(cm)</label>
+                                            <label for="doorHeaderCharSize3" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">辅助字高度(cm)</label>
                                             <input type="number" id="doorHeaderCharSize3" placeholder="10" min="5" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                         </div>
                                         <div>
-                                            <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">辅助字类型</label>
+                                            <label for="doorHeaderFontType3" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">辅助字类型</label>
                                             <select id="doorHeaderFontType3" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                                 <option value="none">无辅助字</option>
                                                 <option value="led_channel">亚克力发光字</option>
@@ -7314,7 +7348,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                 <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.375rem;font-weight:600;">🔧 安装费用</div>
                                 <div style="display:grid;grid-template-columns:1.2fr 1.2fr 0.6fr;gap:0.25rem;margin-bottom:0.25rem;">
                                     <div>
-                                        <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">高空作业</label>
+                                        <label for="doorHeaderHighWork" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">高空作业</label>
                                         <select id="doorHeaderHighWork" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                             <option value="none">无需高空作业</option>
                                             <option value="low">2-3米脚手架</option>
@@ -7323,7 +7357,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                         </select>
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">墙面类型</label>
+                                        <label for="doorHeaderWallType" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">墙面类型</label>
                                         <select id="doorHeaderWallType" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                             <option value="concrete">混凝土墙</option>
                                             <option value="brick">砖墙</option>
@@ -7333,7 +7367,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                         </select>
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">楼层</label>
+                                        <label for="doorHeaderFloor" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">楼层</label>
                                         <select id="doorHeaderFloor" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;" onchange="updateDoorHeaderPreview()">
                                             <option value="1">1楼</option>
                                             <option value="2">2楼</option>
@@ -7361,7 +7395,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                 <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.25rem;font-weight:600;">💵 税率 & 运输</div>
                                 <div style="display:grid;grid-template-columns:0.9fr 1.1fr 1.0fr;gap:0.25rem;">
                                     <div>
-                                        <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">税费</label>
+                                        <label for="doorHeaderTaxRate" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">税费</label>
                                         <select id="doorHeaderTaxRate" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                             <option value="0">不含税</option>
                                             <option value="1">1%增值税</option>
@@ -7371,14 +7405,14 @@ function safeExecuteAsync(fn, defaultVal) {
                                         </select>
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">计价模式</label>
+                                        <label for="doorHeaderPriceMode" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">计价模式</label>
                                         <select id="doorHeaderPriceMode" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                             <option value="ex">未税价(税外加)</option>
                                             <option value="in">含税价(税内含)</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">运输距离</label>
+                                        <label for="doorHeaderTransportDistance" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">运输距离</label>
                                         <select id="doorHeaderTransportDistance" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
                                             <option value="0">市区(免运费)</option>
                                             <option value="20">郊区(+20km)</option>
@@ -7393,7 +7427,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                 <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
                                     <!-- 加价 -->
                                     <div style="display:flex;align-items:center;gap:0.375rem;">
-                                        <label style="font-size:0.75rem;color:#92400e;font-weight:600;white-space:nowrap;">加价:</label>
+                                        <label for="doorHeaderMarkup" style="font-size:0.75rem;color:#92400e;font-weight:600;white-space:nowrap;">加价:</label>
                                         <input type="number" id="doorHeaderMarkup" value="30" min="0" max="500" placeholder="30" style="width:60px;padding:0.3rem 0.375rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:var(--radius);">
                                         <span style="font-size:0.6875rem;color:#92400e;">%</span>
                                         <div style="display:flex;gap:0.125rem;">
@@ -7404,7 +7438,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                     </div>
                                     <!-- 损耗 -->
                                     <div style="display:flex;align-items:center;gap:0.375rem;">
-                                        <label style="font-size:0.75rem;color:#92400e;font-weight:600;white-space:nowrap;">损耗:</label>
+                                        <label for="doorHeaderWasteRate" style="font-size:0.75rem;color:#92400e;font-weight:600;white-space:nowrap;">损耗:</label>
                                         <input type="number" id="doorHeaderWasteRate" value="5" min="0" max="50" placeholder="5" style="width:55px;padding:0.3rem 0.375rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:var(--radius);">
                                         <span style="font-size:0.6875rem;color:#92400e;">%</span>
                                         <div style="display:flex;gap:0.125rem;">
@@ -7418,7 +7452,7 @@ function safeExecuteAsync(fn, defaultVal) {
                             <!-- 临时价格调整 -->
                             <div style="border-top:1px dashed #fcd34d;padding-top:0.375rem;margin-top:0.25rem;">
                                 <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-                                    <label style="font-size:0.75rem;color:#92400e;font-weight:600;white-space:nowrap;">临时调价:</label>
+                                    <div style="font-size:0.75rem;color:#92400e;font-weight:600;white-space:nowrap;">临时调价:</div>
                                     <button class="btn btn-xs" onclick="toggleDoorHeaderTempPrice()" id="doorHeaderTempPriceBtn" style="background:#fef3c7;color:#92400e;font-size:0.6875rem;padding:0.25rem 0.5rem;">⚙️ 设置</button>
                                     <span style="font-size:0.6875rem;color:#92400e;" id="doorHeaderTempPriceStatus">使用全局默认</span>
                                 </div>
@@ -7504,7 +7538,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                         <!-- 紧凑的3列网格布局 -->
                                         <div class="cultureWallPriceGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.375rem;">
                                             <div style="background:white;border-radius:6px;padding:0.375rem;">
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">加价率</label>
+                                                <label for="cultureWallMarkup" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">加价率</label>
                                                 <div style="display:flex;gap:2px;">
                                                     <input type="number" id="cultureWallMarkup" value="30" min="0" max="300" step="1" onchange="updateCultureWallPreview()" style="flex:1;padding:0.25rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:4px;background:white;text-align:center;">
                                                     <span style="padding:0.25rem;font-size:0.75rem;color:#92400e;font-weight:500;">%</span>
@@ -7516,7 +7550,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                                 </div>
                                             </div>
                                             <div style="background:white;border-radius:6px;padding:0.375rem;">
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">损耗率</label>
+                                                <label for="cultureWallWasteRate" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">损耗率</label>
                                                 <div style="display:flex;gap:2px;">
                                                     <input type="number" id="cultureWallWasteRate" value="5" min="0" max="50" step="0.5" onchange="updateCultureWallPreview()" style="flex:1;padding:0.25rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:4px;background:white;text-align:center;">
                                                     <span style="padding:0.25rem;font-size:0.75rem;color:#92400e;font-weight:500;">%</span>
@@ -7528,7 +7562,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                                 </div>
                                             </div>
                                             <div style="background:white;border-radius:6px;padding:0.375rem;">
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">税率</label>
+                                                <label for="cultureWallTaxRate" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">税率</label>
                                                 <select id="cultureWallTaxRate" style="width:100%;padding:0.25rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:4px;background:white;">
                                                     <option value="0">不含税</option>
                                                     <option value="1">1%</option>
@@ -7538,21 +7572,21 @@ function safeExecuteAsync(fn, defaultVal) {
                                                 </select>
                                             </div>
                                             <div style="background:white;border-radius:6px;padding:0.375rem;">
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">计价模式</label>
+                                                <label for="cultureWallPriceMode" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">计价模式</label>
                                                 <select id="cultureWallPriceMode" style="width:100%;padding:0.25rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:4px;background:white;">
                                                     <option value="ex">未税价</option>
                                                     <option value="in" selected>含税价</option>
                                                 </select>
                                             </div>
                                             <div style="background:white;border-radius:6px;padding:0.375rem;">
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">计算方式</label>
+                                                <label for="cultureWallCalcMode" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">计算方式</label>
                                                 <select id="cultureWallCalcMode" onchange="updateCultureWallPreview()" style="width:100%;padding:0.25rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:4px;background:white;">
                                                     <option value="area">按尺寸算</option>
                                                     <option value="material" selected>按材料算</option>
                                                 </select>
                                             </div>
                                             <div style="background:white;border-radius:6px;padding:0.375rem;">
-                                                <label style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">运输距离</label>
+                                                <label for="cultureWallTransportDistance" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">运输距离</label>
                                                 <select id="cultureWallTransportDistance" style="width:100%;padding:0.25rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:4px;background:white;">
                                                     <option value="0" selected>市区(免费)</option>
                                                     <option value="20">郊区(+20km)</option>
@@ -7880,31 +7914,31 @@ function safeExecuteAsync(fn, defaultVal) {
                 <div class="company-info-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 1rem;">
                     <!-- 第一行：公司名称 + 联系人电话 -->
                     <div style="display:flex;flex-direction:column;gap:0.0625rem;">
-                        <label style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">公司名称</label>
+                        <label for="companyName" style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">公司名称</label>
                         <input type="text" id="companyName" placeholder="请输入公司名称" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
                     </div>
                     <div style="display:flex;gap:0.5rem;">
                         <div style="display:flex;flex-direction:column;gap:0.0625rem;flex:1;">
-                            <label style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">联系人</label>
+                            <label for="companyContact" style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">联系人</label>
                             <input type="text" id="companyContact" placeholder="姓名" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
                         </div>
                         <div style="display:flex;flex-direction:column;gap:0.0625rem;flex:1;">
-                            <label style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">电话</label>
+                            <label for="companyPhone" style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">电话</label>
                             <input type="text" id="companyPhone" placeholder="联系电话" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
                         </div>
                     </div>
                     <!-- 第二行：邮箱 + 地址 -->
                     <div style="display:flex;flex-direction:column;gap:0.0625rem;">
-                        <label style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">邮箱</label>
+                        <label for="companyEmail" style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">邮箱</label>
                         <input type="email" id="companyEmail" placeholder="email@example.com" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
                     </div>
                     <div style="display:flex;flex-direction:column;gap:0.0625rem;">
-                        <label style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">地址</label>
+                        <label for="companyAddress" style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">地址</label>
                         <input type="text" id="companyAddress" placeholder="详细地址" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
                     </div>
                     <!-- 第三行：备注说明（跨两列） -->
                     <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.0625rem;">
-                        <label style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">备注说明</label>
+                        <label for="companyNotes" style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">备注说明</label>
                         <textarea id="companyNotes" placeholder="付款方式、交货时间等备注信息" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;min-height:56px;resize:vertical;"></textarea>
                     </div>
                 </div>
@@ -7959,11 +7993,11 @@ function safeExecuteAsync(fn, defaultVal) {
                     <div style="font-weight:500;margin-bottom:0.5rem;font-size:0.8125rem;">🎨 自定义主题色（可选）</div>
                     <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
                         <div style="display:flex;align-items:center;gap:0.5rem;">
-                            <label style="font-size:0.75rem;color:#6b7280;">主色</label>
+                            <label for="customPrimaryColor" style="font-size:0.75rem;color:#6b7280;">主色</label>
                             <input type="color" id="customPrimaryColor" value="#2563eb" onchange="updateCustomTheme()" style="width:90px;height:40px;border:none;cursor:pointer;border-radius:8px;">
                         </div>
                         <div style="display:flex;align-items:center;gap:0.5rem;">
-                            <label style="font-size:0.75rem;color:#6b7280;">辅色</label>
+                            <label for="customSecondaryColor" style="font-size:0.75rem;color:#6b7280;">辅色</label>
                             <input type="color" id="customSecondaryColor" value="#0ea5e9" onchange="updateCustomTheme()" style="width:90px;height:40px;border:none;cursor:pointer;border-radius:8px;">
                         </div>
                         <button class="btn btn-sm btn-outline" onclick="applyCustomTheme()" style="margin-left:auto;padding:0.3rem 0.6rem;font-size:0.7rem;">✅ 应用颜色</button>
@@ -8016,10 +8050,10 @@ function safeExecuteAsync(fn, defaultVal) {
             <div class="settings-section">
                 <h3>📋 默认设置</h3>
                 <div class="default-settings-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;">
-                    <div style="display:flex;flex-direction:column;gap:0.25rem;"><label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">税率 (%)</label><input type="number" id="defaultTaxRate" min="0" max="100" step="0.1" value="3" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100px;"></div>
-                    <div style="display:flex;flex-direction:column;gap:0.25rem;"><label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">计价模式</label><select id="defaultPriceMode" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:120px;"><option value="in">含税价</option><option value="ex">未税价</option></select></div>
-                    <div style="display:flex;flex-direction:column;gap:0.25rem;"><label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">折扣率 (%)</label><input type="number" id="defaultDiscountRate" min="0" max="100" step="0.1" value="100" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100px;"></div>
-                    <div style="display:flex;flex-direction:column;gap:0.25rem;"><label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">有效期(天)</label><input type="number" id="quoteValidDays" min="1" value="7" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100px;"></div>
+                    <div style="display:flex;flex-direction:column;gap:0.25rem;"><label for="defaultTaxRate" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">税率 (%)</label><input type="number" id="defaultTaxRate" min="0" max="100" step="0.1" value="3" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100px;"></div>
+                    <div style="display:flex;flex-direction:column;gap:0.25rem;"><label for="defaultPriceMode" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">计价模式</label><select id="defaultPriceMode" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:120px;"><option value="in">含税价</option><option value="ex">未税价</option></select></div>
+                    <div style="display:flex;flex-direction:column;gap:0.25rem;"><label for="defaultDiscountRate" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">折扣率 (%)</label><input type="number" id="defaultDiscountRate" min="0" max="100" step="0.1" value="100" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100px;"></div>
+                    <div style="display:flex;flex-direction:column;gap:0.25rem;"><label for="quoteValidDays" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">有效期(天)</label><input type="number" id="quoteValidDays" min="1" value="7" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100px;"></div>
                 </div>
             </div>
 
@@ -8080,7 +8114,7 @@ function safeExecuteAsync(fn, defaultVal) {
                     <div style="margin-bottom:1rem;">
                         <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.5rem;">
                             <input type="text" id="deepseekApiKey" placeholder="sk-xxxxxxxxxxxxxxxx" style="flex:1;min-width:280px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
-                            <label style="font-size:0.8125rem;color:var(--gray-700);white-space:nowrap;">默认模型选择</label>
+                            <label for="deepseekModel" style="font-size:0.8125rem;color:var(--gray-700);white-space:nowrap;">默认模型选择</label>
                             <select id="deepseekModel" style="min-width:200px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
                                 <option value="deepseek-v4-pro">deepseek-v4-pro（推荐·高性能）</option>
                                 <option value="deepseek-v4-flash">deepseek-v4-flash（快速·低成本）</option>
@@ -8234,20 +8268,20 @@ function safeExecuteAsync(fn, defaultVal) {
                 
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
                     <div style="display:flex;flex-direction:column;gap:0.25rem;">
-                        <label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">GitHub Token</label>
+                        <label for="gistToken" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">GitHub Token</label>
                         <div style="position:relative;">
                             <input type="password" id="gistToken" placeholder="ghp_xxxxxxxxxxxx" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;" onchange="saveGistToken()">
                             <button type="button" class="btn btn-xs btn-outline" style="position:absolute;right:4px;top:0;bottom:0;margin:auto;width:1.75rem;min-width:0!important;min-height:0!important;height:1.75rem!important;display:flex;align-items:center;justify-content:center;box-sizing:border-box;" onclick="toggleTokenVisibility()">👁️</button>
                         </div>
                     </div>
                     <div style="display:flex;flex-direction:column;gap:0.25rem;">
-                        <label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">Gist ID（团队共享用）</label>
+                        <label for="gistIdInput" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">Gist ID（团队共享用）</label>
                         <input type="text" id="gistIdInput" placeholder="自动生成或输入团队ID" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;">
                     </div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
                     <div style="display:flex;flex-direction:column;gap:0.25rem;">
-                        <label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">自动同步间隔</label>
+                        <label for="cloudSyncInterval" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">自动同步间隔</label>
                         <select id="cloudSyncInterval" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;">
                             <option value="0">手动同步</option>
                             <option value="180000">3分钟（适合频繁修改）</option>
@@ -8258,7 +8292,7 @@ function safeExecuteAsync(fn, defaultVal) {
                         </select>
                     </div>
                     <div style="display:flex;flex-direction:column;gap:0.25rem;">
-                        <label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">同步模式</label>
+                        <label for="syncMode" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">同步模式</label>
                         <select id="syncMode" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;">
                             <option value="auto" selected>智能同步（推荐）</option>
                             <option value="incremental">增量同步</option>
@@ -8314,16 +8348,16 @@ function safeExecuteAsync(fn, defaultVal) {
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
                             <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                <label style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队名称</label>
+                                <label for="teamName" style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队名称</label>
                                 <input type="text" id="teamName" placeholder="团队名称" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem; background: #f8fafc;" readonly>
                             </div>
                             <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                <label style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队成员名称</label>
+                                <label for="teamUserName" style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队成员名称</label>
                                 <input type="text" id="teamUserName" placeholder="例如：张三" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem;" onchange="saveTeamUserName()">
                             </div>
                         </div>
                         <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.5rem;">
-                            <label style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队Gist ID</label>
+                            <label for="teamGistId" style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队Gist ID</label>
                             <input type="text" id="teamGistId" placeholder="团队Gist ID" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem;" onchange="saveTeamGistId()">
                         </div>
                         <div style="font-size: 0.75rem; font-weight: 500; color: #475569; margin-bottom: 0.375rem;">选择同步数据类型：</div>
@@ -8821,7 +8855,7 @@ function safeExecuteAsync(fn, defaultVal) {
                             <button type="button" class="btn btn-sm btn-outline" onclick="openPhotoSelector()">📷 从相册选择</button>
                             <button type="button" class="btn btn-sm btn-outline" onclick="removeProductImage()" style="display:none;" id="removeImageBtn">🗑️ 移除图片</button>
                         </div>
-                        <label style="font-size:0.7rem;color:#6b7280;margin-bottom:0.25rem;display:block;">🔗 图片链接URL</label>
+                        <label for="productImageUrlField" style="font-size:0.7rem;color:#6b7280;margin-bottom:0.25rem;display:block;">🔗 图片链接URL</label>
                         <input type="url" id="productImageUrlField" placeholder="粘贴图片链接" oninput="applyProductImageUrl(this)" style="width:100%;padding:0.3rem 0.4rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;">
                         <div id="imageUrlHint" style="display:none;margin-top:0.25rem;font-size:0.7rem;color:var(--gray-500);"></div>
                     </div>
@@ -8882,14 +8916,14 @@ function safeExecuteAsync(fn, defaultVal) {
         <form id="templateForm" class="form-grid">
             <input type="hidden" id="templateId">
             <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;" class="full-width">
-                <div class="form-group" style="flex:2;min-width:200px;"><label>模板名称 *</label><input type="text" id="templateName" required placeholder="例如：开业庆典全套广告报价"></div>
-                <div class="form-group" style="flex:1;min-width:140px;"><label>模板分类</label><select id="templateCategory" style="width:100%;padding:0.5rem;"><option value="">无分类</option><option value="文化墙-党建">文化墙-党建</option><option value="文化墙-企业">文化墙-企业</option><option value="文化墙-校园">文化墙-校园</option><option value="文化墙-社区">文化墙-社区</option><option value="门头招牌">门头招牌</option><option value="庆典活动">庆典活动</option><option value="展览展示">展览展示</option><option value="广告制作">广告制作</option><option value="标识标牌">标识标牌</option><option value="印刷喷绘">印刷喷绘</option><option value="其他">其他</option></select></div>
-                <div class="form-group" style="flex:0;white-space:nowrap;display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" id="templateFavorite" style="width:auto;"><label style="margin:0;font-weight:normal;font-size:0.875rem;">⭐ 收藏</label></div>
+                <div class="form-group" style="flex:2;min-width:200px;"><label for="templateName">模板名称 *</label><input type="text" id="templateName" required placeholder="例如：开业庆典全套广告报价"></div>
+                <div class="form-group" style="flex:1;min-width:140px;"><label for="templateCategory">模板分类</label><select id="templateCategory" style="width:100%;padding:0.5rem;"><option value="">无分类</option><option value="文化墙-党建">文化墙-党建</option><option value="文化墙-企业">文化墙-企业</option><option value="文化墙-校园">文化墙-校园</option><option value="文化墙-社区">文化墙-社区</option><option value="门头招牌">门头招牌</option><option value="庆典活动">庆典活动</option><option value="展览展示">展览展示</option><option value="广告制作">广告制作</option><option value="标识标牌">标识标牌</option><option value="印刷喷绘">印刷喷绘</option><option value="其他">其他</option></select></div>
+                <div class="form-group" style="flex:0;white-space:nowrap;display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" id="templateFavorite" style="width:auto;"><label for="templateFavorite" style="margin:0;font-weight:normal;font-size:0.875rem;">⭐ 收藏</label></div>
             </div>
-            <div class="form-group full-width"><label>模板描述</label><textarea id="templateDescription" placeholder="描述这个模板适用场景"></textarea></div>
-            <div class="form-group full-width"><label>案例介绍（成功案例详细信息）</label><textarea id="templateCaseInfo" placeholder="介绍成功案例的背景、效果、客户评价等信息"></textarea></div>
+            <div class="form-group full-width"><label for="templateDescription">模板描述</label><textarea id="templateDescription" placeholder="描述这个模板适用场景"></textarea></div>
+            <div class="form-group full-width"><label for="templateCaseInfo">案例介绍（成功案例详细信息）</label><textarea id="templateCaseInfo" placeholder="介绍成功案例的背景、效果、客户评价等信息"></textarea></div>
             <div class="form-group full-width">
-                <label>📷 案例照片（可添加多张）</label>
+                <label for="templatePhotoUrlInput">📷 案例照片（可添加多张）</label>
                 <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;align-items:center;">
                     <input type="text" id="templatePhotoUrlInput" placeholder="输入图片URL（http://或https://开头）" style="flex:1;padding:0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.875rem;">
                     <button type="button" class="btn btn-outline btn-sm" onclick="addTemplatePhotoByUrl()">🔗 添加URL图片</button>
@@ -8925,11 +8959,11 @@ function safeExecuteAsync(fn, defaultVal) {
         <div id="sizeInputProductName" style="font-weight:600;color:var(--primary);margin-bottom:1rem;font-size:1.125rem;"></div>
         <div class="form-grid" style="gap:1rem;">
             <div class="form-group">
-                <label>宽度（米）</label>
+                <label for="sizeInputWidth">宽度（米）</label>
                 <input type="number" id="sizeInputWidth" step="0.01" min="0" placeholder="请输入宽度" style="width:100%;" oninput="updateSizePreview()">
             </div>
             <div class="form-group">
-                <label>高度（米）</label>
+                <label for="sizeInputHeight">高度（米）</label>
                 <input type="number" id="sizeInputHeight" step="0.01" min="0" placeholder="请输入高度" style="width:100%;" oninput="updateSizePreview()">
             </div>
         </div>
@@ -10318,7 +10352,7 @@ function cleanupBeforeUnload() {
 // 注册页面卸载事件
 if (typeof window !== 'undefined') {
     window.addEventListener('beforeunload', cleanupBeforeUnload);
-    window.addEventListener('unload', cleanupBeforeUnload);
+    window.addEventListener('pagehide', cleanupBeforeUnload);
 }
 
 function addToHistory(action, details){
@@ -11112,9 +11146,11 @@ function showChangePasswordModal() {
 function handleLogin(event) {
     event.preventDefault();
     
-    const password = document.getElementById('login-password').value;
+    const passwordInput = document.getElementById('login-password');
     const errorDiv = document.getElementById('login-error');
-    const autoLoginChecked = document.getElementById('loginAutoLogin').checked;
+    const autoLoginCheckbox = document.getElementById('loginAutoLogin');
+    const password = passwordInput?.value || '';
+    const autoLoginChecked = autoLoginCheckbox?.checked || false;
     
     if (password === getAccessPassword()) {
         const overlay = document.getElementById('login-overlay');
@@ -11226,7 +11262,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if ('requestIdleCallback' in window) {
             requestIdleCallback(() => {
-                toggleProductView();
+                initProductViewButton();
                 renderProducts();
                 renderTemplates();
                 renderCustomers();
@@ -11234,11 +11270,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderAnalytics();
                 updateCloudSyncStatus();
                 hideLoader();
+                initProductViewButton();
                 initTemplateViewButton();
             });
         } else {
             setTimeout(() => {
-                toggleProductView();
+                initProductViewButton();
                 renderProducts();
                 renderTemplates();
                 renderCustomers();
@@ -12494,13 +12531,16 @@ function handlePaymentMethodChange(){
 function syncPaymentMethod(){
 }
 function toggleShowNotes(){
-    const checked = document.getElementById('showNotesCheckbox').checked;
+    const checkbox = document.getElementById('showNotesCheckbox');
+    const checked = checkbox?.checked || false;
     appData.currentQuote.showNotes = checked;
 }
 function getPaymentMethod(){
     var sel=document.getElementById('paymentMethod');
+    if(!sel) return '';
     if(sel.value==='custom'){
-        return document.getElementById('paymentMethodCustom').value.trim();
+        const customInput = document.getElementById('paymentMethodCustom');
+        return customInput?.value.trim() || '';
     }
     return sel.value;
 }
@@ -14509,10 +14549,12 @@ function performCalculateTotals(){
         let pmr = ad > 0 ? (tp / ad * 100) : 0;
         
         // 显示/隐藏折扣行
-        if(tierDiscountTotal > 0.001){ document.getElementById('tierDiscountRow').style.display='flex'; }
-        else { document.getElementById('tierDiscountRow').style.display='none'; }
-        if(dr < 100){ document.getElementById('discountRow').style.display='flex'; document.getElementById('afterDiscountRow').style.display='flex'; }
-        else { document.getElementById('discountRow').style.display='none'; document.getElementById('afterDiscountRow').style.display='none'; }
+        const tierDiscountRow = document.getElementById('tierDiscountRow');
+        const discountRow = document.getElementById('discountRow');
+        const afterDiscountRow = document.getElementById('afterDiscountRow');
+        if(tierDiscountRow) tierDiscountRow.style.display = tierDiscountTotal > 0.001 ? 'flex' : 'none';
+        if(discountRow) discountRow.style.display = dr < 100 ? 'flex' : 'none';
+        if(afterDiscountRow) afterDiscountRow.style.display = dr < 100 ? 'flex' : 'none';
 
         const tcEl = document.getElementById('totalCost');
         const stEl = document.getElementById('totalProfit');
@@ -25287,14 +25329,16 @@ function calculateDoorHeaderQuote() {
     const needCrane = document.getElementById('doorHeaderCrane').checked;
     // 税率和运输
     const taxRate = parseInt(document.getElementById('doorHeaderTaxRate').value) || 0;
-    const priceMode = document.getElementById('doorHeaderPriceMode').value; // 'in'=含税价, 'ex'=未税价
-    const transportDistance = parseInt(document.getElementById('doorHeaderTransportDistance').value) || 0;
+    const priceMode = document.getElementById('doorHeaderPriceMode')?.value || 'in'; // 'in'=含税价, 'ex'=未税价
+    const transportDistance = parseInt(document.getElementById('doorHeaderTransportDistance')?.value) || 0;
 
     // 验证
     if (width <= 0 || height <= 0) {
         showToast('❌ 请输入有效的门头宽度和高度', 'warning');
-        if (width <= 0) document.getElementById('doorHeaderWidth').focus();
-        else document.getElementById('doorHeaderHeight').focus();
+        const widthEl = document.getElementById('doorHeaderWidth');
+        const heightEl = document.getElementById('doorHeaderHeight');
+        if (width <= 0 && widthEl) widthEl.focus();
+        else if (heightEl) heightEl.focus();
         return;
     }
     if (width > 30 || height > 10) {
@@ -25868,11 +25912,12 @@ function calculateDoorHeaderQuote() {
 // 渲染门头报价结果（增强版：成本/售价双栏、材料汇总、工期估算）
 function renderDoorHeaderResult(result) {
     const resultDiv = document.getElementById('doorHeaderResult');
-    resultDiv.style.display = 'block';
+    if (resultDiv) resultDiv.style.display = 'block';
 
     const markupLabel = result.markup > 0 ? ` (含${result.markup}%加价)` : ' (成本价)';
     const wasteLabel = result.wasteRate > 0 ? ` | 损耗率: ${result.wasteRate}%` : '';
-    const floorLabel = document.getElementById('doorHeaderFloor').value !== '1' ? `(${document.getElementById('doorHeaderFloor').value}楼加价)` : '';
+    const floorValue = document.getElementById('doorHeaderFloor')?.value || '1';
+    const floorLabel = floorValue !== '1' ? `(${floorValue}楼加价)` : '';
 
     // 分类明细表格（成本/售价双栏）
     let categoryHtml = '';
@@ -28285,18 +28330,20 @@ function analyzeRequirementsAndGenerateQuote(input, budget, materialInfo) {
         let height = hasManualMaterial ? materialInfo.height : 1.2;
         let charCount = hasManualMaterial && materialInfo.charCount > 0 ? materialInfo.charCount : 4;
         let charSize = hasManualMaterial && materialInfo.charSize > 0 ? materialInfo.charSize : 40;
+        let sizeMatch = null;
+        let charCountMatch = null;
         
         // 否则从输入中提取尺寸
         if (!hasManualMaterial) {
             const sizePattern = /(\d+\.?\d*)\s*[米mM×xX*\*]\s*(\d+\.?\d*)\s*[米mM]?/;
-            const sizeMatch = input.match(sizePattern);
+            sizeMatch = input.match(sizePattern);
             if (sizeMatch) {
                 width = parseFloat(sizeMatch[1]);
                 height = parseFloat(sizeMatch[2]);
             }
             
             const charCountPattern = /(\d+)\s*[个只字]/;
-            const charCountMatch = input.match(charCountPattern);
+            charCountMatch = input.match(charCountPattern);
             if (charCountMatch) {
                 charCount = parseInt(charCountMatch[1]);
             }
@@ -29872,12 +29919,17 @@ var viewModeLabels = {
     'large': '🖼️ 大图',
     'tile': '📄 平铺'
 };
+// 初始化产品库视图切换按钮文字
+function initProductViewButton() {
+    const btn = document.getElementById('productViewToggleBtn');
+    if (btn) { btn.textContent = viewModeLabels[productViewMode]; }
+}
 function toggleProductView(){
     const currentIndex = viewModes.indexOf(productViewMode);
     const nextIndex = (currentIndex + 1) % viewModes.length;
     productViewMode = viewModes[nextIndex];
     localStorage.setItem('productViewMode', productViewMode);
-    const btn = document.getElementById('viewToggleBtn');
+    const btn = document.getElementById('productViewToggleBtn');
     if(btn){ btn.textContent = viewModeLabels[productViewMode]; }
     renderProducts();
 }
@@ -30193,7 +30245,7 @@ let currentTemplateView = window.innerWidth <= 768 ? 'grid' : 'grid';
 
 // 初始化视图切换按钮文字
 function initTemplateViewButton() {
-    const btn = document.getElementById('viewToggleBtn');
+    const btn = document.getElementById('templateViewToggleBtn');
     if (btn && window.innerWidth > 768) {
         btn.innerHTML = currentTemplateView === 'grid' ? '📋 切换到列表视图' : '📐 切换到卡片视图';
     }
@@ -30207,7 +30259,7 @@ function toggleTemplateView() {
     }
     
     currentTemplateView = currentTemplateView === 'grid' ? 'list' : 'grid';
-    const btn = document.getElementById('viewToggleBtn');
+    const btn = document.getElementById('templateViewToggleBtn');
     const grid = document.getElementById('templateGrid');
     
     if (currentTemplateView === 'grid') {
@@ -30811,9 +30863,9 @@ function renderTemplates(){
                     <span class="template-total-label">模板总价</span>
                     <span class="template-total-value">¥${total.toFixed(2)}</span>
                 </div>
-                <div class="btn-group" style="margin-top:0.75rem;gap:0.25rem;">
-                    <button class="btn btn-outline btn-sm" style="flex:1;" onclick="viewTemplateDetail(${t.id})">👁️ 查看详情</button>
-                    <button class="btn btn-primary btn-sm" style="flex:1;" onclick="useTemplate(${t.id})">📥 使用模板</button>
+                <div class="btn-group template-card-actions" style="margin-top:0.75rem;gap:0.25rem;">
+                    <button class="btn btn-outline btn-sm" style="flex:1;" onclick="viewTemplateDetail(${t.id})"><span class="btn-icon">👁️</span><span class="btn-label">详情</span></button>
+                    <button class="btn btn-primary btn-sm" style="flex:1;" onclick="useTemplate(${t.id})"><span class="btn-icon">📥</span><span class="btn-label">使用</span></button>
                     <button class="btn btn-outline btn-sm" onclick="toggleTemplateFavorite(${t.id})" title="${t.isFavorite?'取消收藏':'添加收藏'}">${t.isFavorite?'⭐':'☆'}</button>
                     <button class="btn btn-outline btn-sm" onclick="openEditTemplateModal(${t.id})">✏️</button>
                     ${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteTemplate(${t.id})">🗑️</button>` : ''}
@@ -35718,7 +35770,7 @@ function showSelectiveSync() {
         const checked = selectiveSyncConfig[opt.key] ? 'checked' : '';
         html += `
             <label style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;background:var(--gray-50);border-radius:var(--radius);cursor:pointer;">
-                <input type="checkbox" ${checked} onclick="toggleSelectiveSync('${opt.key}', this)">
+                <input type="checkbox" id="selectiveSync-${opt.key}" ${checked} onclick="toggleSelectiveSync('${opt.key}', this)">
                 <div>
                     <div style="font-weight:500;">${opt.label}</div>
                     <div style="font-size:0.7rem;color:var(--gray-500);">${opt.desc}</div>
@@ -42738,7 +42790,7 @@ function renderPhotoGrid() {
         const isSelected = selectedPhotos.includes(photo.id);
         return `
         <div class="photo-item" style="background:white;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;min-height:130px;cursor:pointer;position:relative;" onclick="${photoSelectMode ? 'event.stopPropagation()' : 'viewPhoto(\'' + photo.id + '\')'}">
-            ${photoSelectMode ? `<input type="checkbox" class="photo-checkbox" style="position:absolute;top:4px;left:4px;width:16px;height:16px;z-index:10;cursor:pointer;" 
+            ${photoSelectMode ? `<input type="checkbox" id="photo-checkbox-${photo.id}" class="photo-checkbox" style="position:absolute;top:4px;left:4px;width:16px;height:16px;z-index:10;cursor:pointer;" 
                    ${isSelected ? 'checked' : ''} 
                    onclick="event.stopPropagation();togglePhotoSelection('${photo.id}')">` : ''}
             <div style="width:100%;height:90px;background:#f3f4f6;position:relative;">
