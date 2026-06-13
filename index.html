@@ -2181,6 +2181,14 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
         margin: 0 !important;
         border-radius: 0 !important;
         max-height: 100vh !important;
+        width: 100% !important;
+        overflow: hidden !important;
+    }
+    
+    #templateModal .modal-body {
+        max-height: calc(100vh - 120px) !important;
+        overflow-y: auto !important;
+        padding: 1rem !important;
     }
     
     #templateModal .form-grid {
@@ -2204,6 +2212,8 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
         padding: 0.625rem;
         font-size: 14px;
         min-height: 40px;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
     
     #templateModal textarea {
@@ -2216,21 +2226,26 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
         gap: 0.5rem;
         padding: 0.75rem;
         align-items: start;
+        overflow: hidden !important;
     }
     
     .template-item-row > .form-group {
         grid-column: auto !important;
         text-align: left;
+        min-width: 0 !important;
     }
     
     .template-item-row > .form-group:first-child {
         grid-column: 1 / -1 !important;
     }
     
+    /* 保留所有字段但优化显示 */
     .template-item-row > .form-group:nth-child(3), /* 备注 */
     .template-item-row > .form-group:nth-child(4)  /* 成本 */
     {
-        display: none !important;
+        display: flex !important;
+        flex-direction: column;
+        gap: 0.25rem;
     }
     
     .template-item-row > .form-group:last-child {
@@ -2259,6 +2274,13 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
         padding: 0.5rem;
         border: 1px solid var(--gray-300);
         border-radius: var(--radius-md);
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* 为小屏幕优化输入框大小 */
+    .template-item-row .form-group input[type="number"] {
+        max-width: 120px;
     }
 }
 
@@ -2292,28 +2314,39 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
         flex: none !important;
     }
     
-    /* 超小屏幕优化 - 进一步简化 */
+    /* 超小屏幕优化 - 紧凑显示但保留所有字段 */
     .template-item-row {
         padding: 0.5rem;
         gap: 0.375rem;
     }
     
+    /* 保留所有字段但优化显示 */
     .template-item-row > .form-group:nth-child(2), /* 规格参数 */
     .template-item-row > .form-group:nth-child(3), /* 备注 */
     .template-item-row > .form-group:nth-child(4)  /* 成本 */
     {
-        display: none !important;
+        display: flex !important;
+        flex-direction: column;
+        gap: 0.125rem;
     }
     
     .template-item-row .form-group input,
     .template-item-row .form-group select {
-        height: 38px;
-        font-size: 0.8125rem;
+        height: 36px;
+        font-size: 0.75rem;
         padding: 0.375rem;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
     
     .template-item-row .form-group label {
         font-size: 0.6875rem;
+        margin-bottom: 0.125rem;
+    }
+    
+    /* 数字输入框在超小屏幕上更紧凑 */
+    .template-item-row .form-group input[type="number"] {
+        max-width: 100px;
     }
 }
 @media (max-width: 576px) {
@@ -6381,23 +6414,26 @@ function safeExecuteAsync(fn, defaultVal) {
 </div>
         <div id="templates" class="tab-content">
             <!-- 标题行 -->
-            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
-                <div style="display:flex;align-items:center;gap:0.5rem;">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:0.75rem;gap:0.75rem;">
+                <div style="display:flex;align-items:center;gap:0.5rem;flex:1 1 auto;">
                     <span style="font-size:1.125rem;font-weight:600;">📋 报价模板库</span>
                     <span class="badge badge-secondary" id="templateCountBadge" style="font-size:0.75rem;">0 个模板</span>
                 </div>
                 
-                <div style="display:flex;align-items:center;gap:0.375rem;">
-                    <!-- 搜索框 -->
-                    <div style="min-width:180px;max-width:220px;">
+                <div style="display:flex;align-items:center;gap:0.375rem;flex:2 1 auto;min-width:0;">
+                    <!-- 搜索框 - 占满可用空间 -->
+                    <div style="flex:1 1 auto;min-width:0;">
                         <input type="text" id="templateSearch" placeholder="🔍 搜索..." oninput="searchTemplates()" style="width:100%;padding:0.5rem 0.75rem;font-size:0.8125rem;height:36px;">
                     </div>
                     <!-- 主要操作按钮 -->
-                    <div style="display:flex;gap:0.375rem;">
+                    <div style="display:flex;gap:0.375rem;flex-shrink:0;">
                         <button class="btn btn-primary template-action-btn" onclick="openAddTemplateModal()" style="padding:0.5rem 0.75rem;font-size:0.8125rem;height:36px;">➕ 新建模板</button>
                         <button class="btn btn-warning template-action-btn" onclick="openQuoteRecognitionModal()" style="padding:0.5rem 0.75rem;font-size:0.8125rem;height:36px;">📷 识别报价单</button>
                     </div>
-                    <!-- 视图切换 - 移动端隐藏 -->
+                </div>
+                
+                <!-- 视图切换按钮 - 单独一行显示 -->
+                <div style="display:flex;justify-content:flex-end;flex:1 1 auto;">
                     <button class="btn btn-outline" id="viewToggleBtn" onclick="toggleTemplateView()" style="padding:0.5rem 0.75rem;font-size:0.8125rem;height:36px;">📋 切换视图</button>
                 </div>
             </div>
@@ -6408,16 +6444,36 @@ function safeExecuteAsync(fn, defaultVal) {
                     padding: 0.375rem 0.5rem;
                     font-size: 0.75rem;
                     flex-shrink: 0;
+                    white-space: nowrap;
                 }
-                @media (max-width: 480px) {
+                @media (max-width: 768px) {
                     .template-action-btn {
-                        padding: 0.25rem 0.375rem;
-                        font-size: 0.6875rem;
+                        padding: 0.3rem 0.4rem;
+                        font-size: 0.7rem;
                     }
                     #templateSearch {
                         font-size: 0.75rem !important;
-                        padding: 0.25rem 0.375rem !important;
+                        padding: 0.3rem 0.5rem !important;
                     }
+                    #viewToggleBtn {
+                        padding: 0.3rem 0.4rem;
+                        font-size: 0.7rem;
+                    }
+                }
+                @media (max-width: 480px) {
+                    .template-action-btn {
+                        padding: 0.25rem 0.3rem;
+                        font-size: 0.65rem;
+                    }
+                    #templateSearch {
+                        font-size: 0.7rem !important;
+                        padding: 0.25rem 0.4rem !important;
+                    }
+                    #viewToggleBtn {
+                        padding: 0.25rem 0.3rem;
+                        font-size: 0.65rem;
+                    }
+
                 }
             </style>
             
