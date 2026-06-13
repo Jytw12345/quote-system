@@ -300,13 +300,51 @@
         @media (max-width: 640px) {
             body { font-size: 12px; }
             .container { padding: 0.5rem 0.25rem 1rem 0.25rem; }
-            #aiPanelCultureWall > div { padding: 0.5rem !important; }
+            #aiPanelCultureWall { max-width: none !important; margin: 0 -0.5rem !important; width: calc(100% + 1rem) !important; border-radius: 0 !important; }
+            #aiPanelCultureWall > div { padding: 0.75rem !important; margin: 0 !important; }
             #aiPanelCultureWall .btn { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
             #aiPanelCultureWall input, #aiPanelCultureWall select { padding: 0.2rem; font-size: 0.7rem; }
-            #aiPanelCultureWall .cultureWallLayout { gap: 0.375rem !important; }
+            #aiPanelCultureWall .cultureWallLayout { gap: 0.375rem !important; grid-template-columns: 1fr !important; }
             #aiPanelCultureWall span, #aiPanelCultureWall label { font-size: 0.65rem !important; }
-            #cultureWallPriceEditPanel { padding: 0.375rem !important; max-height: 200px !important; }
+            #cultureWallPriceEditPanel { padding: 0.375rem !important; max-height: 200px !important; overflow-x: hidden !important; max-width: none !important; margin: 0 -0.375rem !important; width: calc(100% + 0.75rem) !important; }
             #cultureWallPriceEditPanel .btn { padding: 0.2rem 0.4rem; font-size: 0.65rem; }
+            #cultureWallPriceEditFields { overflow-x: auto; }
+            #cultureWallPriceEditFields input[type="number"] { width: 50px !important; max-width: 50px !important; }
+            #cultureWallPriceEditFields .price-row { flex-wrap: wrap; }
+            #cultureWallPriceEditFields .price-row > * { min-width: 0; }
+            /* 文化空间价格参数设置模块移动端优化 */
+            #aiPanelCultureWall .cultureWallPriceGrid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 0.2rem !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            #aiPanelCultureWall .cultureWallPriceGrid > div {
+                padding: 0.25rem !important;
+                min-width: 0 !important;
+                box-sizing: border-box !important;
+            }
+            #aiPanelCultureWall .cultureWallPriceGrid input,
+            #aiPanelCultureWall .cultureWallPriceGrid select {
+                font-size: 0.75rem !important;
+                padding: 0.3rem 0.4rem !important;
+                border-radius: 6px !important;
+                border: 1px solid #fcd34d !important;
+            }
+            #aiPanelCultureWall .cultureWallPriceGrid label {
+                font-size: 0.7rem !important;
+                margin-bottom: 0.2rem !important;
+                font-weight: 600 !important;
+            }
+            #aiPanelCultureWall .cultureWallPriceGrid > div {
+                padding: 0.4rem !important;
+                gap: 0.3rem !important;
+            }
+            #aiPanelCultureWall .cultureWallPriceGrid button {
+                font-size: 0.6rem !important;
+                padding: 0.2rem 0.4rem !important;
+                border-radius: 4px !important;
+            }
             .btn-sm { white-space: nowrap; }
             /* 快速搜索栏移动端优化 */
             .quick-search-bar { flex-wrap: nowrap !important; }
@@ -602,7 +640,12 @@
         }
         
         .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-        @media (max-width: 640px) { .template-grid { grid-template-columns: 1fr; } }
+        .template-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; margin-bottom: 1rem; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+        @media (max-width: 768px) { 
+            .template-list { grid-template-columns: 1fr; }
+            .template-grid { grid-template-columns: 1fr; } 
+            #viewToggleBtn { display: none !important; }
+        }
         
         /* 分页控件样式 */
         .pagination-container {
@@ -799,8 +842,17 @@
         .customer-actions { display: flex; gap: 0.25rem; margin-top: auto; }
         .customer-actions .btn { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
         .customer-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
-        .history-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 1rem; margin-bottom: 0.75rem; transition: all 0.2s ease; }
+        .history-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 1rem; margin-bottom: 0.75rem; transition: all 0.2s ease; position: relative; }
         .history-card:hover { border-color: var(--primary); box-shadow: var(--shadow-md); }
+        .history-card.selected { border-color: var(--primary); background: rgba(37,99,235,0.05); }
+        .history-card .select-checkbox {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
         .history-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
         .history-title { font-size: 1rem; font-weight: 600; }
         .history-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.25rem; font-size: 0.8125rem; color: var(--gray-600); }
@@ -2158,30 +2210,55 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
         min-height: 80px;
     }
     
-    /* 项目列表移动端布局 */
+    /* 项目列表移动端布局 - 简化显示 */
     .template-item-row {
-        grid-template-columns: 1fr 1fr !important;
-        gap: 0.375rem;
-        padding: 0.625rem;
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        align-items: start;
+    }
+    
+    .template-item-row > .form-group {
+        grid-column: auto !important;
+        text-align: left;
     }
     
     .template-item-row > .form-group:first-child {
-        grid-column: 1 / -1;
+        grid-column: 1 / -1 !important;
+    }
+    
+    .template-item-row > .form-group:nth-child(3), /* 备注 */
+    .template-item-row > .form-group:nth-child(4)  /* 成本 */
+    {
+        display: none !important;
     }
     
     .template-item-row > .form-group:last-child {
-        grid-column: 1 / -1;
-        text-align: center;
+        grid-column: 1 / -1 !important;
+        text-align: right !important;
+        margin-top: 0.5rem;
+        padding-right: 0.25rem;
     }
     
-    .template-item-row .form-group input,
-    .template-item-row .form-group select {
-        height: 36px;
-        font-size: 0.8125rem;
+    .template-item-row .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
     }
     
     .template-item-row .form-group label {
         font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--gray-700);
+    }
+    
+    .template-item-row .form-group input,
+    .template-item-row .form-group select {
+        height: 40px;
+        font-size: 0.875rem;
+        padding: 0.5rem;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--radius-md);
     }
 }
 
@@ -2215,14 +2292,28 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
         flex: none !important;
     }
     
-    /* 项目列表移动端单列 */
+    /* 超小屏幕优化 - 进一步简化 */
     .template-item-row {
-        grid-template-columns: 1fr !important;
+        padding: 0.5rem;
+        gap: 0.375rem;
     }
     
-    .template-item-row > .form-group:first-child,
-    .template-item-row > .form-group:last-child {
-        grid-column: auto;
+    .template-item-row > .form-group:nth-child(2), /* 规格参数 */
+    .template-item-row > .form-group:nth-child(3), /* 备注 */
+    .template-item-row > .form-group:nth-child(4)  /* 成本 */
+    {
+        display: none !important;
+    }
+    
+    .template-item-row .form-group input,
+    .template-item-row .form-group select {
+        height: 38px;
+        font-size: 0.8125rem;
+        padding: 0.375rem;
+    }
+    
+    .template-item-row .form-group label {
+        font-size: 0.6875rem;
     }
 }
 @media (max-width: 576px) {
@@ -6289,24 +6380,46 @@ function safeExecuteAsync(fn, defaultVal) {
             </div>
 </div>
         <div id="templates" class="tab-content">
-            <!-- 标题和操作栏 -->
-            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;margin-bottom:1rem;">
-                <!-- 标题 -->
+            <!-- 标题行 -->
+            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
                 <div style="display:flex;align-items:center;gap:0.5rem;">
                     <span style="font-size:1.125rem;font-weight:600;">📋 报价模板库</span>
+                    <span class="badge badge-secondary" id="templateCountBadge" style="font-size:0.75rem;">0 个模板</span>
                 </div>
                 
-                <!-- 主要操作按钮 -->
-                <div style="display:flex;gap:0.375rem;flex-wrap:wrap;margin-left:auto;">
-                    <button class="btn btn-primary btn-sm" style="padding:0.5rem 0.75rem;font-size:0.875rem;" onclick="openAddTemplateModal()">➕ 新建模板</button>
-                    <button class="btn btn-warning btn-sm" style="padding:0.5rem 0.75rem;font-size:0.875rem;" onclick="openQuoteRecognitionModal()">📷 识别报价单</button>
-                </div>
-                
-                <!-- 搜索框 -->
-                <div style="flex:1;min-width:140px;max-width:280px;position:relative;">
-                    <input type="text" id="templateSearch" placeholder="🔍 搜索模板..." oninput="searchTemplates()" style="width:100%;padding:0.5rem 0.75rem;font-size:0.875rem;">
+                <div style="display:flex;align-items:center;gap:0.375rem;">
+                    <!-- 搜索框 -->
+                    <div style="min-width:180px;max-width:220px;">
+                        <input type="text" id="templateSearch" placeholder="🔍 搜索..." oninput="searchTemplates()" style="width:100%;padding:0.5rem 0.75rem;font-size:0.8125rem;height:36px;">
+                    </div>
+                    <!-- 主要操作按钮 -->
+                    <div style="display:flex;gap:0.375rem;">
+                        <button class="btn btn-primary template-action-btn" onclick="openAddTemplateModal()" style="padding:0.5rem 0.75rem;font-size:0.8125rem;height:36px;">➕ 新建模板</button>
+                        <button class="btn btn-warning template-action-btn" onclick="openQuoteRecognitionModal()" style="padding:0.5rem 0.75rem;font-size:0.8125rem;height:36px;">📷 识别报价单</button>
+                    </div>
+                    <!-- 视图切换 - 移动端隐藏 -->
+                    <button class="btn btn-outline" id="viewToggleBtn" onclick="toggleTemplateView()" style="padding:0.5rem 0.75rem;font-size:0.8125rem;height:36px;">📋 切换视图</button>
                 </div>
             </div>
+            
+            <!-- 响应式样式 -->
+            <style>
+                .template-action-btn {
+                    padding: 0.375rem 0.5rem;
+                    font-size: 0.75rem;
+                    flex-shrink: 0;
+                }
+                @media (max-width: 480px) {
+                    .template-action-btn {
+                        padding: 0.25rem 0.375rem;
+                        font-size: 0.6875rem;
+                    }
+                    #templateSearch {
+                        font-size: 0.75rem !important;
+                        padding: 0.25rem 0.375rem !important;
+                    }
+                }
+            </style>
             
             <!-- AI智能助手面板 -->
             <div id="aiAssistantPanel" style="background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;border:1px solid #fcd34d;">
@@ -8714,7 +8827,7 @@ function safeExecuteAsync(fn, defaultVal) {
             <input type="hidden" id="templateId">
             <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;" class="full-width">
                 <div class="form-group" style="flex:2;min-width:200px;"><label>模板名称 *</label><input type="text" id="templateName" required placeholder="例如：开业庆典全套广告报价"></div>
-                <div class="form-group" style="flex:1;min-width:140px;"><label>模板分类</label><select id="templateCategory" style="width:100%;padding:0.5rem;"><option value="">无分类</option><option value="文化墙-党建">文化墙-党建</option><option value="文化墙-企业">文化墙-企业</option><option value="文化墙-校园">文化墙-校园</option><option value="文化墙-社区">文化墙-社区</option><option value="庆典活动">庆典活动</option><option value="展览展示">展览展示</option><option value="广告制作">广告制作</option><option value="标识标牌">标识标牌</option><option value="印刷喷绘">印刷喷绘</option><option value="其他">其他</option></select></div>
+                <div class="form-group" style="flex:1;min-width:140px;"><label>模板分类</label><select id="templateCategory" style="width:100%;padding:0.5rem;"><option value="">无分类</option><option value="文化墙-党建">文化墙-党建</option><option value="文化墙-企业">文化墙-企业</option><option value="文化墙-校园">文化墙-校园</option><option value="文化墙-社区">文化墙-社区</option><option value="门头招牌">门头招牌</option><option value="庆典活动">庆典活动</option><option value="展览展示">展览展示</option><option value="广告制作">广告制作</option><option value="标识标牌">标识标牌</option><option value="印刷喷绘">印刷喷绘</option><option value="其他">其他</option></select></div>
                 <div class="form-group" style="flex:0;white-space:nowrap;display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" id="templateFavorite" style="width:auto;"><label style="margin:0;font-weight:normal;font-size:0.875rem;">⭐ 收藏</label></div>
             </div>
             <div class="form-group full-width"><label>模板描述</label><textarea id="templateDescription" placeholder="描述这个模板适用场景"></textarea></div>
@@ -11065,6 +11178,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderAnalytics();
                 updateCloudSyncStatus();
                 hideLoader();
+                initTemplateViewButton();
             });
         } else {
             setTimeout(() => {
@@ -11076,6 +11190,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderAnalytics();
                 updateCloudSyncStatus();
                 hideLoader();
+                initTemplateViewButton();
             }, 100);
         }
     });
@@ -12453,6 +12568,920 @@ function clearCurrentQuote(){
         document.getElementById('showNotesCheckbox').checked = true;
     }
 }
+
+// 从报价历史生成合同
+function generateContractFromQuote(quote) {
+    // 创建合同数据
+    const contract = {
+        id: 'contract_' + Date.now(),
+        quoteId: quote.id,
+        clientName: quote.clientName || '未命名客户',
+        clientContact: quote.clientContactPerson || '',
+        clientPhone: quote.clientPhone || '',
+        clientEmail: quote.clientEmail || '',
+        clientAddress: quote.clientAddress || '',
+        quoteNumber: quote.quoteNumber || '未编号',
+        quoteDate: quote.createdAt || new Date().toISOString().slice(0,10),
+        contractDate: new Date().toISOString().slice(0,10),
+        totalAmount: quote.total || 0,
+        paymentMethod: quote.paymentMethod || '协商确定',
+        items: quote.items || [],
+        status: 'draft',
+        createdAt: new Date().toISOString()
+    };
+    
+    return contract;
+}
+
+// 生成并下载合同
+function downloadContract(quote) {
+    const contract = generateContractFromQuote(quote);
+    
+    // 创建合同HTML
+    const contractHTML = `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合同 - ${contract.clientName}</title>
+    <style>
+        body { font-family: 'Microsoft YaHei', sans-serif; line-height: 1.6; margin: 20px; }
+        .contract-header { text-align: center; margin-bottom: 30px; }
+        .contract-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        .contract-info { margin-bottom: 20px; }
+        .contract-info table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .contract-info td { padding: 8px; border: 1px solid #ddd; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .items-table th, .items-table td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        .items-table th { background-color: #f5f5f5; font-weight: bold; }
+        .total-section { text-align: right; font-size: 18px; font-weight: bold; margin-top: 20px; }
+        .signature-section { display: flex; justify-content: space-between; margin-top: 50px; }
+        .signature-block { text-align: center; width: 45%; }
+        .signature-line { border-top: 1px solid #000; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="contract-header">
+        <div class="contract-title">广告制作合同</div>
+        <div>合同编号: ${contract.id}</div>
+    </div>
+    
+    <div class="contract-info">
+        <table>
+            <tr>
+                <td width="30%"><strong>甲方（客户）:</strong></td>
+                <td>${contract.clientName}</td>
+                <td width="30%"><strong>合同日期:</strong></td>
+                <td>${contract.contractDate}</td>
+            </tr>
+            <tr>
+                <td><strong>联系人:</strong></td>
+                <td>${contract.clientContact}</td>
+                <td><strong>联系电话:</strong></td>
+                <td>${contract.clientPhone}</td>
+            </tr>
+            <tr>
+                <td><strong>联系邮箱:</strong></td>
+                <td>${contract.clientEmail}</td>
+                <td><strong>联系地址:</strong></td>
+                <td>${contract.clientAddress}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="contract-content">
+        <h3>一、服务内容</h3>
+        <p>甲方委托乙方制作以下广告产品：</p>
+        
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>产品名称</th>
+                    <th>规格型号</th>
+                    <th>单位</th>
+                    <th>数量</th>
+                    <th>单价（元）</th>
+                    <th>金额（元）</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${contract.items.map((item, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${item.name}</td>
+                    <td>${item.spec || '-'}</td>
+                    <td>${item.unit || '件'}</td>
+                    <td>${item.qty}</td>
+                    <td>${item.price.toFixed(2)}</td>
+                    <td>${(item.qty * item.price).toFixed(2)}</td>
+                </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        
+        <div class="total-section">
+            合计金额: ￥${contract.totalAmount.toFixed(2)}
+        </div>
+        
+        <h3>二、付款方式</h3>
+        <p>${contract.paymentMethod}</p>
+        
+        <h3>三、交货时间</h3>
+        <p>双方协商确定</p>
+        
+        <h3>四、双方权利与义务</h3>
+        <p>1. 甲方应提供准确的制作要求和相关资料。</p>
+        <p>2. 乙方应按照甲方要求按时完成制作。</p>
+        <p>3. 双方应保守对方的商业秘密。</p>
+        
+        <h3>五、违约责任</h3>
+        <p>任何一方违反本合同约定，应承担相应的违约责任。</p>
+        
+        <div class="signature-section">
+            <div class="signature-block">
+                <div>甲方（盖章）:</div>
+                <div class="signature-line"></div>
+                <div>签字: _______________</div>
+                <div>日期: _______________</div>
+            </div>
+            <div class="signature-block">
+                <div>乙方（盖章）:</div>
+                <div class="signature-line"></div>
+                <div>签字: _______________</div>
+                <div>日期: _______________</div>
+            </div>
+        </div>
+</body>
+</html>
+    `;
+    
+    // 导出为PDF
+    if (window.html2canvas && window.jspdf) {
+        exportContractAsPDF(contractHTML, contract.clientName);
+    } else {
+        // 先加载依赖库
+        showToast('正在加载合同生成库，请稍后...', 'info');
+        loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', function() {
+            loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', function() {
+                window.jspdf = window.jspdf || window.jsPDF;
+                exportContractAsPDF(contractHTML, contract.clientName);
+            });
+        });
+    }
+}
+
+// 导出合同为PDF
+function exportContractAsPDF(htmlContent, clientName) {
+    // 直接使用当前页面的body进行转换，避免iframe的问题
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    tempDiv.style.position = 'fixed';
+    tempDiv.style.top = '0';
+    tempDiv.style.left = '0';
+    tempDiv.style.width = '100%';
+    tempDiv.style.height = '100%';
+    tempDiv.style.background = 'white';
+    tempDiv.style.zIndex = '9999';
+    tempDiv.style.overflow = 'auto';
+    document.body.appendChild(tempDiv);
+    
+    // 等待页面渲染完成
+    setTimeout(() => {
+        html2canvas(tempDiv, {
+            scale: 2,
+            useCORS: true,
+            logging: true
+        }).then(function(canvas) {
+            try {
+                const imgData = canvas.toDataURL('image/jpeg', 0.98);
+                const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                
+                // 计算正确的缩放比例
+                const scaleX = pdfWidth / imgWidth;
+                const scaleY = scaleX;
+                const finalWidth = imgWidth * scaleX;
+                const finalHeight = imgHeight * scaleY;
+                
+                // 添加图片到PDF
+                pdf.addImage(imgData, 'JPEG', 0, 0, finalWidth, finalHeight);
+                
+                // 保存PDF
+                const fileName = `合同_${clientName}_${new Date().toISOString().slice(0,10)}.pdf`;
+                pdf.save(fileName);
+                
+                showToast(`合同已成功生成并下载: ${fileName}`, 'success');
+            } catch (error) {
+                console.error('PDF生成错误:', error);
+                showToast('合同生成失败: ' + error.message, 'error');
+            } finally {
+                // 移除临时div
+                document.body.removeChild(tempDiv);
+            }
+        }).catch(function(error) {
+            console.error('html2canvas错误:', error);
+            showToast('合同生成失败: ' + error.message, 'error');
+            document.body.removeChild(tempDiv);
+        });
+    }, 500); // 等待500毫秒确保渲染完成
+}
+
+// 显示导出选项
+function showExportOptions() {
+    const selectedQuotes = document.querySelectorAll('.history-card.selected');
+    if (selectedQuotes.length === 0) {
+        showToast('请先选择要生成合同的报价单', 'warning');
+        return;
+    }
+    
+    const optionsDiv = document.createElement('div');
+    optionsDiv.className = 'modal-overlay';
+    optionsDiv.innerHTML = `
+        <div class="modal" style="max-width: 400px; margin: auto;">
+            <div class="modal-header">
+                <h3>选择导出格式</h3>
+                <button class="close-btn" onclick="this.closest('.modal-overlay').remove()">×</button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <div class="format-options">
+                    <button class="btn btn-primary" onclick="exportSelectedContracts('pdf')" style="width: 100%; margin-bottom: 0.75rem; padding: 1rem;">
+                        📄 PDF格式 (适合打印)
+                    </button>
+                    <button class="btn btn-success" onclick="exportSelectedContracts('word')" style="width: 100%; padding: 1rem;">
+                        📘 Word格式 (可编辑)
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(optionsDiv);
+}
+
+// 导出选中的合同
+function exportSelectedContracts(format) {
+    try {
+        const selectedQuotes = document.querySelectorAll('.history-card.selected');
+        if (selectedQuotes.length === 0) {
+            showToast('请先选择要生成合同的报价单', 'warning');
+            return;
+        }
+        
+        // 关闭模态框
+        const overlay = document.querySelector('.modal-overlay');
+        if (overlay) overlay.remove();
+        
+        if (confirm(`确定要为选中的 ${selectedQuotes.length} 个报价单生成${format === 'pdf' ? 'PDF' : 'Word'}合同吗？`)) {
+            selectedQuotes.forEach((card, index) => {
+                const quoteId = card.dataset.id;
+                // 延迟生成，避免性能问题
+                setTimeout(() => {
+                    loadQuoteFromHistory(quoteId).then(quote => {
+                        if (quote) {
+                            if (format === 'pdf') {
+                                downloadContractPDF(quote);
+                            } else {
+                                downloadContractWord(quote);
+                            }
+                        } else {
+                            showToast(`无法加载报价单: ${quoteId}`, 'error');
+                        }
+                    }).catch(error => {
+                        console.error('加载报价单错误:', error);
+                        showToast(`加载报价单失败: ${error.message}`, 'error');
+                    });
+                }, index * 1000); // 每秒生成一个
+            });
+            showToast(`开始批量生成${format === 'pdf' ? 'PDF' : 'Word'}合同，共 ${selectedQuotes.length} 个`, 'success');
+        }
+    } catch (error) {
+        console.error('导出合同错误:', error);
+        showToast('导出合同失败: ' + error.message, 'error');
+    }
+}
+
+// 生成并下载PDF合同
+function downloadContractPDF(quote) {
+    try {
+        const contract = generateContractFromQuote(quote);
+        
+        // 创建合同HTML
+        const contractHTML = generateContractHTML(contract);
+        
+        // 导出为PDF
+        if (window.html2canvas && window.jspdf) {
+            exportContractAsPDF(contractHTML, contract.clientName);
+        } else {
+            // 先加载依赖库
+            showToast('正在加载合同生成库，请稍后...', 'info');
+            loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', function() {
+                loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', function() {
+                    window.jspdf = window.jspdf || window.jsPDF;
+                    exportContractAsPDF(contractHTML, contract.clientName);
+                });
+            });
+        }
+    } catch (error) {
+        console.error('PDF合同生成错误:', error);
+        showToast('PDF合同生成失败: ' + error.message, 'error');
+    }
+}
+
+// 生成并下载Word合同
+function downloadContractWord(quote) {
+    try {
+        const contract = generateContractFromQuote(quote);
+        
+        // 创建Word文档内容（使用HTML格式，优化A4版面）
+        const contractHTML = generateContractHTML(contract);
+        
+        // 创建Word文档的头部信息，包含A4页面设置
+        const wordContent = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+    <meta charset="UTF-8">
+    <title>合同 - ${contract.clientName}</title>
+    <!-- Word文档样式和A4页面设置 -->
+    <style>
+        @page {
+            size: A4;
+            margin: 18mm 15mm 18mm 15mm;
+            mso-header-margin: 5mm;
+            mso-footer-margin: 5mm;
+            mso-paper-source: 0;
+        }
+        body {
+            font-family: 'Microsoft YaHei UI', 'Microsoft YaHei', 'SimSun', 'Arial Unicode MS', sans-serif;
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+            font-size: 10.5pt;
+            color: #000;
+            background: #fff;
+        }
+        .contract-container {
+            width: 100%;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 0;
+        }
+        .contract-header {
+            text-align: center;
+            margin-bottom: 20pt;
+            padding-bottom: 10pt;
+            border-bottom: 2px solid #000;
+        }
+        .contract-title {
+            font-size: 20pt;
+            font-weight: bold;
+            margin-bottom: 8pt;
+            color: #000;
+            letter-spacing: 2pt;
+            line-height: 1.2;
+        }
+        .contract-subtitle {
+            font-size: 9.5pt;
+            color: #333;
+            margin-bottom: 3pt;
+            font-weight: 500;
+            letter-spacing: 0.5pt;
+            line-height: 1.3;
+        }
+        .contract-info {
+            margin-bottom: 15pt;
+        }
+        .contract-info table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15pt;
+            font-size: 10.5pt;
+            border: 2px solid #000;
+        }
+        .contract-info td {
+            padding: 6pt 8pt;
+            border: 1px solid #000;
+            vertical-align: top;
+            min-height: 24pt;
+        }
+        .contract-info td:first-child {
+            background-color: #f8f8f8;
+            font-weight: bold;
+            width: 25%;
+        }
+        .contract-info strong {
+            font-weight: bold;
+            color: #000;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12pt;
+            font-size: 9.5pt;
+        }
+        .items-table th, .items-table td {
+            padding: 3pt 4pt;
+            border: 1px solid #000;
+            text-align: center;
+            min-height: 14pt;
+            line-height: 1.3;
+        }
+        .items-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            font-size: 9.5pt;
+            color: #000;
+            border-bottom: 2px solid #000;
+        }
+        .items-table td.left-align {
+            text-align: left;
+        }
+        .total-section {
+            text-align: right;
+            font-size: 11pt;
+            font-weight: bold;
+            margin-top: 12pt;
+            padding-top: 8pt;
+            border-top: 1px solid #000;
+        }
+        .content-section {
+            margin-bottom: 12pt;
+        }
+        .content-section h3 {
+            font-size: 11.5pt;
+            font-weight: bold;
+            margin-bottom: 6pt;
+            color: #000;
+            letter-spacing: 0.5pt;
+        }
+        .content-section p {
+            margin-bottom: 4pt;
+            text-indent: 22pt;
+            text-align: justify;
+            font-size: 10.5pt;
+            line-height: 1.4;
+        }
+        .signature-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20pt;
+            padding-top: 10pt;
+            border-top: 1px solid #000;
+        }
+        .signature-block {
+            text-align: center;
+            width: 45%;
+            font-size: 10.5pt;
+            padding: 0;
+        }
+        .signature-line {
+            border-top: 2px solid #000;
+            margin: 10pt 0 8pt 0;
+            width: 100%;
+            max-width: 150px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .signature-label {
+            font-weight: bold;
+            margin-bottom: 6pt;
+            font-size: 11pt;
+            color: #000;
+        }
+    </style>
+    <!-- Word特定设置 -->
+    <!--[if gte mso 9]>
+    <xml>
+        <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>100</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+            <w:DoNotHyphenateCaps/>
+            <w:PunctuationKerning/>
+            <w:ValidateAgainstSchemas/>
+            <w:SaveIfXMLInvalid>false</w:SaveIfXMLInvalid>
+            <w:IgnoreMixedContent>false</w:IgnoreMixedContent>
+            <w:AlwaysShowPlaceholderText>false</w:AlwaysShowPlaceholderText>
+            <w:Compatibility>
+                <w:BreakWrappedTables/>
+                <w:SnapToGridInCell/>
+                <w:WrapTextWithPunct/>
+                <w:UseAsianBreakRules/>
+                <w:DontGrowAutofit/>
+                <w:UseFELayout/>
+            </w:Compatibility>
+            <w:BrowserLevel>MicrosoftInternetExplorer4</w:BrowserLevel>
+        </w:WordDocument>
+    </xml>
+    <![endif]-->
+</head>
+<body>
+    <div class="contract-container">
+        ${contractHTML}
+    </div>
+</body>
+</html>
+    `;
+        
+        // 创建下载链接
+        const blob = new Blob([wordContent], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `合同_${contract.clientName}_${new Date().toISOString().slice(0,10)}.doc`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showToast(`Word合同已成功生成并下载: 合同_${contract.clientName}_${new Date().toISOString().slice(0,10)}.doc`, 'success');
+    } catch (error) {
+        console.error('Word合同生成错误:', error);
+        showToast('Word合同生成失败: ' + error.message, 'error');
+    }
+}
+
+// 生成合同HTML内容
+function generateContractHTML(contract) {
+    return `
+    <div class="contract-header">
+        <div class="contract-title">广告制作合同</div>
+        <div class="contract-subtitle">合同编号: ${contract.id}</div>
+        <div class="contract-subtitle">报价单编号: ${contract.quoteNumber}</div>
+        <div class="contract-subtitle">报价日期: ${contract.quoteDate}</div>
+    </div>
+    
+    <div class="contract-info">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td width="90" align="right" style="padding:4pt 8pt 4pt 0;white-space:nowrap;"><strong>甲方（客户）:</strong></td>
+                <td style="padding:4pt 0;">${contract.clientName}</td>
+                <td width="80" align="right" style="padding:4pt 8pt 4pt 15pt;white-space:nowrap;"><strong>合同日期:</strong></td>
+                <td style="padding:4pt 0;">${contract.contractDate}</td>
+            </tr>
+            <tr>
+                <td align="right" style="padding:4pt 8pt 4pt 0;white-space:nowrap;"><strong>联系人:</strong></td>
+                <td style="padding:4pt 0;">${contract.clientContact || ' -'}</td>
+                <td align="right" style="padding:4pt 8pt 4pt 15pt;white-space:nowrap;"><strong>联系电话:</strong></td>
+                <td style="padding:4pt 0;">${contract.clientPhone || ' -'}</td>
+            </tr>
+            <tr>
+                <td align="right" style="padding:4pt 8pt 4pt 0;white-space:nowrap;"><strong>联系邮箱:</strong></td>
+                <td style="padding:4pt 0;">${contract.clientEmail || ' -'}</td>
+                <td align="right" style="padding:4pt 8pt 4pt 15pt;white-space:nowrap;"><strong>联系地址:</strong></td>
+                <td style="padding:4pt 0;">${contract.clientAddress || ' -'}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="content-section">
+        <h3>一、服务内容</h3>
+        <p>甲方委托乙方制作以下广告产品：</p>
+        
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th class="left-align">产品名称</th>
+                    <th>规格型号</th>
+                    <th>单位</th>
+                    <th>数量</th>
+                    <th>单价（元）</th>
+                    <th>金额（元）</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${contract.items.map((item, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td class="left-align">${item.name}</td>
+                    <td>${item.spec || '-'}</td>
+                    <td>${item.unit || '件'}</td>
+                    <td>${item.qty}</td>
+                    <td>${item.price.toFixed(2)}</td>
+                    <td>${(item.qty * item.price).toFixed(2)}</td>
+                </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        
+        <div class="total-section">
+            合计金额: ￥${contract.totalAmount.toFixed(2)}
+        </div>
+    </div>
+    
+    <div class="content-section">
+        <h3>二、付款方式</h3>
+        <p>${contract.paymentMethod}</p>
+    </div>
+    
+    <div class="content-section">
+        <h3>三、交货时间</h3>
+        <p>双方协商确定</p>
+    </div>
+    
+    <div class="content-section">
+        <h3>四、双方权利与义务</h3>
+        <p>1. 甲方应提供准确的制作要求和相关资料，确保乙方能够顺利进行制作。</p>
+        <p>2. 乙方应按照甲方要求按时完成制作，并保证产品质量符合行业标准。</p>
+        <p>3. 双方应保守对方的商业秘密，不得向任何第三方泄露合同内容及相关信息。</p>
+        <p>4. 甲方应在收到产品后及时进行验收，如有异议应在3个工作日内提出。</p>
+    </div>
+    
+    <div class="content-section">
+        <h3>五、违约责任</h3>
+        <p>任何一方违反本合同约定，应承担相应的违约责任，并赔偿对方因此遭受的损失。</p>
+        <p>若甲方逾期付款，每逾期一日应按照未付款项的0.1%向乙方支付违约金。</p>
+        <p>若乙方逾期交货，每逾期一日应按照合同总金额的0.1%向甲方支付违约金。</p>
+    </div>
+    
+    <div class="content-section">
+        <h3>六、争议解决</h3>
+        <p>本合同在履行过程中发生的争议，由双方当事人协商解决；协商不成的，任何一方均有权向合同签订地人民法院提起诉讼。</p>
+    </div>
+    
+    <div class="content-section">
+        <h3>七、其他条款</h3>
+        <p>本合同自双方签字盖章之日起生效，一式两份，甲乙双方各执一份，具有同等法律效力。</p>
+        <p>本合同未尽事宜，可由双方另行签订补充协议，补充协议与本合同具有同等法律效力。</p>
+    </div>
+    
+    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+            <td width="50%" valign="top">
+                <div style="text-align:left;">
+                    <div style="font-weight:bold;margin-bottom:8pt;">甲方（盖章）:</div>
+                    <div style="border-top:2px solid #000;width:150px;margin-bottom:8pt;"></div>
+                    <div style="margin-bottom:4pt;">签字: ____________________</div>
+                    <div>日期: _______________</div>
+                </div>
+            </td>
+            <td width="50%" valign="top">
+                <div style="text-align:left;">
+                    <div style="font-weight:bold;margin-bottom:8pt;">乙方（盖章）:</div>
+                    <div style="border-top:2px solid #000;width:150px;margin-bottom:8pt;"></div>
+                    <div style="margin-bottom:4pt;">签字: ____________________</div>
+                    <div>日期: _______________</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+    `;
+}
+
+
+
+
+
+// 更新版本状态
+function updateVersionStatus(quoteId, versionNumber, newStatus) {
+    try {
+        const quote = appData.quoteHistory.find(h => h.id === quoteId);
+        if (!quote) {
+            showToast('未找到报价单', 'error');
+            return;
+        }
+        
+        const version = quote.versions.find(v => v.versionNumber === versionNumber);
+        if (!version) {
+            showToast('未找到指定版本', 'error');
+            return;
+        }
+        
+        // 更新版本状态
+        version.status = newStatus;
+        version.updatedAt = new Date().toISOString();
+        
+        // 如果是最新版本，同时更新主报价单状态
+        const isLatest = versionNumber === (quote.version || quote.versions.length);
+        if (isLatest) {
+            quote.status = newStatus;
+            quote.updatedAt = new Date().toISOString();
+        }
+        
+        saveQuoteHistory();
+        renderHistory();
+        
+        // 关闭模态框
+        const overlay = document.querySelector('.modal-overlay');
+        if (overlay) overlay.remove();
+        
+        const statusLabels = { pending: '⏳ 待跟进', quoted: '📤 已报价', ordered: '✅ 已通过', cancelled: '❌ 已拒绝', expired: '⏰ 已过期' };
+        showToast(`版本状态已更新为：${statusLabels[newStatus]}`, 'success');
+        
+    } catch (error) {
+        console.error('更新版本状态错误:', error);
+        showToast('更新版本状态失败: ' + error.message, 'error');
+    }
+}
+
+// 从版本生成Word合同
+function generateWordContractFromVersion(quoteId, versionNumber) {
+    try {
+        const quote = appData.quoteHistory.find(h => h.id === quoteId);
+        if (!quote) {
+            showToast('未找到报价单', 'error');
+            return;
+        }
+        
+        const version = quote.versions.find(v => v.versionNumber === versionNumber);
+        if (!version) {
+            showToast('未找到指定版本', 'error');
+            return;
+        }
+        
+        // 创建版本合同数据
+        const contractQuote = {
+            id: quote.id,
+            clientName: quote.clientName || '未命名客户',
+            clientContactPerson: quote.clientContactPerson || '',
+            clientPhone: quote.clientPhone || '',
+            clientEmail: quote.clientEmail || '',
+            clientAddress: quote.clientAddress || '',
+            quoteNumber: quote.quoteNumber || '未编号',
+            createdAt: version.createdAt || quote.createdAt,
+            paymentMethod: quote.paymentMethod || '协商确定',
+            items: version.items || [],
+            total: version.finalTotal || 0,
+            finalTotal: version.finalTotal || 0
+        };
+        
+        // 直接生成Word合同
+        downloadContractWord(contractQuote);
+        
+    } catch (error) {
+        console.error('生成Word合同错误:', error);
+        showToast('生成Word合同失败: ' + error.message, 'error');
+    }
+}
+
+// 为版本生成PDF合同
+function downloadContractPDFForVersion(quote) {
+    // 解析JSON字符串
+    if (typeof quote === 'string') {
+        quote = JSON.parse(quote);
+    }
+    downloadContractPDF(quote);
+}
+
+// 为版本生成Word合同
+function downloadContractWordForVersion(quote) {
+    // 解析JSON字符串
+    if (typeof quote === 'string') {
+        quote = JSON.parse(quote);
+    }
+    downloadContractWord(quote);
+}
+
+// 加载脚本
+function loadScript(url, callback) {
+    const script = document.createElement('script');
+    script.src = url;
+    script.onload = callback;
+    script.onerror = function() {
+        showToast('加载脚本失败，请检查网络连接', 'error');
+    };
+    document.head.appendChild(script);
+}
+
+// 批量选择模式
+let batchSelectMode = false;
+
+// 切换批量选择模式
+function toggleBatchSelectMode() {
+    batchSelectMode = !batchSelectMode;
+    const btn = document.getElementById('batchSelectBtn');
+    const generateBtn = document.getElementById('batchGenerateBtn');
+    
+    if (batchSelectMode) {
+        btn.textContent = '✖️ 取消选择';
+        btn.classList.remove('btn-outline');
+        btn.classList.add('btn-primary');
+        generateBtn.style.display = 'inline-block';
+        
+        // 添加选择复选框
+        addSelectCheckboxes();
+        // 添加全选按钮
+        addSelectAllButton();
+    } else {
+        btn.textContent = '🔍 批量选择';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-outline');
+        generateBtn.style.display = 'none';
+        
+        // 移除选择复选框
+        removeSelectCheckboxes();
+        // 移除全选按钮
+        removeSelectAllButton();
+        // 清除所有选择
+        clearAllSelections();
+    }
+}
+
+// 添加选择复选框
+function addSelectCheckboxes() {
+    const historyCards = document.querySelectorAll('.history-card');
+    historyCards.forEach(card => {
+        if (!card.querySelector('.select-checkbox')) {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'select-checkbox';
+            checkbox.onchange = function() {
+                if (this.checked) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            };
+            card.appendChild(checkbox);
+        }
+    });
+}
+
+// 移除选择复选框
+function removeSelectCheckboxes() {
+    const checkboxes = document.querySelectorAll('.history-card .select-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.remove();
+    });
+}
+
+// 添加全选按钮
+function addSelectAllButton() {
+    if (document.getElementById('selectAllBtn')) return;
+    
+    const selectAllBtn = document.createElement('button');
+    selectAllBtn.id = 'selectAllBtn';
+    selectAllBtn.className = 'btn btn-sm btn-outline';
+    selectAllBtn.textContent = '✅ 全选';
+    selectAllBtn.style.marginLeft = '0.5rem';
+    selectAllBtn.onclick = function() {
+        const checkboxes = document.querySelectorAll('.history-card .select-checkbox');
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        
+        checkboxes.forEach(cb => {
+            cb.checked = !allChecked;
+            const card = cb.closest('.history-card');
+            if (cb.checked) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+        });
+        
+        this.textContent = allChecked ? '✅ 全选' : '❌ 取消全选';
+    };
+    
+    const btnGroup = document.querySelector('#history .section-title .btn-group');
+    btnGroup.appendChild(selectAllBtn);
+}
+
+// 移除全选按钮
+function removeSelectAllButton() {
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    if (selectAllBtn) {
+        selectAllBtn.remove();
+    }
+}
+
+// 清除所有选择
+function clearAllSelections() {
+    const selectedCards = document.querySelectorAll('.history-card.selected');
+    selectedCards.forEach(card => {
+        card.classList.remove('selected');
+    });
+}
+
+// 批量生成合同
+function batchGenerateContracts() {
+    const selectedQuotes = document.querySelectorAll('.history-card.selected');
+    if (selectedQuotes.length === 0) {
+        showToast('请先选择要生成合同的报价单', 'warning');
+        return;
+    }
+    
+    if (confirm(`确定要为选中的 ${selectedQuotes.length} 个报价单生成合同吗？`)) {
+        selectedQuotes.forEach((card, index) => {
+            const quoteId = card.dataset.id;
+            // 延迟生成，避免性能问题
+            setTimeout(() => {
+                loadQuoteFromHistory(quoteId).then(quote => {
+                    if (quote) {
+                        downloadContract(quote);
+                    }
+                });
+            }, index * 1000); // 每秒生成一个
+        });
+        showToast(`开始批量生成合同，共 ${selectedQuotes.length} 个`, 'success');
+    }
+}
+
 function saveCurrentCustomer(){
     const clientName = document.getElementById('quoteClientName').value.trim();
     const contactPerson = document.getElementById('quoteClientContactPerson').value.trim();
@@ -12607,8 +13636,9 @@ function toggleColumnVisibility(column, checked){
     const settings = JSON.parse(localStorage.getItem('quoteColumnHidden') || '{}');
     settings[column] = checked;
     localStorage.setItem('quoteColumnHidden', JSON.stringify(settings));
+    
     if(appData.currentQuote && appData.currentQuote.items && appData.currentQuote.items.length > 0){
-        generateQuotePreview();
+        generateQuotePreview(true); // 传递true表示手动修改，不需要重新应用自动逻辑
     }
 }
 function initColumnVisibility(){
@@ -13572,7 +14602,7 @@ function calculateAutoColumnWidths(){
         image: hasImage ? 70 : 0
     };
 }
-function generateQuotePreview(){
+function generateQuotePreview(isManualChange){
     if(!appData.currentQuote.mainImages) appData.currentQuote.mainImages = [];
     appData.currentQuote.clientName=document.getElementById('quoteClientName').value;
     appData.currentQuote.clientContactPerson=document.getElementById('quoteClientContactPerson').value;
@@ -13584,6 +14614,54 @@ function generateQuotePreview(){
     appData.currentQuote.paymentMethod=getPaymentMethod();
     if(!appData.currentQuote || !appData.currentQuote.items || !appData.currentQuote.items.length){ showToast('请至少添加一个报价项目', 'warning'); return; }
     const colVis = getColumnVisibility();
+    // 自动隐藏空内容列 - 照片、规格参数、备注三列参与自动隐藏逻辑
+    const hasNoteContent = appData.currentQuote.items.some(item => item.note && item.note.trim() !== '');
+    const hasSpecContent = appData.currentQuote.items.some(item => item.spec && item.spec.trim() !== '');
+    const hasImageContent = appData.currentQuote.items.some(item => item.image && item.image.trim() !== '');
+    
+    // 获取当前列可见性设置
+    const columnSettings = JSON.parse(localStorage.getItem('quoteColumnHidden') || '{}');
+    
+    // 逻辑：
+    // 1. 如果是用户手动修改列可见性后触发的预览，直接使用用户设置
+    // 2. 如果是正常点击生成预览，应用自动隐藏逻辑
+    
+    if (!isManualChange) {
+        // 正常生成预览：应用自动隐藏逻辑
+        
+        // 处理备注列
+        colVis.note = hasNoteContent;
+        const noteCheckbox = document.querySelector('input[onchange*="toggleColumnVisibility(\'note\'"]');
+        if (noteCheckbox) {
+            noteCheckbox.checked = !hasNoteContent;
+        }
+        columnSettings.note = !hasNoteContent;
+        
+        // 处理规格列
+        colVis.spec = hasSpecContent;
+        const specCheckbox = document.querySelector('input[onchange*="toggleColumnVisibility(\'spec\'"]');
+        if (specCheckbox) {
+            specCheckbox.checked = !hasSpecContent;
+        }
+        columnSettings.spec = !hasSpecContent;
+        
+        // 处理照片列
+        colVis.image = hasImageContent;
+        const imageCheckbox = document.querySelector('input[onchange*="toggleColumnVisibility(\'image\'"]');
+        if (imageCheckbox) {
+            imageCheckbox.checked = !hasImageContent;
+        }
+        columnSettings.image = !hasImageContent;
+        
+    } else {
+        // 用户手动修改列可见性后触发的预览：尊重用户选择
+        colVis.note = columnSettings.note !== true;
+        colVis.spec = columnSettings.spec !== true;
+        colVis.image = columnSettings.image !== true;
+    }
+    
+    // 保存更新后的设置
+    localStorage.setItem('quoteColumnHidden', JSON.stringify(columnSettings));
     let cw=getColumnWidths();
     let marginTop=cw.marginTop||10;
     let marginSides=cw.marginSides||15;
@@ -13797,12 +14875,32 @@ function generateQuotePreview(){
                 <div style="height:40px;border-bottom:1px solid #333;display:flex;align-items:flex-end;padding-bottom:0.3rem;font-size:0.85rem;color:#333;">
                     ${settings.companyName || ''}
                 </div>
-                <div style="font-size:0.75rem;color:#999;margin-top:0.5rem;">日期：________年________月________日</div>
+                <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:#999;">
+                    <span>日期：</span>
+                    <div style="display:flex;align-items:center;gap:0.25rem;">
+                        <input type="text" placeholder="____" style="width:45px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
+                        <span>年</span>
+                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
+                        <span>月</span>
+                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
+                        <span>日</span>
+                    </div>
+                </div>
             </div>
             <div style="flex:1;">
                 <div style="font-size:0.8rem;color:#666;font-weight:600;margin-bottom:0.75rem;">客户确认（签章）</div>
                 <div style="height:40px;border-bottom:1px solid #333;"></div>
-                <div style="font-size:0.75rem;color:#999;margin-top:0.5rem;">日期：________年________月________日</div>
+                <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:#999;">
+                    <span>日期：</span>
+                    <div style="display:flex;align-items:center;gap:0.25rem;">
+                        <input type="text" placeholder="____" style="width:45px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
+                        <span>年</span>
+                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
+                        <span>月</span>
+                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
+                        <span>日</span>
+                    </div>
+                </div>
             </div>
         </div>`;
         
@@ -13946,12 +15044,32 @@ function generateQuotePreview(){
                 <div style="height:40px;border-bottom:1px solid #333;display:flex;align-items:flex-end;padding-bottom:0.3rem;font-size:0.85rem;color:#333;">
                     ${settings.companyName || ''}
                 </div>
-                <div style="font-size:0.75rem;color:#999;margin-top:0.5rem;">日期：________年________月________日</div>
+                <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:#999;">
+                    <span>日期：</span>
+                    <div style="display:flex;align-items:center;gap:0.25rem;">
+                        <input type="text" placeholder="____" style="width:45px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
+                        <span>年</span>
+                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
+                        <span>月</span>
+                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
+                        <span>日</span>
+                    </div>
+                </div>
             </div>
             <div style="flex:1;">
                 <div style="font-size:0.8rem;color:#666;font-weight:600;margin-bottom:0.75rem;">客户确认（签章）</div>
                 <div style="height:40px;border-bottom:1px solid #333;"></div>
-                <div style="font-size:0.75rem;color:#999;margin-top:0.5rem;">日期：________年________月________日</div>
+                <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:#999;">
+                    <span>日期：</span>
+                    <div style="display:flex;align-items:center;gap:0.25rem;">
+                        <input type="text" placeholder="____" style="width:45px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
+                        <span>年</span>
+                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
+                        <span>月</span>
+                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
+                        <span>日</span>
+                    </div>
+                </div>
             </div>
         </div>`;
         
@@ -14117,12 +15235,32 @@ function generateQuotePreview(){
                 <div style="height:45px;border-bottom:1px solid #333;display:flex;align-items:flex-end;padding-bottom:0.35rem;font-size:0.9rem;color:#333;font-weight:500;">
                     ${settings.companyName || ''}
                 </div>
-                <div style="font-size:0.8rem;color:#999;margin-top:0.5rem;">日期：________年________月________日</div>
+                <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:#999;">
+                    <span>日期：</span>
+                    <div style="display:flex;align-items:center;gap:0.25rem;">
+                        <input type="text" placeholder="____" style="width:50px;border:1px solid #ddd;border-radius:4px;padding:0.25rem 0.35rem;font-size:0.8rem;text-align:center;">
+                        <span>年</span>
+                        <input type="text" placeholder="__" style="width:40px;border:1px solid #ddd;border-radius:4px;padding:0.25rem 0.35rem;font-size:0.8rem;text-align:center;">
+                        <span>月</span>
+                        <input type="text" placeholder="__" style="width:40px;border:1px solid #ddd;border-radius:4px;padding:0.25rem 0.35rem;font-size:0.8rem;text-align:center;">
+                        <span>日</span>
+                    </div>
+                </div>
             </div>
             <div style="flex:1;">
                 <div style="font-size:0.85rem;color:#666;font-weight:600;margin-bottom:0.75rem;">客户确认（签章）</div>
                 <div style="height:45px;border-bottom:1px solid #333;"></div>
-                <div style="font-size:0.8rem;color:#999;margin-top:0.5rem;">日期：________年________月________日</div>
+                <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:#999;">
+                    <span>日期：</span>
+                    <div style="display:flex;align-items:center;gap:0.25rem;">
+                        <input type="text" placeholder="____" style="width:50px;border:1px solid #ddd;border-radius:4px;padding:0.25rem 0.35rem;font-size:0.8rem;text-align:center;">
+                        <span>年</span>
+                        <input type="text" placeholder="__" style="width:40px;border:1px solid #ddd;border-radius:4px;padding:0.25rem 0.35rem;font-size:0.8rem;text-align:center;">
+                        <span>月</span>
+                        <input type="text" placeholder="__" style="width:40px;border:1px solid #ddd;border-radius:4px;padding:0.25rem 0.35rem;font-size:0.8rem;text-align:center;">
+                        <span>日</span>
+                    </div>
+                </div>
             </div>
         </div>`;
         
@@ -14641,22 +15779,88 @@ function exportPDF(showSaveAs){
             el.style.border = 'none';
             el.classList.remove('dragging');
         });
+        // 将日期输入框转换为普通文本格式，并设置所有日期相关文字为黑色
+        clone.querySelectorAll('input[type="text"][placeholder="____"], input[type="text"][placeholder="__"]').forEach(function(input) {
+            var placeholder = input.placeholder;
+            var text = input.value || placeholder;
+            var span = document.createElement('span');
+            span.textContent = text;
+            if (input.value) {
+                // 如果有输入值，显示下划线
+                span.style.borderBottom = '1px solid #999999'; // 灰色下划线
+                span.style.paddingBottom = '2px';
+            } else {
+                // 如果没有输入值，只显示文字，不显示下划线
+                span.style.borderBottom = 'none';
+                span.style.paddingBottom = '0';
+            }
+            span.style.minWidth = input.style.width;
+            span.style.display = 'inline-block';
+            span.style.textAlign = 'center';
+            span.style.color = '#999999'; // 设置为灰色文字
+            input.parentNode.replaceChild(span, input);
+        });
+        // 设置日期标签和年月日文字为灰色
+        clone.querySelectorAll('div:has(input[type="text"][placeholder="____"]) span, div:has(input[type="text"][placeholder="__"]) span').forEach(function(span) {
+            if (span.textContent.includes('日期：') || span.textContent === '年' || span.textContent === '月' || span.textContent === '日') {
+                span.style.color = '#999999'; // 设置为灰色文字
+            }
+        });
         clone.querySelectorAll('table').forEach(function(table) {
             table.style.width = '100%';
             table.style.minWidth = '100%';
             table.style.maxWidth = 'none';
             table.style.tableLayout = 'auto';
         });
+        // 将日期输入框转换为普通文本格式，并设置所有日期相关文字为黑色
+        clone.querySelectorAll('input[type="text"][placeholder="____"], input[type="text"][placeholder="__"]').forEach(function(input) {
+            var placeholder = input.placeholder;
+            var text = input.value || placeholder;
+            var span = document.createElement('span');
+            span.textContent = text;
+            if (input.value) {
+                // 如果有输入值，显示下划线
+                span.style.borderBottom = '1px solid #999999'; // 灰色下划线
+                span.style.paddingBottom = '2px';
+            } else {
+                // 如果没有输入值，只显示文字，不显示下划线
+                span.style.borderBottom = 'none';
+                span.style.paddingBottom = '0';
+            }
+            span.style.minWidth = input.style.width;
+            span.style.display = 'inline-block';
+            span.style.textAlign = 'center';
+            span.style.color = '#999999'; // 设置为灰色文字
+            input.parentNode.replaceChild(span, input);
+        });
+        // 设置日期标签和年月日文字为灰色
+        clone.querySelectorAll('div:has(input[type="text"][placeholder="____"]) span, div:has(input[type="text"][placeholder="__"]) span').forEach(function(span) {
+            if (span.textContent.includes('日期：') || span.textContent === '年' || span.textContent === '月' || span.textContent === '日') {
+                span.style.color = '#999999'; // 设置为灰色文字
+            }
+        });
         clone.classList.remove('hidden');
         document.body.appendChild(clone);
         var printContent = clone;
+        // 提升导出清晰度：使用更高的分辨率
         var opt = {
-            scale: 2,
+            scale: 3, // 提升到3倍分辨率，显著提高清晰度
             useCORS: true,
             background: '#ffffff',
             width: a4WidthPixels,
-            windowWidth: a4WidthPixels
+            windowWidth: a4WidthPixels,
+            dpi: 300 // 设置DPI为300，适合打印
         };
+        
+        // 手机端优化：根据设备性能调整
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            // 高端设备使用3倍分辨率，中低端设备使用2.5倍
+            if (window.devicePixelRatio >= 3) {
+                opt.scale = 3;
+            } else {
+                opt.scale = 2.5;
+            }
+        }
         var tableBounds = [];
         var rowBoundaries = [];
         var cloneRect = clone.getBoundingClientRect();
@@ -14697,7 +15901,8 @@ function exportPDF(showSaveAs){
             var imgWidth = canvas.width;
             var imgHeight = canvas.height;
             
-            var scale = 2;
+            // 使用实际的scale值（来自opt参数）
+            var scale = opt.scale;
             var pageWidthMM = pdfWidth;
             var pageHeightMM = pdfHeight;
             var contentWidthMM = imgWidth / scale;
@@ -14710,9 +15915,16 @@ function exportPDF(showSaveAs){
             var bottomMargin = 15;
             var pageContentHeight = pageHeightMM - topMargin - bottomMargin;
             
-            if (totalHeightMM <= pageHeightMM) {
-                pdf.addImage(imgData, 'JPEG', 0, 0, pageWidthMM, totalHeightMM);
-            } else {
+            // 精确计算内容高度，避免创建空白页
+            // 添加固定20mm的容差，避免因计算误差导致误判
+            var actualContentHeightMM = totalHeightMM;
+            var tolerance = 20; // 固定20mm容差
+            
+            // 直接使用分页模式，避免单页导出限制
+            try {
+                throw new Error('Force multi-page mode');
+            } catch (e) {
+                // 内容确实超过一页，使用分页模式
                 var pixelsPerPageMM = imgHeight / totalHeightMM;
                 var pageContentPixels = pageContentHeight * pixelsPerPageMM;
                 var firstPageContentPixels = (pageHeightMM - bottomMargin) * pixelsPerPageMM;
@@ -14720,13 +15932,25 @@ function exportPDF(showSaveAs){
                 var pageIndex = 0;
                 
                 while (currentPixel < imgHeight) {
-                    if (pageIndex > 0) {
-                        pdf.addPage();
+                    // 检查是否只剩下非常少的内容，避免创建几乎空白的页面
+                    var remainingPixels = imgHeight - currentPixel;
+                    var remainingHeightMM = remainingPixels / pixelsPerPageMM;
+                    var endPixel = undefined;
+                    
+                    // 如果剩余内容小于5mm，并且不是第一页，就不再创建新页面
+                    if (pageIndex > 0 && remainingHeightMM < 5) {
+                        // 将剩余内容合并到最后一页
+                        endPixel = imgHeight;
+                        if (pageIndex > 0) {
+                            pdf.addPage();
+                        }
+                    } else {
+                        if (pageIndex > 0) {
+                            pdf.addPage();
+                        }
+                        var maxEndPixel = currentPixel + (pageIndex === 0 ? firstPageContentPixels : pageContentPixels);
+                        endPixel = Math.min(maxEndPixel, imgHeight);
                     }
-                    
-                    var maxEndPixel = currentPixel + (pageIndex === 0 ? firstPageContentPixels : pageContentPixels);
-                    var endPixel = Math.min(maxEndPixel, imgHeight);
-                    
                     for (var t = 0; t < tableBounds.length; t++) {
                         var tb = tableBounds[t];
                         if (endPixel > tb.top && endPixel < tb.bottom) {
@@ -14785,6 +16009,49 @@ function exportPDF(showSaveAs){
                     
                     currentPixel = endPixel;
                     pageIndex++;
+                }
+                
+                // 最终检查：删除所有空白页
+                var pageCount = pdf.internal.getNumberOfPages();
+                if (pageCount > 1) {
+                    // 首先检查是否真的需要多页
+                    var totalContentHeightMM = actualContentHeightMM;
+                    var pageHeightMM = pdf.internal.pageSize.getHeight();
+                    var pageContentHeightMM = pageHeightMM - topMargin - bottomMargin;
+                    
+                    // 如果总内容高度小于一页内容高度（加10mm容差），则只保留第一页
+                    if (totalContentHeightMM < pageContentHeightMM + 10) {
+                        // 删除所有多余页面
+                        while (pdf.internal.getNumberOfPages() > 1) {
+                            pdf.deletePage(2);
+                        }
+                    } else {
+                        // 从后往前检查，删除真正的空白页
+                        for (var i = pageCount; i >= 1; i--) {
+                            // 计算页面内容高度
+                            var pageStartPixel = (i === 1) ? 0 : (i-2)*pageContentPixels + firstPageContentPixels;
+                            var pageEndPixel = (i === pageCount) ? imgHeight : (i-1)*pageContentPixels + firstPageContentPixels;
+                            var pageContentPixels = pageEndPixel - pageStartPixel;
+                            var pageContentHeightMM = pageContentPixels / pixelsPerPageMM;
+                            
+                            // 如果页面内容高度小于3mm，则认为是空白页
+                            if (pageContentHeightMM < 3 && pageCount > 1) {
+                                pdf.deletePage(i);
+                                pageCount--;
+                            }
+                        }
+                    }
+                }
+                
+                // 最后检查：如果只有一页但内容太少，确保不会有空白页
+                var finalPageCount = pdf.internal.getNumberOfPages();
+                if (finalPageCount === 1) {
+                    var singlePageContentHeightMM = actualContentHeightMM;
+                    if (singlePageContentHeightMM < 5) {
+                        // 内容极少，重新创建PDF确保没有空白
+                        pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+                        pdf.addImage(imgData, 'JPEG', 0, 0, pageWidthMM, singlePageContentHeightMM);
+                    }
                 }
             }
             
@@ -14986,13 +16253,25 @@ function exportJPG(showSaveAs){
         
         document.body.appendChild(clone);
         
+        // 提升导出清晰度：使用更高的分辨率
         var opt = {
-            scale: 2,
+            scale: 3, // 提升到3倍分辨率，显著提高清晰度
             useCORS: true,
             background: '#ffffff',
             width: a4WidthPixels,
-            windowWidth: a4WidthPixels
+            windowWidth: a4WidthPixels,
+            dpi: 300 // 设置DPI为300，适合打印
         };
+        
+        // 手机端优化：根据设备性能调整
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            // 高端设备使用3倍分辨率，中低端设备使用2.5倍
+            if (window.devicePixelRatio >= 3) {
+                opt.scale = 3;
+            } else {
+                opt.scale = 2.5;
+            }
+        }
         
         html2canvas(clone, opt).then(function(canvas) {
             // 转换为JPG
@@ -15257,8 +16536,11 @@ function exportXLS(){
     wsData[rowIndex++] = ['报价方：' + (settings.companyName || '______________'), '', '', '', '客户确认：________________', '', '', ''];
     wsData[rowIndex++] = ['签字：________________', '', '', '', '签字：________________', '', '', ''];
     
+    // 创建工作簿和工作表
+    var wb = XLSX.utils.book_new();
     var ws = XLSX.utils.aoa_to_sheet(wsData);
     
+    // 设置列宽
     ws['!cols'] = [
         { wch: 6 },
         { wch: 30 },
@@ -15270,15 +16552,132 @@ function exportXLS(){
         { wch: 12 }
     ];
     
-    var wb = XLSX.utils.book_new();
+    // 添加单元格合并
+    ws['!merges'] = [];
+    
+    // 公司名称合并（第2行）
+    ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 7 } });
+    
+    // 公司地址电话合并（第3行，如果存在）
+    if(settings.companyAddress||settings.companyPhone){
+        ws['!merges'].push({ s: { r: 2, c: 0 }, e: { r: 2, c: 7 } });
+    }
+    
+    // 报价单标题合并（第5行）
+    ws['!merges'].push({ s: { r: 4, c: 0 }, e: { r: 4, c: 7 } });
+    
+    // 报价编号合并（第6行，如果存在）
+    if(quote.quoteNumber){
+        ws['!merges'].push({ s: { r: 5, c: 0 }, e: { r: 5, c: 7 } });
+    }
+    
+    // 客户信息合并（第8行）- 实际数据中没有客户信息行，跳过
+    // ws['!merges'].push({ s: { r: 7, c: 0 }, e: { r: 7, c: 7 } });
+    
+    // 客户信息2合并（第9行，如果存在）- 实际数据中没有，跳过
+    // if(quote.clientEmail || quote.clientAddress){
+    //     ws['!merges'].push({ s: { r: 8, c: 0 }, e: { r: 8, c: 7 } });
+    // }
+    
+    // 日期合并（第10行）
+    ws['!merges'].push({ s: { r: 9, c: 0 }, e: { r: 9, c: 7 } });
+    
+    // 付款方式合并（第11行，如果存在）- 实际数据中没有，跳过
+    // if(quote.paymentMethod){
+    //     ws['!merges'].push({ s: { r: 10, c: 0 }, e: { r: 10, c: 7 } });
+    // }
+    
+    // 大写金额合并
+    var totalRowIndex = rowIndex - 4; // 大写金额所在行
+    ws['!merges'].push({ s: { r: totalRowIndex, c: 0 }, e: { r: totalRowIndex, c: 7 } });
+    
+    // 备注信息合并
+    var notesRowIndex = rowIndex - 2; // 备注所在行
+    ws['!merges'].push({ s: { r: notesRowIndex, c: 0 }, e: { r: notesRowIndex, c: 7 } });
+    
+    // 底部签字区域合并
+    var signRow1Index = rowIndex; // 报价方/客户确认行
+    ws['!merges'].push({ s: { r: signRow1Index, c: 0 }, e: { r: signRow1Index, c: 3 } });
+    ws['!merges'].push({ s: { r: signRow1Index, c: 4 }, e: { r: signRow1Index, c: 7 } });
+    
+    var signRow2Index = rowIndex + 1; // 签字行
+    ws['!merges'].push({ s: { r: signRow2Index, c: 0 }, e: { r: signRow2Index, c: 3 } });
+    ws['!merges'].push({ s: { r: signRow2Index, c: 4 }, e: { r: signRow2Index, c: 7 } });
+    
+    // 使用XLSX库的单元格样式属性
+    // 1. 设置行高
+    if(!ws['!rows']) ws['!rows'] = [];
+    ws['!rows'][4] = { hpx: 30 }; // 标题行高
+    
+    // 2. 设置表头行高
+    var headerRowIndex = rowIndex - quote.items.length - 8; // 表头所在行
+    ws['!rows'][headerRowIndex] = { hpx: 25 };
+    
+    // 3. 创建样式对象
+    var boldStyle = { font: { bold: true } };
+    var centerStyle = { alignment: { horizontal: 'center', vertical: 'center' } };
+    var rightStyle = { alignment: { horizontal: 'right', vertical: 'center' } };
+    
+    // 设置标题样式（加粗+居中）
+    if(ws['A5']) {
+        ws['A5'].s = Object.assign({}, boldStyle, centerStyle);
+    }
+    
+    // 设置表头样式（加粗+居中）
+    for(var c = 0; c < 8; c++){
+        var cellAddress = XLSX.utils.encode_cell({ r: headerRowIndex, c: c });
+        if(ws[cellAddress]){
+            ws[cellAddress].s = Object.assign({}, boldStyle, centerStyle);
+        }
+    }
+    
+    // 设置合计行样式（加粗+右对齐）
+    var totalRow = rowIndex - 3; // 合计行
+    var totalCellAddress = XLSX.utils.encode_cell({ r: totalRow, c: 7 });
+    if(ws[totalCellAddress]){
+        ws[totalCellAddress].s = Object.assign({}, boldStyle, rightStyle);
+    }
+    
+    // 设置报价、折扣、税额等样式（加粗+右对齐）
+    var amountRows = [
+        rowIndex - quote.items.length - 3, // 报价行
+        rowIndex - quote.items.length - 2, // 折扣行（如果有）
+        rowIndex - quote.items.length - 1  // 税额行（如果有）
+    ];
+    
+    amountRows.forEach(function(row){
+        var cellAddress = XLSX.utils.encode_cell({ r: row, c: 7 });
+        if(ws[cellAddress]){
+            ws[cellAddress].s = Object.assign({}, boldStyle, rightStyle);
+        }
+    });
+    
+    // 设置公司名称、地址等合并单元格的居中样式
+    var centerRows = [1, 2, 5, 9, totalRowIndex, notesRowIndex];
+    centerRows.forEach(function(row){
+        var cellAddress = XLSX.utils.encode_cell({ r: row, c: 0 });
+        if(ws[cellAddress]){
+            ws[cellAddress].s = centerStyle;
+        }
+    });
+    
+    // 已经提前创建了工作簿
     XLSX.utils.book_append_sheet(wb, ws, '报价单');
     
     var filename = '报价单_' + (quote.clientName || '客户') + '_' + new Date().toISOString().slice(0, 10) + '.xlsx';
     
+    // 使用带有样式支持的写入选项
+    var writeOptions = { 
+        bookType: 'xlsx', 
+        type: 'array',
+        cellStyles: true, // 启用单元格样式
+        sheetStyles: true  // 启用工作表样式
+    };
+    
     // 另存为功能：使用File System Access API
     if (window.showSaveFilePicker) {
         try {
-            var xlsData = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            var xlsData = XLSX.write(wb, writeOptions);
             var blob = new Blob([xlsData], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             
             window.showSaveFilePicker({
@@ -15309,7 +16708,7 @@ function exportXLS(){
         }
     } else {
         // 回退到默认下载方式
-        XLSX.writeFile(wb, filename);
+        XLSX.writeFile(wb, filename, writeOptions);
         showToast('XLSX 导出成功！', 'success');
     }
 }
@@ -24588,31 +25987,30 @@ function applyDoorHeaderToQuote() {
         return;
     }
 
+    // 检查报价单中是否已有项目，提示用户确认
+    const existingItems = appData.currentQuote.items.filter(item => 
+        !item.id || !String(item.id).startsWith('temp_')
+    );
+    if (existingItems.length > 0) {
+        if (!confirm(`报价单中已有 ${existingItems.length} 个项目。\n\n点击"确定"将门头用料添加到现有项目之后。\n点击"取消"可先清空报价单再添加。`)) {
+            return;
+        }
+    }
+
     // 获取税费信息
     const safeTaxRate = typeof result.taxRate === 'number' ? result.taxRate : 0;
     const safePriceMode = (result.priceMode === 'ex' || result.priceMode === 'in') ? result.priceMode : 'in';
     const safeTaxAmount = typeof result.taxAmount === 'number' ? result.taxAmount : 0;
 
-    // 如果门头算价是"未税价+税"模式，需要特殊处理
-    // 为了保证总价一致，我们添加一个"税费调整"项来补偿差异
-    const needTaxAdjustment = (safeTaxRate > 0 && safePriceMode === 'ex');
-
-    // 计算各项费用的未税价格总和
-    let subtotalBeforeTax = 0;
-    result.materials.forEach(item => {
-        subtotalBeforeTax += item.qty * item.unitPrice;
-    });
-    result.extraItems.forEach(item => {
-        subtotalBeforeTax += item.qty * item.unitPrice;
-    });
-    subtotalBeforeTax += result.installSell;
-
-    // 报价单重新计算的税费
-    let expectedTax = Math.round(subtotalBeforeTax * (safeTaxRate / 100));
-    // 门头算价原有的税费
-    let originalTax = safeTaxAmount;
-    // 税费差异
-    let taxDiff = originalTax - expectedTax;
+    // 同步税率和价格模式到报价单（由报价单系统自动计算税费）
+    const taxRateInput = document.getElementById('taxRate');
+    if (taxRateInput) {
+        taxRateInput.value = safeTaxRate;
+    }
+    const priceModeRadio = document.querySelector(`input[name="priceMode"][value="${safePriceMode}"]`);
+    if (priceModeRadio) {
+        priceModeRadio.checked = true;
+    }
 
     // 添加所有材料项
     result.materials.forEach(item => {
@@ -24652,38 +26050,20 @@ function applyDoorHeaderToQuote() {
         cost: result.installCost
     });
 
-    // 如果有税费差异，添加调整项
-    if (needTaxAdjustment && taxDiff !== 0) {
-        addQuoteItem({
-            id: Date.now() + Math.random(),
-            name: '税费调整',
-            spec: `门头报价税费四舍五入调整`,
-            note: '',
-            qty: 1,
-            price: taxDiff, // 差异金额
-            cost: 0
-        });
-    }
-
-    // 同步税率和价格模式到报价单
-    const taxRateInput = document.getElementById('taxRate');
-    if (taxRateInput) {
-        taxRateInput.value = safeTaxRate;
-    }
-    const priceModeRadio = document.querySelector(`input[name="priceMode"][value="${safePriceMode}"]`);
-    if (priceModeRadio) {
-        priceModeRadio.checked = true;
-    }
+    // 重新计算报价单总计（包含税费自动计算）
 
     renderQuoteItems();
     calculateTotals();
 
-    const taxNote = safeTaxRate > 0 ? `，税费${safePriceMode === 'in' ? '(含税' : '(未税+'}${safeTaxRate}%)=¥${originalTax}` : '';
+    const taxNote = safeTaxRate > 0 ? `，税费${safePriceMode === 'in' ? '(含税' : '(未税+'}${safeTaxRate}%)=¥${safeTaxAmount}` : '';
     showToast(`已添加${result.typeName}用料明细到报价单${taxNote}`, 'success');
 }
 
 // 保存门头报价为模板
 function saveDoorHeaderAsTemplate() {
+    // 优先使用已计算的结果（包含成本价信息）
+    const lastResult = doorHeaderLastResult;
+    
     const type = document.getElementById('doorHeaderType').value;
     const fontType = document.getElementById('doorHeaderFontType').value;
     const width = parseFloat(document.getElementById('doorHeaderWidth').value) || 0;
@@ -24702,63 +26082,99 @@ function saveDoorHeaderAsTemplate() {
     const fontConfig = fontTypeConfig[fontType];
     const options = { charCount, charSize, floor, edge };
 
-    // 底板材料（应用自定义单价和加价）
-    const baseItems = config.baseMaterials(width, height, options);
-    const templateItems = baseItems.map(item => {
-        const unitPrice = customPrices[item.name] || item.unitPrice;
-        const finalPrice = Math.round(unitPrice * markupMultiplier);
-        return {
-            name: item.name,
-            spec: item.spec,
-            qty: item.qty,
-            price: finalPrice
-        };
-    });
-
-    // 字体项
-    if (fontType !== 'none') {
-        const fontResult = fontConfig.calcPrice(charCount, charSize);
-        const fontPrice = Math.round(fontResult.unitPrice * markupMultiplier);
-        templateItems.push({ name: fontConfig.name, spec: `字高${charSize}cm`, qty: charCount, price: fontPrice });
-        
-        // 发光字额外电源
-        if (fontConfig.isLighted && type !== 'vacuum_lightbox') {
-            const powerCount = Math.max(1, Math.ceil(charCount * 0.3));
-            const powerPrice = Math.round(45 * markupMultiplier);
-            templateItems.push({ name: 'LED电源', spec: '12V30A开关电源', qty: powerCount, price: powerPrice });
-        }
+    let templateItems = [];
+    
+    // 如果有已计算的结果，使用其中的材料数据（包含成本价）
+    if (lastResult && lastResult.materials) {
+        lastResult.materials.forEach(item => {
+            templateItems.push({
+                name: item.name,
+                spec: item.spec || '',
+                qty: item.qty,
+                price: item.unitPrice || item.price || 0,
+                cost: item.costPrice || item.cost || 0
+            });
+        });
+    } else {
+        // 如果没有已计算的结果，使用 baseMaterials 并估算成本价
+        const baseItems = config.baseMaterials(width, height, options);
+        templateItems = baseItems.map(item => {
+            const unitPrice = customPrices[item.name] || item.unitPrice;
+            const finalPrice = Math.round(unitPrice * markupMultiplier);
+            // 估算成本价约为售价的60-70%
+            const costPrice = Math.round(unitPrice * 0.65);
+            return {
+                name: item.name,
+                spec: item.spec,
+                qty: item.qty,
+                price: finalPrice,
+                cost: costPrice
+            };
+        });
     }
-
-    // 安装费
-    const highWorkType = document.getElementById('doorHeaderHighWork').value;
-    const wallType = document.getElementById('doorHeaderWallType').value;
-    const needWaterproof = document.getElementById('doorHeaderWaterproof').checked;
-    const needCrane = document.getElementById('doorHeaderCrane').checked;
-    const installFee = calcInstallFee(width, height, floor, highWorkType, wallType, needWaterproof, needCrane);
-    const installPrice = Math.round(installFee * markupMultiplier);
-    templateItems.push({ name: '安装费', spec: `${config.name} ${width}m×${height}m${floor !== '1' ? ' ' + floor + '楼' : ''}`, qty: 1, price: installPrice });
-
-    // 附加费用
-    const additionalFees = [
-        { id: 'doorHeaderDesignFee', name: '设计费', price: 200 },
-        { id: 'doorHeaderTransportFee', name: '运输费', price: 150 },
-        { id: 'doorHeaderApprovalFee', name: '报批费', price: 300 },
-        { id: 'doorHeaderDismantleFee', name: '拆旧费', price: 200 }
+    
+    // 添加附加费项目（包含成本价）
+    const extraFees = [
+        { name: '设计费', price: 200, cost: 150 },
+        { name: '运输费', price: 150, cost: 100 },
+        { name: '报批费', price: 300, cost: 200 },
+        { name: '拆旧费', price: 200, cost: 150 },
+        { name: '辅材费', price: 0, cost: 0 },
+        { name: '墙面处理费', price: 0, cost: 0 },
+        { name: '接地防雷费', price: 0, cost: 0 },
+        { name: '高空作业费', price: 0, cost: 0 },
+        { name: '吊车费', price: 0, cost: 0 }
     ];
-
-    additionalFees.forEach(fee => {
-        const checkbox = document.getElementById(fee.id);
-        if (checkbox && checkbox.checked) {
-            const finalPrice = Math.round(fee.price * markupMultiplier);
-            templateItems.push({ name: fee.name, spec: '', qty: 1, price: finalPrice });
-        }
-    });
+    
+    // 如果有已计算的结果，使用其中的附加费数据
+    if (lastResult && lastResult.extraItems) {
+        lastResult.extraItems.forEach(item => {
+            // 避免重复添加
+            if (!templateItems.find(t => t.name === item.name && t.spec === item.spec)) {
+                templateItems.push({
+                    name: item.name,
+                    spec: item.spec || '',
+                    qty: item.qty,
+                    price: item.unitPrice || item.price || 0,
+                    cost: item.costPrice || item.cost || 0
+                });
+            }
+        });
+    } else {
+        // 添加选中的附加费用
+        extraFees.forEach(fee => {
+            const checkbox = document.getElementById('doorHeader' + fee.name.replace(/费$/, '') + 'Fee');
+            if (checkbox && checkbox.checked) {
+                const finalPrice = Math.round(fee.price * markupMultiplier);
+                templateItems.push({ name: fee.name, spec: '', qty: 1, price: finalPrice, cost: fee.cost });
+            }
+        });
+    }
+    
+    // 添加安装费
+    if (lastResult && lastResult.installSell) {
+        templateItems.push({
+            name: '安装费',
+            spec: `${config.name} ${width}m×${height}m${floor !== '1' ? ' ' + floor + '楼' : ''}`,
+            qty: 1,
+            price: lastResult.installSell,
+            cost: lastResult.installCost || 0
+        });
+    } else {
+        const highWorkType = document.getElementById('doorHeaderHighWork').value;
+        const wallType = document.getElementById('doorHeaderWallType').value;
+        const needWaterproof = document.getElementById('doorHeaderWaterproof').checked;
+        const needCrane = document.getElementById('doorHeaderCrane').checked;
+        const installFee = calcInstallFee(width, height, floor, highWorkType, wallType, needWaterproof, needCrane);
+        const installPrice = Math.round(installFee * markupMultiplier);
+        templateItems.push({ name: '安装费', spec: `${config.name} ${width}m×${height}m${floor !== '1' ? ' ' + floor + '楼' : ''}`, qty: 1, price: installPrice, cost: installFee });
+    }
 
     // 添加自定义附加费用
     const customFees = getCustomAdditionalFees();
     customFees.forEach(fee => {
         const finalPrice = Math.round(fee.price * markupMultiplier);
-        templateItems.push({ name: fee.name, spec: fee.spec || '', qty: 1, price: finalPrice });
+        templateItems.push({ name: fee.name, spec: fee.spec || '', qty: 1, price: finalPrice, cost: fee.price });
     });
 
     openAddTemplateModal();
@@ -24778,6 +26194,11 @@ function saveDoorHeaderAsTemplate() {
                 row.querySelector('.template-item-spec').value = item.spec || '';
                 row.querySelector('.template-item-qty').value = item.qty;
                 row.querySelector('.template-item-price').value = item.price;
+                // 设置成本价字段
+                const costInput = row.querySelector('.template-item-cost');
+                if (costInput) {
+                    costInput.value = item.cost || 0;
+                }
             }
         });
     }, 100);
@@ -28712,6 +30133,41 @@ function renderProducts(useSmartResults = false){
 }
 // ===== 模板库 =====
 let currentTemplatePhotos = [];
+let currentTemplateView = window.innerWidth <= 768 ? 'grid' : 'grid';
+
+// 初始化视图切换按钮文字
+function initTemplateViewButton() {
+    const btn = document.getElementById('viewToggleBtn');
+    if (btn && window.innerWidth > 768) {
+        btn.innerHTML = currentTemplateView === 'grid' ? '📋 切换到列表视图' : '📐 切换到卡片视图';
+    }
+}
+// 移除批量删除功能，不再需要selectedTemplateIds变量
+
+function toggleTemplateView() {
+    // 移动端强制使用卡片视图
+    if (window.innerWidth <= 768) {
+        return;
+    }
+    
+    currentTemplateView = currentTemplateView === 'grid' ? 'list' : 'grid';
+    const btn = document.getElementById('viewToggleBtn');
+    const grid = document.getElementById('templateGrid');
+    
+    if (currentTemplateView === 'grid') {
+        btn.innerHTML = '📋 切换到列表视图';
+        grid.classList.remove('template-list');
+        grid.classList.add('template-grid');
+    } else {
+        btn.innerHTML = '📐 切换到卡片视图';
+        grid.classList.remove('template-grid');
+        grid.classList.add('template-list');
+    }
+    
+    renderTemplates();
+}
+
+// 批量删除功能已移除
 
 function addTemplatePhotos(event) {
     const files = event.target.files;
@@ -28804,8 +30260,8 @@ function openAddTemplateModal(){
     document.getElementById('templateId').value='';
     const urlInput = document.getElementById('templatePhotoUrlInput');
     if (urlInput) urlInput.value = '';
-    const isAdmin = isAdminMode();
-    const costField = isAdmin ? '<div class="form-group"><label>成本</label><input type="number" class="template-item-cost" step="0.01" min="0" placeholder="0"></div>' : '';
+    // 始终显示成本价字段，便于门头算价等场景保存成本信息
+    const costField = '<div class="form-group"><label>成本</label><input type="number" class="template-item-cost" step="0.01" min="0" placeholder="0"></div>';
     document.getElementById('templateItemsList').innerHTML='<div class="template-item-row"><div class="form-group"><label>项目名称</label><input type="text" class="template-item-name" placeholder="项目名称"></div><div class="form-group"><label>规格参数</label><input type="text" class="template-item-spec" placeholder="尺寸/材质"></div><div class="form-group"><label>备注</label><input type="text" class="template-item-note" placeholder="备注"></div>' + costField + '<div class="form-group"><label>数量</label><input type="number" class="template-item-qty" min="1" value="1"></div><div class="form-group"><label>单价</label><input type="number" class="template-item-price" step="0.01" min="0" placeholder="0"></div><div class="form-group"><button type="button" class="btn btn-danger btn-sm" onclick="removeTemplateItem(this)">删除</button></div></div>';
     document.getElementById('templatePhotosContainer').innerHTML = `
         <label class="btn btn-outline btn-sm" style="padding:1rem;cursor:pointer;">
@@ -28839,8 +30295,8 @@ function openEditTemplateModal(tid){
     document.getElementById('templateCaseInfo').value=t.caseInfo||'';
     const urlInput = document.getElementById('templatePhotoUrlInput');
     if (urlInput) urlInput.value = '';
-    const isAdmin = isAdminMode();
-    const costField = isAdmin ? '<div class="form-group"><label>成本</label><input type="number" class="template-item-cost" step="0.01" min="0" value="${item.cost||0}" placeholder="0"></div>' : '';
+    // 始终显示成本价字段，便于门头算价等场景保存成本信息
+    const costField = '<div class="form-group"><label>成本</label><input type="number" class="template-item-cost" step="0.01" min="0" value="${item.cost||0}" placeholder="0"></div>';
     document.getElementById('templateItemsList').innerHTML=t.items.map(item=>`<div class="template-item-row">
         <div class="form-group"><label>项目名称</label><input type="text" class="template-item-name" value="${item.name}" placeholder="项目名称"></div>
         <div class="form-group"><label>规格参数</label><input type="text" class="template-item-spec" value="${item.spec||''}" placeholder="尺寸/材质"></div>
@@ -28878,8 +30334,8 @@ function openEditTemplateModal(tid){
 function addTemplateItemRow(){
     const c=document.getElementById('templateItemsList');
     const d=document.createElement('div'); d.className='template-item-row';
-    const isAdmin = isAdminMode();
-    const costField = isAdmin ? '<div class="form-group"><label>成本</label><input type="number" class="template-item-cost" step="0.01" min="0" placeholder="0"></div>' : '';
+    // 始终显示成本价字段，便于门头算价等场景保存成本信息
+    const costField = '<div class="form-group"><label>成本</label><input type="number" class="template-item-cost" step="0.01" min="0" placeholder="0"></div>';
     d.innerHTML='<div class="form-group"><label>项目名称</label><input type="text" class="template-item-name" placeholder="项目名称"></div><div class="form-group"><label>规格参数</label><input type="text" class="template-item-spec" placeholder="尺寸/材质"></div><div class="form-group"><label>备注</label><input type="text" class="template-item-note" placeholder="备注"></div>' + costField + '<div class="form-group"><label>数量</label><input type="number" class="template-item-qty" min="1" value="1"></div><div class="form-group"><label>单价</label><input type="number" class="template-item-price" step="0.01" min="0" placeholder="0"></div><div class="form-group"><button type="button" class="btn btn-danger btn-sm" onclick="removeTemplateItem(this)">删除</button></div>';
     c.appendChild(d);
 }
@@ -29210,6 +30666,12 @@ function useTemplate(tid){
 }
 function searchTemplates(){ renderTemplates(); }
 function renderTemplates(){
+    // 更新模板总数显示
+    const countBadge = document.getElementById('templateCountBadge');
+    if (countBadge) {
+        countBadge.textContent = `${appData.templates.length} 个模板`;
+    }
+    
     const isAdmin = isAdminMode();
     const c=document.getElementById('templateGrid');
     const s=document.getElementById('templateSearch').value.toLowerCase();
@@ -29224,36 +30686,84 @@ function renderTemplates(){
         c.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/><line x1="9" y1="9" x2="15" y2="9" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="15" x2="15" y2="15" stroke-width="2" stroke-linecap="round"/></svg><p>暂无模板，创建您的第一个报价模板吧！</p></div>';
         return;
     }
+    
+    // 添加数量统计（放在模板列表容器外）
+    const container = document.getElementById('templateGrid');
+    const existingHeader = container.previousElementSibling;
+    if (existingHeader && existingHeader.classList.contains('template-stats-header')) {
+        existingHeader.innerHTML = `共 ${f.length} 个模板`;
+    } else {
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'template-stats-header';
+        headerDiv.style.cssText = 'margin-bottom:0.75rem;padding:0.5rem;background:var(--gray-50);border-radius:var(--radius);font-size:0.8125rem;color:var(--gray-500);';
+        headerDiv.textContent = `共 ${f.length} 个模板`;
+        container.parentNode.insertBefore(headerDiv, container);
+    }
+    
     const fragment = document.createDocumentFragment();
+    
     f.forEach(t => {
         const total=t.items.reduce((s,i)=>s+(i.qty*i.price),0);
         const tc=t.items.reduce((s,i)=>s+(i.qty*(i.cost||0)),0);
         const profit=total-tc;
         const pp=total>0?(profit/total*100).toFixed(0):0;
-        const div = document.createElement('div');
-        div.className = 'template-card' + (t.isFavorite ? ' template-favorite' : '');
-        div.innerHTML = `
-            <div class="template-name">${t.isFavorite ? '⭐ ' : ''}${escapeHtml(t.name)}${t.category ? ' <span class="badge">'+escapeHtml(t.category)+'</span>' : ''}</div>
-            <div class="template-desc">${escapeHtml(t.description||'无描述')}</div>
-            <div class="template-meta">
-                <span>${t.items.length} 个项目</span>
-                <span>总价 ¥${total.toFixed(2)}</span>
-                <span class="badge badge-success">利润率 ${pp}%</span>
-                <span>更新于 ${new Date(t.updatedAt).toLocaleDateString()}</span>
-            </div>
-            ${t.caseInfo?`<div style="margin-top:0.5rem;padding:0.5rem;background:rgba(37,99,235,0.05);border-radius:var(--radius);"><strong>📝 案例：</strong> <span style="font-size:0.75rem;color:var(--gray-600);">${escapeHtml(t.caseInfo.length>60?t.caseInfo.slice(0,60)+'...':t.caseInfo)}</span></div>`:''}
-            <div class="template-total">
-                <span class="template-total-label">模板总价</span>
-                <span class="template-total-value">¥${total.toFixed(2)}</span>
-            </div>
-            <div class="btn-group" style="margin-top:0.75rem;gap:0.25rem;">
-                <button class="btn btn-outline btn-sm" style="flex:1;" onclick="viewTemplateDetail(${t.id})">👁️ 查看详情</button>
-                <button class="btn btn-primary btn-sm" style="flex:1;" onclick="useTemplate(${t.id})">📥 使用模板</button>
-                <button class="btn btn-outline btn-sm" onclick="toggleTemplateFavorite(${t.id})" title="${t.isFavorite?'取消收藏':'添加收藏'}">${t.isFavorite?'⭐':'☆'}</button>
-                <button class="btn btn-outline btn-sm" onclick="openEditTemplateModal(${t.id})">✏️</button>
-                ${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteTemplate(${t.id})">🗑️</button>` : ''}
-            </div>`;
-        fragment.appendChild(div);
+        
+        if (currentTemplateView === 'list') {
+            // 列表视图
+            const div = document.createElement('div');
+            div.className = 'template-list-item' + (t.isFavorite ? ' template-favorite' : '');
+            div.innerHTML = `
+                <div style="display:flex;align-items:center;gap:1rem;padding:0.75rem;border-bottom:1px solid var(--gray-200);">
+                    <div style="flex:1;min-width:0;">
+                        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
+                            <span style="font-weight:600;">${t.isFavorite ? '⭐ ' : ''}${escapeHtml(t.name)}</span>
+                            ${t.category ? '<span class="badge badge-sm">'+escapeHtml(t.category)+'</span>' : ''}
+                        </div>
+                        <div style="display:flex;align-items:center;gap:1rem;font-size:0.8125rem;color:var(--gray-500);">
+                            <span>${t.items.length} 个项目</span>
+                            <span>总价 ¥${total.toFixed(2)}</span>
+                            <span class="badge badge-success badge-sm">利润率 ${pp}%</span>
+                            <span>更新于 ${new Date(t.updatedAt).toLocaleDateString()}</span>
+                        </div>
+                        <div style="margin-top:0.25rem;font-size:0.8125rem;color:var(--gray-600);">${escapeHtml(t.description||'无描述')}</div>
+                    </div>
+                    <div style="display:flex;gap:0.25rem;">
+                        <button class="btn btn-outline btn-xs" onclick="viewTemplateDetail(${t.id})">👁️</button>
+                        <button class="btn btn-primary btn-xs" onclick="useTemplate(${t.id})">📥</button>
+                        <button class="btn btn-outline btn-xs" onclick="toggleTemplateFavorite(${t.id})" title="${t.isFavorite?'取消收藏':'添加收藏'}">${t.isFavorite?'⭐':'☆'}</button>
+                        <button class="btn btn-outline btn-xs" onclick="openEditTemplateModal(${t.id})">✏️</button>
+                        ${isAdmin ? `<button class="btn btn-danger btn-xs" onclick="deleteTemplate(${t.id})">🗑️</button>` : ''}
+                    </div>
+                </div>
+            `;
+            fragment.appendChild(div);
+        } else {
+            // 卡片视图
+            const div = document.createElement('div');
+            div.className = 'template-card' + (t.isFavorite ? ' template-favorite' : '');
+            div.innerHTML = `
+                <div class="template-name">${t.isFavorite ? '⭐ ' : ''}${escapeHtml(t.name)}${t.category ? ' <span class="badge">'+escapeHtml(t.category)+'</span>' : ''}</div>
+                <div class="template-desc">${escapeHtml(t.description||'无描述')}</div>
+                <div class="template-meta">
+                    <span>${t.items.length} 个项目</span>
+                    <span>总价 ¥${total.toFixed(2)}</span>
+                    <span class="badge badge-success">利润率 ${pp}%</span>
+                    <span>更新于 ${new Date(t.updatedAt).toLocaleDateString()}</span>
+                </div>
+                ${t.caseInfo?`<div style="margin-top:0.5rem;padding:0.5rem;background:rgba(37,99,235,0.05);border-radius:var(--radius);"><strong>📝 案例：</strong> <span style="font-size:0.75rem;color:var(--gray-600);">${escapeHtml(t.caseInfo.length>60?t.caseInfo.slice(0,60)+'...':t.caseInfo)}</span></div>`:''}
+                <div class="template-total">
+                    <span class="template-total-label">模板总价</span>
+                    <span class="template-total-value">¥${total.toFixed(2)}</span>
+                </div>
+                <div class="btn-group" style="margin-top:0.75rem;gap:0.25rem;">
+                    <button class="btn btn-outline btn-sm" style="flex:1;" onclick="viewTemplateDetail(${t.id})">👁️ 查看详情</button>
+                    <button class="btn btn-primary btn-sm" style="flex:1;" onclick="useTemplate(${t.id})">📥 使用模板</button>
+                    <button class="btn btn-outline btn-sm" onclick="toggleTemplateFavorite(${t.id})" title="${t.isFavorite?'取消收藏':'添加收藏'}">${t.isFavorite?'⭐':'☆'}</button>
+                    <button class="btn btn-outline btn-sm" onclick="openEditTemplateModal(${t.id})">✏️</button>
+                    ${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteTemplate(${t.id})">🗑️</button>` : ''}
+                </div>`;
+            fragment.appendChild(div);
+        }
     });
     c.innerHTML = '';
     c.appendChild(fragment);
@@ -29815,7 +31325,7 @@ function renderHistory() {
                     <div class="history-title">${escapeHtml(h.title || '未命名报价')}${h.quoteNumber?' <span style="font-size:0.75rem;color:var(--gray-400);font-weight:400;">('+escapeHtml(h.quoteNumber)+')</span>':''}</div>
                     <div style="font-size:0.8125rem;color:var(--gray-500);">客户：${escapeHtml(h.clientName)} · ${date}</div>
                     <div style="font-size:0.75rem;margin-top:0.25rem;display:flex;gap:1rem;align-items:center;">
-                        <span class="badge" style="background:${statusColors[h.status] || 'var(--gray-500)'};">${statusLabels[h.status] || '待跟进'}</span>
+                        <span class="badge" style="background:${statusColors[h.status] || 'var(--gray-500)'}">${statusLabels[h.status] || '待跟进'}</span>
                         ${expiryInfo.html}
                         <span style="color:var(--gray-400);">📦 v${h.version || versionCount}</span>
                     </div>
@@ -29930,10 +31440,12 @@ function viewQuoteVersions(quoteId) {
                     <div>项目数：${v.items ? v.items.length : 0}</div>
                     <div>最终金额：¥${v.finalTotal ? v.finalTotal.toFixed(2) : '0.00'}</div>
                 </div>
-                <div style="display:flex;gap:0.5rem;">
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
                     ${!isLatest ? `<button class="btn btn-primary btn-sm" onclick="compareVersions(${quoteId}, ${v.versionNumber})">🔄 对比</button>` : ''}
                     ${!isLatest ? `<button class="btn btn-warning btn-sm" onclick="rollbackToVersion(${quoteId}, ${v.versionNumber})">⏪ 回滚到此版本</button>` : ''}
                     <button class="btn btn-outline btn-sm" onclick="viewVersionDetails(${quoteId}, ${v.versionNumber})">👁️ 查看详情</button>
+
+                    ${isLatest ? `<button class="btn btn-success btn-sm" onclick="generateWordContractFromVersion(${quoteId}, ${v.versionNumber})">📝 生成Word合同</button>` : ''}
                 </div>
             </div>
         `;
