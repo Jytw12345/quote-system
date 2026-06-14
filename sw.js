@@ -26,9 +26,11 @@ self.addEventListener('fetch', event => {
     if (request.url.includes('index.html')) {
         event.respondWith(
             fetch(request).then(fetchResponse => {
+                // 先克隆响应，避免后续使用时出错
+                const responseToCache = fetchResponse.clone();
                 if (fetchResponse && fetchResponse.status === 200) {
                     caches.open(CACHE_NAME).then(cache => {
-                        cache.put(request, fetchResponse.clone());
+                        cache.put(request, responseToCache);
                     });
                 }
                 return fetchResponse || caches.match(request);
