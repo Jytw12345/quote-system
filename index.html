@@ -14931,16 +14931,20 @@ function generateQuotePreview(isManualChange){
                         <span style="font-size:0.9rem;color:#666;">报价金额</span>
                         <span style="font-size:0.95rem;color:#333;">¥${st.toFixed(2)}</span>
                     </div>
+                    ${tr>0 ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid #ddd;font-size:0.85rem;color:#666;">
+                        <span>${pm==='in'?'含税税率':'另加税率'} ${tr}%</span>
+                        <span>${pm==='in'?'税额':'税金'} ¥${tax.toFixed(2)}</span>
+                    </div>` : ''}
                     ${dr<100 ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid #ddd;">
                         <span style="font-size:0.9rem;color:#666;">优惠折扣 (${dr}%)</span>
                         <span style="font-size:0.95rem;color:#c00;">-¥${da.toFixed(2)}</span>
                     </div>` : ''}
                     <div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0;border-top:2px solid #1e40af;margin-top:0.3rem;">
-                        <span style="font-size:1rem;font-weight:600;color:#1f2937;">合计金额${tr>0 && pm==='in' ? '（含税）' : tr>0 && pm==='ex' ? '（另加税）' : ''}</span>
+                        <span style="font-size:1rem;font-weight:600;color:#1f2937;">合计金额</span>
                         <span style="font-size:1.5rem;font-weight:700;color:#1e40af;">¥${total.toFixed(2)}</span>
                     </div>
                     <div style="text-align:right;margin-top:0.5rem;font-size:0.9rem;color:#666;">
-                        大写金额：${numberToChineseUpper(total)}${tr>0 ? `（${pm==='in'?'含税':'税额'}¥${tax.toFixed(2)}）` : ''}
+                        大写金额：${numberToChineseUpper(total)}
                     </div>
                 </div>
             </div>
@@ -14948,57 +14952,24 @@ function generateQuotePreview(isManualChange){
         
         let notesSection='';
         if(appData.currentQuote.showNotes !== false){
-            notesSection=`<div style="padding:1.25rem 2rem;background:#ffffff;border-top:1px solid #e5e7eb;">
-                ${appData.currentQuote.paymentMethod ? `<div style="margin-bottom:1rem;">
-                    <span style="font-size:0.8rem;color:#666;font-weight:600;margin-right:1rem;">付款方式：</span>
-                    <span style="font-size:0.95rem;color:#1f2937;font-weight:500;">${appData.currentQuote.paymentMethod}</span>
-                </div>` : ''}
-                <div>
-                    <div style="font-size:0.8rem;color:#666;font-weight:600;margin-bottom:0.5rem;">备注说明</div>
-                    <div style="font-size:0.9rem;color:#444;line-height:1.8;background:#f8f9fa;padding:0.75rem 1rem;border-left:3px solid #1e40af;">
-                        ${dn.replace(/\n/g,'<br>')}
-                    </div>
-                </div>
+            notesSection=`<div style="padding:1rem 2rem;background:#ffffff;border-top:1px solid #e5e7eb;font-size:0.85rem;color:#666;">
+                ${appData.currentQuote.paymentMethod ? `<span style="margin-right:1.5rem;"><strong>付款方式：</strong>${appData.currentQuote.paymentMethod}</span>` : ''}
+                <span><strong>备注：</strong>${dn.replace(/\n/g,'；')}</span>
             </div>`;
         } else if(appData.currentQuote.paymentMethod) {
-            notesSection=`<div style="padding:1.25rem 2rem;background:#ffffff;border-top:1px solid #e5e7eb;">
-                <span style="font-size:0.8rem;color:#666;font-weight:600;margin-right:1rem;">付款方式：</span>
-                <span style="font-size:0.95rem;color:#1f2937;font-weight:500;">${appData.currentQuote.paymentMethod}</span>
+            notesSection=`<div style="padding:1rem 2rem;background:#ffffff;border-top:1px solid #e5e7eb;font-size:0.85rem;color:#666;">
+                <strong>付款方式：</strong>${appData.currentQuote.paymentMethod}
             </div>`;
         }
         
         let signatureSection=`<div style="padding:1.25rem 2rem;background:#fafafa;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;gap:3rem;">
             <div style="flex:1;">
                 <div style="font-size:0.8rem;color:#666;font-weight:600;margin-bottom:0.75rem;">报价方（签章）</div>
-                <div style="height:40px;border-bottom:1px solid #333;display:flex;align-items:flex-end;padding-bottom:0.3rem;font-size:0.85rem;color:#333;">
-                    ${settings.companyName || ''}
-                </div>
-                <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:#999;">
-                    <span>日期：</span>
-                    <div style="display:flex;align-items:center;gap:0.25rem;">
-                        <input type="text" placeholder="____" style="width:45px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
-                        <span>年</span>
-                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
-                        <span>月</span>
-                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
-                        <span>日</span>
-                    </div>
-                </div>
+                <div style="height:50px;font-size:0.85rem;color:#333;">${settings.companyName || ''}</div>
             </div>
             <div style="flex:1;">
                 <div style="font-size:0.8rem;color:#666;font-weight:600;margin-bottom:0.75rem;">客户确认（签章）</div>
-                <div style="height:40px;border-bottom:1px solid #333;"></div>
-                <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:#999;">
-                    <span>日期：</span>
-                    <div style="display:flex;align-items:center;gap:0.25rem;">
-                        <input type="text" placeholder="____" style="width:45px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
-                        <span>年</span>
-                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
-                        <span>月</span>
-                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
-                        <span>日</span>
-                    </div>
-                </div>
+                <div style="height:50px;"></div>
             </div>
         </div>`;
         
@@ -15100,16 +15071,20 @@ function generateQuotePreview(isManualChange){
                         <span style="font-size:0.9rem;color:#666;">报价金额</span>
                         <span style="font-size:0.95rem;color:#333;">¥${st.toFixed(2)}</span>
                     </div>
+                    ${tr>0 ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid #e5e7eb;font-size:0.85rem;color:#666;">
+                        <span>${pm==='in'?'含税税率':'另加税率'} ${tr}%</span>
+                        <span>${pm==='in'?'税额':'税金'} ¥${tax.toFixed(2)}</span>
+                    </div>` : ''}
                     ${dr<100 ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid #e5e7eb;">
                         <span style="font-size:0.9rem;color:#666;">优惠折扣 (${dr}%)</span>
                         <span style="font-size:0.95rem;color:#dc2626;">-¥${da.toFixed(2)}</span>
                     </div>` : ''}
                     <div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0;border-top:2px solid #059669;margin-top:0.3rem;">
-                        <span style="font-size:1rem;font-weight:600;color:#1f2937;">合计金额${tr>0 && pm==='in' ? '（含税）' : tr>0 && pm==='ex' ? '（另加税）' : ''}</span>
+                        <span style="font-size:1rem;font-weight:600;color:#1f2937;">合计金额</span>
                         <span style="font-size:1.5rem;font-weight:700;color:#059669;">¥${total.toFixed(2)}</span>
                     </div>
                     <div style="text-align:right;margin-top:0.5rem;font-size:0.9rem;color:#666;">
-                        大写金额：${numberToChineseUpper(total)}${tr>0 ? `（${pm==='in'?'含税':'税额'}¥${tax.toFixed(2)}）` : ''}
+                        大写金额：${numberToChineseUpper(total)}
                     </div>
                 </div>
             </div>
@@ -15117,57 +15092,24 @@ function generateQuotePreview(isManualChange){
         
         let notesSection='';
         if(appData.currentQuote.showNotes !== false){
-            notesSection=`<div style="background:#f8fafc;padding:1.25rem 2rem;">
-                ${appData.currentQuote.paymentMethod ? `<div style="margin-bottom:1rem;">
-                    <span style="font-size:0.8rem;color:#666;font-weight:600;margin-right:1rem;">付款方式：</span>
-                    <span style="font-size:0.95rem;color:#1f2937;font-weight:500;">${appData.currentQuote.paymentMethod}</span>
-                </div>` : ''}
-                <div>
-                    <div style="font-size:0.8rem;color:#666;font-weight:600;margin-bottom:0.5rem;">备注说明</div>
-                    <div style="font-size:0.9rem;color:#444;line-height:1.8;background:white;padding:0.75rem 1rem;border-left:3px solid #10b981;border-radius:0 4px 4px 0;">
-                        ${dn.replace(/\n/g,'<br>')}
-                    </div>
-                </div>
+            notesSection=`<div style="padding:1rem 2rem;background:#f8fafc;font-size:0.85rem;color:#666;">
+                ${appData.currentQuote.paymentMethod ? `<span style="margin-right:1.5rem;"><strong>付款方式：</strong>${appData.currentQuote.paymentMethod}</span>` : ''}
+                <span><strong>备注：</strong>${dn.replace(/\n/g,'；')}</span>
             </div>`;
         } else if(appData.currentQuote.paymentMethod) {
-            notesSection=`<div style="background:#f8fafc;padding:1.25rem 2rem;">
-                <span style="font-size:0.8rem;color:#666;font-weight:600;margin-right:1rem;">付款方式：</span>
-                <span style="font-size:0.95rem;color:#1f2937;font-weight:500;">${appData.currentQuote.paymentMethod}</span>
+            notesSection=`<div style="padding:1rem 2rem;background:#f8fafc;font-size:0.85rem;color:#666;">
+                <strong>付款方式：</strong>${appData.currentQuote.paymentMethod}
             </div>`;
         }
         
         let signatureSection=`<div style="background:white;padding:1.25rem 2rem;display:flex;justify-content:space-between;gap:3rem;">
             <div style="flex:1;">
                 <div style="font-size:0.8rem;color:#666;font-weight:600;margin-bottom:0.75rem;">报价方（签章）</div>
-                <div style="height:40px;border-bottom:1px solid #333;display:flex;align-items:flex-end;padding-bottom:0.3rem;font-size:0.85rem;color:#333;">
-                    ${settings.companyName || ''}
-                </div>
-                <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:#999;">
-                    <span>日期：</span>
-                    <div style="display:flex;align-items:center;gap:0.25rem;">
-                        <input type="text" placeholder="____" style="width:45px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
-                        <span>年</span>
-                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
-                        <span>月</span>
-                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
-                        <span>日</span>
-                    </div>
-                </div>
+                <div style="height:50px;font-size:0.85rem;color:#333;">${settings.companyName || ''}</div>
             </div>
             <div style="flex:1;">
                 <div style="font-size:0.8rem;color:#666;font-weight:600;margin-bottom:0.75rem;">客户确认（签章）</div>
-                <div style="height:40px;border-bottom:1px solid #333;"></div>
-                <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:#999;">
-                    <span>日期：</span>
-                    <div style="display:flex;align-items:center;gap:0.25rem;">
-                        <input type="text" placeholder="____" style="width:45px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
-                        <span>年</span>
-                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
-                        <span>月</span>
-                        <input type="text" placeholder="__" style="width:35px;border:1px solid #ddd;border-radius:4px;padding:0.2rem 0.3rem;font-size:0.75rem;text-align:center;">
-                        <span>日</span>
-                    </div>
-                </div>
+                <div style="height:50px;"></div>
             </div>
         </div>`;
         
@@ -15291,16 +15233,20 @@ function generateQuotePreview(isManualChange){
                         <span style="font-size:0.9rem;color:#666;">合计报价</span>
                         <span style="font-size:0.95rem;color:#333;">¥${st.toFixed(2)}</span>
                     </div>
+                    ${tr>0 ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid #e5e7eb;font-size:0.85rem;color:#666;">
+                        <span>${pm==='in'?'含税税率':'另加税率'} ${tr}%</span>
+                        <span>${pm==='in'?'税额':'税金'} ¥${tax.toFixed(2)}</span>
+                    </div>` : ''}
                     ${dr<100 ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid #e5e7eb;">
                         <span style="font-size:0.9rem;color:#666;">优惠折扣 (${dr}%)</span>
                         <span style="font-size:0.95rem;color:#dc2626;">-¥${da.toFixed(2)}</span>
                     </div>` : ''}
                     <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-top:2px solid #dc2626;margin-top:0.3rem;background:white;padding:1rem;border-radius:4px;">
-                        <span style="font-size:1.05rem;font-weight:700;color:#1f2937;">工程总价${tr>0 && pm==='in' ? '（含税）' : tr>0 && pm==='ex' ? '（另加税）' : ''}</span>
+                        <span style="font-size:1.05rem;font-weight:700;color:#1f2937;">工程总价</span>
                         <span style="font-size:1.6rem;font-weight:800;color:#dc2626;">¥${total.toFixed(2)}</span>
                     </div>
                     <div style="text-align:right;margin-top:0.75rem;font-size:0.9rem;color:#666;background:white;padding:0.75rem;border-radius:4px;">
-                        大写金额：${numberToChineseUpper(total)}${tr>0 ? `（${pm==='in'?'含税':'税额'}¥${tax.toFixed(2)}）` : ''}
+                        大写金额：${numberToChineseUpper(total)}
                     </div>
                 </div>
             </div>
@@ -15308,57 +15254,24 @@ function generateQuotePreview(isManualChange){
         
         let notesSection='';
         if(appData.currentQuote.showNotes !== false){
-            notesSection=`<div style="background:white;padding:1.25rem 2rem;">
-                ${appData.currentQuote.paymentMethod ? `<div style="margin-bottom:1rem;">
-                    <span style="font-size:0.85rem;color:#666;font-weight:600;margin-right:1rem;">付款方式：</span>
-                    <span style="font-size:0.95rem;color:#1f2937;font-weight:500;">${appData.currentQuote.paymentMethod}</span>
-                </div>` : ''}
-                <div>
-                    <div style="font-size:0.85rem;color:#666;font-weight:600;margin-bottom:0.5rem;">工程说明</div>
-                    <div style="font-size:0.9rem;color:#444;line-height:1.8;background:#f9fafb;padding:0.75rem 1rem;border-left:3px solid #dc2626;border-radius:0 4px 4px 0;">
-                        ${dn.replace(/\n/g,'<br>')}
-                    </div>
-                </div>
+            notesSection=`<div style="padding:1rem 2rem;background:white;font-size:0.85rem;color:#666;">
+                ${appData.currentQuote.paymentMethod ? `<span style="margin-right:1.5rem;"><strong>付款方式：</strong>${appData.currentQuote.paymentMethod}</span>` : ''}
+                <span><strong>备注：</strong>${dn.replace(/\n/g,'；')}</span>
             </div>`;
         } else if(appData.currentQuote.paymentMethod) {
-            notesSection=`<div style="background:white;padding:1.25rem 2rem;">
-                <span style="font-size:0.85rem;color:#666;font-weight:600;margin-right:1rem;">付款方式：</span>
-                <span style="font-size:0.95rem;color:#1f2937;font-weight:500;">${appData.currentQuote.paymentMethod}</span>
+            notesSection=`<div style="padding:1rem 2rem;background:white;font-size:0.85rem;color:#666;">
+                <strong>付款方式：</strong>${appData.currentQuote.paymentMethod}
             </div>`;
         }
         
         let signatureSection=`<div style="background:#f9fafb;padding:1.25rem 2rem;display:flex;justify-content:space-between;gap:3rem;">
             <div style="flex:1;">
                 <div style="font-size:0.85rem;color:#666;font-weight:600;margin-bottom:0.75rem;">施工方（签章）</div>
-                <div style="height:45px;border-bottom:1px solid #333;display:flex;align-items:flex-end;padding-bottom:0.35rem;font-size:0.9rem;color:#333;font-weight:500;">
-                    ${settings.companyName || ''}
-                </div>
-                <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:#999;">
-                    <span>日期：</span>
-                    <div style="display:flex;align-items:center;gap:0.25rem;">
-                        <input type="text" placeholder="____" style="width:50px;border:1px solid #ddd;border-radius:4px;padding:0.25rem 0.35rem;font-size:0.8rem;text-align:center;">
-                        <span>年</span>
-                        <input type="text" placeholder="__" style="width:40px;border:1px solid #ddd;border-radius:4px;padding:0.25rem 0.35rem;font-size:0.8rem;text-align:center;">
-                        <span>月</span>
-                        <input type="text" placeholder="__" style="width:40px;border:1px solid #ddd;border-radius:4px;padding:0.25rem 0.35rem;font-size:0.8rem;text-align:center;">
-                        <span>日</span>
-                    </div>
-                </div>
+                <div style="height:50px;font-size:0.9rem;color:#333;font-weight:500;">${settings.companyName || ''}</div>
             </div>
             <div style="flex:1;">
                 <div style="font-size:0.85rem;color:#666;font-weight:600;margin-bottom:0.75rem;">客户确认（签章）</div>
-                <div style="height:45px;border-bottom:1px solid #333;"></div>
-                <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:#999;">
-                    <span>日期：</span>
-                    <div style="display:flex;align-items:center;gap:0.25rem;">
-                        <input type="text" placeholder="____" style="width:50px;border:1px solid #ddd;border-radius:4px;padding:0.25rem 0.35rem;font-size:0.8rem;text-align:center;">
-                        <span>年</span>
-                        <input type="text" placeholder="__" style="width:40px;border:1px solid #ddd;border-radius:4px;padding:0.25rem 0.35rem;font-size:0.8rem;text-align:center;">
-                        <span>月</span>
-                        <input type="text" placeholder="__" style="width:40px;border:1px solid #ddd;border-radius:4px;padding:0.25rem 0.35rem;font-size:0.8rem;text-align:center;">
-                        <span>日</span>
-                    </div>
-                </div>
+                <div style="height:50px;"></div>
             </div>
         </div>`;
         
@@ -15447,16 +15360,12 @@ function generateQuotePreview(isManualChange){
             <table style="font-family:'Microsoft YaHei',Arial,sans-serif;">
                 <tr><td style="padding:0.5rem 1.5rem;text-align:right;font-size:0.85rem;color:#718096;">报价金额：</td><td style="padding:0.5rem 1.5rem;text-align:right;font-size:0.9rem;">¥${st.toFixed(2)}</td></tr>
                 ${dr<100?`<tr><td style="padding:0.5rem 1.5rem;text-align:right;font-size:0.85rem;color:#718096;">折扣 (${dr}%)：</td><td style="padding:0.5rem 1.5rem;text-align:right;font-size:0.9rem;color:#c53030;">-¥${da.toFixed(2)}</td></tr>`:''}
-                <tr style="background:#2c5282;color:white;"><td style="padding:0.6rem 1.5rem;text-align:right;font-size:0.9rem;font-weight:500;">合计金额${tr>0&&pm==='in'?'（含税'+tr+'%）':tr>0&&pm==='ex'?'（含税'+tr+'%，税金¥'+tax.toFixed(2)+'）':pm==='ex'&&tr===0?'（未税）':''}：</td><td style="padding:0.6rem 1.5rem;text-align:right;font-size:1.1rem;font-weight:700;">¥${total.toFixed(2)}</td></tr>
+                <tr style="background:#2c5282;color:white;"><td style="padding:0.6rem 1.5rem;text-align:right;font-size:0.9rem;font-weight:500;">合计金额${pm==='in'&&tr>0?'（含税'+tr+'%）':pm==='in'&&tr===0?'':pm==='ex'&&tr>0?'（加税'+tr+'%，税金¥'+tax.toFixed(2)+'）':pm==='ex'&&tr===0?'（未税）':''}：</td><td style="padding:0.6rem 1.5rem;text-align:right;font-size:1.1rem;font-weight:700;">¥${total.toFixed(2)}</td></tr>
                 <tr style="background:#2c5282;color:white;"><td colspan="2" style="padding:0.4rem 1.5rem;text-align:right;font-size:0.9rem;font-weight:500;opacity:0.9;">大写金额：${numberToChineseUpper(total)}</td></tr>
             </table>
         </div>
         <div style="margin-top:2rem;padding:1rem;background:#f7fafc;border-radius:6px;font-size:0.8rem;color:#666;">
-            ${appData.currentQuote.paymentMethod?`<div style="margin-bottom:0.5rem;font-weight:600;color:#2c5282;">付款方式：${appData.currentQuote.paymentMethod}</div>`:''}
-            ${appData.currentQuote.showNotes !== false ? `<div style="font-weight:600;margin-bottom:0.5rem;color:#4a5568;">备注条款：</div>
-            <div>1. 本报价单有效期为 ${vd} 天</div>
-            <div>2. 最终价格以实际制作量为准</div>
-            <div>3. 交付时间双方协商确定</div>` : ''}
+            ${appData.currentQuote.paymentMethod || appData.currentQuote.showNotes !== false ? `<div>${appData.currentQuote.paymentMethod?`<strong>付款方式：</strong>${appData.currentQuote.paymentMethod}；`:''}${appData.currentQuote.showNotes !== false?`<strong>备注：</strong>${dn.replace(/\n/g,'；')}`:''}</div>` : ''}
         </div>`;
         preview.innerHTML=`<div style="background:white;max-width:100%;margin:0 auto;font-family:'Microsoft YaHei',Arial,sans-serif;overflow:hidden;${innerPadding};">${headerHtml}${bodyHtml}${footerHtml}${sh}${sigHtml}</div>`;
     } else if(quoteStyle === 'classic'){
@@ -15465,7 +15374,7 @@ function generateQuotePreview(isManualChange){
             <div style="font-size:1.25rem;font-weight:bold;color:#333;">${settings.companyName||'公司名称'}</div>
             <div style="font-size:0.75rem;color:#666;margin-top:0.5rem;">${settings.companyAddress||''} ${settings.companyPhone?'| '+settings.companyPhone:''}</div>
             <div style="font-size:1.5rem;font-weight:bold;color:#333;margin-top:1rem;text-decoration:underline;">报 价 单</div>
-            ${appData.currentQuote.quoteNumber?`<div style="font-size:0.8rem;color:#666;margin-top:0.5rem;">编号：${appData.currentQuote.quoteNumber}</div>`:''}
+            <div style="font-size:0.8rem;color:#666;margin-top:0.5rem;">${appData.currentQuote.quoteNumber?'编号：'+appData.currentQuote.quoteNumber+' | ':''}日期：${ds}</div>
         </div>
         <div style="margin-bottom:1rem;font-size:0.85rem;">
             ${appData.currentQuote.clientName?`<span style="font-weight:600;">客户公司：</span>${appData.currentQuote.clientName} &nbsp;&nbsp;`:''}
@@ -15473,7 +15382,6 @@ function generateQuotePreview(isManualChange){
             ${appData.currentQuote.clientPhone?`<span style="font-weight:600;">电话：</span>${appData.currentQuote.clientPhone} &nbsp;&nbsp;`:''}
             ${appData.currentQuote.clientEmail?`<span style="font-weight:600;">邮箱：</span>${appData.currentQuote.clientEmail}<br>`:''}
             ${appData.currentQuote.clientAddress?`<span style="font-weight:600;">地址：</span>${appData.currentQuote.clientAddress} &nbsp;&nbsp;`:''}
-            <span style="font-weight:600;">日期：</span>${ds}
         </div>`;
         let cw = getColumnWidths();
         let rows=appData.currentQuote.items.map((item,idx)=>{
@@ -15513,13 +15421,20 @@ function generateQuotePreview(isManualChange){
             <table style="font-family:'SimSun',Arial,sans-serif;">
                 <tr><td style="padding:0.3rem 1rem;text-align:right;font-size:0.8rem;border-bottom:1px solid #ddd;">报价：</td><td style="padding:0.3rem 1rem;text-align:right;font-size:0.85rem;border-bottom:1px solid #ddd;">¥${st.toFixed(2)}</td></tr>
                 ${dr<100?`<tr><td style="padding:0.3rem 1rem;text-align:right;font-size:0.8rem;color:#c00;border-bottom:1px solid #ddd;">折扣 (${dr}%)：</td><td style="padding:0.3rem 1rem;text-align:right;font-size:0.85rem;color:#c00;border-bottom:1px solid #ddd;">-¥${da.toFixed(2)}</td></tr>`:''}
-                <tr><td style="padding:0.4rem 1rem;text-align:right;font-size:0.9rem;font-weight:600;border-top:2px solid #333;">合计${tr>0&&pm==='in'?'（含税'+tr+'%）':tr>0&&pm==='ex'?'（含税'+tr+'%，税金¥'+tax.toFixed(2)+'）':pm==='ex'&&tr===0?'（未税）':''}：</td><td style="padding:0.4rem 1rem;text-align:right;font-size:1rem;font-weight:700;color:#c00;border-top:2px solid #333;">¥${total.toFixed(2)}</td></tr>
+                <tr><td style="padding:0.4rem 1rem;text-align:right;font-size:0.9rem;font-weight:600;border-top:2px solid #333;">合计${pm==='in'&&tr>0?'（含税'+tr+'%）':pm==='in'&&tr===0?'':pm==='ex'&&tr>0?'（加税'+tr+'%，税金¥'+tax.toFixed(2)+'）':pm==='ex'&&tr===0?'（未税）':''}：</td><td style="padding:0.4rem 1rem;text-align:right;font-size:1rem;font-weight:700;color:#c00;border-top:2px solid #333;">¥${total.toFixed(2)}</td></tr>
                 <tr><td colspan="2" style="padding:0.3rem 1rem;text-align:right;font-size:0.9rem;color:#333;font-weight:500;">大写金额：${numberToChineseUpper(total)}</td></tr>
             </table>
         </div>
-        <div style="margin-top:2rem;display:flex;justify-content:space-between;font-size:0.8rem;">
-            <div><span style="font-weight:600;">报价方：</span>${settings.companyName||'______________'}</div>
-            <div><span style="font-weight:600;">客户确认：</span>______________</div>
+        <div style="margin-top:2rem;display:flex;justify-content:space-between;gap:2rem;font-size:0.8rem;">
+            <div style="flex:1;text-align:center;">
+                <div style="font-weight:600;margin-bottom:0.5rem;">报价方（签章）</div>
+                <div style="height:50px;font-size:0.85rem;">${settings.companyName||''}</div>
+            </div>
+            <div style="flex:1;text-align:center;">
+                <div style="font-weight:600;margin-bottom:0.5rem;">客户确认（签章）</div>
+                <div style="height:50px;"></div>
+                <div style="margin-top:0.5rem;">日期：___________</div>
+            </div>
         </div>
         <div style="margin-top:1rem;font-size:0.75rem;color:#666;text-align:center;">
             ${appData.currentQuote.paymentMethod?`付款方式：${appData.currentQuote.paymentMethod} | `:''}有效期：${vd}天 | 联系人：${settings.companyContact||'______________'}
@@ -15573,7 +15488,7 @@ function generateQuotePreview(isManualChange){
         
         let mFooterRows=`<tr><td colspan="${footerCol1}" style="padding:0.6rem 1rem;text-align:right;font-size:0.8rem;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;">报价金额</td><td style="padding:0.6rem 1rem;text-align:right;font-size:0.85rem;font-weight:600;background:#f9fafb;border-bottom:1px solid #e5e7eb;">¥${st.toFixed(2)}</td></tr>`;
         if(dr<100){mFooterRows+=`<tr><td colspan="${footerCol1}" style="padding:0.6rem 1rem;text-align:right;font-size:0.8rem;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;">折扣 (${dr}%)</td><td style="padding:0.6rem 1rem;text-align:right;font-size:0.85rem;font-weight:600;color:#dc2626;background:#f9fafb;border-bottom:1px solid #e5e7eb;">-¥${da.toFixed(2)}</td></tr>`;}
-        mFooterRows+=`<tr><td colspan="${footerCol1}" style="padding:0.8rem 1rem;text-align:right;font-size:1rem;font-weight:700;color:${hc};background:${hg};border-bottom:none;">合计金额${tr>0&&pm==='in'?'（含税'+tr+'%）':tr>0&&pm==='ex'?'（含税'+tr+'%，税金¥'+tax.toFixed(2)+'）':pm==='ex'&&tr===0?'（未税）':''}</td><td style="padding:0.8rem 1rem;text-align:right;font-size:1.15rem;font-weight:700;color:${hc};background:${hg};border-bottom:none;">¥${total.toFixed(2)}</td></tr>`;
+        mFooterRows+=`<tr><td colspan="${footerCol1}" style="padding:0.8rem 1rem;text-align:right;font-size:1rem;font-weight:700;color:${hc};background:${hg};border-bottom:none;">合计金额${pm==='in'&&tr>0?'（含税'+tr+'%）':pm==='in'&&tr===0?'':pm==='ex'&&tr>0?'（加税'+tr+'%，税金¥'+tax.toFixed(2)+'）':pm==='ex'&&tr===0?'（未税）':''}</td><td style="padding:0.8rem 1rem;text-align:right;font-size:1.15rem;font-weight:700;color:${hc};background:${hg};border-bottom:none;">¥${total.toFixed(2)}</td></tr>`;
         mFooterRows+=`<tr><td colspan="${footerCol2}" style="padding:0.5rem 1rem;text-align:right;font-size:0.9rem;color:${hc};background:${hg};border-bottom:none;font-weight:500;">大写金额：${numberToChineseUpper(total)}</td></tr>`;
         
         preview.innerHTML=`<div style="background:white;max-width:100%;margin:0 auto;font-family:'Microsoft YaHei','PingFang SC',Arial,sans-serif;overflow:hidden;${innerPadding};">
@@ -15585,7 +15500,7 @@ function generateQuotePreview(isManualChange){
                             <div style="font-size:0.75rem;opacity:0.8;letter-spacing:0.15em;margin-bottom:0.5rem;">ADVERTISING QUOTATION</div>
                             <h2 style="font-size:1.75rem;font-weight:700;margin:0 0 0.5rem 0;letter-spacing:0.02em;">${appData.currentQuote.title||'广告报价单'}</h2>
                             ${appData.currentQuote.quoteNumber?`<div style="font-size:0.8rem;opacity:0.85;margin-bottom:0.25rem;">编号：${appData.currentQuote.quoteNumber}</div>`:''}
-                            <div style="font-size:0.85rem;opacity:0.9;">${ds} ${settings.companyName?'| '+settings.companyName:''}</div>
+                            <div style="font-size:0.85rem;opacity:0.9;">${ds}</div>
                         </div>
                     </div>
                     <div style="text-align:right;">
@@ -15646,25 +15561,20 @@ function generateQuotePreview(isManualChange){
                     <tfoot>${mFooterRows}</tfoot>
                 </table>
             </div>
-            <div style="padding:1.5rem 2rem;background:#fafbfc;border-top:1px solid #e5e7eb;">
-                ${appData.currentQuote.paymentMethod?`<div style="margin-bottom:0.75rem;"><span style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;color:#9ca3af;font-weight:600;">付款方式</span><div style="font-size:0.85rem;color:#1f2937;font-weight:600;margin-top:0.25rem;">${appData.currentQuote.paymentMethod}</div></div>`:''}
-                ${appData.currentQuote.showNotes !== false ? `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;color:#9ca3af;margin-bottom:0.75rem;font-weight:600;">备注条款</div>
-                <div style="font-size:0.85rem;color:#6b7280;line-height:1.6;">${dn.replace(/\n/g,'<br>')}</div>` : ''}
+            <div style="padding:1rem 2rem;background:#fafbfc;border-top:1px solid #e5e7eb;font-size:0.85rem;color:#666;">
+                ${appData.currentQuote.paymentMethod || appData.currentQuote.showNotes !== false ? `<div>${appData.currentQuote.paymentMethod?`<strong>付款方式：</strong>${appData.currentQuote.paymentMethod}；`:''}${appData.currentQuote.showNotes !== false?`<strong>备注：</strong>${dn.replace(/\n/g,'；')}`:''}</div>` : ''}
             </div>
             <div style="padding:1.5rem 2rem;display:flex;justify-content:space-between;background:white;border-top:1px solid #e5e7eb;">
                 <div>
                     <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#9ca3af;margin-bottom:0.5rem;font-weight:600;">报价方</div>
-                    <div style="width:150px;height:50px;border-bottom:1px solid #d1d5db;display:flex;align-items:flex-end;justify-content:center;padding-bottom:0.5rem;font-size:0.8rem;color:#6b7280;">${settings.companyName||'公司名称'}</div>
+                    <div style="width:150px;height:50px;font-size:0.8rem;color:#6b7280;">${settings.companyName||'公司名称'}</div>
                     <div style="font-size:0.75rem;color:#9ca3af;margin-top:0.5rem;">签字：___________</div>
                 </div>
                 <div>
                     <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#9ca3af;margin-bottom:0.5rem;font-weight:600;">客户确认</div>
-                    <div style="width:150px;height:50px;border-bottom:1px solid #d1d5db;"></div>
-                    <div style="font-size:0.75rem;color:#9ca3af;margin-top:0.5rem;">签字：___________</div>
+                    <div style="width:150px;height:50px;"></div>
+                    <div style="font-size:0.75rem;color:#9ca3af;margin-top:0.5rem;">签字：___________ &nbsp;&nbsp; 日期：___________</div>
                 </div>
-            </div>
-            <div style="padding:1rem 2rem;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);text-align:center;">
-                <span style="font-size:0.75rem;color:rgba(255,255,255,0.8);">有效期 ${vd} 天 | 感谢您的信任，期待合作</span>
             </div>
         ${sh}${sigHtml}</div>${saveBtnHtml}`;
     }
