@@ -11399,7 +11399,26 @@ function loadFromLocalStorage() {
             var parsed = JSON.parse(saved);
             // 确保解析结果是一个有效的对象
             if (parsed && typeof parsed === 'object') {
-                // 合并解析的数据到 appData
+                // 检查是否使用混合存储策略
+                if (parsed.useIndexedDB && idbInitialized && IDB.isSupported()) {
+                    console.log('检测到混合存储，从 IndexedDB 加载重量级数据');
+                    // 先加载元数据
+                    Object.assign(appData, parsed);
+                    fixAppDataCompat();
+                    
+                    // 从 IndexedDB 加载重量级数据
+                    loadFromIndexedDB().then(function() {
+                        console.log('混合存储加载完成');
+                        initUI();
+                    }).catch(function(e) {
+                        console.warn('IndexedDB 加载失败，使用元数据中的计数信息:', e);
+                        // 即使 IndexedDB 失败，也使用现有元数据
+                        initUI();
+                    });
+                    return;
+                }
+                
+                // 传统存储模式：直接使用 localStorage 中的所有数据
                 Object.assign(appData, parsed);
                 fixAppDataCompat();
                 console.log('从localStorage加载数据成功');
@@ -11490,45 +11509,73 @@ function loadFromIndexedDB() {
             }
             if (!Array.isArray(results.photos)) results.photos = [];
             
+            // 检查是否为混合存储模式（元数据已从 localStorage 加载）
+            var isHybridMode = appData.useIndexedDB === true;
+            
             // 检查是否有实际的业务数据（产品、客户、模板、报价历史）
             var hasBusinessData = results.products.length > 0 || 
                                  results.templates.length > 0 || 
                                  results.customers.length > 0 || 
                                  results.quoteHistory.length > 0;
             
-            // 检查是否有系统设置或照片等辅助数据
-            var hasAuxData = results.photos.length > 0 ||
-                            (results.systemSettings && Object.keys(results.systemSettings).length > 0);
-            
-            if (hasBusinessData) {
-                // 使用IDB数据
-                appData.products = results.products;
-                appData.templates = results.templates;
-                appData.customers = results.customers;
-                appData.quoteHistory = results.quoteHistory;
-                appData.systemSettings = results.systemSettings;
-                appData.photos = results.photos;
-                fixAppDataCompat();
-                console.log('从IndexedDB加载数据成功，产品数量:', results.products.length);
-                resolve();
-            } else if (hasAuxData) {
-                // 只有辅助数据，尝试从localStorage恢复业务数据
-                console.log('IndexedDB只有辅助数据，尝试从localStorage恢复业务数据');
-                loadFromLocalStorage();
-                // 如果localStorage也没有业务数据，保留IDB的辅助数据
-                if (appData.products && appData.products.length > 0) {
-                    console.log('从localStorage恢复业务数据成功');
+            if (isHybridMode) {
+                // 混合存储模式：只更新重量级数据，保持元数据不变
+                if (hasBusinessData) {
+                    appData.products = results.products;
+                    appData.templates = results.templates;
+                    appData.customers = results.customers;
+                    appData.quoteHistory = results.quoteHistory;
+                    console.log('混合存储模式：从 IndexedDB 加载重量级数据成功');
+                } else {
+                    console.log('混合存储模式：IndexedDB 中没有业务数据，使用默认空数组');
+                    appData.products = [];
+                    appData.templates = [];
+                    appData.customers = [];
+                    appData.quoteHistory = [];
                 }
+                
+                // 合并系统设置（IndexedDB 优先）
+                if (Object.keys(results.systemSettings).length > 0) {
+                    appData.systemSettings = Object.assign(appData.systemSettings || {}, results.systemSettings);
+                }
+                
+                fixAppDataCompat();
                 resolve();
             } else {
-                // IDB为空或只有空数据，尝试从localStorage加载
-                console.log('IndexedDB为空，尝试从localStorage加载');
-                loadFromLocalStorage();
-                // 如果localStorage也没有数据，保留当前的appData（可能包含默认设置）
-                if (!appData.products || appData.products.length === 0) {
-                    console.log('localStorage也没有数据，保持现有状态');
+                // 传统存储模式：完全使用 IndexedDB 数据
+                var hasAuxData = results.photos.length > 0 ||
+                                (results.systemSettings && Object.keys(results.systemSettings).length > 0);
+                
+                if (hasBusinessData) {
+                    // 使用IDB数据
+                    appData.products = results.products;
+                    appData.templates = results.templates;
+                    appData.customers = results.customers;
+                    appData.quoteHistory = results.quoteHistory;
+                    appData.systemSettings = results.systemSettings;
+                    appData.photos = results.photos;
+                    fixAppDataCompat();
+                    console.log('从IndexedDB加载数据成功，产品数量:', results.products.length);
+                    resolve();
+                } else if (hasAuxData) {
+                    // 只有辅助数据，尝试从localStorage恢复业务数据
+                    console.log('IndexedDB只有辅助数据，尝试从localStorage恢复业务数据');
+                    loadFromLocalStorage();
+                    // 如果localStorage也没有业务数据，保留IDB的辅助数据
+                    if (appData.products && appData.products.length > 0) {
+                        console.log('从localStorage恢复业务数据成功');
+                    }
+                    resolve();
+                } else {
+                    // IDB为空或只有空数据，尝试从localStorage加载
+                    console.log('IndexedDB为空，尝试从localStorage加载');
+                    loadFromLocalStorage();
+                    // 如果localStorage也没有数据，保留当前的appData（可能包含默认设置）
+                    if (!appData.products || appData.products.length === 0) {
+                        console.log('localStorage也没有数据，保持现有状态');
+                    }
+                    resolve();
                 }
-                resolve();
             }
         }).catch(function(e) {
             console.error('从IndexedDB加载失败:', e);
@@ -12282,8 +12329,10 @@ function saveToIndexedDB() {
 
 function saveToLocalStorage() {
     try {
-        // 优化：分离元数据和图片数据，避免序列化大量base64图片导致卡顿
-        // 1. 保存元数据（不包含图片）
+        // 智能混合存储策略：localStorage 存储轻量级元数据，IndexedDB 存储重量级数据
+        var idbAvailable = idbInitialized && IDB.isSupported();
+        
+        // 1. 保存元数据（轻量级数据）
         var metaData = {
             version: appData.version || '1.0',
             systemSettings: appData.systemSettings || {},
@@ -12292,15 +12341,30 @@ function saveToLocalStorage() {
             favoriteIds: appData.favoriteIds || [],
             photoAlbums: appData.photoAlbums || [],
             dataTimestamp: new Date().toISOString(),
-            customers: appData.customers || [],
-            templates: appData.templates || [],
-            quoteHistory: appData.quoteHistory || [],
             recycleBin: appData.recycleBin || null,
-            categories: appData.categories || []
+            categories: appData.categories || [],
+            useIndexedDB: idbAvailable // 标记是否使用 IndexedDB
         };
         
-        // 2. 保存产品数据，保留原样
-        metaData.products = appData.products || [];
+        // 2. 如果 IndexedDB 可用，将重量级数据存储到 IndexedDB
+        if (idbAvailable) {
+            // localStorage 只存储元数据，不存储大量数据
+            metaData.customersCount = (appData.customers || []).length;
+            metaData.templatesCount = (appData.templates || []).length;
+            metaData.quoteHistoryCount = (appData.quoteHistory || []).length;
+            metaData.productsCount = (appData.products || []).length;
+            
+            // 异步保存重量级数据到 IndexedDB
+            saveToIndexedDB().catch(function(e) {
+                console.warn('IndexedDB 保存失败，数据仍在内存中:', e);
+            });
+        } else {
+            // IndexedDB 不可用时，才将所有数据存储到 localStorage
+            metaData.customers = appData.customers || [];
+            metaData.templates = appData.templates || [];
+            metaData.quoteHistory = appData.quoteHistory || [];
+            metaData.products = appData.products || [];
+        }
         
         var str = JSON.stringify(metaData);
         console.log('localStorage 存储数据大小:', (str.length/1024).toFixed(1), 'KB');
@@ -12311,9 +12375,28 @@ function saveToLocalStorage() {
         var maxSize = 5 * 1024 * 1024; // 假设 5MB 限制
         
         if (currentUsage + estimatedSize > maxSize) {
-            console.warn('localStorage 空间不足，跳过保存。当前使用:', currentUsage, '新增:', estimatedSize);
-            showToast('本地存储空间不足，数据未保存', 'warning');
-            return false;
+            console.warn('localStorage 空间不足，尝试清理旧数据...');
+            var cleanupResult = smartCleanup(estimatedSize);
+            
+            if (cleanupResult.success) {
+                console.log('清理成功，重新保存');
+                if (window.safeSetItem) {
+                    window.safeSetItem('adQuoteAppData', str);
+                } else {
+                    localStorage.setItem('adQuoteAppData', str);
+                }
+                showToast('⚠️ 存储空间已优化，已清理 ' + cleanupResult.deletedCount + ' 个旧文件', 'info');
+                return true;
+            } else {
+                console.error('localStorage 空间不足且清理失败');
+                if (idbAvailable) {
+                    showToast('⚠️ localStorage 空间不足，但数据已保存到 IndexedDB', 'warning');
+                    return true;
+                } else {
+                    showToast('❌ 存储空间不足，无法保存数据', 'error');
+                    return false;
+                }
+            }
         }
         
         if (window.safeSetItem) {
@@ -12325,11 +12408,25 @@ function saveToLocalStorage() {
     } catch(e) {
         if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_FILE_CROSS_ORIGIN_BLOCKED') {
             console.error('localStorage 配额已满:', e);
-            showToast('本地存储空间已满，数据未保存', 'error');
+            
+            // 尝试使用 IndexedDB 作为备选
+            if (idbInitialized && IDB.isSupported()) {
+                console.log('localStorage 已满，尝试使用 IndexedDB');
+                saveToIndexedDB().then(function() {
+                    showToast('⚠️ localStorage 已满，数据已保存到 IndexedDB', 'warning');
+                }).catch(function(e2) {
+                    console.error('IndexedDB 也无法保存:', e2);
+                    showToast('❌ 存储空间不足，无法保存数据', 'error');
+                });
+                return false;
+            } else {
+                showToast('❌ 存储空间不足，无法保存数据', 'error');
+                return false;
+            }
         } else {
             console.error('localStorage保存失败:', e);
+            return false;
         }
-        return false;
     }
 }
 
@@ -15809,13 +15906,9 @@ function exportPDF(showSaveAs){
             input.parentNode.replaceChild(span, input);
         });
         // 设置日期标签和年月日文字为灰色
-        clone.querySelectorAll('span').forEach(function(span) {
+        clone.querySelectorAll('div:has(input[type="text"][placeholder="____"]) span, div:has(input[type="text"][placeholder="__"]) span').forEach(function(span) {
             if (span.textContent.includes('日期：') || span.textContent === '年' || span.textContent === '月' || span.textContent === '日') {
-                // 检查父级div是否包含日期输入框
-                var parent = span.parentElement;
-                if (parent && parent.querySelector('input[type="text"][placeholder="____"], input[type="text"][placeholder="__"]')) {
-                    span.style.color = '#999999';
-                }
+                span.style.color = '#999999'; // 设置为灰色文字
             }
         });
         clone.querySelectorAll('table').forEach(function(table) {
@@ -15846,37 +15939,29 @@ function exportPDF(showSaveAs){
             input.parentNode.replaceChild(span, input);
         });
         // 设置日期标签和年月日文字为灰色
-        clone.querySelectorAll('span').forEach(function(span) {
+        clone.querySelectorAll('div:has(input[type="text"][placeholder="____"]) span, div:has(input[type="text"][placeholder="__"]) span').forEach(function(span) {
             if (span.textContent.includes('日期：') || span.textContent === '年' || span.textContent === '月' || span.textContent === '日') {
-                // 检查父级div是否包含日期输入框
-                var parent = span.parentElement;
-                if (parent && parent.querySelector('input[type="text"][placeholder="____"], input[type="text"][placeholder="__"]')) {
-                    span.style.color = '#999999';
-                }
+                span.style.color = '#999999'; // 设置为灰色文字
             }
         });
         clone.classList.remove('hidden');
         document.body.appendChild(clone);
         var printContent = clone;
+        
+        // 获取浏览器特定的导出配置
+        var exportConfig = getExportConfig();
+        var browser = getBrowserInfo();
+        
         // 提升导出清晰度：使用更高的分辨率
         var opt = {
-            scale: 3, // 提升到3倍分辨率，显著提高清晰度
+            scale: exportConfig.scale,
             useCORS: true,
             background: '#ffffff',
             width: a4WidthPixels,
             windowWidth: a4WidthPixels,
-            dpi: 300 // 设置DPI为300，适合打印
+            dpi: browser.isiPhoneSafari || browser.isMiBrowser ? 150 : 300
         };
         
-        // 手机端优化：根据设备性能调整
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            // 高端设备使用3倍分辨率，中低端设备使用2.5倍
-            if (window.devicePixelRatio >= 3) {
-                opt.scale = 3;
-            } else {
-                opt.scale = 2.5;
-            }
-        }
         var tableBounds = [];
         var rowBoundaries = [];
         var cloneRect = clone.getBoundingClientRect();
@@ -16073,11 +16158,11 @@ function exportPDF(showSaveAs){
             
             var pdfFileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.pdf';
             
-            // 桌面版 Chrome/Edge 使用 showSaveFilePicker
-            var isDesktop = !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            var isChromeOrEdge = /Chrome|Edge/.test(navigator.userAgent) && !/Firefox|Safari/.test(navigator.userAgent);
+            // 获取浏览器信息（在异步回调中需要重新获取）
+            var browser = getBrowserInfo();
             
-            if (showSaveAs && isDesktop && isChromeOrEdge && window.showSaveFilePicker) {
+            // 另存为功能：使用File System Access API（仅桌面端浏览器支持）
+            if (showSaveAs && browser.useSaveFilePicker && window.showSaveFilePicker) {
                 try {
                     var pdfBuffer = pdf.output('arraybuffer');
                     var pdfData = new Uint8Array(pdfBuffer);
@@ -16096,61 +16181,190 @@ function exportPDF(showSaveAs){
                     }).then(function() {
                         if(clone.parentNode) clone.parentNode.removeChild(clone);
                         pdfExportLock = false;
-                        showToast('PDF已保存: ' + pdfFileName, 'success');
+                        showToast('PDF已保存到指定位置', 'success');
+                        console.log('PDF saved successfully with showSaveFilePicker');
                     }).catch(function(err) {
                         if (err.name === 'AbortError') {
+                            // 用户取消了保存
                             if(clone.parentNode) clone.parentNode.removeChild(clone);
                             pdfExportLock = false;
                             return;
                         }
-                        // 失败时回退到直接下载
-                        var pdfBlob = pdf.output('blob');
-                        var blobUrl = URL.createObjectURL(pdfBlob);
-                        var link = document.createElement('a');
-                        link.href = blobUrl;
-                        link.download = pdfFileName;
-                        link.style.display = 'none';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
+                        console.error('showSaveFilePicker error:', err);
                         if(clone.parentNode) clone.parentNode.removeChild(clone);
                         pdfExportLock = false;
-                        showToast('PDF已导出: ' + pdfFileName + ' (下载文件夹)', 'success');
+                        alert('保存失败: ' + err.message);
                     });
                 } catch (err) {
-                    console.error('PDF save error:', err);
-                    // 回退到直接下载
-                    var pdfBlob = pdf.output('blob');
-                    var blobUrl = URL.createObjectURL(pdfBlob);
-                    var link = document.createElement('a');
-                    link.href = blobUrl;
-                    link.download = pdfFileName;
-                    link.style.display = 'none';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
+                    console.error('PDF output error:', err);
                     if(clone.parentNode) clone.parentNode.removeChild(clone);
                     pdfExportLock = false;
-                    showToast('PDF已导出: ' + pdfFileName + ' (下载文件夹)', 'success');
+                    alert('PDF生成失败: ' + err.message);
                 }
             } else {
-                // 直接下载方式
-                var pdfBlob = pdf.output('blob');
-                var blobUrl = URL.createObjectURL(pdfBlob);
-                var link = document.createElement('a');
-                link.href = blobUrl;
-                link.download = pdfFileName;
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
+                // 默认下载方式 - 根据浏览器类型选择合适的下载方法
+                var browser = getBrowserInfo();
+                
+                if (browser.isiPhoneSafari || browser.isMiBrowser) {
+                    // iPhone Safari和小米浏览器使用Blob方式下载
+                    try {
+                        var pdfBuffer = pdf.output('arraybuffer');
+                        var pdfData = new Uint8Array(pdfBuffer);
+                        var blob = new Blob([pdfData], { type: 'application/pdf' });
+                        var blobUrl = URL.createObjectURL(blob);
+                        
+                        // 小米浏览器特殊处理：只显示下载弹窗，不触发自动下载（避免重复提示）
+                        if (browser.isMiBrowser) {
+                            var downloadBtn = document.createElement('div');
+                            downloadBtn.innerHTML = `
+                                <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:16px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:9999;text-align:center;max-width:90%;width:320px;">
+                                    <div style="font-size:2rem;margin-bottom:1rem;">📥</div>
+                                    <div style="font-size:1.1rem;font-weight:600;color:#1f2937;margin-bottom:0.5rem;">下载报价单</div>
+                                    <div style="font-size:0.875rem;color:#6b7280;margin-bottom:1.5rem;">点击下方按钮保存文件</div>
+                                    <a href="${blobUrl}" download="${pdfFileName}" style="display:inline-block;background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;padding:0.75rem 2rem;border-radius:8px;font-weight:600;text-decoration:none;">立即下载</a>
+                                    <div style="margin-top:1rem;font-size:0.75rem;color:#9ca3af;">文件格式：PDF</div>
+                                </div>
+                            `;
+                            document.body.appendChild(downloadBtn);
+                            
+                            // 点击按钮后自动移除弹窗
+                            downloadBtn.querySelector('a').addEventListener('click', function() {
+                                setTimeout(function() {
+                                    if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
+                                }, 500);
+                            });
+                            
+                            // 30秒后自动移除弹窗
+                            setTimeout(function() {
+                                if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
+                                URL.revokeObjectURL(blobUrl);
+                            }, 30000);
+                        } else {
+                            // iPhone Safari：尝试自动下载，同时显示弹窗作为备选
+                            var link = document.createElement('a');
+                            link.download = pdfFileName;
+                            link.href = blobUrl;
+                            link.style.display = 'none';
+                            document.body.appendChild(link);
+                            link.click();
+                            
+                            // 创建下载弹窗作为备选
+                            var downloadBtn = document.createElement('div');
+                            downloadBtn.innerHTML = `
+                                <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:16px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:9999;text-align:center;max-width:90%;width:320px;">
+                                    <div style="font-size:2rem;margin-bottom:1rem;">📥</div>
+                                    <div style="font-size:1.1rem;font-weight:600;color:#1f2937;margin-bottom:0.5rem;">下载报价单</div>
+                                    <div style="font-size:0.875rem;color:#6b7280;margin-bottom:1.5rem;">点击下方按钮保存文件</div>
+                                    <a href="${blobUrl}" download="${pdfFileName}" style="display:inline-block;background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;padding:0.75rem 2rem;border-radius:8px;font-weight:600;text-decoration:none;">立即下载</a>
+                                    <div style="margin-top:1rem;font-size:0.75rem;color:#9ca3af;">文件格式：PDF</div>
+                                </div>
+                            `;
+                            document.body.appendChild(downloadBtn);
+                            
+                            // 点击按钮后自动移除弹窗
+                            downloadBtn.querySelector('a').addEventListener('click', function() {
+                                setTimeout(function() {
+                                    if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
+                                }, 500);
+                            });
+                            
+                            // 30秒后自动移除弹窗
+                            setTimeout(function() {
+                                if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
+                                URL.revokeObjectURL(blobUrl);
+                            }, 30000);
+                        }
+                    } catch (err) {
+                        console.error('Blob download failed, falling back to pdf.save:', err);
+                        pdf.save(pdfFileName);
+                    }
+                } else {
+                    pdf.save(pdfFileName);
+                }
                 
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 pdfExportLock = false;
-                showToast('PDF已导出: ' + pdfFileName + ' (下载文件夹)', 'success');
+                console.log('PDF exported successfully');
+                
+                // 显示导出成功提示并提供打开文件夹选项
+                setTimeout(function() {
+                    // 尝试多种方案打开下载文件夹
+                    var success = false;
+                    
+                    // 方案1：使用PakePlus自定义API
+                    if (window.Pake && window.Pake.openDownloadFolder) {
+                        try {
+                            window.Pake.openDownloadFolder();
+                            showToast('已打开下载文件夹', 'success');
+                            success = true;
+                        } catch (err) {
+                            console.error('Pake.openDownloadFolder failed:', err);
+                        }
+                    }
+                    
+                    // 方案2：使用Tauri API的不同写法
+                    if (!success && window.__TAURI__) {
+                        try {
+                            if (window.__TAURI__.shell && window.__TAURI__.shell.openPath) {
+                                // 直接打开系统下载文件夹
+                                window.__TAURI__.shell.openPath('downloads').then(function() {
+                                    showToast('已打开下载文件夹', 'success');
+                                    success = true;
+                                }).catch(function(err) {
+                                    console.error('__TAURI__.shell.openPath failed:', err);
+                                });
+                            } else if (window.__TAURI__.path && window.__TAURI__.shell) {
+                                window.__TAURI__.path.downloadDir().then(function(downloadPath) {
+                                    window.__TAURI__.shell.open(downloadPath).then(function() {
+                                        showToast('已打开下载文件夹', 'success');
+                                        success = true;
+                                    });
+                                }).catch(function(err) {
+                                    console.error('Tauri API failed:', err);
+                                });
+                            }
+                        } catch (err) {
+                            console.error('Tauri API error:', err);
+                        }
+                    }
+                    
+                    // 方案3：使用HTML5 Plus API
+                    if (!success && window.plus) {
+                        try {
+                            if (plus.io && plus.runtime) {
+                                var downloadPath = plus.io.convertLocalFileSystemURL('_downloads/');
+                                plus.runtime.openFile(downloadPath, function(error) {
+                                    console.error('plus.runtime.openFile failed:', error);
+                                });
+                                success = true;
+                            }
+                        } catch (err) {
+                            console.error('HTML5 Plus API error:', err);
+                        }
+                    }
+                    
+                    // 方案4：使用Windows特定的命令行方式
+                    if (!success && navigator.userAgent.indexOf('Windows') !== -1) {
+                        try {
+                            // 使用PowerShell命令打开下载文件夹
+                            if (window.__TAURI__ && window.__TAURI__.shell) {
+                                window.__TAURI__.shell.execute('start shell:downloads').then(function() {
+                                    showToast('已打开下载文件夹', 'success');
+                                    success = true;
+                                }).catch(function(err) {
+                                    console.error('PowerShell command failed:', err);
+                                });
+                            }
+                        } catch (err) {
+                            console.error('Windows command error:', err);
+                        }
+                    }
+                    
+                    // 如果所有方案都失败，跳过提示（用户已通过Toast收到通知）
+                    if (!success) {
+                        // 不显示详细提示，避免重复
+                    }
+                }, 100);
             }
         }).catch(function(err) {
             console.error('html2canvas error:', err);
@@ -16163,6 +16377,49 @@ function exportPDF(showSaveAs){
         pdfExportLock = false;
         alert('导出出错: ' + e.message);
     }
+}
+
+// 浏览器检测工具函数
+function getBrowserInfo() {
+    var ua = navigator.userAgent;
+    return {
+        isiPhoneSafari: /iPhone/i.test(ua) && /Safari/i.test(ua) && !/CriOS/i.test(ua) && !/FxiOS/i.test(ua),
+        isMiBrowser: /MiBrowser/i.test(ua) || /Xiaomi/i.test(ua) && /Browser/i.test(ua),
+        isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua),
+        // 移动端浏览器禁用showSaveFilePicker（需要用户激活）
+        useSaveFilePicker: !(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua))
+    };
+}
+
+// 获取适合当前浏览器的导出配置
+function getExportConfig() {
+    var browser = getBrowserInfo();
+    var config = {
+        scale: 3,
+        quality: 0.92,
+        useBlobDownload: false
+    };
+    
+    if (browser.isiPhoneSafari) {
+        // iPhone Safari特殊处理：降低分辨率以避免内存问题
+        config.scale = 2;
+        config.quality = 0.85;
+        config.useBlobDownload = true;
+    } else if (browser.isMiBrowser) {
+        // 小米浏览器特殊处理：降低分辨率
+        config.scale = 2;
+        config.quality = 0.85;
+        config.useBlobDownload = true;
+    } else if (browser.isMobile) {
+        // 其他移动端浏览器
+        if (window.devicePixelRatio >= 3) {
+            config.scale = 2.5;
+        } else {
+            config.scale = 2;
+        }
+    }
+    
+    return config;
 }
 
 // 导出JPG图片
@@ -16221,36 +16478,128 @@ function exportJPG(showSaveAs){
         
         document.body.appendChild(clone);
         
+        // 获取浏览器特定的导出配置
+        var exportConfig = getExportConfig();
+        var browser = getBrowserInfo();
+        
         // 提升导出清晰度：使用更高的分辨率
         var opt = {
-            scale: 3, // 提升到3倍分辨率，显著提高清晰度
+            scale: exportConfig.scale,
             useCORS: true,
             background: '#ffffff',
             width: a4WidthPixels,
             windowWidth: a4WidthPixels,
-            dpi: 300 // 设置DPI为300，适合打印
+            dpi: browser.isiPhoneSafari || browser.isMiBrowser ? 150 : 300
         };
         
-        // 手机端优化：根据设备性能调整
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            // 高端设备使用3倍分辨率，中低端设备使用2.5倍
-            if (window.devicePixelRatio >= 3) {
-                opt.scale = 3;
-            } else {
-                opt.scale = 2.5;
-            }
-        }
-        
         html2canvas(clone, opt).then(function(canvas) {
-            // 转换为JPG
-            var imgData = canvas.toDataURL('image/jpeg', 0.92);
+            // 转换为JPG，使用浏览器特定的质量设置
+            var imgData = canvas.toDataURL('image/jpeg', exportConfig.quality);
             var fileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.jpg';
             
-            // 桌面版 Chrome/Edge 使用 showSaveFilePicker
-            var isDesktop = !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            var isChromeOrEdge = /Chrome|Edge/.test(navigator.userAgent) && !/Firefox|Safari/.test(navigator.userAgent);
+            // iPhone Safari和小米浏览器使用Blob方式下载
+            if (exportConfig.useBlobDownload && !showSaveAs) {
+                var byteString = atob(imgData.split(',')[1]);
+                var mimeString = imgData.split(',')[0].split(':')[1].split(';')[0];
+                var ab = new ArrayBuffer(byteString.length);
+                var ia = new Uint8Array(ab);
+                for (var i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                var blob = new Blob([ab], { type: mimeString });
+                
+                // 创建Object URL
+                var blobUrl = URL.createObjectURL(blob);
+                
+                // 小米浏览器特殊处理：只显示下载弹窗，不触发自动下载（避免重复提示）
+                if (browser.isMiBrowser) {
+                    var downloadBtn = document.createElement('div');
+                    downloadBtn.innerHTML = `
+                        <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:16px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:9999;text-align:center;max-width:90%;width:320px;">
+                            <div style="font-size:2rem;margin-bottom:1rem;">📥</div>
+                            <div style="font-size:1.1rem;font-weight:600;color:#1f2937;margin-bottom:0.5rem;">下载报价单</div>
+                            <div style="font-size:0.875rem;color:#6b7280;margin-bottom:1.5rem;">点击下方按钮保存文件</div>
+                            <a href="${blobUrl}" download="${fileName}" style="display:inline-block;background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;padding:0.75rem 2rem;border-radius:8px;font-weight:600;text-decoration:none;">立即下载</a>
+                            <div style="margin-top:1rem;font-size:0.75rem;color:#9ca3af;">文件格式：JPG</div>
+                        </div>
+                    `;
+                    document.body.appendChild(downloadBtn);
+                    
+                    // 点击按钮后自动移除弹窗
+                    downloadBtn.querySelector('a').addEventListener('click', function() {
+                        setTimeout(function() {
+                            if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
+                        }, 500);
+                    });
+                    
+                    // 30秒后自动移除弹窗
+                    setTimeout(function() {
+                        if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
+                        URL.revokeObjectURL(blobUrl);
+                    }, 30000);
+                } else if (browser.isiPhoneSafari) {
+                    // iPhone Safari：尝试自动下载，同时显示弹窗作为备选
+                    var link = document.createElement('a');
+                    link.download = fileName;
+                    link.href = blobUrl;
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    // 创建下载弹窗作为备选
+                    var downloadBtn = document.createElement('div');
+                    downloadBtn.innerHTML = `
+                        <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:16px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:9999;text-align:center;max-width:90%;width:320px;">
+                            <div style="font-size:2rem;margin-bottom:1rem;">📥</div>
+                            <div style="font-size:1.1rem;font-weight:600;color:#1f2937;margin-bottom:0.5rem;">下载报价单</div>
+                            <div style="font-size:0.875rem;color:#6b7280;margin-bottom:1.5rem;">点击下方按钮保存文件</div>
+                            <a href="${blobUrl}" download="${fileName}" style="display:inline-block;background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;padding:0.75rem 2rem;border-radius:8px;font-weight:600;text-decoration:none;">立即下载</a>
+                            <div style="margin-top:1rem;font-size:0.75rem;color:#9ca3af;">文件格式：JPG</div>
+                        </div>
+                    `;
+                    document.body.appendChild(downloadBtn);
+                    
+                    // 点击按钮后自动移除弹窗
+                    downloadBtn.querySelector('a').addEventListener('click', function() {
+                        setTimeout(function() {
+                            if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
+                        }, 500);
+                    });
+                    
+                    // 30秒后自动移除弹窗
+                    setTimeout(function() {
+                        if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
+                        URL.revokeObjectURL(blobUrl);
+                    }, 30000);
+                } else {
+                    // 其他浏览器：只自动下载
+                    var link = document.createElement('a');
+                    link.download = fileName;
+                    link.href = blobUrl;
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    // 清理
+                    setTimeout(function() {
+                        URL.revokeObjectURL(blobUrl);
+                        document.body.removeChild(link);
+                    }, 1000);
+                    
+                    showToast('JPG图片已导出', 'success');
+                }
+                
+                if(clone.parentNode) clone.parentNode.removeChild(clone);
+                jpgExportLock = false;
+                return;
+            }
             
-            if (showSaveAs && isDesktop && isChromeOrEdge && window.showSaveFilePicker) {
+            // 获取浏览器信息（在异步回调中需要重新获取）
+            var browser = getBrowserInfo();
+            
+            // 另存为功能：使用File System Access API（仅桌面端浏览器支持）
+            if (showSaveAs && browser.useSaveFilePicker && window.showSaveFilePicker) {
+                // 将base64转换为Blob
                 var byteString = atob(imgData.split(',')[1]);
                 var mimeString = imgData.split(',')[0].split(':')[1].split(';')[0];
                 var ab = new ArrayBuffer(byteString.length);
@@ -16275,51 +16624,110 @@ function exportJPG(showSaveAs){
                 }).then(function() {
                     if(clone.parentNode) clone.parentNode.removeChild(clone);
                     jpgExportLock = false;
-                    showToast('JPG已保存: ' + fileName, 'success');
+                    showToast('JPG已保存到指定位置', 'success');
+                    console.log('JPG saved successfully with showSaveFilePicker');
                 }).catch(function(err) {
                     if (err.name === 'AbortError') {
+                        // 用户取消了保存
                         if(clone.parentNode) clone.parentNode.removeChild(clone);
                         jpgExportLock = false;
                         return;
                     }
-                    // 失败时回退到直接下载
-                    var jpgBlob = new Blob([ab], { type: mimeString });
-                    var blobUrl = URL.createObjectURL(jpgBlob);
-                    var link = document.createElement('a');
-                    link.href = blobUrl;
-                    link.download = fileName;
-                    link.style.display = 'none';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
+                    console.error('showSaveFilePicker error:', err);
                     if(clone.parentNode) clone.parentNode.removeChild(clone);
                     jpgExportLock = false;
-                    showToast('JPG已导出: ' + fileName + ' (下载文件夹)', 'success');
+                    alert('保存失败: ' + err.message);
                 });
             } else {
-                // 直接下载方式
-                var byteString = atob(imgData.split(',')[1]);
-                var mimeString = imgData.split(',')[0].split(':')[1].split(';')[0];
-                var ab = new ArrayBuffer(byteString.length);
-                var ia = new Uint8Array(ab);
-                for (var i = 0; i < byteString.length; i++) {
-                    ia[i] = byteString.charCodeAt(i);
-                }
-                var jpgBlob = new Blob([ab], { type: mimeString });
-                var blobUrl = URL.createObjectURL(jpgBlob);
+                // 默认下载方式
                 var link = document.createElement('a');
-                link.href = blobUrl;
                 link.download = fileName;
-                link.style.display = 'none';
-                document.body.appendChild(link);
+                link.href = imgData;
                 link.click();
-                document.body.removeChild(link);
-                setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
                 
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 jpgExportLock = false;
-                showToast('JPG已导出: ' + fileName + ' (下载文件夹)', 'success');
+                
+                // 显示导出成功提示并提供打开文件夹选项
+                setTimeout(function() {
+                    // 尝试多种方案打开下载文件夹
+                    var success = false;
+                    
+                    // 方案1：使用PakePlus自定义API
+                    if (window.Pake && window.Pake.openDownloadFolder) {
+                        try {
+                            window.Pake.openDownloadFolder();
+                            showToast('已打开下载文件夹', 'success');
+                            success = true;
+                        } catch (err) {
+                            console.error('Pake.openDownloadFolder failed:', err);
+                        }
+                    }
+                    
+                    // 方案2：使用Tauri API的不同写法
+                    if (!success && window.__TAURI__) {
+                        try {
+                            if (window.__TAURI__.shell && window.__TAURI__.shell.openPath) {
+                                // 直接打开系统下载文件夹
+                                window.__TAURI__.shell.openPath('downloads').then(function() {
+                                    showToast('已打开下载文件夹', 'success');
+                                    success = true;
+                                }).catch(function(err) {
+                                    console.error('__TAURI__.shell.openPath failed:', err);
+                                });
+                            } else if (window.__TAURI__.path && window.__TAURI__.shell) {
+                                window.__TAURI__.path.downloadDir().then(function(downloadPath) {
+                                    window.__TAURI__.shell.open(downloadPath).then(function() {
+                                        showToast('已打开下载文件夹', 'success');
+                                        success = true;
+                                    });
+                                }).catch(function(err) {
+                                    console.error('Tauri API failed:', err);
+                                });
+                            }
+                        } catch (err) {
+                            console.error('Tauri API error:', err);
+                        }
+                    }
+                    
+                    // 方案3：使用HTML5 Plus API
+                    if (!success && window.plus) {
+                        try {
+                            if (plus.io && plus.runtime) {
+                                var downloadPath = plus.io.convertLocalFileSystemURL('_downloads/');
+                                plus.runtime.openFile(downloadPath, function(error) {
+                                    console.error('plus.runtime.openFile failed:', error);
+                                });
+                                success = true;
+                            }
+                        } catch (err) {
+                            console.error('HTML5 Plus API error:', err);
+                        }
+                    }
+                    
+                    // 方案4：使用Windows特定的命令行方式
+                    if (!success && navigator.userAgent.indexOf('Windows') !== -1) {
+                        try {
+                            // 使用PowerShell命令打开下载文件夹
+                            if (window.__TAURI__ && window.__TAURI__.shell) {
+                                window.__TAURI__.shell.execute('start shell:downloads').then(function() {
+                                    showToast('已打开下载文件夹', 'success');
+                                    success = true;
+                                }).catch(function(err) {
+                                    console.error('PowerShell command failed:', err);
+                                });
+                            }
+                        } catch (err) {
+                            console.error('Windows command error:', err);
+                        }
+                    }
+                    
+                    // 如果所有方案都失败，跳过提示（用户已通过Toast收到通知）
+                    if (!success) {
+                        // 不显示详细提示，避免重复
+                    }
+                }, 100);
+                showToast('JPG图片已导出', 'success');
             }
         }).catch(function(err) {
             console.error('html2canvas error:', err);
