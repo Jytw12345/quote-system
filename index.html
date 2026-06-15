@@ -6337,8 +6337,26 @@ function safeExecuteAsync(fn, defaultVal) {
                                     <input type="number" id="cw-lineHeight-num" value="20" min="10" max="40" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('lineHeight',this.value)">
                                 </div>
                             </div>
+                            <div class="col-width-item">
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">表头字号</div>
+                                <div style="display:flex;align-items:center;gap:0.5rem;">
+                                    <input type="range" id="cw-headerFontSize" min="10" max="18" value="14" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('headerFontSize',this.value)">
+                                    <input type="number" id="cw-headerFontSize-num" value="14" min="10" max="18" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('headerFontSize',this.value)">
+                                </div>
+                            </div>
+                            <div class="col-width-item">
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">内容字号</div>
+                                <div style="display:flex;align-items:center;gap:0.5rem;">
+                                    <input type="range" id="cw-contentFontSize" min="10" max="16" value="12" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('contentFontSize',this.value)">
+                                    <input type="number" id="cw-contentFontSize-num" value="12" min="10" max="16" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('contentFontSize',this.value)">
+                                </div>
+                            </div>
                         </div>
                         <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid #e5e7eb;">
+                            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.75rem;">
+                                <span style="font-size:0.8rem;color:#374151;font-weight:600;">列顺序（拖拽调整）：</span>
+                                <div id="columnOrderList" style="display:flex;gap:0.3rem;flex-wrap:wrap;"></div>
+                            </div>
                             <button class="btn btn-sm btn-primary" onclick="applyColumnWidth()">✅ 应用到预览</button>
                             <span style="font-size:0.75rem;color:#6b7280;margin-left:1rem;">提示：调整后点击"应用到预览"查看效果</span>
                         </div>
@@ -14818,13 +14836,13 @@ function toggleColumnWidthPanel(){
 }
 function loadColumnWidthSettings(){
     const saved = appData.systemSettings.columnWidthSettings;
-    const defaults = {index:45,image:70,name:180,spec:120,unit:60,note:90,qty:55,price:90,subtotal:95,marginTop:10,marginSides:15,lineHeight:18};
+    const defaults = {index:45,image:70,name:180,spec:120,unit:60,note:90,qty:55,price:90,subtotal:95,marginTop:10,marginSides:15,lineHeight:18,headerFontSize:14,contentFontSize:12};
     if(saved){
         columnWidthSettings = {...defaults, ...saved};
     } else {
         columnWidthSettings = {...defaults};
     }
-    const cols = ['index','image','name','spec','unit','note','qty','price','subtotal','marginTop','marginSides','lineHeight'];
+    const cols = ['index','image','name','spec','unit','note','qty','price','subtotal','marginTop','marginSides','lineHeight','headerFontSize','contentFontSize'];
     cols.forEach(col => {
         const slider = document.getElementById('cw-' + col);
         const numInput = document.getElementById('cw-' + col + '-num');
@@ -14833,6 +14851,38 @@ function loadColumnWidthSettings(){
             numInput.value = columnWidthSettings[col];
         }
     });
+    loadColumnOrder();
+}
+function loadColumnOrder(){
+    const savedOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+    const colNames = {index:'序号',image:'图片',name:'项目名称',spec:'规格',unit:'单位',note:'备注',qty:'数量',price:'单价',subtotal:'小计'};
+    const list = document.getElementById('columnOrderList');
+    if(list){
+        list.innerHTML = savedOrder.map((col, idx) => 
+            `<span draggable="true" ondragstart="dragColumn(event,'${col}')" ondragover="allowDrop(event)" ondrop="dropColumn(event,'${col}')" 
+                   style="padding:0.3rem 0.6rem;background:white;border:1px solid #ddd;border-radius:4px;font-size:0.75rem;cursor:move;"
+                   title="拖拽调整顺序">${colNames[col]}</span>`
+        ).join('');
+    }
+    columnOrder = savedOrder;
+}
+let columnOrder = ['index','image','name','spec','unit','note','qty','price','subtotal'];
+function dragColumn(e, col){
+    e.dataTransfer.setData('text/plain', col);
+}
+function allowDrop(e){
+    e.preventDefault();
+}
+function dropColumn(e, targetCol){
+    e.preventDefault();
+    const draggedCol = e.dataTransfer.getData('text/plain');
+    if(draggedCol !== targetCol){
+        const draggedIdx = columnOrder.indexOf(draggedCol);
+        const targetIdx = columnOrder.indexOf(targetCol);
+        columnOrder.splice(draggedIdx, 1);
+        columnOrder.splice(targetIdx, 0, draggedCol);
+        loadColumnOrder();
+    }
 }
 function updateColumnWidth(col, value){
     columnWidthSettings[col] = parseInt(value);
@@ -14843,14 +14893,17 @@ function updateColumnWidth(col, value){
 }
 function applyColumnWidth(){
     appData.systemSettings.columnWidthSettings = {...columnWidthSettings};
+    appData.systemSettings.columnOrder = [...columnOrder];
     saveData();
     generateQuotePreview();
     showToast('列宽已应用到预览！', 'success');
 }
 function resetColumnWidth(){
-    columnWidthSettings = {index:50,image:60,name:150,spec:150,note:100,qty:60,price:100,subtotal:100,marginTop:10,marginSides:15,lineHeight:20};
+    columnWidthSettings = {index:50,image:60,name:150,spec:150,note:100,qty:60,price:100,subtotal:100,marginTop:10,marginSides:15,lineHeight:20,headerFontSize:14,contentFontSize:12};
+    columnOrder = ['index','image','name','spec','unit','note','qty','price','subtotal'];
     loadColumnWidthSettings();
     appData.systemSettings.columnWidthSettings = null;
+    appData.systemSettings.columnOrder = null;
     saveData();
     showToast('列宽已重置为默认', 'success');
 }
@@ -14858,20 +14911,21 @@ function getColumnWidths(){
     const saved = appData.systemSettings.columnWidthSettings;
     const autoWidths = calculateAutoColumnWidths();
     const defaults = columnWidthSettings;
-    const isDefault = !saved || (saved.name === defaults.name && saved.spec === defaults.spec);
     return {
         index: saved?.index ?? autoWidths.index ?? defaults.index,
         image: saved?.image ?? autoWidths.image ?? defaults.image,
-        name: isDefault ? (autoWidths.name ?? defaults.name) : (saved?.name ?? defaults.name),
-        spec: isDefault ? (autoWidths.spec ?? defaults.spec) : (saved?.spec ?? defaults.spec),
+        name: saved?.name ?? autoWidths.name ?? defaults.name,
+        spec: saved?.spec ?? autoWidths.spec ?? defaults.spec,
         unit: saved?.unit ?? autoWidths.unit ?? defaults.unit,
-        note: isDefault ? (autoWidths.note ?? defaults.note) : (saved?.note ?? defaults.note),
+        note: saved?.note ?? autoWidths.note ?? defaults.note,
         qty: saved?.qty ?? autoWidths.qty ?? defaults.qty,
         price: saved?.price ?? autoWidths.price ?? defaults.price,
         subtotal: saved?.subtotal ?? autoWidths.subtotal ?? defaults.subtotal,
         marginTop: saved?.marginTop ?? defaults.marginTop,
         marginSides: saved?.marginSides ?? defaults.marginSides,
-        lineHeight: saved?.lineHeight ?? defaults.lineHeight
+        lineHeight: saved?.lineHeight ?? defaults.lineHeight,
+        headerFontSize: saved?.headerFontSize ?? defaults.headerFontSize,
+        contentFontSize: saved?.contentFontSize ?? defaults.contentFontSize
     };
 }
 function calculateAutoColumnWidths(){
@@ -15018,7 +15072,7 @@ function generateQuotePreview(isManualChange){
         const lastSig=appData.signatures[appData.signatures.length-1];
         sigHtml=`<div class="quote-signature draggable-element" id="previewSignature" data-type="signature" style="position:absolute;bottom:${sip.bottom}px;right:${sip.right}px;width:150px;height:60px;opacity:0.9;cursor:move;z-index:10;"><img src="${lastSig.image}" alt="签名" style="width:100%;height:100%;object-fit:contain;pointer-events:none;"></div>`;
     }
-    const dn=settings.companyNotes || `- 本报价单有效期为 ${vd} 天\n- 交付时间根据实际工作量双方协商确定\n- 最终价格以实际制作量为准`;
+    const dn=settings.companyNotes || `本报价单有效期为 ${vd} 天\n交付时间根据实际工作量双方协商确定\n最终价格以实际制作量为准`;
     const quoteStyle = settings.quoteStyle || 'modern';
     let headerHtml='', bodyHtml='', footerHtml='', saveBtnHtml='';
     if(quoteStyle === 'gallery'){
@@ -15340,16 +15394,25 @@ function generateQuotePreview(isManualChange){
             const itemQty = item.qty || 1;
             const itemPrice = item.price || 0;
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
-            let row = `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:0.75rem 1rem;text-align:center;font-size:0.9rem;color:#666;">${idx+1}</td>`;
-            if(colVis.image !== false) {
-                const productImage = item.image ? renderProductImage(item.image, item.name || '', { style: 'width:50px !important;height:50px !important;object-fit:cover !important;border-radius:4px;border:1px solid #ddd;' }) : '<span style="color:#999;">-</span>';
-                row += `<td style="padding:0.75rem 1rem;text-align:center;">${productImage}</td>`;
-            }
-            row += `<td style="padding:0.75rem 1rem;text-align:left;font-size:0.95rem;color:#1f2937;font-weight:500;">${item.name}</td>`;
-            if(colVis.spec !== false) row += `<td style="padding:0.75rem 1rem;text-align:left;font-size:0.9rem;color:#666;white-space:pre-wrap;">${item.spec || '-'}</td>`;
-            row += `<td style="padding:0.75rem 1rem;text-align:center;font-size:0.9rem;color:#666;">${item.unit || '项'}</td>`;
-            if(colVis.note !== false) row += `<td style="padding:0.75rem 1rem;text-align:left;font-size:0.9rem;color:#666;">${item.note || '-'}</td>`;
-            row += `<td style="padding:0.75rem 1rem;text-align:center;font-size:0.9rem;color:#333;">${itemQty}</td><td style="padding:0.75rem 1rem;text-align:right;font-size:0.9rem;color:#333;">¥${itemPrice.toFixed(2)}</td><td style="padding:0.75rem 1rem;text-align:right;font-size:0.95rem;color:#dc2626;font-weight:600;">¥${it}</td></tr>`;
+            let row = `<tr style="border-bottom:1px solid #e5e7eb;">`;
+            const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+            colOrder.forEach(col => {
+                switch(col){
+                    case 'index': row += `<td style="padding:0.75rem 1rem;text-align:center;font-size:${cw.contentFontSize}px;color:#666;">${idx+1}</td>`; break;
+                    case 'image': if(colVis.image !== false) {
+                        const productImage = item.image ? renderProductImage(item.image, item.name || '', { style: 'width:50px !important;height:50px !important;object-fit:cover !important;border-radius:4px;border:1px solid #ddd;' }) : '<span style="color:#999;">-</span>';
+                        row += `<td style="padding:0.75rem 1rem;text-align:center;">${productImage}</td>`;
+                    } break;
+                    case 'name': row += `<td style="padding:0.75rem 1rem;text-align:left;font-size:${cw.contentFontSize+2}px;color:#1f2937;font-weight:500;">${item.name}</td>`; break;
+                    case 'spec': if(colVis.spec !== false) row += `<td style="padding:0.75rem 1rem;text-align:left;font-size:${cw.contentFontSize}px;color:#666;white-space:pre-wrap;">${item.spec || '-'}</td>`; break;
+                    case 'unit': row += `<td style="padding:0.75rem 1rem;text-align:center;font-size:${cw.contentFontSize}px;color:#666;">${item.unit || '项'}</td>`; break;
+                    case 'note': if(colVis.note !== false) row += `<td style="padding:0.75rem 1rem;text-align:left;font-size:${cw.contentFontSize}px;color:#666;">${item.note || '-'}</td>`; break;
+                    case 'qty': row += `<td style="padding:0.75rem 1rem;text-align:center;font-size:${cw.contentFontSize}px;color:#333;">${itemQty}</td>`; break;
+                    case 'price': row += `<td style="padding:0.75rem 1rem;text-align:right;font-size:${cw.contentFontSize}px;color:#333;">¥${itemPrice.toFixed(2)}</td>`; break;
+                    case 'subtotal': row += `<td style="padding:0.75rem 1rem;text-align:right;font-size:${cw.contentFontSize+2}px;color:#dc2626;font-weight:600;">¥${it}</td>`; break;
+                }
+            });
+            row += `</tr>`;
             return row;
         }).join('');
         
@@ -15400,19 +15463,45 @@ function generateQuotePreview(isManualChange){
                 </div>
                 <table style="width:100%;border-collapse:collapse;background:white;">
                     <colgroup>
-                        <col style="width:${cw.index}px;">${colVis.image !== false ? `<col style="width:${cw.image}px;">` : ''}<col style="width:${cw.name}px;">${colVis.spec !== false ? `<col style="width:${cw.spec}px;">` : ''}<col style="width:${cw.unit}px;">${colVis.note !== false ? `<col style="width:${cw.note}px;">` : ''}<col style="width:${cw.qty}px;"><col style="width:${cw.price}px;"><col style="width:${cw.subtotal}px;">
+                        ${(()=>{
+                            const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+                            let cols = '';
+                            colOrder.forEach(col => {
+                                switch(col){
+                                    case 'index': cols += `<col style="width:${cw.index}px;">`; break;
+                                    case 'image': if(colVis.image !== false) cols += `<col style="width:${cw.image}px;">`; break;
+                                    case 'name': cols += `<col style="width:${cw.name}px;">`; break;
+                                    case 'spec': if(colVis.spec !== false) cols += `<col style="width:${cw.spec}px;">`; break;
+                                    case 'unit': cols += `<col style="width:${cw.unit}px;">`; break;
+                                    case 'note': if(colVis.note !== false) cols += `<col style="width:${cw.note}px;">`; break;
+                                    case 'qty': cols += `<col style="width:${cw.qty}px;">`; break;
+                                    case 'price': cols += `<col style="width:${cw.price}px;">`; break;
+                                    case 'subtotal': cols += `<col style="width:${cw.subtotal}px;">`; break;
+                                }
+                            });
+                            return cols;
+                        })()}
                     </colgroup>
                     <thead>
                         <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
-                            <th style="padding:0.75rem 1rem;text-align:center;font-size:0.8rem;color:#666;font-weight:600;">序号</th>
-                            ${colVis.image !== false ? '<th style="padding:0.75rem 1rem;text-align:center;font-size:0.8rem;color:#666;font-weight:600;">图片</th>' : ''}
-                            <th style="padding:0.75rem 1rem;text-align:left;font-size:0.8rem;color:#666;font-weight:600;">项目名称</th>
-                            ${colVis.spec !== false ? '<th style="padding:0.75rem 1rem;text-align:left;font-size:0.8rem;color:#666;font-weight:600;">规格参数</th>' : ''}
-                            <th style="padding:0.75rem 1rem;text-align:center;font-size:0.8rem;color:#666;font-weight:600;">单位</th>
-                            ${colVis.note !== false ? '<th style="padding:0.75rem 1rem;text-align:left;font-size:0.8rem;color:#666;font-weight:600;">备注</th>' : ''}
-                            <th style="padding:0.75rem 1rem;text-align:center;font-size:0.8rem;color:#666;font-weight:600;">数量</th>
-                            <th style="padding:0.75rem 1rem;text-align:right;font-size:0.8rem;color:#666;font-weight:600;">单价</th>
-                            <th style="padding:0.75rem 1rem;text-align:right;font-size:0.8rem;color:#666;font-weight:600;">小计</th>
+                            ${(()=>{
+                                const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+                                let headers = '';
+                                colOrder.forEach(col => {
+                                    switch(col){
+                                        case 'index': headers += `<th style="padding:0.75rem 1rem;text-align:center;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">序号</th>`; break;
+                                        case 'image': if(colVis.image !== false) headers += `<th style="padding:0.75rem 1rem;text-align:center;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">图片</th>`; break;
+                                        case 'name': headers += `<th style="padding:0.75rem 1rem;text-align:center;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">项目名称</th>`; break;
+                                        case 'spec': if(colVis.spec !== false) headers += `<th style="padding:0.75rem 1rem;text-align:center;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">规格参数</th>`; break;
+                                        case 'unit': headers += `<th style="padding:0.75rem 1rem;text-align:center;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">单位</th>`; break;
+                                        case 'note': if(colVis.note !== false) headers += `<th style="padding:0.75rem 1rem;text-align:center;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">备注</th>`; break;
+                                        case 'qty': headers += `<th style="padding:0.75rem 1rem;text-align:center;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">数量</th>`; break;
+                                        case 'price': headers += `<th style="padding:0.75rem 1rem;text-align:center;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">单价</th>`; break;
+                                        case 'subtotal': headers += `<th style="padding:0.75rem 1rem;text-align:center;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">小计</th>`; break;
+                                    }
+                                });
+                                return headers;
+                            })()}
                         </tr>
                     </thead>
                     <tbody>
@@ -15498,16 +15587,25 @@ function generateQuotePreview(isManualChange){
             const itemPrice = item.price || 0;
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
             let bg=idx%2===0?'#fff':'#f8fafc';
-            let row = `<tr style="background:${bg};"><td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:0.8rem;">${idx+1}</td>`;
-            if(colVis.image !== false) {
-                let ic = item.image ? renderProductImage(item.image, item.name || '', { style: 'width:40px !important;height:40px !important;object-fit:cover !important;border-radius:4px;' }) : '-';
-                row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;">${ic}</td>`;
-            }
-            row += `<td style="padding:0.6rem 0.5rem;text-align:left;border-bottom:1px solid #e2e8f0;font-size:0.85rem;font-weight:500;">${item.name}</td>`;
-            if(colVis.spec !== false) row += `<td style="padding:0.6rem 0.5rem;text-align:left;border-bottom:1px solid #e2e8f0;font-size:0.75rem;color:#666;">${item.spec||'-'}</td>`;
-            row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:0.75rem;color:#666;">${item.unit||'项'}</td>`;
-            if(colVis.note !== false) row += `<td style="padding:0.6rem 0.5rem;text-align:left;border-bottom:1px solid #e2e8f0;font-size:0.75rem;color:#666;">${item.note||'-'}</td>`;
-            row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:0.8rem;">${itemQty}</td><td style="padding:0.6rem 0.5rem;text-align:right;border-bottom:1px solid #e2e8f0;font-size:0.8rem;">¥${itemPrice.toFixed(2)}</td><td style="padding:0.6rem 0.5rem;text-align:right;border-bottom:1px solid #e2e8f0;font-size:0.85rem;font-weight:600;">¥${it}</td></tr>`;
+            let row = `<tr style="background:${bg};">`;
+            const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+            colOrder.forEach(col => {
+                switch(col){
+                    case 'index': row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:${cw.contentFontSize}px;">${idx+1}</td>`; break;
+                    case 'image': if(colVis.image !== false) {
+                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: 'width:40px !important;height:40px !important;object-fit:cover !important;border-radius:4px;' }) : '-';
+                        row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;">${ic}</td>`;
+                    } break;
+                    case 'name': row += `<td style="padding:0.6rem 0.5rem;text-align:left;border-bottom:1px solid #e2e8f0;font-size:${cw.contentFontSize+2}px;font-weight:500;">${item.name}</td>`; break;
+                    case 'spec': if(colVis.spec !== false) row += `<td style="padding:0.6rem 0.5rem;text-align:left;border-bottom:1px solid #e2e8f0;font-size:${cw.contentFontSize}px;color:#666;">${item.spec||'-'}</td>`; break;
+                    case 'unit': row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:${cw.contentFontSize}px;color:#666;">${item.unit||'项'}</td>`; break;
+                    case 'note': if(colVis.note !== false) row += `<td style="padding:0.6rem 0.5rem;text-align:left;border-bottom:1px solid #e2e8f0;font-size:${cw.contentFontSize}px;color:#666;">${item.note||'-'}</td>`; break;
+                    case 'qty': row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:${cw.contentFontSize}px;">${itemQty}</td>`; break;
+                    case 'price': row += `<td style="padding:0.6rem 0.5rem;text-align:right;border-bottom:1px solid #e2e8f0;font-size:${cw.contentFontSize}px;">¥${itemPrice.toFixed(2)}</td>`; break;
+                    case 'subtotal': row += `<td style="padding:0.6rem 0.5rem;text-align:right;border-bottom:1px solid #e2e8f0;font-size:${cw.contentFontSize+2}px;font-weight:600;">¥${it}</td>`; break;
+                }
+            });
+            row += `</tr>`;
             return row;
         }).join('');
         bodyHtml=`<div style="padding:1.5rem 2rem;background:#fff;">
@@ -15537,19 +15635,45 @@ function generateQuotePreview(isManualChange){
             </div>
             <table style="width:100%;border-collapse:collapse;font-family:'Microsoft YaHei',Arial,sans-serif;line-height:${lhPx}rem;">
                 <colgroup>
-                    <col style="width:${cw.index}px;">${colVis.image !== false ? `<col style="width:${cw.image}px;">` : ''}<col style="width:${cw.name}px;">${colVis.spec !== false ? `<col style="width:${cw.spec}px;">` : ''}<col style="width:${cw.unit}px;">${colVis.note !== false ? `<col style="width:${cw.note}px;">` : ''}<col style="width:${cw.qty}px;"><col style="width:${cw.price}px;"><col style="width:${cw.subtotal}px;">
+                    ${(()=>{
+                        const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+                        let cols = '';
+                        colOrder.forEach(col => {
+                            switch(col){
+                                case 'index': cols += `<col style="width:${cw.index}px;">`; break;
+                                case 'image': if(colVis.image !== false) cols += `<col style="width:${cw.image}px;">`; break;
+                                case 'name': cols += `<col style="width:${cw.name}px;">`; break;
+                                case 'spec': if(colVis.spec !== false) cols += `<col style="width:${cw.spec}px;">`; break;
+                                case 'unit': cols += `<col style="width:${cw.unit}px;">`; break;
+                                case 'note': if(colVis.note !== false) cols += `<col style="width:${cw.note}px;">`; break;
+                                case 'qty': cols += `<col style="width:${cw.qty}px;">`; break;
+                                case 'price': cols += `<col style="width:${cw.price}px;">`; break;
+                                case 'subtotal': cols += `<col style="width:${cw.subtotal}px;">`; break;
+                            }
+                        });
+                        return cols;
+                    })()}
                 </colgroup>
                 <thead>
                     <tr style="background:#f7fafc;">
-                        <th style="padding:0.6rem 0.5rem;text-align:center;font-size:0.7rem;font-weight:600;color:#4a5568;">序号</th>
-                        ${colVis.image !== false ? '<th style="padding:0.6rem 0.5rem;text-align:center;font-size:0.7rem;font-weight:600;color:#4a5568;">图片</th>' : ''}
-                        <th style="padding:0.6rem 0.5rem;text-align:left;font-size:0.7rem;font-weight:600;color:#4a5568;">项目名称</th>
-                        ${colVis.spec !== false ? '<th style="padding:0.6rem 0.5rem;text-align:left;font-size:0.7rem;font-weight:600;color:#4a5568;">规格</th>' : ''}
-                        <th style="padding:0.6rem 0.5rem;text-align:center;font-size:0.7rem;font-weight:600;color:#4a5568;">单位</th>
-                        ${colVis.note !== false ? '<th style="padding:0.6rem 0.5rem;text-align:left;font-size:0.7rem;font-weight:600;color:#4a5568;">备注</th>' : ''}
-                        <th style="padding:0.6rem 0.5rem;text-align:center;font-size:0.7rem;font-weight:600;color:#4a5568;">数量</th>
-                        <th style="padding:0.6rem 0.5rem;text-align:right;font-size:0.7rem;font-weight:600;color:#4a5568;">单价</th>
-                        <th style="padding:0.6rem 0.5rem;text-align:right;font-size:0.7rem;font-weight:600;color:#4a5568;">小计</th>
+                        ${(()=>{
+                            const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+                            let headers = '';
+                            colOrder.forEach(col => {
+                                switch(col){
+                                    case 'index': headers += `<th style="padding:0.6rem 0.5rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">序号</th>`; break;
+                                    case 'image': if(colVis.image !== false) headers += `<th style="padding:0.6rem 0.5rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">图片</th>`; break;
+                                    case 'name': headers += `<th style="padding:0.6rem 0.5rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">项目名称</th>`; break;
+                                    case 'spec': if(colVis.spec !== false) headers += `<th style="padding:0.6rem 0.5rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">规格</th>`; break;
+                                    case 'unit': headers += `<th style="padding:0.6rem 0.5rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">单位</th>`; break;
+                                    case 'note': if(colVis.note !== false) headers += `<th style="padding:0.6rem 0.5rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">备注</th>`; break;
+                                    case 'qty': headers += `<th style="padding:0.6rem 0.5rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">数量</th>`; break;
+                                    case 'price': headers += `<th style="padding:0.6rem 0.5rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">单价</th>`; break;
+                                    case 'subtotal': headers += `<th style="padding:0.6rem 0.5rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">小计</th>`; break;
+                                }
+                            });
+                            return headers;
+                        })()}
                     </tr>
                 </thead><tbody>${rows}</tbody></table>`;
         footerHtml=`<div style="margin-top:1.5rem;display:flex;justify-content:flex-end;">
@@ -15584,33 +15708,68 @@ function generateQuotePreview(isManualChange){
             const itemQty = item.qty || 1;
             const itemPrice = item.price || 0;
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
-            let row = `<tr><td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:0.75rem;">${idx+1}</td>`;
-            if(colVis.image !== false) {
-                let ic = item.image ? renderProductImage(item.image, item.name || '', { style: 'width:35px !important;height:35px !important;object-fit:cover !important;border:1px solid #ddd;' }) : '';
-                row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;">${ic}</td>`;
-            }
-            row += `<td style="padding:0.5rem;border:1px solid #333;text-align:left;font-size:0.8rem;word-break:break-all;">${item.name}</td>`;
-            if(colVis.spec !== false) row += `<td style="padding:0.5rem;border:1px solid #333;text-align:left;font-size:0.75rem;word-break:break-all;">${item.spec||''}</td>`;
-            row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:0.75rem;">${item.unit||'项'}</td>`;
-            if(colVis.note !== false) row += `<td style="padding:0.5rem;border:1px solid #333;text-align:left;font-size:0.75rem;word-break:break-all;">${item.note||''}</td>`;
-            row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:0.75rem;">${itemQty}</td><td style="padding:0.5rem;border:1px solid #333;text-align:right;font-size:0.75rem;">¥${itemPrice.toFixed(2)}</td><td style="padding:0.5rem;border:1px solid #333;text-align:right;font-size:0.8rem;font-weight:600;">¥${it}</td></tr>`;
+            let row = `<tr>`;
+            const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+            colOrder.forEach(col => {
+                switch(col){
+                    case 'index': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:${cw.contentFontSize}px;">${idx+1}</td>`; break;
+                    case 'image': if(colVis.image !== false) {
+                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: 'width:35px !important;height:35px !important;object-fit:cover !important;border:1px solid #ddd;' }) : '';
+                        row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;">${ic}</td>`;
+                    } break;
+                    case 'name': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:left;font-size:${cw.contentFontSize+2}px;word-break:break-all;">${item.name}</td>`; break;
+                    case 'spec': if(colVis.spec !== false) row += `<td style="padding:0.5rem;border:1px solid #333;text-align:left;font-size:${cw.contentFontSize}px;word-break:break-all;">${item.spec||''}</td>`; break;
+                    case 'unit': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:${cw.contentFontSize}px;">${item.unit||'项'}</td>`; break;
+                    case 'note': if(colVis.note !== false) row += `<td style="padding:0.5rem;border:1px solid #333;text-align:left;font-size:${cw.contentFontSize}px;word-break:break-all;">${item.note||''}</td>`; break;
+                    case 'qty': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:${cw.contentFontSize}px;">${itemQty}</td>`; break;
+                    case 'price': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:right;font-size:${cw.contentFontSize}px;">¥${itemPrice.toFixed(2)}</td>`; break;
+                    case 'subtotal': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:right;font-size:${cw.contentFontSize+2}px;font-weight:600;">¥${it}</td>`; break;
+                }
+            });
+            row += `</tr>`;
             return row;
         }).join('');
         bodyHtml=`<table style="width:100%;border-collapse:collapse;font-family:'SimSun',Arial,sans-serif;line-height:${lhPx}rem;">
             <colgroup>
-                <col style="width:${cw.index}px;">${colVis.image !== false ? `<col style="width:${cw.image}px;">` : ''}<col style="width:${cw.name}px;">${colVis.spec !== false ? `<col style="width:${cw.spec}px;">` : ''}<col style="width:${cw.unit}px;">${colVis.note !== false ? `<col style="width:${cw.note}px;">` : ''}<col style="width:${cw.qty}px;"><col style="width:${cw.price}px;"><col style="width:${cw.subtotal}px;">
+                ${(()=>{
+                    const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+                    let cols = '';
+                    colOrder.forEach(col => {
+                        switch(col){
+                            case 'index': cols += `<col style="width:${cw.index}px;">`; break;
+                            case 'image': if(colVis.image !== false) cols += `<col style="width:${cw.image}px;">`; break;
+                            case 'name': cols += `<col style="width:${cw.name}px;">`; break;
+                            case 'spec': if(colVis.spec !== false) cols += `<col style="width:${cw.spec}px;">`; break;
+                            case 'unit': cols += `<col style="width:${cw.unit}px;">`; break;
+                            case 'note': if(colVis.note !== false) cols += `<col style="width:${cw.note}px;">`; break;
+                            case 'qty': cols += `<col style="width:${cw.qty}px;">`; break;
+                            case 'price': cols += `<col style="width:${cw.price}px;">`; break;
+                            case 'subtotal': cols += `<col style="width:${cw.subtotal}px;">`; break;
+                        }
+                    });
+                    return cols;
+                })()}
             </colgroup>
             <thead>
                 <tr style="background:#f0f0f0;">
-                    <th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:0.7rem;font-weight:600;">序号</th>
-                    ${colVis.image !== false ? '<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:0.7rem;font-weight:600;">图片</th>' : ''}
-                    <th style="padding:0.4rem;border:1px solid #333;text-align:left;font-size:0.7rem;font-weight:600;">项目名称</th>
-                    ${colVis.spec !== false ? '<th style="padding:0.4rem;border:1px solid #333;text-align:left;font-size:0.7rem;font-weight:600;">规格</th>' : ''}
-                    <th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:0.7rem;font-weight:600;">单位</th>
-                    ${colVis.note !== false ? '<th style="padding:0.4rem;border:1px solid #333;text-align:left;font-size:0.7rem;font-weight:600;">备注</th>' : ''}
-                    <th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:0.7rem;font-weight:600;">数量</th>
-                    <th style="padding:0.4rem;border:1px solid #333;text-align:right;font-size:0.7rem;font-weight:600;">单价</th>
-                    <th style="padding:0.4rem;border:1px solid #333;text-align:right;font-size:0.7rem;font-weight:600;">小计</th>
+                    ${(()=>{
+                        const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+                        let headers = '';
+                        colOrder.forEach(col => {
+                            switch(col){
+                                case 'index': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">序号</th>`; break;
+                                case 'image': if(colVis.image !== false) headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">图片</th>`; break;
+                                case 'name': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">项目名称</th>`; break;
+                                case 'spec': if(colVis.spec !== false) headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">规格</th>`; break;
+                                case 'unit': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">单位</th>`; break;
+                                case 'note': if(colVis.note !== false) headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">备注</th>`; break;
+                                case 'qty': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">数量</th>`; break;
+                                case 'price': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">单价</th>`; break;
+                                case 'subtotal': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">小计</th>`; break;
+                            }
+                        });
+                        return headers;
+                    })()}
                 </tr>
             </thead><tbody>${rows}</tbody></table>`;
         footerHtml=`<div style="margin-top:1rem;display:flex;justify-content:flex-end;">
@@ -15646,37 +15805,52 @@ function generateQuotePreview(isManualChange){
             const itemPrice = item.price || 0;
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
             let bg=idx%2===0?'#fff':'#f8fafc';
-            let row = `<tr style="background:${bg};">
-                <td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
-                    <span style="display:inline-flex;width:22px;height:22px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border-radius:50%;font-size:0.65rem;font-weight:600;align-items:center;justify-content:center;">${idx+1}</span>
-                </td>`;
-            if(colVis.image !== false) {
-                let ic = item.image ? renderProductImage(item.image, item.name || '', { style: 'width:40px !important;height:40px !important;object-fit:cover !important;border-radius:4px;border:1px solid #e5e7eb;' }) : `<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
-                row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">${ic}</td>`;
-            }
-            row += `<td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;">
-                    <div style="font-weight:600;color:#1f2937;font-size:0.85rem;line-height:1.3;">${item.name}</div>
-                    ${colVis.spec !== false && item.spec?`<div style="font-size:0.7rem;color:#6b7280;margin-top:0.2rem;">规格：${item.spec}</div>`:''}
-                </td>`;
-            row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
-                    <span style="font-size:0.75rem;color:#6b7280;">${item.unit||'项'}</span>
-                </td>`;
-            if(colVis.note !== false) {
-                row += `<td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;font-size:0.75rem;color:#6b7280;line-height:1.3;">${item.note||'-'}</td>`;
-            }
-            row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
-                    <span style="background:#e5e7eb;padding:0.15rem 0.5rem;border-radius:6px;font-weight:600;color:#374151;font-size:0.8rem;">${itemQty}</span>
-                </td>
-                <td style="padding:0.6rem 0.4rem;text-align:right;border-bottom:1px solid #e5e7eb;color:#4b5563;font-size:0.85rem;font-weight:500;">¥${itemPrice.toFixed(2)}</td>
-                <td style="padding:0.6rem 0.4rem;text-align:right;border-bottom:1px solid #e5e7eb;"><span style="font-weight:700;color:#1f2937;font-size:0.9rem;">¥${it}</span></td>
-            </tr>`;
+            let row = `<tr style="background:${bg};">`;
+            const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+            colOrder.forEach(col => {
+                switch(col){
+                    case 'index': row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
+                        <span style="display:inline-flex;width:22px;height:22px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border-radius:50%;font-size:${cw.contentFontSize-2}px;font-weight:600;align-items:center;justify-content:center;">${idx+1}</span>
+                    </td>`; break;
+                    case 'image': if(colVis.image !== false) {
+                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: 'width:40px !important;height:40px !important;object-fit:cover !important;border-radius:4px;border:1px solid #e5e7eb;' }) : `<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
+                        row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">${ic}</td>`;
+                    } break;
+                    case 'name': row += `<td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;">
+                        <div style="font-weight:600;color:#1f2937;font-size:${cw.contentFontSize+2}px;line-height:1.3;">${item.name}</div>
+                    </td>`; break;
+                    case 'spec': if(colVis.spec !== false) row += `<td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;font-size:${cw.contentFontSize}px;color:#6b7280;">${item.spec||'-'}</td>`; break;
+                    case 'unit': row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
+                        <span style="font-size:${cw.contentFontSize}px;color:#6b7280;">${item.unit||'项'}</span>
+                    </td>`; break;
+                    case 'note': if(colVis.note !== false) row += `<td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;font-size:${cw.contentFontSize}px;color:#6b7280;line-height:1.3;">${item.note||'-'}</td>`; break;
+                    case 'qty': row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
+                        <span style="background:#e5e7eb;padding:0.15rem 0.5rem;border-radius:6px;font-weight:600;color:#374151;font-size:${cw.contentFontSize}px;">${itemQty}</span>
+                    </td>`; break;
+                    case 'price': row += `<td style="padding:0.6rem 0.4rem;text-align:right;border-bottom:1px solid #e5e7eb;color:#4b5563;font-size:${cw.contentFontSize}px;font-weight:500;">¥${itemPrice.toFixed(2)}</td>`; break;
+                    case 'subtotal': row += `<td style="padding:0.6rem 0.4rem;text-align:right;border-bottom:1px solid #e5e7eb;"><span style="font-weight:700;color:#1f2937;font-size:${cw.contentFontSize+2}px;">¥${it}</span></td>`; break;
+                }
+            });
+            row += `</tr>`;
             return row;
         }).join('');
         
-        // 计算列数：基础列是6列（序号，项目名称，单位，数量，单价，小计）
-        let colCount = 6;
-        if(colVis.image !== false) colCount++; // 如果图片显示，加1列
-        if(colVis.note !== false) colCount++; // 如果备注显示，加1列
+        // 根据实际的列顺序配置计算列数
+        const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+        let colCount = 0;
+        colOrder.forEach(col => {
+            switch(col){
+                case 'index': colCount++; break;
+                case 'image': if(colVis.image !== false) colCount++; break;
+                case 'name': colCount++; break;
+                case 'spec': if(colVis.spec !== false) colCount++; break;
+                case 'unit': colCount++; break;
+                case 'note': if(colVis.note !== false) colCount++; break;
+                case 'qty': colCount++; break;
+                case 'price': colCount++; break;
+                case 'subtotal': colCount++; break;
+            }
+        });
         
         // 计算表头和表尾的colspan
         let footerCol1 = colCount - 1;
@@ -15732,25 +15906,45 @@ function generateQuotePreview(isManualChange){
             <div style="padding:1.5rem 2rem 2rem;">
                 <table style="width:100%;border-collapse:collapse;line-height:${lhPx}rem;">
                     <colgroup>
-                        <col style="width:${cw.index}px;">
-                        ${colVis.image !== false ? `<col style="width:${cw.image}px;">` : ''}
-                        <col style="width:${cw.name}px;">
-                        <col style="width:${cw.unit}px;">
-                        ${colVis.note !== false ? `<col style="width:${cw.note}px;">` : ''}
-                        <col style="width:${cw.qty}px;">
-                        <col style="width:${cw.price}px;">
-                        <col style="width:${cw.subtotal}px;">
+                        ${(()=>{
+                            const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+                            let cols = '';
+                            colOrder.forEach(col => {
+                                switch(col){
+                                    case 'index': cols += `<col style="width:${cw.index}px;">`; break;
+                                    case 'image': if(colVis.image !== false) cols += `<col style="width:${cw.image}px;">`; break;
+                                    case 'name': cols += `<col style="width:${cw.name}px;">`; break;
+                                    case 'spec': if(colVis.spec !== false) cols += `<col style="width:${cw.spec}px;">`; break;
+                                    case 'unit': cols += `<col style="width:${cw.unit}px;">`; break;
+                                    case 'note': if(colVis.note !== false) cols += `<col style="width:${cw.note}px;">`; break;
+                                    case 'qty': cols += `<col style="width:${cw.qty}px;">`; break;
+                                    case 'price': cols += `<col style="width:${cw.price}px;">`; break;
+                                    case 'subtotal': cols += `<col style="width:${cw.subtotal}px;">`; break;
+                                }
+                            });
+                            return cols;
+                        })()}
                     </colgroup>
                     <thead>
                         <tr style="background:#f1f5f9;">
-                            <th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">序号</th>
-                            ${colVis.image !== false ? '<th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">图片</th>' : ''}
-                            <th style="padding:0.5rem 0.4rem;text-align:left;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">项目名称</th>
-                            <th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">单位</th>
-                            ${colVis.note !== false ? '<th style="padding:0.5rem 0.4rem;text-align:left;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">备注</th>' : ''}
-                            <th style="padding:0.5rem 0.4rem;text-align:center;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">数量</th>
-                            <th style="padding:0.5rem 0.4rem;text-align:right;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">单价</th>
-                            <th style="padding:0.5rem 0.4rem;text-align:right;font-size:0.65rem;font-weight:600;color:#475569;letter-spacing:0.02em;">小计</th>
+                            ${(()=>{
+                                const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+                                let headers = '';
+                                colOrder.forEach(col => {
+                                    switch(col){
+                                        case 'index': headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">序号</th>`; break;
+                                        case 'image': if(colVis.image !== false) headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">图片</th>`; break;
+                                        case 'name': headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">项目名称</th>`; break;
+                                        case 'spec': if(colVis.spec !== false) headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">规格</th>`; break;
+                                        case 'unit': headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">单位</th>`; break;
+                                        case 'note': if(colVis.note !== false) headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">备注</th>`; break;
+                                        case 'qty': headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">数量</th>`; break;
+                                        case 'price': headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">单价</th>`; break;
+                                        case 'subtotal': headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">小计</th>`; break;
+                                    }
+                                });
+                                return headers;
+                            })()}
                         </tr>
                     </thead>
                     <tbody>${mRows}</tbody>
@@ -26549,7 +26743,8 @@ function applyDoorHeaderToQuote() {
     );
     if (existingItems.length > 0) {
         if (!confirm(`报价单中已有 ${existingItems.length} 个项目。\n\n点击"确定"将门头用料添加到现有项目之后。\n点击"取消"可先清空报价单再添加。`)) {
-            return;
+            // 用户点击取消，先清空报价单
+            clearCurrentQuoteItems();
         }
     }
 
@@ -34129,13 +34324,89 @@ function downloadBackup(key) {
 }
 function deleteBackup(key) {
     if (confirm('确定删除这个备份吗？')) {
+        // 删除 localStorage 中的备份文件
         if (window.safeRemoveItem) {
             window.safeRemoveItem(key);
         } else {
             localStorage.removeItem(key);
         }
+        
+        // 清理未使用的图片（可选，需要用户确认）
+        if (idbInitialized && IDB.isSupported()) {
+            cleanUnusedImages().catch(function(e) {
+                console.warn('清理未使用图片失败:', e);
+            });
+        }
+        
         renderBackupList();
+        // 刷新存储统计
+        setTimeout(function() {
+            if (typeof checkStorageUsage === 'function') {
+                checkStorageUsage();
+            }
+        }, 500);
     }
+}
+
+// 清理未使用的图片
+function cleanUnusedImages() {
+    return new Promise(function(resolve, reject) {
+        if (!idbInitialized || !IDB.isSupported()) {
+            resolve();
+            return;
+        }
+        
+        // 收集所有正在使用的图片ID
+        var usedImageIds = new Set();
+        
+        // 从产品中收集
+        if (appData.products) {
+            appData.products.forEach(function(p) {
+                if (p.imageId) usedImageIds.add(p.imageId);
+            });
+        }
+        
+        // 从印章中收集
+        if (appData.seals) {
+            appData.seals.forEach(function(s) {
+                if (s.imageId) usedImageIds.add(s.imageId);
+            });
+        }
+        
+        // 从照片中收集
+        if (appData.photos) {
+            appData.photos.forEach(function(ph) {
+                if (ph.imageId) usedImageIds.add(ph.imageId);
+            });
+        }
+        
+        // 获取所有存储的图片
+        IDB.getAllImages().then(function(images) {
+            var deletedCount = 0;
+            var deletePromises = [];
+            
+            images.forEach(function(img) {
+                if (!usedImageIds.has(img.id)) {
+                    // 删除未使用的图片
+                    deletePromises.push(
+                        IDB.delete('images', img.id).then(function() {
+                            deletedCount++;
+                        }).catch(function(e) {
+                            console.warn('删除图片失败:', img.id, e);
+                        })
+                    );
+                }
+            });
+            
+            Promise.all(deletePromises).then(function() {
+                if (deletedCount > 0) {
+                    console.log('清理了', deletedCount, '张未使用的图片');
+                    showToast(`✅ 已清理 ${deletedCount} 张未使用的图片`, 'success');
+                }
+                resolve(deletedCount);
+            }).catch(reject);
+        }).catch(reject);
+    });
 }
 function restoreBackup(key) {
     if (!confirm('⚠️ 确定要恢复这个备份吗？当前数据会被覆盖！')) return;
@@ -42121,7 +42392,7 @@ function checkStorageUsage() {
         }
     }
     
-    var totalMB = (total / 1024 / 1024).toFixed(2);
+    var localStorageMB = (total / 1024 / 1024).toFixed(2);
     var backupMB = (backupSize / 1024 / 1024).toFixed(2);
     var imageMB = (imageSize / 1024 / 1024).toFixed(2);
     var mainDataMB = (mainDataSize / 1024 / 1024).toFixed(2);
@@ -42155,8 +42426,12 @@ function checkStorageUsage() {
                     <td style="padding:0.5rem;text-align:right;">${imageCount} 张 / ${imageMB} MB</td>
                 </tr>
                 <tr style="border-bottom:1px solid var(--gray-200);">
+                    <td style="padding:0.5rem;font-weight:500;">IndexedDB 图片：</td>
+                    <td style="padding:0.5rem;text-align:right;"><span id="idbStats">计算中...</span></td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--gray-200);">
                     <td style="padding:0.5rem;font-weight:500;"><strong>总计已使用：</strong></td>
-                    <td style="padding:0.5rem;text-align:right;"><strong style="color:${color};">${totalMB} MB (${usagePercent}%)</strong></td>
+                    <td style="padding:0.5rem;text-align:right;"><strong style="color:${color};">${localStorageMB} MB (${usagePercent}%)</strong></td>
                 </tr>
                 <tr>
                     <td style="padding:0.5rem;font-weight:500;">估算剩余空间：</td>
@@ -42175,6 +42450,35 @@ function checkStorageUsage() {
     var container = document.getElementById('storageStats');
     container.innerHTML = html;
     updateStorageSummary();
+    
+    // 异步获取 IndexedDB 统计
+    if (idbInitialized && IDB.isSupported()) {
+        IDB.getAllImages().then(function(images) {
+            var idbImageCount = images.length;
+            var idbImageSize = 0;
+            images.forEach(function(img) {
+                if (img.data) idbImageSize += img.data.length;
+            });
+            var idbImageSizeMB = (idbImageSize / 1024 / 1024).toFixed(2);
+            
+            // 更新 IndexedDB 统计显示
+            var idbElement = document.getElementById('idbStats');
+            if (idbElement) {
+                idbElement.innerHTML = `${idbImageCount} 张 / ${idbImageSizeMB} MB`;
+            }
+        }).catch(function(e) {
+            console.warn('获取 IndexedDB 统计失败:', e);
+            var idbElement = document.getElementById('idbStats');
+            if (idbElement) {
+                idbElement.innerHTML = '获取失败';
+            }
+        });
+    } else {
+        var idbElement = document.getElementById('idbStats');
+        if (idbElement) {
+            idbElement.innerHTML = '不支持';
+        }
+    }
 }
 
 function updateStorageSummary() {
