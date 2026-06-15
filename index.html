@@ -15809,9 +15809,13 @@ function exportPDF(showSaveAs){
             input.parentNode.replaceChild(span, input);
         });
         // 设置日期标签和年月日文字为灰色
-        clone.querySelectorAll('div:has(input[type="text"][placeholder="____"]) span, div:has(input[type="text"][placeholder="__"]) span').forEach(function(span) {
+        clone.querySelectorAll('span').forEach(function(span) {
             if (span.textContent.includes('日期：') || span.textContent === '年' || span.textContent === '月' || span.textContent === '日') {
-                span.style.color = '#999999'; // 设置为灰色文字
+                // 检查父级div是否包含日期输入框
+                var parent = span.parentElement;
+                if (parent && parent.querySelector('input[type="text"][placeholder="____"], input[type="text"][placeholder="__"]')) {
+                    span.style.color = '#999999';
+                }
             }
         });
         clone.querySelectorAll('table').forEach(function(table) {
@@ -15842,9 +15846,13 @@ function exportPDF(showSaveAs){
             input.parentNode.replaceChild(span, input);
         });
         // 设置日期标签和年月日文字为灰色
-        clone.querySelectorAll('div:has(input[type="text"][placeholder="____"]) span, div:has(input[type="text"][placeholder="__"]) span').forEach(function(span) {
+        clone.querySelectorAll('span').forEach(function(span) {
             if (span.textContent.includes('日期：') || span.textContent === '年' || span.textContent === '月' || span.textContent === '日') {
-                span.style.color = '#999999'; // 设置为灰色文字
+                // 检查父级div是否包含日期输入框
+                var parent = span.parentElement;
+                if (parent && parent.querySelector('input[type="text"][placeholder="____"], input[type="text"][placeholder="__"]')) {
+                    span.style.color = '#999999';
+                }
             }
         });
         clone.classList.remove('hidden');
