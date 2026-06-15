@@ -7258,54 +7258,194 @@ function safeExecuteAsync(fn, defaultVal) {
                             </div>
                             <!-- 第二字体和第三字体容器 -->
                             <div class="second-third-font-container" style="border-top:1px dashed #fcd34d;padding-top:0.5rem;margin-top:0.25rem;">
-                                <!-- 第二字体（小字）设置 -->
-                                <div class="font-option-group" style="margin-bottom:0.375rem;">
-                                    <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.25rem;font-weight:600;">📝 第二字体（小字，可选）</div>
-                                    <div class="font-option-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 1.4fr;gap:0.25rem;">
-                                        <div>
-                                            <label for="doorHeaderCharCount2" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">小字数量</label>
-                                            <input type="number" id="doorHeaderCharCount2" placeholder="8" min="0" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
-                                        </div>
-                                        <div>
-                                            <label for="doorHeaderCharSize2" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">小字高度(cm)</label>
-                                            <input type="number" id="doorHeaderCharSize2" placeholder="20" min="5" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
-                                        </div>
-                                        <div>
-                                            <label for="doorHeaderFontType2" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">小字类型</label>
-                                            <select id="doorHeaderFontType2" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
-                                                <option value="none">无小字</option>
-                                                <option value="led_channel">亚克力发光字</option>
-                                                <option value="back_lit">背发光字</option>
-                                                <option value="pvc">PVC字</option>
-                                                <option value="crystal">水晶字</option>
-                                                <option value="stainless_steel_font">不锈钢字</option>
-                                            </select>
+                                <!-- 字体选项横排布局 -->
+                                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+                                    <!-- 第二字体（小字）设置 -->
+                                    <div class="font-option-group" style="flex:1;min-width:200px;background:#fefce8;border:1px solid #fcd34d;border-radius:6px;padding:0.4rem;">
+                                        <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.3rem;font-weight:600;">📝 第二字体（小字）</div>
+                                        <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+                                            <div style="flex:1;min-width:60px;">
+                                                <label for="doorHeaderCharCount2" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">数量</label>
+                                                <input type="number" id="doorHeaderCharCount2" placeholder="8" min="0" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
+                                            </div>
+                                            <div style="flex:1;min-width:60px;">
+                                                <label for="doorHeaderCharSize2" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">高度(cm)</label>
+                                                <input type="number" id="doorHeaderCharSize2" placeholder="20" min="5" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
+                                            </div>
+                                            <div style="flex:2;min-width:120px;">
+                                                <label for="doorHeaderFontType2" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">类型</label>
+                                                <select id="doorHeaderFontType2" style="width:100%;padding:0.15rem 0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:3px;">
+                                                    <option value="none">无小字</option>
+                                                    <option value="led_channel">亚克力发光字</option>
+                                                    <option value="back_lit">背发光字</option>
+                                                    <option value="pvc">PVC字</option>
+                                                    <option value="crystal">水晶字</option>
+                                                    <option value="stainless_steel_font">不锈钢字</option>
+                                                    <option value="metal_painted">金属烤漆字</option>
+                                                    <option value="resin">树脂字</option>
+                                                    <option value="mini_led">迷你发光字</option>
+                                                    <option value="borderless">无边发光字</option>
+                                                    <option value="super_font">超级字</option>
+                                                    <option value="titanium">钛金字</option>
+                                                    <option value="rose_gold">玫瑰金字</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <!-- 第三字体（辅助字）设置 -->
-                                <div class="font-option-group">
-                                    <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.25rem;font-weight:600;">📝 第三字体（辅助字，可选）</div>
-                                    <div class="font-option-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 1.4fr;gap:0.25rem;">
-                                        <div>
-                                            <label for="doorHeaderCharCount3" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">辅助字数量</label>
-                                            <input type="number" id="doorHeaderCharCount3" placeholder="12" min="0" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
+                                    <!-- 第三字体（辅助字）设置 -->
+                                    <div class="font-option-group" style="flex:1;min-width:200px;background:#fefce8;border:1px solid #fcd34d;border-radius:6px;padding:0.4rem;">
+                                        <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.3rem;font-weight:600;">📝 第三字体（辅助字）</div>
+                                        <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+                                            <div style="flex:1;min-width:60px;">
+                                                <label for="doorHeaderCharCount3" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">数量</label>
+                                                <input type="number" id="doorHeaderCharCount3" placeholder="12" min="0" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
+                                            </div>
+                                            <div style="flex:1;min-width:60px;">
+                                                <label for="doorHeaderCharSize3" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">高度(cm)</label>
+                                                <input type="number" id="doorHeaderCharSize3" placeholder="10" min="5" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
+                                            </div>
+                                            <div style="flex:2;min-width:120px;">
+                                                <label for="doorHeaderFontType3" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">类型</label>
+                                                <select id="doorHeaderFontType3" style="width:100%;padding:0.15rem 0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:3px;">
+                                                    <option value="none">无辅助字</option>
+                                                    <option value="led_channel">亚克力发光字</option>
+                                                    <option value="back_lit">背发光字</option>
+                                                    <option value="pvc">PVC字</option>
+                                                    <option value="crystal">水晶字</option>
+                                                    <option value="stainless_steel_font">不锈钢字</option>
+                                                    <option value="metal_painted">金属烤漆字</option>
+                                                    <option value="resin">树脂字</option>
+                                                    <option value="mini_led">迷你发光字</option>
+                                                    <option value="borderless">无边发光字</option>
+                                                    <option value="super_font">超级字</option>
+                                                    <option value="titanium">钛金字</option>
+                                                    <option value="rose_gold">玫瑰金字</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label for="doorHeaderCharSize3" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">辅助字高度(cm)</label>
-                                            <input type="number" id="doorHeaderCharSize3" placeholder="10" min="5" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
+                                    </div>
+                                    <!-- 第四字体设置 -->
+                                    <div class="font-option-group" style="flex:1;min-width:200px;background:#fefce8;border:1px solid #fcd34d;border-radius:6px;padding:0.4rem;">
+                                        <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.3rem;font-weight:600;">📝 第四字体</div>
+                                        <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+                                            <div style="flex:1;min-width:60px;">
+                                                <label for="doorHeaderCharCount4" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">数量</label>
+                                                <input type="number" id="doorHeaderCharCount4" placeholder="6" min="0" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
+                                            </div>
+                                            <div style="flex:1;min-width:60px;">
+                                                <label for="doorHeaderCharSize4" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">高度(cm)</label>
+                                                <input type="number" id="doorHeaderCharSize4" placeholder="8" min="5" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
+                                            </div>
+                                            <div style="flex:2;min-width:120px;">
+                                                <label for="doorHeaderFontType4" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">类型</label>
+                                                <select id="doorHeaderFontType4" style="width:100%;padding:0.15rem 0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:3px;">
+                                                    <option value="none">无第四字</option>
+                                                    <option value="led_channel">亚克力发光字</option>
+                                                    <option value="back_lit">背发光字</option>
+                                                    <option value="pvc">PVC字</option>
+                                                    <option value="crystal">水晶字</option>
+                                                    <option value="stainless_steel_font">不锈钢字</option>
+                                                    <option value="metal_painted">金属烤漆字</option>
+                                                    <option value="resin">树脂字</option>
+                                                    <option value="mini_led">迷你发光字</option>
+                                                    <option value="borderless">无边发光字</option>
+                                                    <option value="super_font">超级字</option>
+                                                    <option value="titanium">钛金字</option>
+                                                    <option value="rose_gold">玫瑰金字</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label for="doorHeaderFontType3" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">辅助字类型</label>
-                                            <select id="doorHeaderFontType3" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
-                                                <option value="none">无辅助字</option>
-                                                <option value="led_channel">亚克力发光字</option>
-                                                <option value="back_lit">背发光字</option>
-                                                <option value="pvc">PVC字</option>
-                                                <option value="crystal">水晶字</option>
-                                                <option value="stainless_steel_font">不锈钢字</option>
-                                                <option value="metal_painted">金属烤漆字</option>
-                                            </select>
+                                    </div>
+                                    <!-- 第五字体设置 -->
+                                    <div class="font-option-group" style="flex:1;min-width:200px;background:#fefce8;border:1px solid #fcd34d;border-radius:6px;padding:0.4rem;">
+                                        <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.3rem;font-weight:600;">📝 第五字体</div>
+                                        <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+                                            <div style="flex:1;min-width:60px;">
+                                                <label for="doorHeaderCharCount5" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">数量</label>
+                                                <input type="number" id="doorHeaderCharCount5" placeholder="4" min="0" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
+                                            </div>
+                                            <div style="flex:1;min-width:60px;">
+                                                <label for="doorHeaderCharSize5" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">高度(cm)</label>
+                                                <input type="number" id="doorHeaderCharSize5" placeholder="6" min="5" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
+                                            </div>
+                                            <div style="flex:2;min-width:120px;">
+                                                <label for="doorHeaderFontType5" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">类型</label>
+                                                <select id="doorHeaderFontType5" style="width:100%;padding:0.15rem 0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:3px;">
+                                                    <option value="none">无第五字</option>
+                                                    <option value="led_channel">亚克力发光字</option>
+                                                    <option value="back_lit">背发光字</option>
+                                                    <option value="pvc">PVC字</option>
+                                                    <option value="crystal">水晶字</option>
+                                                    <option value="stainless_steel_font">不锈钢字</option>
+                                                    <option value="metal_painted">金属烤漆字</option>
+                                                    <option value="resin">树脂字</option>
+                                                    <option value="mini_led">迷你发光字</option>
+                                                    <option value="borderless">无边发光字</option>
+                                                    <option value="super_font">超级字</option>
+                                                    <option value="titanium">钛金字</option>
+                                                    <option value="rose_gold">玫瑰金字</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- 第六字体设置 -->
+                                    <div class="font-option-group" style="flex:1;min-width:200px;background:#fefce8;border:1px solid #fcd34d;border-radius:6px;padding:0.4rem;">
+                                        <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.3rem;font-weight:600;">📝 第六字体</div>
+                                        <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+                                            <div style="flex:1;min-width:60px;">
+                                                <label for="doorHeaderCharCount6" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">数量</label>
+                                                <input type="number" id="doorHeaderCharCount6" placeholder="4" min="0" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
+                                            </div>
+                                            <div style="flex:1;min-width:60px;">
+                                                <label for="doorHeaderCharSize6" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">高度(cm)</label>
+                                                <input type="number" id="doorHeaderCharSize6" placeholder="5" min="3" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
+                                            </div>
+                                            <div style="flex:2;min-width:120px;">
+                                                <label for="doorHeaderFontType6" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">类型</label>
+                                                <select id="doorHeaderFontType6" style="width:100%;padding:0.15rem 0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:3px;">
+                                                    <option value="none">无第六字</option>
+                                                    <option value="led_channel">亚克力发光字</option>
+                                                    <option value="back_lit">背发光字</option>
+                                                    <option value="pvc">PVC字</option>
+                                                    <option value="crystal">水晶字</option>
+                                                    <option value="stainless_steel_font">不锈钢字</option>
+                                                    <option value="metal_painted">金属烤漆字</option>
+                                                    <option value="resin">树脂字</option>
+                                                    <option value="mini_led">迷你发光字</option>
+                                                    <option value="borderless">无边发光字</option>
+                                                    <option value="super_font">超级字</option>
+                                                    <option value="titanium">钛金字</option>
+                                                    <option value="rose_gold">玫瑰金字</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- LOGO设置 -->
+                                    <div class="font-option-group" style="flex:1;min-width:200px;background:#fefce8;border:1px solid #fcd34d;border-radius:6px;padding:0.4rem;">
+                                        <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.3rem;font-weight:600;">🎨 LOGO</div>
+                                        <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+                                            <div style="flex:1;min-width:60px;">
+                                                <label for="doorHeaderLogoWidth" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">宽度(cm)</label>
+                                                <input type="number" id="doorHeaderLogoWidth" placeholder="30" min="5" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
+                                            </div>
+                                            <div style="flex:1;min-width:60px;">
+                                                <label for="doorHeaderLogoHeight" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">高度(cm)</label>
+                                                <input type="number" id="doorHeaderLogoHeight" placeholder="20" min="5" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #fcd34d;border-radius:3px;">
+                                            </div>
+                                            <div style="flex:2;min-width:120px;">
+                                                <label for="doorHeaderLogoType" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.1rem;">材质</label>
+                                                <select id="doorHeaderLogoType" style="width:100%;padding:0.15rem 0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:3px;">
+                                                    <option value="none">无LOGO</option>
+                                                    <option value="logo_acrylic">亚克力LOGO</option>
+                                                    <option value="logo_led">LED发光LOGO</option>
+                                                    <option value="logo_metal">金属LOGO</option>
+                                                    <option value="logo_pvc">PVC LOGO</option>
+                                                    <option value="logo_crystal">水晶LOGO</option>
+                                                    <option value="logo_stainless">不锈钢LOGO</option>
+                                                    <option value="logo_resin">树脂LOGO</option>
+                                                    <option value="logo_backlit">背光LOGO</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -11399,26 +11539,7 @@ function loadFromLocalStorage() {
             var parsed = JSON.parse(saved);
             // 确保解析结果是一个有效的对象
             if (parsed && typeof parsed === 'object') {
-                // 检查是否使用混合存储策略
-                if (parsed.useIndexedDB && idbInitialized && IDB.isSupported()) {
-                    console.log('检测到混合存储，从 IndexedDB 加载重量级数据');
-                    // 先加载元数据
-                    Object.assign(appData, parsed);
-                    fixAppDataCompat();
-                    
-                    // 从 IndexedDB 加载重量级数据
-                    loadFromIndexedDB().then(function() {
-                        console.log('混合存储加载完成');
-                        initUI();
-                    }).catch(function(e) {
-                        console.warn('IndexedDB 加载失败，使用元数据中的计数信息:', e);
-                        // 即使 IndexedDB 失败，也使用现有元数据
-                        initUI();
-                    });
-                    return;
-                }
-                
-                // 传统存储模式：直接使用 localStorage 中的所有数据
+                // 合并解析的数据到 appData
                 Object.assign(appData, parsed);
                 fixAppDataCompat();
                 console.log('从localStorage加载数据成功');
@@ -11509,73 +11630,45 @@ function loadFromIndexedDB() {
             }
             if (!Array.isArray(results.photos)) results.photos = [];
             
-            // 检查是否为混合存储模式（元数据已从 localStorage 加载）
-            var isHybridMode = appData.useIndexedDB === true;
-            
             // 检查是否有实际的业务数据（产品、客户、模板、报价历史）
             var hasBusinessData = results.products.length > 0 || 
                                  results.templates.length > 0 || 
                                  results.customers.length > 0 || 
                                  results.quoteHistory.length > 0;
             
-            if (isHybridMode) {
-                // 混合存储模式：只更新重量级数据，保持元数据不变
-                if (hasBusinessData) {
-                    appData.products = results.products;
-                    appData.templates = results.templates;
-                    appData.customers = results.customers;
-                    appData.quoteHistory = results.quoteHistory;
-                    console.log('混合存储模式：从 IndexedDB 加载重量级数据成功');
-                } else {
-                    console.log('混合存储模式：IndexedDB 中没有业务数据，使用默认空数组');
-                    appData.products = [];
-                    appData.templates = [];
-                    appData.customers = [];
-                    appData.quoteHistory = [];
-                }
-                
-                // 合并系统设置（IndexedDB 优先）
-                if (Object.keys(results.systemSettings).length > 0) {
-                    appData.systemSettings = Object.assign(appData.systemSettings || {}, results.systemSettings);
-                }
-                
+            // 检查是否有系统设置或照片等辅助数据
+            var hasAuxData = results.photos.length > 0 ||
+                            (results.systemSettings && Object.keys(results.systemSettings).length > 0);
+            
+            if (hasBusinessData) {
+                // 使用IDB数据
+                appData.products = results.products;
+                appData.templates = results.templates;
+                appData.customers = results.customers;
+                appData.quoteHistory = results.quoteHistory;
+                appData.systemSettings = results.systemSettings;
+                appData.photos = results.photos;
                 fixAppDataCompat();
+                console.log('从IndexedDB加载数据成功，产品数量:', results.products.length);
+                resolve();
+            } else if (hasAuxData) {
+                // 只有辅助数据，尝试从localStorage恢复业务数据
+                console.log('IndexedDB只有辅助数据，尝试从localStorage恢复业务数据');
+                loadFromLocalStorage();
+                // 如果localStorage也没有业务数据，保留IDB的辅助数据
+                if (appData.products && appData.products.length > 0) {
+                    console.log('从localStorage恢复业务数据成功');
+                }
                 resolve();
             } else {
-                // 传统存储模式：完全使用 IndexedDB 数据
-                var hasAuxData = results.photos.length > 0 ||
-                                (results.systemSettings && Object.keys(results.systemSettings).length > 0);
-                
-                if (hasBusinessData) {
-                    // 使用IDB数据
-                    appData.products = results.products;
-                    appData.templates = results.templates;
-                    appData.customers = results.customers;
-                    appData.quoteHistory = results.quoteHistory;
-                    appData.systemSettings = results.systemSettings;
-                    appData.photos = results.photos;
-                    fixAppDataCompat();
-                    console.log('从IndexedDB加载数据成功，产品数量:', results.products.length);
-                    resolve();
-                } else if (hasAuxData) {
-                    // 只有辅助数据，尝试从localStorage恢复业务数据
-                    console.log('IndexedDB只有辅助数据，尝试从localStorage恢复业务数据');
-                    loadFromLocalStorage();
-                    // 如果localStorage也没有业务数据，保留IDB的辅助数据
-                    if (appData.products && appData.products.length > 0) {
-                        console.log('从localStorage恢复业务数据成功');
-                    }
-                    resolve();
-                } else {
-                    // IDB为空或只有空数据，尝试从localStorage加载
-                    console.log('IndexedDB为空，尝试从localStorage加载');
-                    loadFromLocalStorage();
-                    // 如果localStorage也没有数据，保留当前的appData（可能包含默认设置）
-                    if (!appData.products || appData.products.length === 0) {
-                        console.log('localStorage也没有数据，保持现有状态');
-                    }
-                    resolve();
+                // IDB为空或只有空数据，尝试从localStorage加载
+                console.log('IndexedDB为空，尝试从localStorage加载');
+                loadFromLocalStorage();
+                // 如果localStorage也没有数据，保留当前的appData（可能包含默认设置）
+                if (!appData.products || appData.products.length === 0) {
+                    console.log('localStorage也没有数据，保持现有状态');
                 }
+                resolve();
             }
         }).catch(function(e) {
             console.error('从IndexedDB加载失败:', e);
@@ -12213,9 +12306,27 @@ function saveData(){
     saveDataTimer = setTimeout(function() {
         try {
             saveDataLock = true;
-            // 只保存到 localStorage，跳过耗时的 IndexedDB
-            saveToLocalStorage();
-            console.log('数据已保存到 localStorage');
+            // 优先保存到 IndexedDB（大容量），localStorage 作为备份
+            if (idbInitialized && IDB.isSupported()) {
+                saveToIndexedDB().then(function() {
+                    console.log('数据已保存到 IndexedDB');
+                    // 同时保存一份精简数据到 localStorage 作为备份
+                    saveToLocalStorageBackup();
+                }).catch(function(e) {
+                    console.error('IndexedDB 保存失败，回退到 localStorage:', e);
+                    // IndexedDB 失败时，尝试保存到 localStorage
+                    var saved = saveToLocalStorage();
+                    if (!saved) {
+                        showToast('存储空间不足，请清理数据或导出备份', 'error');
+                    }
+                });
+            } else {
+                // IndexedDB 不可用时使用 localStorage
+                var saved = saveToLocalStorage();
+                if (!saved) {
+                    showToast('存储空间不足，请清理数据或导出备份', 'error');
+                }
+            }
         } catch(e) {
             console.error('保存失败:', e);
         } finally {
@@ -12226,30 +12337,68 @@ function saveData(){
 
 // 立即保存数据（不使用防抖），用于导入等关键操作
 function saveDataImmediately() {
-    try {
-        // 清除防抖定时器，避免重复保存
-        if (saveDataTimer) {
-            clearTimeout(saveDataTimer);
-            saveDataTimer = null;
-        }
-        
-        // 如果有正在进行的保存，等待其完成
-        if (saveDataLock) {
-            // 等待最多2秒后强制保存
-            const waitStart = Date.now();
-            while (saveDataLock && (Date.now() - waitStart < 2000)) {
-                // busy wait - 不推荐但简单有效
+    return new Promise(function(resolve, reject) {
+        try {
+            // 清除防抖定时器，避免重复保存
+            if (saveDataTimer) {
+                clearTimeout(saveDataTimer);
+                saveDataTimer = null;
             }
+            
+            saveDataLock = true;
+            
+            // 优先保存到 IndexedDB
+            if (idbInitialized && IDB.isSupported()) {
+                saveToIndexedDB().then(function() {
+                    console.log('数据已立即保存到 IndexedDB');
+                    saveToLocalStorageBackup();
+                    resolve();
+                }).catch(function(e) {
+                    console.error('IndexedDB 立即保存失败:', e);
+                    var saved = saveToLocalStorage();
+                    if (saved) {
+                        resolve();
+                    } else {
+                        reject(e);
+                    }
+                });
+            } else {
+                var saved = saveToLocalStorage();
+                if (saved) {
+                    console.log('数据已立即保存到 localStorage');
+                    resolve();
+                } else {
+                    reject(new Error('localStorage 保存失败'));
+                }
+            }
+        } catch(e) {
+            console.error('保存失败:', e);
+            reject(e);
+        } finally {
+            saveDataLock = false;
         }
-        
-        saveDataLock = true;
-        // 只保存到 localStorage，跳过耗时的 IndexedDB
-        saveToLocalStorage();
-        console.log('数据已立即保存');
+    });
+}
+
+// 保存精简备份数据到 localStorage（仅关键配置，不含大量数据）
+function saveToLocalStorageBackup() {
+    try {
+        var backupData = {
+            version: appData.version || '1.0',
+            systemSettings: appData.systemSettings || {},
+            charPricingConfig: appData.charPricingConfig || {},
+            favorites: appData.favorites || [],
+            favoriteIds: appData.favoriteIds || [],
+            dataTimestamp: new Date().toISOString(),
+            // 不保存 products/templates/customers/quoteHistory，这些存在 IndexedDB
+            _backupMode: true // 标记这是精简备份
+        };
+        var str = JSON.stringify(backupData);
+        localStorage.setItem('adQuoteAppDataBackup', str);
+        return true;
     } catch(e) {
-        console.error('保存失败:', e);
-    } finally {
-        saveDataLock = false;
+        console.warn('localStorage 备份保存失败:', e);
+        return false;
     }
 }
 
@@ -12329,10 +12478,8 @@ function saveToIndexedDB() {
 
 function saveToLocalStorage() {
     try {
-        // 智能混合存储策略：localStorage 存储轻量级元数据，IndexedDB 存储重量级数据
-        var idbAvailable = idbInitialized && IDB.isSupported();
-        
-        // 1. 保存元数据（轻量级数据）
+        // 优化：分离元数据和图片数据，避免序列化大量base64图片导致卡顿
+        // 1. 保存元数据（不包含图片）
         var metaData = {
             version: appData.version || '1.0',
             systemSettings: appData.systemSettings || {},
@@ -12341,30 +12488,15 @@ function saveToLocalStorage() {
             favoriteIds: appData.favoriteIds || [],
             photoAlbums: appData.photoAlbums || [],
             dataTimestamp: new Date().toISOString(),
+            customers: appData.customers || [],
+            templates: appData.templates || [],
+            quoteHistory: appData.quoteHistory || [],
             recycleBin: appData.recycleBin || null,
-            categories: appData.categories || [],
-            useIndexedDB: idbAvailable // 标记是否使用 IndexedDB
+            categories: appData.categories || []
         };
         
-        // 2. 如果 IndexedDB 可用，将重量级数据存储到 IndexedDB
-        if (idbAvailable) {
-            // localStorage 只存储元数据，不存储大量数据
-            metaData.customersCount = (appData.customers || []).length;
-            metaData.templatesCount = (appData.templates || []).length;
-            metaData.quoteHistoryCount = (appData.quoteHistory || []).length;
-            metaData.productsCount = (appData.products || []).length;
-            
-            // 异步保存重量级数据到 IndexedDB
-            saveToIndexedDB().catch(function(e) {
-                console.warn('IndexedDB 保存失败，数据仍在内存中:', e);
-            });
-        } else {
-            // IndexedDB 不可用时，才将所有数据存储到 localStorage
-            metaData.customers = appData.customers || [];
-            metaData.templates = appData.templates || [];
-            metaData.quoteHistory = appData.quoteHistory || [];
-            metaData.products = appData.products || [];
-        }
+        // 2. 保存产品数据，保留原样
+        metaData.products = appData.products || [];
         
         var str = JSON.stringify(metaData);
         console.log('localStorage 存储数据大小:', (str.length/1024).toFixed(1), 'KB');
@@ -12375,28 +12507,9 @@ function saveToLocalStorage() {
         var maxSize = 5 * 1024 * 1024; // 假设 5MB 限制
         
         if (currentUsage + estimatedSize > maxSize) {
-            console.warn('localStorage 空间不足，尝试清理旧数据...');
-            var cleanupResult = smartCleanup(estimatedSize);
-            
-            if (cleanupResult.success) {
-                console.log('清理成功，重新保存');
-                if (window.safeSetItem) {
-                    window.safeSetItem('adQuoteAppData', str);
-                } else {
-                    localStorage.setItem('adQuoteAppData', str);
-                }
-                showToast('⚠️ 存储空间已优化，已清理 ' + cleanupResult.deletedCount + ' 个旧文件', 'info');
-                return true;
-            } else {
-                console.error('localStorage 空间不足且清理失败');
-                if (idbAvailable) {
-                    showToast('⚠️ localStorage 空间不足，但数据已保存到 IndexedDB', 'warning');
-                    return true;
-                } else {
-                    showToast('❌ 存储空间不足，无法保存数据', 'error');
-                    return false;
-                }
-            }
+            console.warn('localStorage 空间不足，数据量过大。建议使用 IndexedDB 存储。');
+            showToast('数据量较大，已自动切换到大容量存储模式', 'info');
+            return false;
         }
         
         if (window.safeSetItem) {
@@ -12408,25 +12521,11 @@ function saveToLocalStorage() {
     } catch(e) {
         if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_FILE_CROSS_ORIGIN_BLOCKED') {
             console.error('localStorage 配额已满:', e);
-            
-            // 尝试使用 IndexedDB 作为备选
-            if (idbInitialized && IDB.isSupported()) {
-                console.log('localStorage 已满，尝试使用 IndexedDB');
-                saveToIndexedDB().then(function() {
-                    showToast('⚠️ localStorage 已满，数据已保存到 IndexedDB', 'warning');
-                }).catch(function(e2) {
-                    console.error('IndexedDB 也无法保存:', e2);
-                    showToast('❌ 存储空间不足，无法保存数据', 'error');
-                });
-                return false;
-            } else {
-                showToast('❌ 存储空间不足，无法保存数据', 'error');
-                return false;
-            }
+            showToast('数据已保存到大容量存储（IndexedDB）', 'info');
         } else {
             console.error('localStorage保存失败:', e);
-            return false;
         }
+        return false;
     }
 }
 
@@ -15947,21 +16046,25 @@ function exportPDF(showSaveAs){
         clone.classList.remove('hidden');
         document.body.appendChild(clone);
         var printContent = clone;
-        
-        // 获取浏览器特定的导出配置
-        var exportConfig = getExportConfig();
-        var browser = getBrowserInfo();
-        
         // 提升导出清晰度：使用更高的分辨率
         var opt = {
-            scale: exportConfig.scale,
+            scale: 3, // 提升到3倍分辨率，显著提高清晰度
             useCORS: true,
             background: '#ffffff',
             width: a4WidthPixels,
             windowWidth: a4WidthPixels,
-            dpi: browser.isiPhoneSafari || browser.isMiBrowser ? 150 : 300
+            dpi: 300 // 设置DPI为300，适合打印
         };
         
+        // 手机端优化：根据设备性能调整
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            // 高端设备使用3倍分辨率，中低端设备使用2.5倍
+            if (window.devicePixelRatio >= 3) {
+                opt.scale = 3;
+            } else {
+                opt.scale = 2.5;
+            }
+        }
         var tableBounds = [];
         var rowBoundaries = [];
         var cloneRect = clone.getBoundingClientRect();
@@ -16158,11 +16261,8 @@ function exportPDF(showSaveAs){
             
             var pdfFileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.pdf';
             
-            // 获取浏览器信息（在异步回调中需要重新获取）
-            var browser = getBrowserInfo();
-            
-            // 另存为功能：使用File System Access API（仅桌面端浏览器支持）
-            if (showSaveAs && browser.useSaveFilePicker && window.showSaveFilePicker) {
+            // 另存为功能：使用File System Access API
+            if (showSaveAs && window.showSaveFilePicker) {
                 try {
                     var pdfBuffer = pdf.output('arraybuffer');
                     var pdfData = new Uint8Array(pdfBuffer);
@@ -16202,86 +16302,8 @@ function exportPDF(showSaveAs){
                     alert('PDF生成失败: ' + err.message);
                 }
             } else {
-                // 默认下载方式 - 根据浏览器类型选择合适的下载方法
-                var browser = getBrowserInfo();
-                
-                if (browser.isiPhoneSafari || browser.isMiBrowser) {
-                    // iPhone Safari和小米浏览器使用Blob方式下载
-                    try {
-                        var pdfBuffer = pdf.output('arraybuffer');
-                        var pdfData = new Uint8Array(pdfBuffer);
-                        var blob = new Blob([pdfData], { type: 'application/pdf' });
-                        var blobUrl = URL.createObjectURL(blob);
-                        
-                        // 小米浏览器特殊处理：只显示下载弹窗，不触发自动下载（避免重复提示）
-                        if (browser.isMiBrowser) {
-                            var downloadBtn = document.createElement('div');
-                            downloadBtn.innerHTML = `
-                                <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:16px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:9999;text-align:center;max-width:90%;width:320px;">
-                                    <div style="font-size:2rem;margin-bottom:1rem;">📥</div>
-                                    <div style="font-size:1.1rem;font-weight:600;color:#1f2937;margin-bottom:0.5rem;">下载报价单</div>
-                                    <div style="font-size:0.875rem;color:#6b7280;margin-bottom:1.5rem;">点击下方按钮保存文件</div>
-                                    <a href="${blobUrl}" download="${pdfFileName}" style="display:inline-block;background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;padding:0.75rem 2rem;border-radius:8px;font-weight:600;text-decoration:none;">立即下载</a>
-                                    <div style="margin-top:1rem;font-size:0.75rem;color:#9ca3af;">文件格式：PDF</div>
-                                </div>
-                            `;
-                            document.body.appendChild(downloadBtn);
-                            
-                            // 点击按钮后自动移除弹窗
-                            downloadBtn.querySelector('a').addEventListener('click', function() {
-                                setTimeout(function() {
-                                    if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
-                                }, 500);
-                            });
-                            
-                            // 30秒后自动移除弹窗
-                            setTimeout(function() {
-                                if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
-                                URL.revokeObjectURL(blobUrl);
-                            }, 30000);
-                        } else {
-                            // iPhone Safari：尝试自动下载，同时显示弹窗作为备选
-                            var link = document.createElement('a');
-                            link.download = pdfFileName;
-                            link.href = blobUrl;
-                            link.style.display = 'none';
-                            document.body.appendChild(link);
-                            link.click();
-                            
-                            // 创建下载弹窗作为备选
-                            var downloadBtn = document.createElement('div');
-                            downloadBtn.innerHTML = `
-                                <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:16px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:9999;text-align:center;max-width:90%;width:320px;">
-                                    <div style="font-size:2rem;margin-bottom:1rem;">📥</div>
-                                    <div style="font-size:1.1rem;font-weight:600;color:#1f2937;margin-bottom:0.5rem;">下载报价单</div>
-                                    <div style="font-size:0.875rem;color:#6b7280;margin-bottom:1.5rem;">点击下方按钮保存文件</div>
-                                    <a href="${blobUrl}" download="${pdfFileName}" style="display:inline-block;background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;padding:0.75rem 2rem;border-radius:8px;font-weight:600;text-decoration:none;">立即下载</a>
-                                    <div style="margin-top:1rem;font-size:0.75rem;color:#9ca3af;">文件格式：PDF</div>
-                                </div>
-                            `;
-                            document.body.appendChild(downloadBtn);
-                            
-                            // 点击按钮后自动移除弹窗
-                            downloadBtn.querySelector('a').addEventListener('click', function() {
-                                setTimeout(function() {
-                                    if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
-                                }, 500);
-                            });
-                            
-                            // 30秒后自动移除弹窗
-                            setTimeout(function() {
-                                if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
-                                URL.revokeObjectURL(blobUrl);
-                            }, 30000);
-                        }
-                    } catch (err) {
-                        console.error('Blob download failed, falling back to pdf.save:', err);
-                        pdf.save(pdfFileName);
-                    }
-                } else {
-                    pdf.save(pdfFileName);
-                }
-                
+                // 默认下载方式
+                pdf.save(pdfFileName);
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 pdfExportLock = false;
                 console.log('PDF exported successfully');
@@ -16360,9 +16382,9 @@ function exportPDF(showSaveAs){
                         }
                     }
                     
-                    // 如果所有方案都失败，跳过提示（用户已通过Toast收到通知）
+                    // 如果所有方案都失败，显示详细提示
                     if (!success) {
-                        // 不显示详细提示，避免重复
+                        alert('PDF导出成功！\n文件名：' + pdfFileName + '\n\n文件已保存到系统默认下载文件夹\n\n你可以通过以下方式找到文件：\n1. 打开文件资源管理器\n2. 在左侧导航栏点击"下载"\n3. 查找文件名包含 "' + pdfFileName + '" 的文件');
                     }
                 }, 100);
             }
@@ -16377,49 +16399,6 @@ function exportPDF(showSaveAs){
         pdfExportLock = false;
         alert('导出出错: ' + e.message);
     }
-}
-
-// 浏览器检测工具函数
-function getBrowserInfo() {
-    var ua = navigator.userAgent;
-    return {
-        isiPhoneSafari: /iPhone/i.test(ua) && /Safari/i.test(ua) && !/CriOS/i.test(ua) && !/FxiOS/i.test(ua),
-        isMiBrowser: /MiBrowser/i.test(ua) || /Xiaomi/i.test(ua) && /Browser/i.test(ua),
-        isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua),
-        // 移动端浏览器禁用showSaveFilePicker（需要用户激活）
-        useSaveFilePicker: !(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua))
-    };
-}
-
-// 获取适合当前浏览器的导出配置
-function getExportConfig() {
-    var browser = getBrowserInfo();
-    var config = {
-        scale: 3,
-        quality: 0.92,
-        useBlobDownload: false
-    };
-    
-    if (browser.isiPhoneSafari) {
-        // iPhone Safari特殊处理：降低分辨率以避免内存问题
-        config.scale = 2;
-        config.quality = 0.85;
-        config.useBlobDownload = true;
-    } else if (browser.isMiBrowser) {
-        // 小米浏览器特殊处理：降低分辨率
-        config.scale = 2;
-        config.quality = 0.85;
-        config.useBlobDownload = true;
-    } else if (browser.isMobile) {
-        // 其他移动端浏览器
-        if (window.devicePixelRatio >= 3) {
-            config.scale = 2.5;
-        } else {
-            config.scale = 2;
-        }
-    }
-    
-    return config;
 }
 
 // 导出JPG图片
@@ -16478,127 +16457,33 @@ function exportJPG(showSaveAs){
         
         document.body.appendChild(clone);
         
-        // 获取浏览器特定的导出配置
-        var exportConfig = getExportConfig();
-        var browser = getBrowserInfo();
-        
         // 提升导出清晰度：使用更高的分辨率
         var opt = {
-            scale: exportConfig.scale,
+            scale: 3, // 提升到3倍分辨率，显著提高清晰度
             useCORS: true,
             background: '#ffffff',
             width: a4WidthPixels,
             windowWidth: a4WidthPixels,
-            dpi: browser.isiPhoneSafari || browser.isMiBrowser ? 150 : 300
+            dpi: 300 // 设置DPI为300，适合打印
         };
         
+        // 手机端优化：根据设备性能调整
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            // 高端设备使用3倍分辨率，中低端设备使用2.5倍
+            if (window.devicePixelRatio >= 3) {
+                opt.scale = 3;
+            } else {
+                opt.scale = 2.5;
+            }
+        }
+        
         html2canvas(clone, opt).then(function(canvas) {
-            // 转换为JPG，使用浏览器特定的质量设置
-            var imgData = canvas.toDataURL('image/jpeg', exportConfig.quality);
+            // 转换为JPG
+            var imgData = canvas.toDataURL('image/jpeg', 0.92);
             var fileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.jpg';
             
-            // iPhone Safari和小米浏览器使用Blob方式下载
-            if (exportConfig.useBlobDownload && !showSaveAs) {
-                var byteString = atob(imgData.split(',')[1]);
-                var mimeString = imgData.split(',')[0].split(':')[1].split(';')[0];
-                var ab = new ArrayBuffer(byteString.length);
-                var ia = new Uint8Array(ab);
-                for (var i = 0; i < byteString.length; i++) {
-                    ia[i] = byteString.charCodeAt(i);
-                }
-                var blob = new Blob([ab], { type: mimeString });
-                
-                // 创建Object URL
-                var blobUrl = URL.createObjectURL(blob);
-                
-                // 小米浏览器特殊处理：只显示下载弹窗，不触发自动下载（避免重复提示）
-                if (browser.isMiBrowser) {
-                    var downloadBtn = document.createElement('div');
-                    downloadBtn.innerHTML = `
-                        <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:16px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:9999;text-align:center;max-width:90%;width:320px;">
-                            <div style="font-size:2rem;margin-bottom:1rem;">📥</div>
-                            <div style="font-size:1.1rem;font-weight:600;color:#1f2937;margin-bottom:0.5rem;">下载报价单</div>
-                            <div style="font-size:0.875rem;color:#6b7280;margin-bottom:1.5rem;">点击下方按钮保存文件</div>
-                            <a href="${blobUrl}" download="${fileName}" style="display:inline-block;background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;padding:0.75rem 2rem;border-radius:8px;font-weight:600;text-decoration:none;">立即下载</a>
-                            <div style="margin-top:1rem;font-size:0.75rem;color:#9ca3af;">文件格式：JPG</div>
-                        </div>
-                    `;
-                    document.body.appendChild(downloadBtn);
-                    
-                    // 点击按钮后自动移除弹窗
-                    downloadBtn.querySelector('a').addEventListener('click', function() {
-                        setTimeout(function() {
-                            if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
-                        }, 500);
-                    });
-                    
-                    // 30秒后自动移除弹窗
-                    setTimeout(function() {
-                        if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
-                        URL.revokeObjectURL(blobUrl);
-                    }, 30000);
-                } else if (browser.isiPhoneSafari) {
-                    // iPhone Safari：尝试自动下载，同时显示弹窗作为备选
-                    var link = document.createElement('a');
-                    link.download = fileName;
-                    link.href = blobUrl;
-                    link.style.display = 'none';
-                    document.body.appendChild(link);
-                    link.click();
-                    
-                    // 创建下载弹窗作为备选
-                    var downloadBtn = document.createElement('div');
-                    downloadBtn.innerHTML = `
-                        <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:16px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:9999;text-align:center;max-width:90%;width:320px;">
-                            <div style="font-size:2rem;margin-bottom:1rem;">📥</div>
-                            <div style="font-size:1.1rem;font-weight:600;color:#1f2937;margin-bottom:0.5rem;">下载报价单</div>
-                            <div style="font-size:0.875rem;color:#6b7280;margin-bottom:1.5rem;">点击下方按钮保存文件</div>
-                            <a href="${blobUrl}" download="${fileName}" style="display:inline-block;background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;padding:0.75rem 2rem;border-radius:8px;font-weight:600;text-decoration:none;">立即下载</a>
-                            <div style="margin-top:1rem;font-size:0.75rem;color:#9ca3af;">文件格式：JPG</div>
-                        </div>
-                    `;
-                    document.body.appendChild(downloadBtn);
-                    
-                    // 点击按钮后自动移除弹窗
-                    downloadBtn.querySelector('a').addEventListener('click', function() {
-                        setTimeout(function() {
-                            if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
-                        }, 500);
-                    });
-                    
-                    // 30秒后自动移除弹窗
-                    setTimeout(function() {
-                        if (downloadBtn.parentNode) downloadBtn.parentNode.removeChild(downloadBtn);
-                        URL.revokeObjectURL(blobUrl);
-                    }, 30000);
-                } else {
-                    // 其他浏览器：只自动下载
-                    var link = document.createElement('a');
-                    link.download = fileName;
-                    link.href = blobUrl;
-                    link.style.display = 'none';
-                    document.body.appendChild(link);
-                    link.click();
-                    
-                    // 清理
-                    setTimeout(function() {
-                        URL.revokeObjectURL(blobUrl);
-                        document.body.removeChild(link);
-                    }, 1000);
-                    
-                    showToast('JPG图片已导出', 'success');
-                }
-                
-                if(clone.parentNode) clone.parentNode.removeChild(clone);
-                jpgExportLock = false;
-                return;
-            }
-            
-            // 获取浏览器信息（在异步回调中需要重新获取）
-            var browser = getBrowserInfo();
-            
-            // 另存为功能：使用File System Access API（仅桌面端浏览器支持）
-            if (showSaveAs && browser.useSaveFilePicker && window.showSaveFilePicker) {
+            // 另存为功能：使用File System Access API
+            if (showSaveAs && window.showSaveFilePicker) {
                 // 将base64转换为Blob
                 var byteString = atob(imgData.split(',')[1]);
                 var mimeString = imgData.split(',')[0].split(':')[1].split(';')[0];
@@ -16722,9 +16607,9 @@ function exportJPG(showSaveAs){
                         }
                     }
                     
-                    // 如果所有方案都失败，跳过提示（用户已通过Toast收到通知）
+                    // 如果所有方案都失败，显示详细提示
                     if (!success) {
-                        // 不显示详细提示，避免重复
+                        alert('JPG导出成功！\n文件名：' + fileName + '\n\n文件已保存到系统默认下载文件夹\n\n你可以通过以下方式找到文件：\n1. 打开文件资源管理器\n2. 在左侧导航栏点击"下载"\n3. 查找文件名包含 "' + fileName + '" 的文件');
                     }
                 }, 100);
                 showToast('JPG图片已导出', 'success');
@@ -22152,6 +22037,95 @@ const fontTypeConfig = {
             const unitPrice = getCharUnitPrice(charSize, charSize, '金属烤漆字', 'solid');
             return { unitPrice: Math.ceil(unitPrice) };
         }
+    },
+    // ========== LOGO 字体类型 ==========
+    logo_acrylic: {
+        name: '亚克力LOGO',
+        material: 'acrylic',
+        isLighted: false,
+        isLogo: true,
+        calcPrice: function(width, height) {
+            const area = width * height / 10000; // 转换为平方米
+            const unitPrice = area * 380; // 亚克力LOGO约380元/㎡
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
+    },
+    logo_led: {
+        name: 'LED发光LOGO',
+        material: 'led',
+        isLighted: true,
+        isLogo: true,
+        calcPrice: function(width, height) {
+            const area = width * height / 10000; // 转换为平方米
+            const unitPrice = area * 580; // LED发光LOGO约580元/㎡
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
+    },
+    logo_metal: {
+        name: '金属LOGO',
+        material: 'metal',
+        isLighted: false,
+        isLogo: true,
+        calcPrice: function(width, height) {
+            const area = width * height / 10000; // 转换为平方米
+            const unitPrice = area * 450; // 金属LOGO约450元/㎡
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
+    },
+    logo_pvc: {
+        name: 'PVC LOGO',
+        material: 'pvc',
+        isLighted: false,
+        isLogo: true,
+        calcPrice: function(width, height) {
+            const area = width * height / 10000; // 转换为平方米
+            const unitPrice = area * 180; // PVC LOGO约180元/㎡
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
+    },
+    logo_crystal: {
+        name: '水晶LOGO',
+        material: '水晶背光字',
+        isLighted: false,
+        isLogo: true,
+        calcPrice: function(width, height) {
+            const area = width * height / 10000; // 转换为平方米
+            const unitPrice = area * 420; // 水晶LOGO约420元/㎡
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
+    },
+    logo_stainless: {
+        name: '不锈钢LOGO',
+        material: 'stainless',
+        isLighted: false,
+        isLogo: true,
+        calcPrice: function(width, height) {
+            const area = width * height / 10000; // 转换为平方米
+            const unitPrice = area * 520; // 不锈钢LOGO约520元/㎡
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
+    },
+    logo_resin: {
+        name: '树脂LOGO',
+        material: 'resin',
+        isLighted: true,
+        isLogo: true,
+        calcPrice: function(width, height) {
+            const area = width * height / 10000; // 转换为平方米
+            const unitPrice = area * 680; // 树脂LOGO约680元/㎡
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
+    },
+    logo_backlit: {
+        name: '背光LOGO',
+        material: 'led',
+        isLighted: true,
+        isLogo: true,
+        calcPrice: function(width, height) {
+            const area = width * height / 10000; // 转换为平方米
+            const unitPrice = area * 550; // 背光LOGO约550元/㎡
+            return { unitPrice: Math.ceil(unitPrice) };
+        }
     }
 };
 // 文化墙配置
@@ -25520,6 +25494,22 @@ function calculateDoorHeaderQuote() {
     const fontType3 = document.getElementById('doorHeaderFontType3').value;
     const charCount3 = parseInt(document.getElementById('doorHeaderCharCount3').value) || 0;
     const charSize3 = parseFloat(document.getElementById('doorHeaderCharSize3').value) || 0;
+    // 第四字体
+    const fontType4 = document.getElementById('doorHeaderFontType4').value;
+    const charCount4 = parseInt(document.getElementById('doorHeaderCharCount4').value) || 0;
+    const charSize4 = parseFloat(document.getElementById('doorHeaderCharSize4').value) || 0;
+    // 第五字体
+    const fontType5 = document.getElementById('doorHeaderFontType5').value;
+    const charCount5 = parseInt(document.getElementById('doorHeaderCharCount5').value) || 0;
+    const charSize5 = parseFloat(document.getElementById('doorHeaderCharSize5').value) || 0;
+    // 第六字体
+    const fontType6 = document.getElementById('doorHeaderFontType6').value;
+    const charCount6 = parseInt(document.getElementById('doorHeaderCharCount6').value) || 0;
+    const charSize6 = parseFloat(document.getElementById('doorHeaderCharSize6').value) || 0;
+    // LOGO设置
+    const logoType = document.getElementById('doorHeaderLogoType').value;
+    const logoWidth = parseFloat(document.getElementById('doorHeaderLogoWidth').value) || 0;
+    const logoHeight = parseFloat(document.getElementById('doorHeaderLogoHeight').value) || 0;
     // 材料等级
     const metalGrade = document.getElementById('doorHeaderMetalGrade').value;
     const panelGrade = document.getElementById('doorHeaderPanelGrade').value;
@@ -25824,7 +25814,251 @@ function calculateDoorHeaderQuote() {
         }
     }
 
-    // 2.7 计算特殊工艺费用
+    // 2.7 计算第四字体费用
+    if (fontType4 !== 'none' && charCount4 > 0 && charSize4 > 0) {
+        const fontConfig4 = fontTypeConfig[fontType4];
+        const fontResult4 = fontConfig4.calcPrice(charCount4, charSize4);
+
+        let fontUnitPrice4 = fontResult4.unitPrice;
+        let fontCostPrice4 = fontResult4.unitPrice;
+
+        const fontProductPrice4 = getProductPriceByName(fontConfig4.name, '门头材料');
+        if (fontProductPrice4 !== null) {
+            fontUnitPrice4 = fontProductPrice4.sellingPrice;
+            fontCostPrice4 = fontProductPrice4.costPrice;
+        } else {
+            const fontTempPrice4 = getDoorHeaderTempPrice(type, fontConfig4.name, null);
+            if (fontTempPrice4 !== null) {
+                fontUnitPrice4 = fontTempPrice4;
+            }
+        }
+
+        fontItems.push({
+            name: fontConfig4.name + '(第四字)',
+            spec: `字高${charSize4}cm`,
+            qty: charCount4,
+            unit: '个',
+            unitPrice: fontUnitPrice4,
+            costPrice: fontCostPrice4,
+            category: '字体'
+        });
+
+        if (fontConfig4.isLighted) {
+            const powerSupplyQty4 = calcLEDPowerSupply(charCount4, charSize4, fontType4, true);
+            const elecWasteRate4 = getWasteRateByCategory('电气');
+            const elecMultiplier4 = (1 + elecWasteRate4) * (1 + wasteRate / 100);
+
+            let ledPowerPrice4 = 45;
+            let ledCostPrice4 = powerSupplyQty4 <= 2 ? 30 : 45;
+
+            const ledProductName4 = powerSupplyQty4 <= 2 ? 'LED电源(12V10A)' : 'LED电源';
+            const ledProductPrice4 = getProductPriceByName(ledProductName4, '门头材料');
+            if (ledProductPrice4 !== null) {
+                ledPowerPrice4 = ledProductPrice4.sellingPrice;
+                ledCostPrice4 = ledProductPrice4.costPrice;
+            } else {
+                const ledTempPrice4 = getDoorHeaderTempPrice(type, 'LED电源', null);
+                if (ledTempPrice4 !== null) {
+                    ledPowerPrice4 = ledTempPrice4;
+                }
+            }
+
+            fontItems.push({
+                name: 'LED电源(第四字)',
+                spec: powerSupplyQty4 <= 2 ? '12V10A开关电源' : '12V30A开关电源',
+                qty: Math.ceil(powerSupplyQty4 * elecMultiplier4),
+                unit: '个',
+                unitPrice: ledPowerPrice4,
+                costPrice: ledCostPrice4,
+                category: '电气'
+            });
+        }
+    }
+
+    // 2.8 计算第五字体费用
+    if (fontType5 !== 'none' && charCount5 > 0 && charSize5 > 0) {
+        const fontConfig5 = fontTypeConfig[fontType5];
+        const fontResult5 = fontConfig5.calcPrice(charCount5, charSize5);
+
+        let fontUnitPrice5 = fontResult5.unitPrice;
+        let fontCostPrice5 = fontResult5.unitPrice;
+
+        const fontProductPrice5 = getProductPriceByName(fontConfig5.name, '门头材料');
+        if (fontProductPrice5 !== null) {
+            fontUnitPrice5 = fontProductPrice5.sellingPrice;
+            fontCostPrice5 = fontProductPrice5.costPrice;
+        } else {
+            const fontTempPrice5 = getDoorHeaderTempPrice(type, fontConfig5.name, null);
+            if (fontTempPrice5 !== null) {
+                fontUnitPrice5 = fontTempPrice5;
+            }
+        }
+
+        fontItems.push({
+            name: fontConfig5.name + '(第五字)',
+            spec: `字高${charSize5}cm`,
+            qty: charCount5,
+            unit: '个',
+            unitPrice: fontUnitPrice5,
+            costPrice: fontCostPrice5,
+            category: '字体'
+        });
+
+        if (fontConfig5.isLighted) {
+            const powerSupplyQty5 = calcLEDPowerSupply(charCount5, charSize5, fontType5, true);
+            const elecWasteRate5 = getWasteRateByCategory('电气');
+            const elecMultiplier5 = (1 + elecWasteRate5) * (1 + wasteRate / 100);
+
+            let ledPowerPrice5 = 45;
+            let ledCostPrice5 = powerSupplyQty5 <= 2 ? 30 : 45;
+
+            const ledProductName5 = powerSupplyQty5 <= 2 ? 'LED电源(12V10A)' : 'LED电源';
+            const ledProductPrice5 = getProductPriceByName(ledProductName5, '门头材料');
+            if (ledProductPrice5 !== null) {
+                ledPowerPrice5 = ledProductPrice5.sellingPrice;
+                ledCostPrice5 = ledProductPrice5.costPrice;
+            } else {
+                const ledTempPrice5 = getDoorHeaderTempPrice(type, 'LED电源', null);
+                if (ledTempPrice5 !== null) {
+                    ledPowerPrice5 = ledTempPrice5;
+                }
+            }
+
+            fontItems.push({
+                name: 'LED电源(第五字)',
+                spec: powerSupplyQty5 <= 2 ? '12V10A开关电源' : '12V30A开关电源',
+                qty: Math.ceil(powerSupplyQty5 * elecMultiplier5),
+                unit: '个',
+                unitPrice: ledPowerPrice5,
+                costPrice: ledCostPrice5,
+                category: '电气'
+            });
+        }
+    }
+
+    // 2.9 计算第六字体费用
+    if (fontType6 !== 'none' && charCount6 > 0 && charSize6 > 0) {
+        const fontConfig6 = fontTypeConfig[fontType6];
+        const fontResult6 = fontConfig6.calcPrice(charCount6, charSize6);
+
+        let fontUnitPrice6 = fontResult6.unitPrice;
+        let fontCostPrice6 = fontResult6.unitPrice;
+
+        const fontProductPrice6 = getProductPriceByName(fontConfig6.name, '门头材料');
+        if (fontProductPrice6 !== null) {
+            fontUnitPrice6 = fontProductPrice6.sellingPrice;
+            fontCostPrice6 = fontProductPrice6.costPrice;
+        } else {
+            const fontTempPrice6 = getDoorHeaderTempPrice(type, fontConfig6.name, null);
+            if (fontTempPrice6 !== null) {
+                fontUnitPrice6 = fontTempPrice6;
+            }
+        }
+
+        fontItems.push({
+            name: fontConfig6.name + '(第六字)',
+            spec: `字高${charSize6}cm`,
+            qty: charCount6,
+            unit: '个',
+            unitPrice: fontUnitPrice6,
+            costPrice: fontCostPrice6,
+            category: '字体'
+        });
+
+        if (fontConfig6.isLighted) {
+            const powerSupplyQty6 = calcLEDPowerSupply(charCount6, charSize6, fontType6, true);
+            const elecWasteRate6 = getWasteRateByCategory('电气');
+            const elecMultiplier6 = (1 + elecWasteRate6) * (1 + wasteRate / 100);
+
+            let ledPowerPrice6 = 45;
+            let ledCostPrice6 = powerSupplyQty6 <= 2 ? 30 : 45;
+
+            const ledProductName6 = powerSupplyQty6 <= 2 ? 'LED电源(12V10A)' : 'LED电源';
+            const ledProductPrice6 = getProductPriceByName(ledProductName6, '门头材料');
+            if (ledProductPrice6 !== null) {
+                ledPowerPrice6 = ledProductPrice6.sellingPrice;
+                ledCostPrice6 = ledProductPrice6.costPrice;
+            } else {
+                const ledTempPrice6 = getDoorHeaderTempPrice(type, 'LED电源', null);
+                if (ledTempPrice6 !== null) {
+                    ledPowerPrice6 = ledTempPrice6;
+                }
+            }
+
+            fontItems.push({
+                name: 'LED电源(第六字)',
+                spec: powerSupplyQty6 <= 2 ? '12V10A开关电源' : '12V30A开关电源',
+                qty: Math.ceil(powerSupplyQty6 * elecMultiplier6),
+                unit: '个',
+                unitPrice: ledPowerPrice6,
+                costPrice: ledCostPrice6,
+                category: '电气'
+            });
+        }
+    }
+
+    // 2.10 计算 LOGO 费用
+    if (logoType !== 'none' && logoWidth > 0 && logoHeight > 0) {
+        const logoConfig = fontTypeConfig[logoType];
+        const logoResult = logoConfig.calcPrice(logoWidth, logoHeight);
+
+        let logoUnitPrice = logoResult.unitPrice;
+        let logoCostPrice = logoResult.unitPrice;
+
+        const logoProductPrice = getProductPriceByName(logoConfig.name, '门头材料');
+        if (logoProductPrice !== null) {
+            logoUnitPrice = logoProductPrice.sellingPrice;
+            logoCostPrice = logoProductPrice.costPrice;
+        } else {
+            const logoTempPrice = getDoorHeaderTempPrice(type, logoConfig.name, null);
+            if (logoTempPrice !== null) {
+                logoUnitPrice = logoTempPrice;
+            }
+        }
+
+        fontItems.push({
+            name: logoConfig.name,
+            spec: `${logoWidth}cm × ${logoHeight}cm`,
+            qty: 1,
+            unit: '个',
+            unitPrice: logoUnitPrice,
+            costPrice: logoCostPrice,
+            category: '字体'
+        });
+
+        if (logoConfig.isLighted) {
+            const powerSupplyQty = Math.ceil((logoWidth * logoHeight / 10000) * 2); // LOGO发光功率估算
+            const elecWasteRate = getWasteRateByCategory('电气');
+            const elecMultiplier = (1 + elecWasteRate) * (1 + wasteRate / 100);
+
+            let ledPowerPrice = 45;
+            let ledCostPrice = powerSupplyQty <= 2 ? 30 : 45;
+
+            const ledProductName = powerSupplyQty <= 2 ? 'LED电源(12V10A)' : 'LED电源';
+            const ledProductPrice = getProductPriceByName(ledProductName, '门头材料');
+            if (ledProductPrice !== null) {
+                ledPowerPrice = ledProductPrice.sellingPrice;
+                ledCostPrice = ledProductPrice.costPrice;
+            } else {
+                const ledTempPrice = getDoorHeaderTempPrice(type, 'LED电源', null);
+                if (ledTempPrice !== null) {
+                    ledPowerPrice = ledTempPrice;
+                }
+            }
+
+            fontItems.push({
+                name: 'LED电源(LOGO)',
+                spec: powerSupplyQty <= 2 ? '12V10A开关电源' : '12V30A开关电源',
+                qty: Math.ceil(powerSupplyQty * elecMultiplier),
+                unit: '个',
+                unitPrice: ledPowerPrice,
+                costPrice: ledCostPrice,
+                category: '电气'
+            });
+        }
+    }
+
+    // 2.11 计算特殊工艺费用
     const craftPrices = {
         baking: { name: '烤漆工艺', price: 80, type: 'area' },
         electroplating: { name: '电镀工艺', price: 150, type: 'area' },
@@ -25862,7 +26096,7 @@ function calculateDoorHeaderQuote() {
                 item.unit = '㎡';
             } else if (craftInfo.type === 'char') {
                 item.spec = '按字数计算';
-                item.qty = charCount + charCount2;
+                item.qty = charCount + charCount2 + charCount3 + charCount4 + charCount5 + charCount6;
                 item.unit = '个';
             } else {
                 item.spec = '按项计算';
