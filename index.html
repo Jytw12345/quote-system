@@ -17034,7 +17034,6 @@ async function exportJPG(showSaveAs){
                         alert('JPG导出成功！\n文件名：' + fileName + '\n\n文件已保存到系统默认下载文件夹\n\n你可以通过以下方式找到文件：\n1. 打开文件资源管理器\n2. 在左侧导航栏点击"下载"\n3. 查找文件名包含 "' + fileName + '" 的文件');
                     }
                 }, 100);
-                showToast('JPG图片已导出', 'success');
             }
         }).catch(function(err) {
             console.error('html2canvas error:', err);
