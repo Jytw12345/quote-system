@@ -15633,7 +15633,7 @@ function generateQuotePreview(isManualChange){
                                     switch(col){
                                         case 'index': headers += `<th style="padding:0.75rem 1rem;text-align:center;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">序号</th>`; break;
                                         case 'image': if(colVis.image !== false) headers += `<th style="padding:0.75rem 1rem;text-align:center;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">图片</th>`; break;
-                                        case 'name': headers += `<th style="padding:0.75rem 1rem;text-align:center;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">项目名称</th>`; break;
+                                        case 'name': headers += `<th style="padding:0.75rem 1rem;text-align:left;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">项目名称</th>`; break;
                                         case 'spec': if(colVis.spec !== false) headers += `<th style="padding:0.75rem 1rem;text-align:center;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">规格参数</th>`; break;
                                         case 'unit': headers += `<th style="padding:0.75rem 1rem;text-align:center;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">单位</th>`; break;
                                         case 'note': if(colVis.note !== false) headers += `<th style="padding:0.75rem 1rem;text-align:center;font-size:${cw.headerFontSize}px;color:#666;font-weight:600;">备注</th>`; break;
@@ -15805,7 +15805,7 @@ function generateQuotePreview(isManualChange){
                                 switch(col){
                                     case 'index': headers += `<th style="padding:0.6rem 0.5rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">序号</th>`; break;
                                     case 'image': if(colVis.image !== false) headers += `<th style="padding:0.6rem 0.5rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">图片</th>`; break;
-                                    case 'name': headers += `<th style="padding:0.6rem 0.5rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">项目名称</th>`; break;
+                                    case 'name': headers += `<th style="padding:0.6rem 0.5rem;text-align:left;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">项目名称</th>`; break;
                                     case 'spec': if(colVis.spec !== false) headers += `<th style="padding:0.6rem 0.5rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">规格</th>`; break;
                                     case 'unit': headers += `<th style="padding:0.6rem 0.5rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">单位</th>`; break;
                                     case 'note': if(colVis.note !== false) headers += `<th style="padding:0.6rem 0.5rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#4a5568;">备注</th>`; break;
@@ -15859,13 +15859,13 @@ function generateQuotePreview(isManualChange){
                         let ic = item.image ? renderProductImage(item.image, item.name || '', { style: 'width:35px !important;height:35px !important;object-fit:cover !important;border:1px solid #ddd;' }) : '';
                         row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;">${ic}</td>`;
                     } break;
-                    case 'name': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:left;font-size:${cw.contentFontSize+2}px;word-break:break-all;">${item.name}</td>`; break;
-                    case 'spec': if(colVis.spec !== false) row += `<td style="padding:0.5rem;border:1px solid #333;text-align:left;font-size:${cw.contentFontSize}px;word-break:break-all;">${item.spec||''}</td>`; break;
+                    case 'name': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:${cw.contentFontSize+2}px;word-break:break-all;">${item.name}</td>`; break;
+                    case 'spec': if(colVis.spec !== false) row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:${cw.contentFontSize}px;word-break:break-all;">${item.spec||''}</td>`; break;
                     case 'unit': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:${cw.contentFontSize}px;">${item.unit||'项'}</td>`; break;
-                    case 'note': if(colVis.note !== false) row += `<td style="padding:0.5rem;border:1px solid #333;text-align:left;font-size:${cw.contentFontSize}px;word-break:break-all;">${item.note||''}</td>`; break;
+                    case 'note': if(colVis.note !== false) row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:${cw.contentFontSize}px;word-break:break-all;">${item.note||''}</td>`; break;
                     case 'qty': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:${cw.contentFontSize}px;">${itemQty}</td>`; break;
-                    case 'price': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:right;font-size:${cw.contentFontSize}px;">¥${itemPrice.toFixed(2)}</td>`; break;
-                    case 'subtotal': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:right;font-size:${cw.contentFontSize+2}px;font-weight:600;">¥${it}</td>`; break;
+                    case 'price': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:${cw.contentFontSize}px;">¥${itemPrice.toFixed(2)}</td>`; break;
+                    case 'subtotal': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:${cw.contentFontSize+2}px;font-weight:600;">¥${it}</td>`; break;
                 }
             });
             row += `</tr>`;
@@ -16076,7 +16076,7 @@ function generateQuotePreview(isManualChange){
                                     switch(col){
                                         case 'index': headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">序号</th>`; break;
                                         case 'image': if(colVis.image !== false) headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">图片</th>`; break;
-                                        case 'name': headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">项目名称</th>`; break;
+                                        case 'name': headers += `<th style="padding:0.5rem 0.4rem;text-align:left;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">项目名称</th>`; break;
                                         case 'spec': if(colVis.spec !== false) headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">规格</th>`; break;
                                         case 'unit': headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">单位</th>`; break;
                                         case 'note': if(colVis.note !== false) headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">备注</th>`; break;
@@ -16258,9 +16258,57 @@ function updateSigPosition(prop, value){
     saveData();
 }
 // BUG修复：增加锁防止递归调用
-function exportPDF(showSaveAs){
+// PDF导出的文件句柄（用于跨异步调用传递）
+var pdfFileHandle = null;
+var pdfUseFilePicker = null; // null=未尝试, true=成功, false=失败
+
+async function exportPDF(showSaveAs){
     if (pdfExportLock) return;
     pdfExportLock = true;
+    
+    // 检测是否是移动端浏览器（移动端通常不支持或有问题）
+    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|MiuiBrowser/i.test(navigator.userAgent);
+    
+    // 移动端直接跳过 showSaveFilePicker，使用传统下载
+    if (isMobile) {
+        pdfUseFilePicker = false;
+    }
+    
+    // 在用户点击的直接回调中立即尝试 showSaveFilePicker
+    // 这必须在第一次调用时就执行，不能在 setTimeout 之后
+    // 只有从未尝试过（pdfUseFilePicker === null）才尝试
+    if (showSaveAs && window.showSaveFilePicker && pdfUseFilePicker === null && !isMobile) {
+        var pdfFileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.pdf';
+        try {
+            // 添加超时机制，防止某些浏览器卡住
+            var timeoutPromise = new Promise(function(_, reject) {
+                setTimeout(function() { reject(new Error('showSaveFilePicker timeout')); }, 3000);
+            });
+            
+            pdfFileHandle = await Promise.race([
+                window.showSaveFilePicker({
+                    suggestedName: pdfFileName,
+                    types: [{
+                        description: 'PDF文件',
+                        accept: { 'application/pdf': ['.pdf'] }
+                    }]
+                }),
+                timeoutPromise
+            ]);
+            pdfUseFilePicker = true;
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                // 用户取消了保存
+                pdfExportLock = false;
+                pdfFileHandle = null;
+                pdfUseFilePicker = null;
+                return;
+            }
+            console.warn('showSaveFilePicker failed, using fallback:', err);
+            pdfUseFilePicker = false; // 标记为失败，后续不再尝试
+        }
+    }
+    
     var preview = document.getElementById('quotePreview');
     if(!preview || preview.classList.contains('hidden')){ 
         generateQuotePreview(); 
@@ -16433,7 +16481,7 @@ function exportPDF(showSaveAs){
             });
         });
         rowBoundaries.sort(function(a, b) { return a - b; });
-        html2canvas(printContent, opt).then(function(canvas) {
+        html2canvas(printContent, opt).then(async function(canvas) {
             var imgData = canvas.toDataURL('image/jpeg', 0.98);
             var pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
             var pdfWidth = pdf.internal.pageSize.getWidth();
@@ -16597,51 +16645,39 @@ function exportPDF(showSaveAs){
             
             var pdfFileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.pdf';
             
-            // 另存为功能：使用File System Access API
-            if (showSaveAs && window.showSaveFilePicker) {
+            // 生成 PDF 数据
+            var pdfBuffer = pdf.output('arraybuffer');
+            var pdfData = new Uint8Array(pdfBuffer);
+            
+            if (pdfUseFilePicker && pdfFileHandle) {
+                // 使用 File System Access API 写入文件
                 try {
-                    var pdfBuffer = pdf.output('arraybuffer');
-                    var pdfData = new Uint8Array(pdfBuffer);
-                    window.showSaveFilePicker({
-                        suggestedName: pdfFileName,
-                        types: [{
-                            description: 'PDF文件',
-                            accept: { 'application/pdf': ['.pdf'] }
-                        }]
-                    }).then(function(handle) {
-                        return handle.createWritable();
-                    }).then(function(writable) {
-                        return writable.write(pdfData).then(function() {
-                            return writable.close();
-                        });
-                    }).then(function() {
-                        if(clone.parentNode) clone.parentNode.removeChild(clone);
-                        pdfExportLock = false;
-                        showToast('PDF已保存到指定位置', 'success');
-                        console.log('PDF saved successfully with showSaveFilePicker');
-                    }).catch(function(err) {
-                        if (err.name === 'AbortError') {
-                            // 用户取消了保存
-                            if(clone.parentNode) clone.parentNode.removeChild(clone);
-                            pdfExportLock = false;
-                            return;
-                        }
-                        console.error('showSaveFilePicker error:', err);
-                        if(clone.parentNode) clone.parentNode.removeChild(clone);
-                        pdfExportLock = false;
-                        alert('保存失败: ' + err.message);
-                    });
-                } catch (err) {
-                    console.error('PDF output error:', err);
+                    var writable = await pdfFileHandle.createWritable();
+                    await writable.write(pdfData);
+                    await writable.close();
                     if(clone.parentNode) clone.parentNode.removeChild(clone);
                     pdfExportLock = false;
-                    alert('PDF生成失败: ' + err.message);
+                    // 清理全局变量
+                    pdfFileHandle = null;
+                    pdfUseFilePicker = null; // 重置为null，下次可以重新尝试
+                    showToast('PDF已保存到指定位置', 'success');
+                } catch (err) {
+                    console.error('File write error:', err);
+                    // 写入失败，使用传统下载
+                    pdf.save(pdfFileName);
+                    if(clone.parentNode) clone.parentNode.removeChild(clone);
+                    pdfExportLock = false;
+                    pdfFileHandle = null;
+                    pdfUseFilePicker = null; // 重置为null，下次可以重新尝试
+                    showToast('使用传统方式下载PDF', 'info');
                 }
             } else {
-                // 默认下载方式
+                // 使用传统下载方式
                 pdf.save(pdfFileName);
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 pdfExportLock = false;
+                pdfFileHandle = null;
+                pdfUseFilePicker = null; // 重置为null，下次可以重新尝试
                 console.log('PDF exported successfully');
                 
                 // 显示导出成功提示并提供打开文件夹选项
@@ -16738,10 +16774,56 @@ function exportPDF(showSaveAs){
 }
 
 // 导出JPG图片
-function exportJPG(showSaveAs){
-    var jpgExportLock = false;
+// JPG导出的文件句柄（用于跨异步调用传递）
+var jpgFileHandle = null;
+var jpgUseFilePicker = null; // null=未尝试, true=成功, false=失败
+var jpgExportLock = false;
+
+async function exportJPG(showSaveAs){
     if (jpgExportLock) return;
     jpgExportLock = true;
+    
+    // 检测是否是移动端浏览器（移动端通常不支持或有问题）
+    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|MiuiBrowser/i.test(navigator.userAgent);
+    
+    // 移动端直接跳过 showSaveFilePicker，使用传统下载
+    if (isMobile) {
+        jpgUseFilePicker = false;
+    }
+    
+    // 在用户点击的直接回调中立即尝试 showSaveFilePicker
+    // 只有从未尝试过（jpgUseFilePicker === null）才尝试
+    if (showSaveAs && window.showSaveFilePicker && jpgUseFilePicker === null && !isMobile) {
+        var jpgFileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.jpg';
+        try {
+            // 添加超时机制，防止某些浏览器卡住
+            var timeoutPromise = new Promise(function(_, reject) {
+                setTimeout(function() { reject(new Error('showSaveFilePicker timeout')); }, 3000);
+            });
+            
+            jpgFileHandle = await Promise.race([
+                window.showSaveFilePicker({
+                    suggestedName: jpgFileName,
+                    types: [{
+                        description: 'JPG图片',
+                        accept: { 'image/jpeg': ['.jpg', '.jpeg'] }
+                    }]
+                }),
+                timeoutPromise
+            ]);
+            jpgUseFilePicker = true;
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                // 用户取消了保存
+                jpgExportLock = false;
+                jpgFileHandle = null;
+                jpgUseFilePicker = null;
+                return;
+            }
+            console.warn('showSaveFilePicker failed, using fallback:', err);
+            jpgUseFilePicker = false; // 标记为失败，后续不再尝试
+        }
+    }
     
     var preview = document.getElementById('quotePreview');
     if(!preview || preview.classList.contains('hidden') || !preview.innerHTML.trim()){ 
@@ -16813,13 +16895,13 @@ function exportJPG(showSaveAs){
             }
         }
         
-        html2canvas(clone, opt).then(function(canvas) {
+        html2canvas(clone, opt).then(async function(canvas) {
             // 转换为JPG
             var imgData = canvas.toDataURL('image/jpeg', 0.92);
             var fileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.jpg';
             
-            // 另存为功能：使用File System Access API
-            if (showSaveAs && window.showSaveFilePicker) {
+            if (jpgUseFilePicker && jpgFileHandle) {
+                // 使用 File System Access API 写入文件
                 // 将base64转换为Blob
                 var byteString = atob(imgData.split(',')[1]);
                 var mimeString = imgData.split(',')[0].split(':')[1].split(';')[0];
@@ -16830,44 +16912,38 @@ function exportJPG(showSaveAs){
                 }
                 var blob = new Blob([ab], { type: mimeString });
                 
-                window.showSaveFilePicker({
-                    suggestedName: fileName,
-                    types: [{
-                        description: 'JPG图片',
-                        accept: { 'image/jpeg': ['.jpg', '.jpeg'] }
-                    }]
-                }).then(function(handle) {
-                    return handle.createWritable();
-                }).then(function(writable) {
-                    return writable.write(blob).then(function() {
-                        return writable.close();
-                    });
-                }).then(function() {
+                try {
+                    var writable = await jpgFileHandle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
                     if(clone.parentNode) clone.parentNode.removeChild(clone);
                     jpgExportLock = false;
+                    jpgFileHandle = null;
+                    jpgUseFilePicker = null; // 重置为null，下次可以重新尝试
                     showToast('JPG已保存到指定位置', 'success');
-                    console.log('JPG saved successfully with showSaveFilePicker');
-                }).catch(function(err) {
-                    if (err.name === 'AbortError') {
-                        // 用户取消了保存
-                        if(clone.parentNode) clone.parentNode.removeChild(clone);
-                        jpgExportLock = false;
-                        return;
-                    }
-                    console.error('showSaveFilePicker error:', err);
+                } catch (err) {
+                    console.error('File write error:', err);
+                    // 写入失败，使用传统下载
+                    var link = document.createElement('a');
+                    link.download = fileName;
+                    link.href = imgData;
+                    link.click();
                     if(clone.parentNode) clone.parentNode.removeChild(clone);
                     jpgExportLock = false;
-                    alert('保存失败: ' + err.message);
-                });
+                    jpgFileHandle = null;
+                    jpgUseFilePicker = null; // 重置为null，下次可以重新尝试
+                    showToast('使用传统方式下载JPG', 'info');
+                }
             } else {
-                // 默认下载方式
+                // 使用传统下载方式
                 var link = document.createElement('a');
                 link.download = fileName;
                 link.href = imgData;
                 link.click();
-                
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 jpgExportLock = false;
+                jpgFileHandle = null;
+                jpgUseFilePicker = null; // 重置为null，下次可以重新尝试
                 
                 // 显示导出成功提示并提供打开文件夹选项
                 setTimeout(function() {
@@ -16962,7 +17038,7 @@ function exportJPG(showSaveAs){
         alert('导出出错: ' + e.message);
     }
 }
-function exportXLS(){
+async function exportXLS(){
     if(!appData.currentQuote || !appData.currentQuote.items || !appData.currentQuote.items.length){ showToast('请先添加报价项目', 'warning'); return; }
     
     if (!window.XLSX) {
@@ -17214,40 +17290,47 @@ function exportXLS(){
         sheetStyles: true  // 启用工作表样式
     };
     
-    // 另存为功能：使用File System Access API
-    if (window.showSaveFilePicker) {
+    // 检测是否是移动端浏览器（移动端通常不支持或有问题）
+    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|MiuiBrowser/i.test(navigator.userAgent);
+    
+    // 尝试使用 File System Access API（仅桌面端）
+    if (window.showSaveFilePicker && !isMobile) {
         try {
             var xlsData = XLSX.write(wb, writeOptions);
             var blob = new Blob([xlsData], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             
-            window.showSaveFilePicker({
-                suggestedName: filename,
-                types: [{
-                    description: 'Excel文件',
-                    accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
-                }]
-            }).then(function(handle) {
-                return handle.createWritable();
-            }).then(function(writable) {
-                return writable.write(blob).then(function() {
-                    return writable.close();
-                });
-            }).then(function() {
-                showToast('XLSX已保存到指定位置', 'success');
-            }).catch(function(err) {
-                if (err.name === 'AbortError') {
-                    // 用户取消了保存
-                    return;
-                }
-                console.error('showSaveFilePicker error:', err);
-                alert('保存失败: ' + err.message);
+            // 添加超时机制，防止某些浏览器卡住
+            var timeoutPromise = new Promise(function(_, reject) {
+                setTimeout(function() { reject(new Error('showSaveFilePicker timeout')); }, 3000);
             });
+            
+            var fileHandle = await Promise.race([
+                window.showSaveFilePicker({
+                    suggestedName: filename,
+                    types: [{
+                        description: 'Excel文件',
+                        accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
+                    }]
+                }),
+                timeoutPromise
+            ]);
+            
+            var writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            showToast('XLSX已保存到指定位置', 'success');
         } catch (err) {
-            console.error('XLSX write error:', err);
-            alert('导出失败: ' + err.message);
+            if (err.name === 'AbortError') {
+                // 用户取消了保存
+                return;
+            }
+            console.warn('showSaveFilePicker failed, using fallback:', err);
+            // 使用传统下载方式
+            XLSX.writeFile(wb, filename, writeOptions);
+            showToast('XLSX 导出成功！', 'success');
         }
     } else {
-        // 回退到默认下载方式
+        // 使用传统下载方式（兼容所有浏览器）
         XLSX.writeFile(wb, filename, writeOptions);
         showToast('XLSX 导出成功！', 'success');
     }
@@ -39374,338 +39457,18 @@ function exportAllData(){
     }));
 }
 function downloadFile(data,filename,type){ 
-    // 检测是否为移动端浏览器
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const isXiaomi = /MiuiBrowser|Xiaomi|Mi Browser/i.test(navigator.userAgent);
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    
-    // 如果是图片文件（jpg、png等），使用特殊处理
-    if (type && type.startsWith('image/')) {
-        downloadImage(data, filename);
-        return;
-    }
-    
-    // 如果是 PDF，尝试使用打印功能保存
-    if (type && type.includes('pdf')) {
-        downloadPDF(data, filename);
-        return;
-    }
-    
-    // JSON 和其他文件类型 - 移动端特殊处理
-    const blob=new Blob([data],{type:type}); 
-    
-    if (isMobile && !isIOS) {
-        // Android 移动端（特别是小米浏览器）
-        downloadMobile(blob, filename, type, isXiaomi);
-    } else if (isIOS) {
-        // iOS 设备
-        downloadIOS(blob, filename);
-    } else {
-        // 桌面浏览器
-        downloadFallback(blob, filename);
-    }
-}
-
-// Android 移动端下载（特别优化小米浏览器）
-function downloadMobile(blob, filename, type, isXiaomi) {
-    // 尝试 Web Share API（如果可用）
-    if (typeof navigator.share !== 'undefined' && typeof File !== 'undefined') {
-        const file = new File([blob], filename, { type: type });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            navigator.share({
-                files: [file],
-                title: filename,
-                text: '广告报价系统导出文件'
-            }).then(function() {
-                showToast('文件已分享', 'success');
-            }).catch(function(e) {
-                console.warn('Web Share 失败:', e);
-                // 回退到其他方式
-                downloadMobileFallback(blob, filename, type, isXiaomi);
-            });
-            return;
-        }
-    }
-    
-    // 使用备用方式
-    downloadMobileFallback(blob, filename, type, isXiaomi);
-}
-
-// Android 移动端备用下载方式
-function downloadMobileFallback(blob, filename, type, isXiaomi) {
-    const url = URL.createObjectURL(blob);
-    
-    // 小米浏览器使用 iframe 下载方式
-    if (isXiaomi) {
-        try {
-            // 创建一个隐藏的 iframe
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = url;
-            document.body.appendChild(iframe);
-            
-            // 尝试触发下载
-            setTimeout(function() {
-                document.body.removeChild(iframe);
-                URL.revokeObjectURL(url);
-            }, 5000);
-            
-            showToast('如果未开始下载，请尝试：长按屏幕 → 刷新 → 重新操作', 'info', 5000);
-            return;
-        } catch(e) {
-            console.warn('iframe 下载失败:', e);
-        }
-    }
-    
-    // 尝试使用 <a download>
-    try {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        
-        setTimeout(function() {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }, 100);
-        return;
-    } catch(e) {
-        console.warn('a.download 失败:', e);
-    }
-    
-    // 最后尝试新窗口打开
-    const win = window.open(url, '_blank');
-    if (win) {
-        showToast('在打开的页面中使用浏览器菜单保存', 'info');
-    } else {
-        // 如果所有方式都失败，复制内容
-        showToast('下载受限，请联系技术支持', 'warning');
-    }
-}
-
-// iOS 设备下载
-function downloadIOS(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    
-    // 使用新窗口打开
-    const win = window.open(url, '_blank');
-    if (win) {
-        showToast('在打开的页面中长按图片保存', 'info');
-    } else {
-        // 尝试复制到剪贴板
-        blob.text().then(function(text) {
-            navigator.clipboard.writeText(text).then(function() {
-                showToast('内容已复制到剪贴板', 'success');
-            }).catch(function() {
-                showToast('下载受限，请使用电脑浏览器', 'warning');
-            });
-        });
-    }
-}
-
-// 传统方式下载（桌面浏览器）
-function downloadFallback(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
+    const blob=new Blob([data],{type:type});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=filename;
+    a.style.display='none';
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-// 图片下载（兼容移动端）
-function downloadImage(dataUrl, filename) {
-    // 检测浏览器类型
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    const isXiaomi = /MiuiBrowser|Xiaomi|Mi Browser/i.test(navigator.userAgent);
-    
-    // 如果是 data URL，直接使用
-    if (dataUrl.startsWith('data:')) {
-        // 尝试使用 canvas 转换格式
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            
-            // 确定文件类型
-            const isJpg = filename.toLowerCase().endsWith('.jpg') || filename.toLowerCase().endsWith('.jpeg');
-            const mimeType = isJpg ? 'image/jpeg' : 'image/png';
-            
-            canvas.toBlob(function(blob) {
-                if (blob) {
-                    if (isIOS) {
-                        // iOS Safari：使用新窗口打开
-                        const url = URL.createObjectURL(blob);
-                        const win = window.open(url, '_blank');
-                        if (win) {
-                            showToast('长按图片可保存到相册', 'info');
-                        } else {
-                            showToast('请允许弹出窗口后重试', 'warning');
-                        }
-                    } else if (isAndroid) {
-                        // Android 浏览器
-                        if (isXiaomi) {
-                            // 小米浏览器：使用 Web Share 或新窗口
-                            downloadMobileImage(blob, filename);
-                        } else {
-                            // 其他 Android 浏览器
-                            const url = URL.createObjectURL(blob);
-                            const win = window.open(url, '_blank');
-                            if (win) {
-                                showToast('长按图片可保存到相册', 'info');
-                            } else {
-                                downloadMobileImage(blob, filename);
-                            }
-                        }
-                    } else {
-                        downloadFallback(blob, filename);
-                    }
-                } else {
-                    downloadFallback(dataURLtoBlob(dataUrl), filename);
-                }
-            }, mimeType, 0.95);
-        };
-        img.src = dataUrl;
-    } else {
-        downloadMobileImage(dataURLtoBlob(dataUrl), filename);
-    }
-}
-
-// 移动端图片下载
-function downloadMobileImage(blob, filename) {
-    // 尝试 Web Share API
-    if (typeof navigator.share !== 'undefined') {
-        const file = new File([blob], filename, { type: blob.type });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            navigator.share({
-                files: [file],
-                title: filename
-            }).then(function() {
-                showToast('图片已保存', 'success');
-            }).catch(function(e) {
-                console.warn('Web Share 失败:', e);
-                tryDirectDownload(blob, filename);
-            });
-            return;
-        }
-    }
-    
-    tryDirectDownload(blob, filename);
-}
-
-// 尝试直接下载
-function tryDirectDownload(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    
-    // 尝试 <a download>
-    try {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        showToast('如果未开始下载，请长按图片保存', 'info', 4000);
-        setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
-        return;
-    } catch(e) {
-        console.warn('直接下载失败:', e);
-    }
-    
-    // 最后尝试新窗口
-    const win = window.open(url, '_blank');
-    if (win) {
-        showToast('长按图片可保存到相册', 'info');
-    } else {
-        showToast('请允许弹出窗口', 'warning');
-    }
-}
-
-// PDF 下载（兼容移动端）
-function downloadPDF(data, filename) {
-    const blob = new Blob([data], { type: 'application/pdf' });
-    
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    const isXiaomi = /MiuiBrowser|Xiaomi|Mi Browser/i.test(navigator.userAgent);
-    
-    if (isIOS) {
-        // iOS：使用新窗口打开 PDF
-        const url = URL.createObjectURL(blob);
-        const win = window.open(url, '_blank');
-        if (win) {
-            showToast('在PDF页面可使用分享按钮保存', 'info');
-        } else {
-            showToast('请允许弹出窗口后重试', 'warning');
-        }
-    } else if (isAndroid) {
-        if (isXiaomi) {
-            // 小米浏览器：尝试多种方式
-            downloadMobilePDF(blob, filename);
-        } else {
-            // 其他 Android 浏览器
-            const url = URL.createObjectURL(blob);
-            const win = window.open(url, '_blank');
-            if (win) {
-                showToast('在PDF页面可使用分享按钮保存', 'info');
-            } else {
-                downloadMobilePDF(blob, filename);
-            }
-        }
-    } else {
-        downloadFallback(blob, filename);
-    }
-}
-
-// 移动端 PDF 下载
-function downloadMobilePDF(blob, filename) {
-    // 尝试 Web Share API
-    if (typeof navigator.share !== 'undefined') {
-        const file = new File([blob], filename, { type: 'application/pdf' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            navigator.share({
-                files: [file],
-                title: filename
-            }).then(function() {
-                showToast('PDF已保存', 'success');
-            }).catch(function(e) {
-                console.warn('Web Share 失败:', e);
-                tryPDFDownload(blob, filename);
-            });
-            return;
-        }
-    }
-    
-    tryPDFDownload(blob, filename);
-}
-
-// 尝试 PDF 下载
-function tryPDFDownload(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    
-    // 尝试新窗口打开
-    const win = window.open(url, '_blank');
-    if (win) {
-        showToast('在PDF页面可使用分享按钮保存', 'info');
-    } else {
-        // 尝试 <a download>
-        try {
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-            return;
-        } catch(e) {
-            console.warn('PDF 下载失败:', e);
-        }
-        showToast('请允许弹出窗口或使用分享功能', 'warning');
-    }
+    setTimeout(function(){
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    },100);
 }
 
 // 将 data URL 转换为 Blob
