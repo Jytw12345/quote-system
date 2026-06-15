@@ -14881,7 +14881,17 @@ function dropColumn(e, targetCol){
         const targetIdx = columnOrder.indexOf(targetCol);
         columnOrder.splice(draggedIdx, 1);
         columnOrder.splice(targetIdx, 0, draggedCol);
-        loadColumnOrder();
+        
+        // 直接更新 DOM，不从保存的设置中读取
+        const colNames = {index:'序号',image:'图片',name:'项目名称',spec:'规格',unit:'单位',note:'备注',qty:'数量',price:'单价',subtotal:'小计'};
+        const list = document.getElementById('columnOrderList');
+        if(list){
+            list.innerHTML = columnOrder.map((col, idx) => 
+                `<span draggable="true" ondragstart="dragColumn(event,'${col}')" ondragover="allowDrop(event)" ondrop="dropColumn(event,'${col}')" 
+                       style="padding:0.3rem 0.6rem;background:white;border:1px solid #ddd;border-radius:4px;font-size:0.75rem;cursor:move;"
+                       title="拖拽调整顺序">${colNames[col]}</span>`
+            ).join('');
+        }
     }
 }
 function updateColumnWidth(col, value){
