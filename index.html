@@ -16388,10 +16388,15 @@ async function exportPDF(showSaveAs){
             span.style.color = '#999999'; // 设置为灰色文字
             input.parentNode.replaceChild(span, input);
         });
-        // 设置日期标签和年月日文字为灰色
-        clone.querySelectorAll('div:has(input[type="text"][placeholder="____"]) span, div:has(input[type="text"][placeholder="__"]) span').forEach(function(span) {
-            if (span.textContent.includes('日期：') || span.textContent === '年' || span.textContent === '月' || span.textContent === '日') {
-                span.style.color = '#999999'; // 设置为灰色文字
+        // 设置日期标签和年月日文字为灰色（兼容旧版浏览器，不使用 :has() 选择器）
+        clone.querySelectorAll('div').forEach(function(div) {
+            var inputs = div.querySelectorAll('input[type="text"][placeholder="____"], input[type="text"][placeholder="__"]');
+            if (inputs.length > 0) {
+                div.querySelectorAll('span').forEach(function(span) {
+                    if (span.textContent.includes('日期：') || span.textContent === '年' || span.textContent === '月' || span.textContent === '日') {
+                        span.style.color = '#999999'; // 设置为灰色文字
+                    }
+                });
             }
         });
         clone.querySelectorAll('table').forEach(function(table) {
@@ -16421,10 +16426,15 @@ async function exportPDF(showSaveAs){
             span.style.color = '#999999'; // 设置为灰色文字
             input.parentNode.replaceChild(span, input);
         });
-        // 设置日期标签和年月日文字为灰色
-        clone.querySelectorAll('div:has(input[type="text"][placeholder="____"]) span, div:has(input[type="text"][placeholder="__"]) span').forEach(function(span) {
-            if (span.textContent.includes('日期：') || span.textContent === '年' || span.textContent === '月' || span.textContent === '日') {
-                span.style.color = '#999999'; // 设置为灰色文字
+        // 设置日期标签和年月日文字为灰色（兼容旧版浏览器，不使用 :has() 选择器）
+        clone.querySelectorAll('div').forEach(function(div) {
+            var inputs = div.querySelectorAll('input[type="text"][placeholder="____"], input[type="text"][placeholder="__"]');
+            if (inputs.length > 0) {
+                div.querySelectorAll('span').forEach(function(span) {
+                    if (span.textContent.includes('日期：') || span.textContent === '年' || span.textContent === '月' || span.textContent === '日') {
+                        span.style.color = '#999999'; // 设置为灰色文字
+                    }
+                });
             }
         });
         clone.classList.remove('hidden');
