@@ -16088,7 +16088,7 @@ function exportPDF(showSaveAs){
                     }).then(function() {
                         if(clone.parentNode) clone.parentNode.removeChild(clone);
                         pdfExportLock = false;
-                        showToast('PDF已保存到指定位置', 'success');
+                        showToast('PDF已保存: ' + pdfFileName, 'success');
                     }).catch(function(err) {
                         if (err.name === 'AbortError') {
                             if(clone.parentNode) clone.parentNode.removeChild(clone);
@@ -16108,7 +16108,7 @@ function exportPDF(showSaveAs){
                         setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
                         if(clone.parentNode) clone.parentNode.removeChild(clone);
                         pdfExportLock = false;
-                        showToast('PDF已导出', 'success');
+                        showToast('PDF已导出: ' + pdfFileName + ' (下载文件夹)', 'success');
                     });
                 } catch (err) {
                     console.error('PDF save error:', err);
@@ -16125,7 +16125,7 @@ function exportPDF(showSaveAs){
                     setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
                     if(clone.parentNode) clone.parentNode.removeChild(clone);
                     pdfExportLock = false;
-                    showToast('PDF已导出', 'success');
+                    showToast('PDF已导出: ' + pdfFileName + ' (下载文件夹)', 'success');
                 }
             } else {
                 // 直接下载方式
@@ -16142,7 +16142,7 @@ function exportPDF(showSaveAs){
                 
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 pdfExportLock = false;
-                showToast('PDF已导出', 'success');
+                showToast('PDF已导出: ' + pdfFileName + ' (下载文件夹)', 'success');
             }
         }).catch(function(err) {
             console.error('html2canvas error:', err);
@@ -16267,7 +16267,7 @@ function exportJPG(showSaveAs){
                 }).then(function() {
                     if(clone.parentNode) clone.parentNode.removeChild(clone);
                     jpgExportLock = false;
-                    showToast('JPG已保存到指定位置', 'success');
+                    showToast('JPG已保存: ' + fileName, 'success');
                 }).catch(function(err) {
                     if (err.name === 'AbortError') {
                         if(clone.parentNode) clone.parentNode.removeChild(clone);
@@ -16287,7 +16287,7 @@ function exportJPG(showSaveAs){
                     setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
                     if(clone.parentNode) clone.parentNode.removeChild(clone);
                     jpgExportLock = false;
-                    showToast('JPG图片已导出', 'success');
+                    showToast('JPG已导出: ' + fileName + ' (下载文件夹)', 'success');
                 });
             } else {
                 // 直接下载方式
@@ -16311,7 +16311,7 @@ function exportJPG(showSaveAs){
                 
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 jpgExportLock = false;
-                showToast('JPG图片已导出', 'success');
+                showToast('JPG已导出: ' + fileName + ' (下载文件夹)', 'success');
             }
         }).catch(function(err) {
             console.error('html2canvas error:', err);
