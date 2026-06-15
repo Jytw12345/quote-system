@@ -16065,8 +16065,11 @@ function exportPDF(showSaveAs){
             
             var pdfFileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.pdf';
             
-            // 另存为功能：使用File System Access API
-            if (showSaveAs && window.showSaveFilePicker) {
+            // 桌面版 Chrome/Edge 使用 showSaveFilePicker
+            var isDesktop = !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            var isChromeOrEdge = /Chrome|Edge/.test(navigator.userAgent) && !/Firefox|Safari/.test(navigator.userAgent);
+            
+            if (showSaveAs && isDesktop && isChromeOrEdge && window.showSaveFilePicker) {
                 try {
                     var pdfBuffer = pdf.output('arraybuffer');
                     var pdfData = new Uint8Array(pdfBuffer);
@@ -16086,111 +16089,60 @@ function exportPDF(showSaveAs){
                         if(clone.parentNode) clone.parentNode.removeChild(clone);
                         pdfExportLock = false;
                         showToast('PDF已保存到指定位置', 'success');
-                        console.log('PDF saved successfully with showSaveFilePicker');
                     }).catch(function(err) {
                         if (err.name === 'AbortError') {
-                            // 用户取消了保存
                             if(clone.parentNode) clone.parentNode.removeChild(clone);
                             pdfExportLock = false;
                             return;
                         }
-                        console.error('showSaveFilePicker error:', err);
+                        // 失败时回退到直接下载
+                        var pdfBlob = pdf.output('blob');
+                        var blobUrl = URL.createObjectURL(pdfBlob);
+                        var link = document.createElement('a');
+                        link.href = blobUrl;
+                        link.download = pdfFileName;
+                        link.style.display = 'none';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
                         if(clone.parentNode) clone.parentNode.removeChild(clone);
                         pdfExportLock = false;
-                        alert('保存失败: ' + err.message);
+                        showToast('PDF已导出', 'success');
                     });
                 } catch (err) {
-                    console.error('PDF output error:', err);
+                    console.error('PDF save error:', err);
+                    // 回退到直接下载
+                    var pdfBlob = pdf.output('blob');
+                    var blobUrl = URL.createObjectURL(pdfBlob);
+                    var link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = pdfFileName;
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
                     if(clone.parentNode) clone.parentNode.removeChild(clone);
                     pdfExportLock = false;
-                    alert('PDF生成失败: ' + err.message);
+                    showToast('PDF已导出', 'success');
                 }
             } else {
-                // 默认下载方式
-                pdf.save(pdfFileName);
+                // 直接下载方式
+                var pdfBlob = pdf.output('blob');
+                var blobUrl = URL.createObjectURL(pdfBlob);
+                var link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = pdfFileName;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
+                
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 pdfExportLock = false;
-                console.log('PDF exported successfully');
-                
-                // 显示导出成功提示并提供打开文件夹选项
-                setTimeout(function() {
-                    // 尝试多种方案打开下载文件夹
-                    var success = false;
-                    
-                    // 方案1：使用PakePlus自定义API
-                    if (window.Pake && window.Pake.openDownloadFolder) {
-                        try {
-                            window.Pake.openDownloadFolder();
-                            showToast('已打开下载文件夹', 'success');
-                            success = true;
-                        } catch (err) {
-                            console.error('Pake.openDownloadFolder failed:', err);
-                        }
-                    }
-                    
-                    // 方案2：使用Tauri API的不同写法
-                    if (!success && window.__TAURI__) {
-                        try {
-                            if (window.__TAURI__.shell && window.__TAURI__.shell.openPath) {
-                                // 直接打开系统下载文件夹
-                                window.__TAURI__.shell.openPath('downloads').then(function() {
-                                    showToast('已打开下载文件夹', 'success');
-                                    success = true;
-                                }).catch(function(err) {
-                                    console.error('__TAURI__.shell.openPath failed:', err);
-                                });
-                            } else if (window.__TAURI__.path && window.__TAURI__.shell) {
-                                window.__TAURI__.path.downloadDir().then(function(downloadPath) {
-                                    window.__TAURI__.shell.open(downloadPath).then(function() {
-                                        showToast('已打开下载文件夹', 'success');
-                                        success = true;
-                                    });
-                                }).catch(function(err) {
-                                    console.error('Tauri API failed:', err);
-                                });
-                            }
-                        } catch (err) {
-                            console.error('Tauri API error:', err);
-                        }
-                    }
-                    
-                    // 方案3：使用HTML5 Plus API
-                    if (!success && window.plus) {
-                        try {
-                            if (plus.io && plus.runtime) {
-                                var downloadPath = plus.io.convertLocalFileSystemURL('_downloads/');
-                                plus.runtime.openFile(downloadPath, function(error) {
-                                    console.error('plus.runtime.openFile failed:', error);
-                                });
-                                success = true;
-                            }
-                        } catch (err) {
-                            console.error('HTML5 Plus API error:', err);
-                        }
-                    }
-                    
-                    // 方案4：使用Windows特定的命令行方式
-                    if (!success && navigator.userAgent.indexOf('Windows') !== -1) {
-                        try {
-                            // 使用PowerShell命令打开下载文件夹
-                            if (window.__TAURI__ && window.__TAURI__.shell) {
-                                window.__TAURI__.shell.execute('start shell:downloads').then(function() {
-                                    showToast('已打开下载文件夹', 'success');
-                                    success = true;
-                                }).catch(function(err) {
-                                    console.error('PowerShell command failed:', err);
-                                });
-                            }
-                        } catch (err) {
-                            console.error('Windows command error:', err);
-                        }
-                    }
-                    
-                    // 如果所有方案都失败，显示详细提示
-                    if (!success) {
-                        alert('PDF导出成功！\n文件名：' + pdfFileName + '\n\n文件已保存到系统默认下载文件夹\n\n你可以通过以下方式找到文件：\n1. 打开文件资源管理器\n2. 在左侧导航栏点击"下载"\n3. 查找文件名包含 "' + pdfFileName + '" 的文件');
-                    }
-                }, 100);
+                showToast('PDF已导出', 'success');
             }
         }).catch(function(err) {
             console.error('html2canvas error:', err);
@@ -16286,9 +16238,11 @@ function exportJPG(showSaveAs){
             var imgData = canvas.toDataURL('image/jpeg', 0.92);
             var fileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.jpg';
             
-            // 另存为功能：使用File System Access API
-            if (showSaveAs && window.showSaveFilePicker) {
-                // 将base64转换为Blob
+            // 桌面版 Chrome/Edge 使用 showSaveFilePicker
+            var isDesktop = !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            var isChromeOrEdge = /Chrome|Edge/.test(navigator.userAgent) && !/Firefox|Safari/.test(navigator.userAgent);
+            
+            if (showSaveAs && isDesktop && isChromeOrEdge && window.showSaveFilePicker) {
                 var byteString = atob(imgData.split(',')[1]);
                 var mimeString = imgData.split(',')[0].split(':')[1].split(';')[0];
                 var ab = new ArrayBuffer(byteString.length);
@@ -16314,108 +16268,49 @@ function exportJPG(showSaveAs){
                     if(clone.parentNode) clone.parentNode.removeChild(clone);
                     jpgExportLock = false;
                     showToast('JPG已保存到指定位置', 'success');
-                    console.log('JPG saved successfully with showSaveFilePicker');
                 }).catch(function(err) {
                     if (err.name === 'AbortError') {
-                        // 用户取消了保存
                         if(clone.parentNode) clone.parentNode.removeChild(clone);
                         jpgExportLock = false;
                         return;
                     }
-                    console.error('showSaveFilePicker error:', err);
+                    // 失败时回退到直接下载
+                    var jpgBlob = new Blob([ab], { type: mimeString });
+                    var blobUrl = URL.createObjectURL(jpgBlob);
+                    var link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = fileName;
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
                     if(clone.parentNode) clone.parentNode.removeChild(clone);
                     jpgExportLock = false;
-                    alert('保存失败: ' + err.message);
+                    showToast('JPG图片已导出', 'success');
                 });
             } else {
-                // 默认下载方式
+                // 直接下载方式
+                var byteString = atob(imgData.split(',')[1]);
+                var mimeString = imgData.split(',')[0].split(':')[1].split(';')[0];
+                var ab = new ArrayBuffer(byteString.length);
+                var ia = new Uint8Array(ab);
+                for (var i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                var jpgBlob = new Blob([ab], { type: mimeString });
+                var blobUrl = URL.createObjectURL(jpgBlob);
                 var link = document.createElement('a');
+                link.href = blobUrl;
                 link.download = fileName;
-                link.href = imgData;
+                link.style.display = 'none';
+                document.body.appendChild(link);
                 link.click();
+                document.body.removeChild(link);
+                setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
                 
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 jpgExportLock = false;
-                
-                // 显示导出成功提示并提供打开文件夹选项
-                setTimeout(function() {
-                    // 尝试多种方案打开下载文件夹
-                    var success = false;
-                    
-                    // 方案1：使用PakePlus自定义API
-                    if (window.Pake && window.Pake.openDownloadFolder) {
-                        try {
-                            window.Pake.openDownloadFolder();
-                            showToast('已打开下载文件夹', 'success');
-                            success = true;
-                        } catch (err) {
-                            console.error('Pake.openDownloadFolder failed:', err);
-                        }
-                    }
-                    
-                    // 方案2：使用Tauri API的不同写法
-                    if (!success && window.__TAURI__) {
-                        try {
-                            if (window.__TAURI__.shell && window.__TAURI__.shell.openPath) {
-                                // 直接打开系统下载文件夹
-                                window.__TAURI__.shell.openPath('downloads').then(function() {
-                                    showToast('已打开下载文件夹', 'success');
-                                    success = true;
-                                }).catch(function(err) {
-                                    console.error('__TAURI__.shell.openPath failed:', err);
-                                });
-                            } else if (window.__TAURI__.path && window.__TAURI__.shell) {
-                                window.__TAURI__.path.downloadDir().then(function(downloadPath) {
-                                    window.__TAURI__.shell.open(downloadPath).then(function() {
-                                        showToast('已打开下载文件夹', 'success');
-                                        success = true;
-                                    });
-                                }).catch(function(err) {
-                                    console.error('Tauri API failed:', err);
-                                });
-                            }
-                        } catch (err) {
-                            console.error('Tauri API error:', err);
-                        }
-                    }
-                    
-                    // 方案3：使用HTML5 Plus API
-                    if (!success && window.plus) {
-                        try {
-                            if (plus.io && plus.runtime) {
-                                var downloadPath = plus.io.convertLocalFileSystemURL('_downloads/');
-                                plus.runtime.openFile(downloadPath, function(error) {
-                                    console.error('plus.runtime.openFile failed:', error);
-                                });
-                                success = true;
-                            }
-                        } catch (err) {
-                            console.error('HTML5 Plus API error:', err);
-                        }
-                    }
-                    
-                    // 方案4：使用Windows特定的命令行方式
-                    if (!success && navigator.userAgent.indexOf('Windows') !== -1) {
-                        try {
-                            // 使用PowerShell命令打开下载文件夹
-                            if (window.__TAURI__ && window.__TAURI__.shell) {
-                                window.__TAURI__.shell.execute('start shell:downloads').then(function() {
-                                    showToast('已打开下载文件夹', 'success');
-                                    success = true;
-                                }).catch(function(err) {
-                                    console.error('PowerShell command failed:', err);
-                                });
-                            }
-                        } catch (err) {
-                            console.error('Windows command error:', err);
-                        }
-                    }
-                    
-                    // 如果所有方案都失败，显示详细提示
-                    if (!success) {
-                        alert('JPG导出成功！\n文件名：' + fileName + '\n\n文件已保存到系统默认下载文件夹\n\n你可以通过以下方式找到文件：\n1. 打开文件资源管理器\n2. 在左侧导航栏点击"下载"\n3. 查找文件名包含 "' + fileName + '" 的文件');
-                    }
-                }, 100);
                 showToast('JPG图片已导出', 'success');
             }
         }).catch(function(err) {
