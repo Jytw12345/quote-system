@@ -11498,21 +11498,28 @@ function replaceImageURL(oldUrl, newUrl) {
 }
 
 function loadData(){
-    // 优先从 IndexedDB 加载（大容量存储），localStorage 作为备份
-    if (idbInitialized && IDB.isSupported()) {
-        loadFromIndexedDB().then(function() {
-            initUI();
-            console.log('从IndexedDB加载数据成功');
-        }).catch(function(e) {
-            console.warn('从IndexedDB加载失败，尝试从localStorage加载:', e);
+    console.log('开始加载数据...');
+    // 等待 IndexedDB 初始化完成后再加载数据
+    idbInitPromise.then(function() {
+        console.log('IndexedDB初始化完成，开始加载数据');
+        // 优先从 IndexedDB 加载（大容量存储），localStorage 作为备份
+        if (idbInitialized && IDB.isSupported()) {
+            loadFromIndexedDB().then(function() {
+                initUI();
+                console.log('从IndexedDB加载数据成功，产品数量:', appData.products.length, '模板数量:', appData.templates.length, '客户数量:', appData.customers.length);
+            }).catch(function(e) {
+                console.warn('从IndexedDB加载失败，尝试从localStorage加载:', e);
+                loadFromLocalStorage();
+                initUI();
+                console.log('从localStorage加载数据，产品数量:', appData.products.length, '模板数量:', appData.templates.length, '客户数量:', appData.customers.length);
+            });
+        } else {
+            // IDB不可用，使用localStorage
             loadFromLocalStorage();
             initUI();
-        });
-    } else {
-        // IDB不可用，使用localStorage
-        loadFromLocalStorage();
-        initUI();
-    }
+            console.log('从localStorage加载数据（IDB不可用），产品数量:', appData.products.length, '模板数量:', appData.templates.length, '客户数量:', appData.customers.length);
+        }
+    });
 }
 
 // 获取产品图片 URL，自动处理 Blob 和 base64
@@ -11647,6 +11654,15 @@ function loadFromIndexedDB() {
                 results.systemSettings = {};
             }
             if (!Array.isArray(results.photos)) results.photos = [];
+            
+            console.log('IndexedDB加载结果:', JSON.stringify({
+                productsCount: results.products.length,
+                templatesCount: results.templates.length,
+                customersCount: results.customers.length,
+                quoteHistoryCount: results.quoteHistory.length,
+                hasSystemSettings: Object.keys(results.systemSettings).length > 0,
+                photosCount: results.photos.length
+            }));
             
             // 检查是否有实际的业务数据（产品、客户、模板、报价历史）
             var hasBusinessData = results.products.length > 0 || 
@@ -35558,7 +35574,10 @@ function syncNow() {
         showSyncProgress('正在分析数据差异...', 40);
         var file = gist.files && gist.files['quote-data.json'];
         if (!file || !file.content) {
-            return gistUploadFull();
+            file = gist.files && gist.files['products-price.json'];
+            if (!file || !file.content) {
+                return gistUploadFull();
+            }
         }
         
         var cloudData = JSON.parse(file.content);
@@ -35954,23 +35973,44 @@ function gistUploadFull() {
         // 应用带宽自适应策略
         var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
         
-        // 获取团队数据共享设置
-        var teamDataSharing = appData.systemSettings.teamDataSharing || {};
+        // 获取团队数据共享设置（使用默认值避免空对象导致数据被过滤）
+        var teamDataSharing = appData.systemSettings.teamDataSharing || { products: true, templates: true, customers: true, quoteHistory: false, seals: false, signatures: false };
         var teamEnabled = appData.systemSettings.teamEnabled;
         
         // 先准备产品图片数据
         prepareProductsForSync(appData.products)
         .then(function(productsWithImages) {
+            console.log('准备同步的产品数量:', productsWithImages.length);
+            console.log('appData.products数量:', appData.products.length);
+            console.log('appData.templates数量:', appData.templates.length);
+            console.log('appData.customers数量:', appData.customers.length);
+            console.log('teamEnabled:', teamEnabled);
+            console.log('teamDataSharing:', JSON.stringify(teamDataSharing));
+            
+            // 检查数据是否为空，如果为空则警告用户
+            if (productsWithImages.length === 0 && appData.templates.length === 0 && appData.customers.length === 0) {
+                console.warn('警告：本地数据为空，上传后将覆盖云端数据！');
+                showToast('⚠️ 本地数据为空，上传将覆盖云端数据！', 'warning');
+            }
+            
             showSyncProgress('正在打包数据...', 30);
             // 根据团队共享设置过滤数据
             // 注意：当数据类型不共享时，使用undefined而不是空数组，
             // 这样在合并时可以保留云端已有数据
-            var filteredProducts = teamEnabled && !teamDataSharing.products ? undefined : productsWithImages;
-            var filteredTemplates = teamEnabled && !teamDataSharing.templates ? undefined : appData.templates;
-            var filteredCustomers = teamEnabled && !teamDataSharing.customers ? undefined : appData.customers;
-            var filteredQuoteHistory = teamEnabled && !teamDataSharing.quoteHistory ? undefined : appData.quoteHistory;
-            var filteredSeals = teamEnabled && !teamDataSharing.seals ? undefined : (appData.seals || []);
-            var filteredSignatures = teamEnabled && !teamDataSharing.signatures ? undefined : (appData.signatures || []);
+            // 团队模式下，只有明确设置为false才不共享，undefined或true都共享
+            var filteredProducts = teamEnabled && teamDataSharing.products === false ? undefined : productsWithImages;
+            var filteredTemplates = teamEnabled && teamDataSharing.templates === false ? undefined : appData.templates;
+            var filteredCustomers = teamEnabled && teamDataSharing.customers === false ? undefined : appData.customers;
+            var filteredQuoteHistory = teamEnabled && teamDataSharing.quoteHistory === false ? undefined : appData.quoteHistory;
+            var filteredSeals = teamEnabled && teamDataSharing.seals === false ? undefined : (appData.seals || []);
+            var filteredSignatures = teamEnabled && teamDataSharing.signatures === false ? undefined : (appData.signatures || []);
+            
+            // 检查过滤后的数据
+            console.log('过滤后的数据:', JSON.stringify({
+                filteredProducts: filteredProducts ? filteredProducts.length : 'undefined',
+                filteredTemplates: filteredTemplates ? filteredTemplates.length : 'undefined',
+                filteredCustomers: filteredCustomers ? filteredCustomers.length : 'undefined'
+            }));
             
             var syncPayload = {
                 version: '3.4',
@@ -35998,6 +36038,95 @@ function gistUploadFull() {
                 // 团队活动日志（最近20条）
                 activityLog: buildSyncActivityLog()
             };
+            
+            // 检查syncPayload的数据结构
+            console.log('syncPayload.data结构:', JSON.stringify({
+                products: syncPayload.data.products ? syncPayload.data.products.length : 'undefined',
+                templates: syncPayload.data.templates ? syncPayload.data.templates.length : 'undefined',
+                customers: syncPayload.data.customers ? syncPayload.data.customers.length : 'undefined'
+            }));
+            
+            // 安全序列化数据，处理特殊字符和循环引用
+            var syncPayloadString;
+            try {
+                // 使用 visited 集合正确检测循环引用
+                var visited = new WeakSet();
+                syncPayloadString = JSON.stringify(syncPayload, function(key, value) {
+                    // 处理特殊字符
+                    if (typeof value === 'string') {
+                        // 移除控制字符，保留换行符和制表符
+                        return value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+                    }
+                    // 正确检查循环引用：使用 WeakSet 跟踪已访问的对象
+                    if (typeof value === 'object' && value !== null) {
+                        if (visited.has(value)) {
+                            // 跳过循环引用，返回 undefined 会被 JSON.stringify 忽略
+                            return undefined;
+                        }
+                        visited.add(value);
+                    }
+                    return value;
+                }, 2);
+                // 检查序列化后的数据
+                console.log('序列化后的数据大小:', syncPayloadString.length, '字符');
+                try {
+                    var parsedBack = JSON.parse(syncPayloadString);
+                    console.log('反序列化后的数据结构:', JSON.stringify({
+                        hasData: !!parsedBack.data,
+                        productsCount: parsedBack.data && parsedBack.data.products ? parsedBack.data.products.length : 0,
+                        templatesCount: parsedBack.data && parsedBack.data.templates ? parsedBack.data.templates.length : 0,
+                        customersCount: parsedBack.data && parsedBack.data.customers ? parsedBack.data.customers.length : 0
+                    }));
+                } catch (e) {
+                    console.error('序列化后的数据无法反序列化:', e);
+                }
+            } catch (e) {
+                console.error('数据序列化失败:', e);
+                // 尝试简化数据结构
+                syncPayloadString = JSON.stringify({
+                    version: syncPayload.version,
+                    uploadTime: syncPayload.uploadTime,
+                    deviceId: syncPayload.deviceId,
+                    schemaVersion: syncPayload.schemaVersion,
+                    team: syncPayload.team,
+                    data: {
+                        products: (syncPayload.data.products || []).map(function(p) {
+                            return {
+                                id: p.id,
+                                name: p.name,
+                                cost: p.cost,
+                                price: p.price,
+                                unit: p.unit,
+                                category1: p.category1,
+                                category2: p.category2
+                            };
+                        }),
+                        templates: (syncPayload.data.templates || []).map(function(t) {
+                            return { id: t.id, name: t.name, items: t.items };
+                        }),
+                        customers: (syncPayload.data.customers || []).map(function(c) {
+                            return { id: c.id, name: c.name, phone: c.phone };
+                        }),
+                        favoriteIds: syncPayload.data.favoriteIds,
+                        categories: syncPayload.data.categories
+                    }
+                }, null, 2);
+            }
+            
+            // 兜底检查：确保 syncPayloadString 有值
+            if (!syncPayloadString) {
+                syncPayloadString = JSON.stringify({
+                    version: '3.4',
+                    uploadTime: new Date().toISOString(),
+                    deviceId: getDeviceId(),
+                    data: {
+                        products: [],
+                        templates: [],
+                        customers: []
+                    }
+                }, null, 2);
+            }
+            
             var priceData = {
                 updateTime: new Date().toISOString(),
                 deviceId: getDeviceId(),
@@ -36006,13 +36135,33 @@ function gistUploadFull() {
                 })
             };
             
+            // 安全序列化 priceData
+            var priceDataString;
+            try {
+                priceDataString = JSON.stringify(priceData, function(key, value) {
+                    if (typeof value === 'string') {
+                        return value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+                    }
+                    return value;
+                }, 2);
+            } catch (e) {
+                console.error('价格数据序列化失败:', e);
+                priceDataString = JSON.stringify({
+                    updateTime: priceData.updateTime,
+                    deviceId: priceData.deviceId,
+                    products: (priceData.products || []).map(function(p) {
+                        return { id: p.id, name: p.name, cost: p.cost, price: p.price, unit: p.unit };
+                    })
+                }, null, 2);
+            }
+            
             // 添加版本历史（保留最近10个版本）
             var versionHistory = appData.systemSettings.versionHistory || [];
             var newVersion = {
                 versionId: 'v' + Date.now(),
                 timestamp: new Date().toISOString(),
                 deviceId: getDeviceId(),
-                dataSize: JSON.stringify(syncPayload).length,
+                dataSize: syncPayloadString.length,
                 productCount: productsWithImages.length,
                 customerCount: appData.customers.length,
                 templateCount: appData.templates.length
@@ -36022,14 +36171,28 @@ function gistUploadFull() {
             appData.systemSettings.versionHistory = versionHistory;
             saveDataImmediately();
             
+            // 安全序列化版本历史
+            var versionHistoryString;
+            try {
+                versionHistoryString = JSON.stringify(versionHistory, function(key, value) {
+                    if (typeof value === 'string') {
+                        return value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+                    }
+                    return value;
+                }, 2);
+            } catch (e) {
+                console.error('版本历史序列化失败:', e);
+                versionHistoryString = JSON.stringify([]);
+            }
+            
             var gistId = appData.systemSettings.gistId || '';
             var gistData = {
                 description: '图文广告快速报价 - 数据同步',
                 public: false,
                 files: {
-                    'quote-data.json': { content: JSON.stringify(syncPayload, null, 2) },
-                    'products-price.json': { content: JSON.stringify(priceData, null, 2) },
-                    'version-history.json': { content: JSON.stringify(versionHistory, null, 2) }
+                    'quote-data.json': { content: syncPayloadString },
+                    'products-price.json': { content: priceDataString },
+                    'version-history.json': { content: versionHistoryString }
                 }
             };
             var promise;
@@ -36109,12 +36272,19 @@ function gistUpload() {
         })
         .then(function(gist) {
             var cloudHasData = false;
-            if (gist.files['quote-data.json']) {
+            var file = gist.files['quote-data.json'] || gist.files['products-price.json'];
+            if (file) {
                 try {
-                    var data = JSON.parse(gist.files['quote-data.json'].content);
-                    cloudHasData = data.data && (data.data.products.length > 0 || 
-                                               data.data.customers.length > 0 || 
-                                               data.data.templates.length > 0);
+                    var data = JSON.parse(file.content);
+                    if (data.data) {
+                        cloudHasData = data.data.products && data.data.products.length > 0 || 
+                                       data.data.customers && data.data.customers.length > 0 || 
+                                       data.data.templates && data.data.templates.length > 0;
+                    } else {
+                        cloudHasData = data.products && data.products.length > 0 || 
+                                       data.customers && data.customers.length > 0 || 
+                                       data.templates && data.templates.length > 0;
+                    }
                 } catch (e) {
                     cloudHasData = false;
                 }
@@ -36315,8 +36485,11 @@ function gistUploadIncremental() {
             return res.json();
         })
         .then(function(existingGist) {
-            // 获取现有数据
+            // 获取现有数据，优先使用quote-data.json，兼容products-price.json
             var quoteDataFile = existingGist.files && existingGist.files['quote-data.json'];
+            if (!quoteDataFile || !quoteDataFile.content) {
+                quoteDataFile = existingGist.files && existingGist.files['products-price.json'];
+            }
             var existingContent = (quoteDataFile && quoteDataFile.content) || '{}';
             var existingData = JSON.parse(existingContent);
             
@@ -36408,19 +36581,111 @@ function gistDownload() {
     })
     .then(function(gist) {
         var file = gist.files && gist.files['quote-data.json'];
-        if (!file || !file.content) throw new Error('云端数据格式不正确');
-        var data = JSON.parse(file.content);
-        if (!data.data) throw new Error('云端数据格式不正确');
-        var serverData = data.data;
-        var serverTime = new Date(data.uploadTime || 0);
+        if (!file || !file.content) {
+            file = gist.files && gist.files['products-price.json'];
+            if (!file || !file.content) {
+                throw new Error('云端数据格式不正确: 缺少quote-data.json或products-price.json文件');
+            }
+        }
+        var data;
+        try {
+            data = JSON.parse(file.content);
+        } catch (e) {
+            throw new Error('云端数据JSON解析失败: ' + e.message);
+        }
+        if (!data) throw new Error('云端数据为空');
+        // 打印云端数据的实际结构用于调试
+        console.log('云端原始数据结构:', JSON.stringify({
+            keys: Object.keys(data),
+            hasDataField: !!data.data,
+            hasProductsField: !!data.products,
+            hasTemplatesField: !!data.templates,
+            hasCustomersField: !!data.customers,
+            dataType: typeof data.data,
+            dataValue: data.data ? (typeof data.data === 'object' ? 'object' : typeof data.data) : 'undefined'
+        }));
+        // 兼容多种数据结构：
+        // 1. 新版有data字段：{ version, data: { products, templates, ... }, team, ... }
+        // 2. 旧版直接有products字段：{ products, templates, customers, ... }
+        // 3. 极旧版只有products数组
+        var serverData;
+        if (data.data && typeof data.data === 'object') {
+            // 新版结构
+            console.log('检测到新版数据结构，包含data字段');
+            serverData = data;
+        } else if (data.products || data.templates || data.customers) {
+            // 旧版结构，包装成新版格式
+            console.log('检测到旧版数据结构，包含products/template/customers字段');
+            serverData = {
+                data: {
+                    products: data.products || [],
+                    templates: data.templates || [],
+                    customers: data.customers || [],
+                    quoteHistory: data.quoteHistory || [],
+                    seals: data.seals || [],
+                    signatures: data.signatures || [],
+                    favoriteIds: data.favoriteIds || [],
+                    categories: data.categories || []
+                },
+                uploadTime: data.uploadTime || data.updateTime || data.lastSyncTime,
+                deviceId: data.deviceId || '未知设备',
+                version: data.version || '3.0',
+                team: data.team || { enabled: false }
+            };
+        } else {
+            // 尝试其他可能的结构
+            console.error('无法识别的云端数据结构:', JSON.stringify(data).substring(0, 500));
+            // 尝试兼容更多结构
+            if (Array.isArray(data)) {
+                // 极旧版：直接是产品数组
+                console.log('检测到极旧版数据结构：产品数组');
+                serverData = {
+                    data: {
+                        products: data,
+                        templates: [],
+                        customers: []
+                    },
+                    uploadTime: data.uploadTime || data.lastSyncTime,
+                    deviceId: data.deviceId || '未知设备',
+                    version: data.version || '2.0',
+                    team: { enabled: false }
+                };
+            } else {
+                // 无法识别的结构，尝试提取所有可能的字段
+                console.log('尝试从未知结构中提取数据');
+                serverData = {
+                    data: {
+                        products: Array.isArray(data.data) ? data.data : (data.products || []),
+                        templates: data.templates || [],
+                        customers: data.customers || [],
+                        quoteHistory: data.quoteHistory || [],
+                        seals: data.seals || [],
+                        signatures: data.signatures || [],
+                        favoriteIds: data.favoriteIds || [],
+                        categories: data.categories || []
+                    },
+                    uploadTime: data.uploadTime || data.lastSyncTime,
+                    deviceId: data.deviceId || '未知设备',
+                    version: data.version || '3.0',
+                    team: data.team || { enabled: false }
+                };
+            }
+        }
+        console.log('云端数据结构:', JSON.stringify({
+            hasData: !!serverData.data,
+            productsCount: serverData.data.products ? serverData.data.products.length : 0,
+            templatesCount: serverData.data.templates ? serverData.data.templates.length : 0,
+            customersCount: serverData.data.customers ? serverData.data.customers.length : 0
+        }));
+        var serverTime = new Date(serverData.uploadTime || 0);
         var localTime = new Date(appData.systemSettings.lastSyncTime || 0);
-        var serverDevice = data.deviceId || '';
+        var serverDevice = serverData.deviceId || '';
         var localDevice = getDeviceId();
         
         // 检查云端数据是否有效（非空）
-        var serverHasData = serverData.products && serverData.products.length > 0 ||
-                           serverData.templates && serverData.templates.length > 0 ||
-                           serverData.customers && serverData.customers.length > 0;
+        var serverHasData = (serverData.data.products && serverData.data.products.length > 0) ||
+                           (serverData.data.templates && serverData.data.templates.length > 0) ||
+                           (serverData.data.customers && serverData.data.customers.length > 0);
         
         // 智能判断是否需要同步
         if (serverDevice === localDevice && serverTime <= localTime) {
@@ -36442,8 +36707,8 @@ function gistDownload() {
             return;
         }
         
-        // 检测编辑冲突
-        var conflicts = detectConflicts(serverData, localTime);
+        // 检测编辑冲突（传递serverData.data给detectConflicts，因为它期望扁平化的数据结构）
+        var conflicts = detectConflicts(serverData.data, localTime);
         
         if (conflicts.length > 0) {
             // 有冲突，显示冲突解决对话框（冲突解决后会继续同步）
@@ -36505,12 +36770,15 @@ function gistPullProducts() {
         var productData = null;
         if (gist.files['quote-data.json']) {
             var syncData = JSON.parse(gist.files['quote-data.json'].content);
+            // 兼容多种数据结构
             if (syncData && syncData.data && syncData.data.products) {
                 productData = syncData.data.products;
+            } else if (syncData && syncData.products) {
+                productData = syncData.products;
             }
         } 
         // 如果没有完整数据，再尝试从products-price.json获取
-        else if (gist.files['products-price.json']) {
+        if (!productData && gist.files['products-price.json']) {
             var priceFile = JSON.parse(gist.files['products-price.json'].content);
             if (priceFile && priceFile.products) {
                 productData = priceFile.products;
@@ -36749,17 +37017,20 @@ async function restoreFromHistory(versionId) {
         
         var gist = await response.json();
         var file = gist.files && gist.files['quote-data.json'];
-        
         if (!file || !file.content) {
-            throw new Error('历史版本数据格式不正确');
+            file = gist.files && gist.files['products-price.json'];
+            if (!file || !file.content) {
+                throw new Error('历史版本数据格式不正确');
+            }
         }
         
         var data = JSON.parse(file.content);
-        if (!data.data) {
-            throw new Error('历史版本数据格式不正确');
+        // 兼容旧版格式
+        if (data.data) {
+            mergeSyncData(data.data);
+        } else {
+            mergeSyncData(data);
         }
-        
-        mergeSyncData(data.data);
         appData.systemSettings.lastSyncTime = new Date().toISOString();
         saveData();
         
@@ -36963,15 +37234,17 @@ async function detectConflictsManual() {
         
         var gist = await response.json();
         var file = gist.files && gist.files['quote-data.json'];
-        
         if (!file || !file.content) {
-            showToast('云端无数据，无需检测冲突', 'info');
-            return;
+            file = gist.files && gist.files['products-price.json'];
+            if (!file || !file.content) {
+                showToast('云端无数据，无需检测冲突', 'info');
+                return;
+            }
         }
         
         var cloudData = JSON.parse(file.content);
         var localSyncTime = new Date(appData.systemSettings.lastSyncTime || 0);
-        var conflicts = detectConflicts(cloudData.data || {}, localSyncTime);
+        var conflicts = detectConflicts(cloudData.data || cloudData, localSyncTime);
         
         if (conflicts.length === 0) {
             showToast('✅ 未检测到数据冲突', 'success');
@@ -37287,12 +37560,27 @@ function viewCloudData() {
     .then(function(gist) {
         var file = gist.files && gist.files['quote-data.json'];
         if (!file || !file.content) {
-            showToast('云端数据为空或格式不正确', 'info');
-            return;
+            file = gist.files && gist.files['products-price.json'];
+            if (!file || !file.content) {
+                showToast('云端数据为空或格式不正确', 'info');
+                return;
+            }
         }
         
         var data = JSON.parse(file.content);
-        var cloudData = data.data || {};
+        // 兼容多种数据结构
+        var cloudData;
+        if (data.data && typeof data.data === 'object') {
+            cloudData = data.data;
+        } else if (data.products || data.templates || data.customers) {
+            cloudData = {
+                products: data.products || [],
+                templates: data.templates || [],
+                customers: data.customers || []
+            };
+        } else {
+            cloudData = {};
+        }
         
         var stats = {
             products: cloudData.products ? cloudData.products.length : 0,
@@ -37444,12 +37732,15 @@ function fixCloudData() {
     .then(function(gist) {
         var file = gist.files && gist.files['quote-data.json'];
         if (!file || !file.content) {
-            showToast('云端数据为空，无需修复', 'info');
-            return;
+            file = gist.files && gist.files['products-price.json'];
+            if (!file || !file.content) {
+                showToast('云端数据为空，无需修复', 'info');
+                return;
+            }
         }
         
         var data = JSON.parse(file.content);
-        var cloudData = data.data || {};
+        var cloudData = data.data || data;
         
         // 去重前的数量
         var beforeCounts = {
@@ -38713,10 +39004,13 @@ function checkCloudUpdateOnStartup() {
     .then(function(gist) {
         if (!gist) return;
         var file = gist.files && gist.files['quote-data.json'];
-        if (!file || !file.content) return;
+        if (!file || !file.content) {
+            file = gist.files && gist.files['products-price.json'];
+            if (!file || !file.content) return;
+        }
         
         var data = JSON.parse(file.content);
-        var serverTime = new Date(data.uploadTime || 0);
+        var serverTime = new Date(data.uploadTime || data.updateTime || 0);
         var localTime = new Date(appData.systemSettings.lastSyncTime || 0);
         
         if (serverTime > localTime) {
@@ -39022,6 +39316,9 @@ function setupOfflineSupport() {
 function mergeSyncData(serverData) {
     var stats = { updated: 0, added: 0 };
     
+    // 提取实际的数据内容（兼容完整数据结构）
+    var syncData = serverData.data || serverData;
+    
     // 检查是否是团队数据（schemaVersion 4+）
     var isTeamData = serverData.team && serverData.team.enabled;
     var currentUserId = appData.systemSettings.teamUserId || getDeviceId();
@@ -39049,24 +39346,25 @@ function mergeSyncData(serverData) {
     }
     
     // 获取本地数据共享设置
-    var teamDataSharing = appData.systemSettings.teamDataSharing || {};
+    var teamDataSharing = appData.systemSettings.teamDataSharing || { products: true, templates: true, customers: true, quoteHistory: false, seals: false, signatures: false };
     var teamEnabled = appData.systemSettings.teamEnabled;
     
     // 如果是团队模式，根据设置决定要合并哪些数据
     // 注意：当服务器数据为 undefined 时，说明对方设置了不共享该数据类型，
     // 此时不进行合并（保留本地数据），而不是使用空数组覆盖
-    var serverProducts = (isTeamData && teamEnabled && !teamDataSharing.products) ? [] : 
-                         (serverData.products === undefined ? [] : (serverData.products || []));
-    var serverTemplates = (isTeamData && teamEnabled && !teamDataSharing.templates) ? [] : 
-                          (serverData.templates === undefined ? [] : (serverData.templates || []));
-    var serverCustomers = (isTeamData && teamEnabled && !teamDataSharing.customers) ? [] : 
-                          (serverData.customers === undefined ? [] : (serverData.customers || []));
-    var serverQuoteHistory = (isTeamData && teamEnabled && !teamDataSharing.quoteHistory) ? [] : 
-                             (serverData.quoteHistory === undefined ? [] : (serverData.quoteHistory || []));
-    var serverSeals = (isTeamData && teamEnabled && !teamDataSharing.seals) ? [] : 
-                      (serverData.seals === undefined ? [] : (serverData.seals || []));
-    var serverSignatures = (isTeamData && teamEnabled && !teamDataSharing.signatures) ? [] : 
-                           (serverData.signatures === undefined ? [] : (serverData.signatures || []));
+    // 团队模式下，只有明确设置为false才不共享，undefined或true都共享
+    var serverProducts = (isTeamData && teamEnabled && teamDataSharing.products === false) ? [] : 
+                         (syncData.products === undefined ? [] : (syncData.products || []));
+    var serverTemplates = (isTeamData && teamEnabled && teamDataSharing.templates === false) ? [] : 
+                          (syncData.templates === undefined ? [] : (syncData.templates || []));
+    var serverCustomers = (isTeamData && teamEnabled && teamDataSharing.customers === false) ? [] : 
+                          (syncData.customers === undefined ? [] : (syncData.customers || []));
+    var serverQuoteHistory = (isTeamData && teamEnabled && teamDataSharing.quoteHistory === false) ? [] : 
+                             (syncData.quoteHistory === undefined ? [] : (syncData.quoteHistory || []));
+    var serverSeals = (isTeamData && teamEnabled && teamDataSharing.seals === false) ? [] : 
+                      (syncData.seals === undefined ? [] : (syncData.seals || []));
+    var serverSignatures = (isTeamData && teamEnabled && teamDataSharing.signatures === false) ? [] : 
+                           (syncData.signatures === undefined ? [] : (syncData.signatures || []));
     
     // 合并产品（带团队追踪信息）
     var localProducts = new Map(appData.products.map(function(p) { return [String(p.id), p]; }));
