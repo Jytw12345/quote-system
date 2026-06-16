@@ -16697,8 +16697,21 @@ async function exportPDF(showSaveAs){
                     showToast('使用传统方式下载PDF', 'info');
                 }
             } else {
-                // 使用传统下载方式
-                pdf.save(pdfFileName);
+                // 使用传统下载方式（修复Android文件名问题）
+                var pdfBlob = new Blob([pdfData], { type: 'application/pdf' });
+                var pdfUrl = URL.createObjectURL(pdfBlob);
+                
+                var link = document.createElement('a');
+                link.href = pdfUrl;
+                link.download = pdfFileName;
+                link.target = '_blank';
+                
+                // 触发点击
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(pdfUrl);
+                
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 pdfExportLock = false;
                 pdfFileHandle = null;
@@ -16969,11 +16982,27 @@ async function exportJPG(showSaveAs){
                     showToast('使用传统方式下载JPG', 'info');
                 }
             } else {
-                // 使用传统下载方式
+                // 使用传统下载方式（修复Android文件名问题）
+                var byteString = atob(imgData.split(',')[1]);
+                var mimeString = imgData.split(',')[0].split(':')[1].split(';')[0];
+                var ab = new ArrayBuffer(byteString.length);
+                var ia = new Uint8Array(ab);
+                for (var i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                var jpgBlob = new Blob([ab], { type: mimeString });
+                var jpgUrl = URL.createObjectURL(jpgBlob);
+                
                 var link = document.createElement('a');
+                link.href = jpgUrl;
                 link.download = fileName;
-                link.href = imgData;
+                link.target = '_blank';
+                
+                document.body.appendChild(link);
                 link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(jpgUrl);
+                
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 jpgExportLock = false;
                 jpgFileHandle = null;
