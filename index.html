@@ -6743,54 +6743,54 @@ function safeExecuteAsync(fn, defaultVal) {
                                     <label for="doorHeaderType" style="font-size:0.75rem;color:#92400e;display:block;margin-bottom:0.25rem;">门头类型</label>
                                     <select id="doorHeaderType" onchange="onDoorHeaderTypeChange()" style="width:100%;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid #fcd34d;border-radius:var(--radius);">
                                         <optgroup label="💡 常见门头（经济实用）">
-                                            <option value="led_channel_letter" title="【优势】亮度高、寿命长、视觉效果好 | 【应用】餐饮、零售、便利店、超市 | 【行业】服务业通用">发光字门头</option>
-                                            <option value="aluminum_composite" title="【优势】防火防水、价格实惠、安装便捷 | 【应用】各类沿街店面、办公楼宇 | 【行业】通用型">铝塑板门头</option>
-                                            <option value="inkjet_cloth" title="【优势】制作周期短、价格最低、可大幅面 | 【应用】临时活动、展会、物料促销 | 【行业】短期/促销">喷绘布门头</option>
-                                            <option value="acrylic_flat" title="【优势】透光性好、颜色丰富、质感高档 | 【应用】珠宝店、化妆品、连锁品牌 | 【行业】高端零售">亚克力平面门头</option>
+                                            <option value="led_channel_letter" title="【优势】亮度高、寿命长、视觉效果好 | 【应用】餐饮、零售、便利店、超市 | 【行业】服务业通用">发光字+底板门头</option>
+                                            <option value="aluminum_composite" title="【优势】防火防水、价格实惠、安装便捷 | 【应用】各类沿街店面、办公楼宇 | 【行业】通用型">铝塑板+底板门头</option>
+                                            <option value="inkjet_cloth" title="【优势】制作周期短、价格最低、可大幅面 | 【应用】临时活动、展会、物料促销 | 【行业】短期/促销">喷绘布+龙骨门头</option>
+                                            <option value="acrylic_flat" title="【优势】透光性好、颜色丰富、质感高档 | 【应用】珠宝店、化妆品、连锁品牌 | 【行业】高端零售">亚克力+底板门头</option>
                                         </optgroup>
                                         <optgroup label="✨ 高端门头（品质保证）">
-                                            <option value="aluminum_veneer" title="【优势】耐候性强、立体感强、可做造型 | 【应用】银行、4S店、品牌旗舰店 | 【行业】高端商业">铝单板门头</option>
-                                            <option value="stainless_steel" title="【优势】耐腐蚀、寿命长、质感豪华 | 【应用】酒店、医院、机关单位、金融 | 【行业】高端公共">不锈钢门头</option>
-                                            <option value="painted_glass" title="【优势】美观大方、透光性好、易清洁 | 【应用】餐厅、咖啡厅、酒吧、会所 | 【行业】餐饮娱乐">烤漆玻璃门头</option>
-                                            <option value="perforated_aluminum" title="【优势】通风散热、材质轻、隔音降噪 | 【应用】机房、配电房、工厂、车间 | 【行业】工业建筑">穿孔铝板门头</option>
+                                            <option value="aluminum_veneer" title="【优势】耐候性强、立体感强、可做造型 | 【应用】银行、4S店、品牌旗舰店 | 【行业】高端商业">铝单板+方管框架门头</option>
+                                            <option value="stainless_steel" title="【优势】耐腐蚀、寿命长、质感豪华 | 【应用】酒店、医院、机关单位、金融 | 【行业】高端公共">不锈钢板+底板门头</option>
+                                            <option value="painted_glass" title="【优势】美观大方、透光性好、易清洁 | 【应用】餐厅、咖啡厅、酒吧、会所 | 【行业】餐饮娱乐">烤漆玻璃+底板门头</option>
+                                            <option value="perforated_aluminum" title="【优势】通风散热、材质轻、隔音降噪 | 【应用】机房、配电房、工厂、车间 | 【行业】工业建筑">穿孔铝板+背光门头</option>
                                         </optgroup>
                                         <optgroup label="💡 灯箱门头（均匀发光）">
-                                            <option value="vacuum_lightbox" title="【优势】发光均匀、立体感强、档次高 | 【应用】品牌连锁、药店、眼镜店 | 【行业】连锁商业">吸塑灯箱门头</option>
-                                            <option value="soft_film_lightbox" title="【优势】透光均匀、无边框设计、简洁大气 | 【应用】手机店、数码店、专卖店 | 【行业】科技零售">软膜灯箱门头</option>
-                                            <option value="ultra_thin_lightbox" title="【优势】超薄省空间、LED节能、光线柔和 | 【应用】美容院、理发店、美甲店 | 【行业】个人服务">超薄灯箱门头</option>
-                                            <option value="3m_lightbox" title="【优势】品质卓越、耐黄变、透光性好 | 【应用】加油站、便利店、快餐店 | 【行业】国际品牌">3M灯箱门头</option>
+                                            <option value="vacuum_lightbox" title="【优势】发光均匀、立体感强、档次高 | 【应用】品牌连锁、药店、眼镜店 | 【行业】连锁商业">吸塑面板+灯箱箱体门头</option>
+                                            <option value="soft_film_lightbox" title="【优势】透光均匀、无边框设计、简洁大气 | 【应用】手机店、数码店、专卖店 | 【行业】科技零售">软膜+铝型材灯箱门头</option>
+                                            <option value="ultra_thin_lightbox" title="【优势】超薄省空间、LED节能、光线柔和 | 【应用】美容院、理发店、美甲店 | 【行业】个人服务">导光板+铝框超薄灯箱门头</option>
+                                            <option value="3m_lightbox" title="【优势】品质卓越、耐黄变、透光性好 | 【应用】加油站、便利店、快餐店 | 【行业】国际品牌">3M灯箱布+镀锌箱体门头</option>
                                         </optgroup>
                                         <optgroup label="🎨 特色门头（风格独特）">
-                                            <option value="eco_wood" title="【优势】自然美观、防腐防潮、环保材料 | 【应用】农家乐、民宿、茶楼、书店 | 【行业】休闲文旅">生态木门头</option>
-                                            <option value="pvc_carved" title="【优势】欧式风格、造型丰富、价格适中 | 【应用】蛋糕店、甜品店、婚庆、珠宝店 | 【行业】精致零售">PVC雕花板门头</option>
-                                            <option value="pvc_foam" title="【优势】轻便便宜、可雕花裁切、色彩多样 | 【应用】临时店面、促销档口、展会 | 【行业】短期使用">雪弗板门头</option>
-                                            <option value="aluminum_profile" title="【优势】模块化拼装、可拆卸、简约现代 | 【应用】便利店、快餐店、连锁店 | 【行业】连锁商业">铝型材门头</option>
+                                            <option value="eco_wood" title="【优势】自然美观、防腐防潮、环保材料 | 【应用】农家乐、民宿、茶楼、书店 | 【行业】休闲文旅">生态木格栅+底板门头</option>
+                                            <option value="pvc_carved" title="【优势】欧式风格、造型丰富、价格适中 | 【应用】蛋糕店、甜品店、婚庆、珠宝店 | 【行业】精致零售">PVC雕花板+底板门头</option>
+                                            <option value="pvc_foam" title="【优势】轻便便宜、可雕花裁切、色彩多样 | 【应用】临时店面、促销档口、展会 | 【行业】短期使用">雪弗板+底板门头</option>
+                                            <option value="aluminum_profile" title="【优势】模块化拼装、可拆卸、简约现代 | 【应用】便利店、快餐店、连锁店 | 【行业】连锁商业">铝型材框架+面板门头</option>
                                         </optgroup>
                                         <optgroup label="🚀 新型材料（前沿科技）">
-                                            <option value="micro_perforated" title="【优势】吸音降噪、通风散热、现代简约 | 【应用】商场、影院、剧院、健身房 | 【行业】公共娱乐">微孔吸音板门头</option>
-                                            <option value="grating" title="【优势】通风透光、工业风格、立体感强 | 【应用】汽车4S店、展厅、机械公司 | 【行业】工业商业">金属格栅门头</option>
-                                            <option value="polycarbonate" title="【优势】抗冲击、透光好、重量轻、防紫外 | 【应用】雨棚、采光罩、温室、泳池 | 【行业】建筑遮蔽">PC耐力板门头</option>
-                                            <option value="woven_mesh" title="【优势】装饰性强、透光透气、质感高级 | 【应用】酒店、餐厅、艺术空间、咖啡馆 | 【行业】高端餐饮">金属编织网门头</option>
-                                            <option value="smart_display" title="【优势】动态显示、视频播放、内容可换 | 【应用】零售门店、餐厅、银行、政务 | 【行业】智能商业">智能LED屏门头</option>
-                                            <option value="holographic" title="【优势】科技炫酷、幻彩效果、视觉冲击 | 【应用】酒吧、KTV、电竞馆、夜店 | 【行业】娱乐场所">全息幻彩门头</option>
-                                            <option value="flexible_led" title="【优势】可弯曲弧形、适配圆柱、造型多样 | 【应用】商场中庭、展厅、弧形墙面 | 【行业】创意商业">柔性LED屏门头</option>
-                                            <option value="autostereoscopic" title="【优势】裸眼3D、无需眼镜、视觉震撼 | 【应用】商场入口、景区、影院、展览 | 【行业】体验营销">裸眼3D显示屏门头</option>
-                                            <option value="smart_glass" title="【优势】电控调光、透明/雾化切换、科技感 | 【应用】展厅、办公室、隔断、高端门店 | 【行业】科技办公">调光玻璃门头</option>
-                                            <option value="photovoltaic" title="【优势】太阳能发电、绿色节能、政策补贴 | 【应用】银行、新能源店、市政项目 | 【行业】绿色环保">光伏发电门头</option>
-                                            <option value="fiber_optic" title="【优势】光源柔和、星星点点、高端定制 | 【应用】珠宝店、高端会所、奢侈品店 | 【行业】高端定制">光纤发光门头</option>
-                                            <option value="metal_emboss" title="【优势】3D浮雕效果、立体感强、工艺精致 | 【应用】博物馆、艺术馆、高端餐厅 | 【行业】文化艺术">金属浮雕门头</option>
-                                            <option value="mirror_finish" title="【优势】全镜面反光、炫酷时尚、拍照圣地 | 【应用】美容院、理发店、潮牌店、眼镜店 | 【行业】时尚服务业">镜面反光门头</option>
-                                            <option value="etched_metal" title="【优势】腐蚀纹理、精致细腻、文化气息 | 【应用】餐厅、咖啡店、茶楼、中式店面 | 【行业】传统文化">腐蚀雕刻门头</option>
-                                            <option value="liquid_metal" title="【优势】液态金属质感、高端奢华、独一无二 | 【应用】超高端会所、奢侈品店、豪车4S店 | 【行业】顶级定制">液态金属门头</option>
-                                            <option value="terrazzo" title="【优势】复古文艺、网红风格、色彩可定制 | 【应用】甜品店、烘焙店、网红餐厅、花店 | 【行业】新零售">水磨石门头</option>
-                                            <option value="cement_fiber" title="【优势】清水混凝土风格、工业极简、返璞归真 | 【应用】咖啡店、书店、文创店、设计事务所 | 【行业】文创艺术">水泥纤维板门头</option>
-                                            <option value="living_moss" title="【优势】绿植装饰、自然清新、吸引眼球 | 【应用】奶茶店、果汁店、花店、美妆店 | 【行业】健康生活">立体绿植门头</option>
-                                            <option value="particle_effect" title="【优势】粒子矩阵、可编程动画、互动体验 | 【应用】科技馆、展览、商业综合体、乐园 | 【行业】互动体验">粒子屏门头</option>
-                                            <option value="magnetic" title="【优势】模块化磁吸、可DIY拼装、快速更换 | 【应用】快闪店、便利店、改装店、活动 | 【行业】灵活零售">磁吸拼装门头</option>
-                                            <option value="color_changing" title="【优势】角度变色、幻彩效果、时尚炫酷 | 【应用】潮牌店、眼镜店、潮玩店、滑板店 | 【行业】青年潮流">变色龙门头</option>
-                                            <option value="breathing_light" title="【优势】渐变呼吸灯、柔和浪漫、氛围感强 | 【应用】酒吧、咖啡馆、清吧、音乐餐厅 | 【行业】休闲娱乐">呼吸灯门头</option>
-                                            <option value="interactive" title="【优势】体感感应、手势互动、程序游戏 | 【应用】展厅、零售店、科技馆、展览 | 【行业】互动营销">体感互动门头</option>
-                                            <option value="voice_control" title="【优势】语音识别、智能交互、无接触控制 | 【应用】银行、政务大厅、医院、图书馆 | 【行业】公共服务">语音控制门头</option>
+                                            <option value="micro_perforated" title="【优势】吸音降噪、通风散热、现代简约 | 【应用】商场、影院、剧院、健身房 | 【行业】公共娱乐">微孔吸音板+吸音棉门头</option>
+                                            <option value="grating" title="【优势】通风透光、工业风格、立体感强 | 【应用】汽车4S店、展厅、机械公司 | 【行业】工业商业">金属格栅+方管框架门头</option>
+                                            <option value="polycarbonate" title="【优势】抗冲击、透光好、重量轻、防紫外 | 【应用】雨棚、采光罩、温室、泳池 | 【行业】建筑遮蔽">PC耐力板+铝框门头</option>
+                                            <option value="woven_mesh" title="【优势】装饰性强、透光透气、质感高级 | 【应用】酒店、餐厅、艺术空间、咖啡馆 | 【行业】高端餐饮">金属编织网+龙骨门头</option>
+                                            <option value="smart_display" title="【优势】动态显示、视频播放、内容可换 | 【应用】零售门店、餐厅、银行、政务 | 【行业】智能商业">LED显示屏+铝框门头</option>
+                                            <option value="holographic" title="【优势】科技炫酷、幻彩效果、视觉冲击 | 【应用】酒吧、KTV、电竞馆、夜店 | 【行业】娱乐场所">全息幻彩膜+亚克力门头</option>
+                                            <option value="flexible_led" title="【优势】可弯曲弧形、适配圆柱、造型多样 | 【应用】商场中庭、展厅、弧形墙面 | 【行业】创意商业">柔性LED屏+弧形铝框门头</option>
+                                            <option value="autostereoscopic" title="【优势】裸眼3D、无需眼镜、视觉震撼 | 【应用】商场入口、景区、影院、展览 | 【行业】体验营销">裸眼3D屏+铝框门头</option>
+                                            <option value="smart_glass" title="【优势】电控调光、透明/雾化切换、科技感 | 【应用】展厅、办公室、隔断、高端门店 | 【行业】科技办公">调光玻璃+不锈钢框门头</option>
+                                            <option value="photovoltaic" title="【优势】太阳能发电、绿色节能、政策补贴 | 【应用】银行、新能源店、市政项目 | 【行业】绿色环保">太阳能板+LED门头</option>
+                                            <option value="fiber_optic" title="【优势】光源柔和、星星点点、高端定制 | 【应用】珠宝店、高端会所、奢侈品店 | 【行业】高端定制">光纤+底板发光门头</option>
+                                            <option value="metal_emboss" title="【优势】3D浮雕效果、立体感强、工艺精致 | 【应用】博物馆、艺术馆、高端餐厅 | 【行业】文化艺术">金属浮雕+龙骨门头</option>
+                                            <option value="mirror_finish" title="【优势】全镜面反光、炫酷时尚、拍照圣地 | 【应用】美容院、理发店、潮牌店、眼镜店 | 【行业】时尚服务业">镜面不锈钢板+龙骨门头</option>
+                                            <option value="etched_metal" title="【优势】腐蚀纹理、精致细腻、文化气息 | 【应用】餐厅、咖啡店、茶楼、中式店面 | 【行业】传统文化">蚀刻金属板+底板门头</option>
+                                            <option value="liquid_metal" title="【优势】液态金属质感、高端奢华、独一无二 | 【应用】超高端会所、奢侈品店、豪车4S店 | 【行业】顶级定制">液态金属漆+钢板门头</option>
+                                            <option value="terrazzo" title="【优势】复古文艺、网红风格、色彩可定制 | 【应用】甜品店、烘焙店、网红餐厅、花店 | 【行业】新零售">水磨石+龙骨门头</option>
+                                            <option value="cement_fiber" title="【优势】清水混凝土风格、工业极简、返璞归真 | 【应用】咖啡店、书店、文创店、设计事务所 | 【行业】文创艺术">水泥纤维板+龙骨门头</option>
+                                            <option value="living_moss" title="【优势】绿植装饰、自然清新、吸引眼球 | 【应用】奶茶店、果汁店、花店、美妆店 | 【行业】健康生活">绿植墙+铝框门头</option>
+                                            <option value="particle_effect" title="【优势】粒子矩阵、可编程动画、互动体验 | 【应用】科技馆、展览、商业综合体、乐园 | 【行业】互动体验">LED粒子屏+铝框门头</option>
+                                            <option value="magnetic" title="【优势】模块化磁吸、可DIY拼装、快速更换 | 【应用】快闪店、便利店、改装店、活动 | 【行业】灵活零售">磁吸模块+铝框门头</option>
+                                            <option value="color_changing" title="【优势】角度变色、幻彩效果、时尚炫酷 | 【应用】潮牌店、眼镜店、潮玩店、滑板店 | 【行业】青年潮流">幻彩变色板+龙骨门头</option>
+                                            <option value="breathing_light" title="【优势】渐变呼吸灯、柔和浪漫、氛围感强 | 【应用】酒吧、咖啡馆、清吧、音乐餐厅 | 【行业】休闲娱乐">呼吸灯+穿孔亚克力门头</option>
+                                            <option value="interactive" title="【优势】体感感应、手势互动、程序游戏 | 【应用】展厅、零售店、科技馆、展览 | 【行业】互动营销">互动屏+铝框门头</option>
+                                            <option value="voice_control" title="【优势】语音识别、智能交互、无接触控制 | 【应用】银行、政务大厅、医院、图书馆 | 【行业】公共服务">语音识别+显示面板门头</option>
                                         </optgroup>
                                     </select>
                                 </div>
@@ -14615,36 +14615,163 @@ function calculatePriceByQtyFromItem(item, quantity) {
     return finalPrice;
 }
 let draggedItemIndex = null;
-function handleDragStart(idx, event) { 
-    draggedItemIndex = idx; 
-    event.dataTransfer.effectAllowed = 'move'; 
-    event.currentTarget.classList.add('dragging'); 
+// 鼠标拖动状态（Electron兼容）
+let mouseDragging = null;
+let mouseStartX = 0;
+let mouseStartY = 0;
+let mouseClone = null;
+let mouseTargetRow = null;
+let mouseOffsetX = 0;
+let mouseOffsetY = 0;
+
+function handleDragStart(idx, event) {
+    draggedItemIndex = idx;
+    event.dataTransfer.effectAllowed = 'move';
+    event.currentTarget.classList.add('dragging');
 }
-function handleDragOver(event, idx) { 
-    event.preventDefault(); 
-    event.dataTransfer.dropEffect = 'move'; 
-    document.querySelectorAll('.quote-item-row[data-index]').forEach(r=>r.classList.remove('drag-over')); 
-    if (idx !== draggedItemIndex) event.currentTarget.closest('.quote-item-row').classList.add('drag-over'); 
+function handleDragOver(event, idx) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    document.querySelectorAll('.quote-item-row[data-index]').forEach(r=>r.classList.remove('drag-over'));
+    if (idx !== draggedItemIndex) event.currentTarget.closest('.quote-item-row').classList.add('drag-over');
 }
-function handleDrop(event, targetIndex) { 
-    event.preventDefault(); 
-    if (draggedItemIndex === null || draggedItemIndex === targetIndex) return; 
+function handleDrop(event, targetIndex) {
+    event.preventDefault();
+    if (draggedItemIndex === null || draggedItemIndex === targetIndex) return;
     if (!appData.currentQuote || !appData.currentQuote.items) return;
-    const items = appData.currentQuote.items; 
+    const items = appData.currentQuote.items;
     if (!items[draggedItemIndex]) return;
-    const draggedItem = items[draggedItemIndex]; 
-    items.splice(draggedItemIndex, 1); 
-    items.splice(targetIndex, 0, draggedItem); 
-    draggedItemIndex = null; 
-    renderQuoteItems(); 
-    calculateTotals(); 
+    const draggedItem = items[draggedItemIndex];
+    items.splice(draggedItemIndex, 1);
+    items.splice(targetIndex, 0, draggedItem);
+    draggedItemIndex = null;
+    renderQuoteItems();
+    calculateTotals();
 }
-function handleDragEnd() { 
-    draggedItemIndex = null; 
-    document.querySelectorAll('.quote-item-row[data-index]').forEach(r=>{ 
-        r.classList.remove('dragging'); 
-        r.classList.remove('drag-over'); 
-    }); 
+function handleDragEnd() {
+    draggedItemIndex = null;
+    document.querySelectorAll('.quote-item-row[data-index]').forEach(r=>{
+        r.classList.remove('dragging');
+        r.classList.remove('drag-over');
+    });
+}
+
+// 鼠标拖动开始（Electron兼容）
+function handleMouseDown(idx, event) {
+    if (event.button !== 0) return;
+    
+    mouseDragging = idx;
+    const targetRow = event.currentTarget.closest('.quote-item-row');
+    if (!targetRow) return;
+    
+    const rect = targetRow.getBoundingClientRect();
+    mouseOffsetX = event.clientX - rect.left;
+    mouseOffsetY = event.clientY - rect.top;
+    mouseTargetRow = targetRow;
+    
+    mouseClone = targetRow.cloneNode(true);
+    mouseClone.style.position = 'fixed';
+    mouseClone.style.zIndex = '9999';
+    mouseClone.style.opacity = '0.8';
+    mouseClone.style.pointerEvents = 'none';
+    mouseClone.style.transform = 'scale(1.02)';
+    mouseClone.style.boxShadow = '0 8px 24px rgba(0,0,0,0.2)';
+    mouseClone.style.width = rect.width + 'px';
+    mouseClone.style.left = rect.left + 'px';
+    mouseClone.style.top = rect.top + 'px';
+    document.body.appendChild(mouseClone);
+    
+    targetRow.style.opacity = '0.4';
+    targetRow.classList.add('dragging');
+    
+    // 使用 capture 模式添加事件监听（更可靠）
+    document.addEventListener('mousemove', handleMouseMove, true);
+    document.addEventListener('mouseup', handleMouseUp, true);
+}
+
+// 鼠标拖动移动
+function handleMouseMove(event) {
+    if (mouseDragging === null || !mouseClone) return;
+    
+    // 检查鼠标按钮是否释放（最可靠的方式）
+    if ((event.buttons & 1) === 0) {
+        handleMouseUp(event);
+        return;
+    }
+    
+    event.preventDefault();
+    
+    mouseClone.style.left = (event.clientX - mouseOffsetX) + 'px';
+    mouseClone.style.top = (event.clientY - mouseOffsetY) + 'px';
+    
+    document.querySelectorAll('.quote-item-row[data-index]').forEach(row => {
+        const rowIdx = parseInt(row.dataset.index);
+        if (rowIdx === mouseDragging) return;
+        const rect = row.getBoundingClientRect();
+        if (event.clientX >= rect.left && event.clientX <= rect.right &&
+            event.clientY >= rect.top && event.clientY <= rect.bottom) {
+            row.classList.add('drag-over');
+        } else {
+            row.classList.remove('drag-over');
+        }
+    });
+}
+
+// 鼠标拖动结束
+function handleMouseUp(event) {
+    if (mouseDragging === null && !mouseClone) return;
+    
+    // 先获取目标位置（隐藏克隆元素）
+    let targetIndex = null;
+    if (mouseDragging !== null && mouseClone) {
+        mouseClone.style.display = 'none';
+        try {
+            const targetRow = document.elementFromPoint(event.clientX, event.clientY)?.closest('.quote-item-row[data-index]');
+            if (targetRow) {
+                targetIndex = parseInt(targetRow.dataset.index);
+            }
+        } catch(e) {}
+        mouseClone.style.display = '';
+    }
+    
+    // 立即清理克隆元素
+    if (mouseClone) {
+        try {
+            document.body.removeChild(mouseClone);
+        } catch(e) {}
+        mouseClone = null;
+    }
+    
+    // 恢复原始行样式
+    if (mouseTargetRow) {
+        mouseTargetRow.style.opacity = '1';
+        mouseTargetRow.classList.remove('dragging');
+        mouseTargetRow = null;
+    }
+    
+    // 移除事件监听（capture 模式）
+    try {
+        document.removeEventListener('mousemove', handleMouseMove, true);
+        document.removeEventListener('mouseup', handleMouseUp, true);
+    } catch(e) {}
+    
+    document.querySelectorAll('.quote-item-row').forEach(r => r.classList.remove('drag-over'));
+    
+    // 执行移动
+    if (mouseDragging !== null && targetIndex !== null && targetIndex !== mouseDragging) {
+        if (!appData.currentQuote || !appData.currentQuote.items || !appData.currentQuote.items[mouseDragging]) {
+            mouseDragging = null;
+            return;
+        }
+        const items = appData.currentQuote.items;
+        const draggedItem = items[mouseDragging];
+        items.splice(mouseDragging, 1);
+        items.splice(targetIndex, 0, draggedItem);
+        renderQuoteItems();
+        calculateTotals();
+    }
+    
+    mouseDragging = null;
 }
 function renderQuoteItems(){
     const c=document.getElementById('quoteItemsList');
@@ -14675,15 +14802,15 @@ function renderQuoteItems(){
         div.ondragover = function(e){handleDragOver(e, idx);};
         div.ondrop = function(e){handleDrop(e, idx);};
         div.innerHTML = `
-            <div style="display:flex;align-items:center;justify-content:center;"><span class="quote-item-number" draggable="true" ondragstart="handleDragStart(${idx}, event)" ondragend="handleDragEnd">${idx+1}</span></div>
+            <div style="display:flex;align-items:center;justify-content:center;"><span class="quote-item-number" draggable="true" ondragstart="handleDragStart(${idx}, event)" ondragend="handleDragEnd" onmousedown="handleMouseDown(${idx}, event)" style="cursor:grab;">${idx+1}</span></div>
             <div style="display:flex;align-items:center;justify-content:center;">${ih}</div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">项目名称</span><input type="text" value="${escapeHtml(itemName)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'name',this.value)" style="width:100%;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">规格参数</span><input type="text" value="${escapeHtml(itemSpec)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'spec',this.value)" style="width:100%;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">单位</span><input type="text" value="${escapeHtml(itemUnit)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'unit',this.value)" style="width:100%;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">备注</span><input type="text" value="${escapeHtml(itemNote)}" placeholder="" onchange="updateQuoteItem(${itemIdQuoted},'note',this.value)" style="width:100%;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
-            <div class="cost-price-column sensitive-data" style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">成本价</span><input type="number" step="0.01" min="0" value="${Number(itemCost).toFixed(2)}" onchange="updateQuoteItem(${itemIdQuoted},'cost',this.value)" onwheel="return false;" class="no-spin" style="width:70px;font-weight:500;-moz-appearance:textfield;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
+            <div class="cost-price-column sensitive-data" style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">成本价</span><input type="number" step="0.01" min="0" value="${Number(itemCost).toFixed(2)}" onchange="updateQuoteItem(${itemIdQuoted},'cost',this.value)" class="no-spin" style="width:70px;font-weight:500;-moz-appearance:textfield;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">数量</span><input type="number" min="1" step="1" value="${itemQty}" onchange="updateQuoteItem(${itemIdQuoted},'qty',this.value)" style="width:65px;min-height:32px;padding:0.25rem 0.25rem;box-sizing:border-box;text-align:center;"></div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">单价</span><input type="number" step="0.01" min="0" value="${Number(itemPrice).toFixed(2)}" onchange="updateQuoteItem(${itemIdQuoted},'price',this.value)" onwheel="return false;" class="no-spin" style="width:70px;-moz-appearance:textfield;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">单价</span><input type="number" step="0.01" min="0" value="${Number(itemPrice).toFixed(2)}" onchange="updateQuoteItem(${itemIdQuoted},'price',this.value)" class="no-spin" style="width:70px;-moz-appearance:textfield;min-height:32px;padding:0.25rem 0.375rem;box-sizing:border-box;"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="column-label">小计</span><span id="subtotal-${itemId}" style="font-weight:600;color:var(--primary);font-size:0.8125rem;">¥${Number(it).toFixed(2)}</span></div>
             <div class="quote-item-actions" style="display:flex;gap:0.5rem;align-items:center;flex-shrink:0;justify-content:flex-end;width:100%;">
                 <button class="btn btn-success btn-icon" onclick="event.stopPropagation();saveQuoteItemToProduct(${itemIdQuoted})" title="保存到产品库">💾</button>
@@ -20844,8 +20971,8 @@ function toggleAIAssistant() {
 // 门头类型材料配置库
 const doorHeaderConfig = {
     led_channel_letter: {
-        name: '发光字门头',
-        desc: 'LED发光字+底板，夜间效果突出',
+        name: '发光字+底板门头',
+        desc: 'LED发光字安装在底板上，夜间效果突出',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -20871,6 +20998,19 @@ const doorHeaderConfig = {
             const wallWashLight = options.wallWashLight || 'none';
             const outerFrameMaterial = options.outerFrameMaterial || 'aluminum_plastic';
             const innerFrameMaterial = options.innerFrameMaterial || 'aluminum_plastic';
+            
+            // 基层板（木工板/密度板）- 标准做法需要基层板
+            const baseBoard = options.baseBoard || 'wood_board'; // wood_board, density_board, none
+            if (baseBoard !== 'none') {
+                const baseBoardConfig = {
+                    wood_board: { name: '木工板基层', spec: '厚1.5cm', unitPrice: 60 },
+                    density_board: { name: '密度板基层', spec: '厚1.2cm', unitPrice: 55 }
+                };
+                const board = baseBoardConfig[baseBoard];
+                if (board) {
+                    items.push({ name: board.name, spec: `${w}m×${h}m ${board.spec}`, qty: Math.ceil(area * 1.1), unit: '㎡', unitPrice: board.unitPrice, category: '基层板' });
+                }
+            }
             
             // 主面板材料（支持分段）
             const splitMaterials = {
@@ -21117,8 +21257,8 @@ const doorHeaderConfig = {
         }
     },
     acrylic_flat: {
-        name: '亚克力平面门头',
-        desc: '亚克力板+字体粘贴，简洁大方',
+        name: '亚克力+底板门头',
+        desc: '亚克力面板+底板+字体粘贴，简洁大方',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21139,6 +21279,19 @@ const doorHeaderConfig = {
             const bottomInnerMaterial = options.bottomInnerMaterial || 'acrylic';
             const frameMaterial = options.frameMaterial || 'acrylic';
             const innerMaterial = options.innerMaterial || 'acrylic';
+            
+            // 基层板（木工板/密度板）- 标准做法需要基层板
+            const baseBoard = options.baseBoard || 'wood_board'; // wood_board, density_board, none
+            if (baseBoard !== 'none') {
+                const baseBoardConfig = {
+                    wood_board: { name: '木工板基层', spec: '厚1.5cm', unitPrice: 60 },
+                    density_board: { name: '密度板基层', spec: '厚1.2cm', unitPrice: 55 }
+                };
+                const board = baseBoardConfig[baseBoard];
+                if (board) {
+                    items.push({ name: board.name, spec: `${w}m×${h}m ${board.spec}`, qty: Math.ceil(area * 1.1), unit: '㎡', unitPrice: board.unitPrice, category: '基层板' });
+                }
+            }
             
             // 主面板材料（支持分段）
             const splitMaterials = {
@@ -21321,20 +21474,33 @@ const doorHeaderConfig = {
         }
     },
     aluminum_composite: {
-        name: '铝塑板门头',
-        desc: '铝塑板面板，耐用防风，最常见门头类型',
+        name: '铝塑板+底板门头',
+        desc: '铝塑板面板+底板，耐用防风，最常见门头类型',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
+            // 基层板（木工板/密度板）- 标准做法需要基层板
+            const baseBoard = options.baseBoard || 'wood_board'; // wood_board, density_board, none
+            if (baseBoard !== 'none') {
+                const baseBoardConfig = {
+                    wood_board: { name: '木工板基层', spec: '厚1.5cm', unitPrice: 60 },
+                    density_board: { name: '密度板基层', spec: '厚1.2cm', unitPrice: 55 }
+                };
+                const board = baseBoardConfig[baseBoard];
+                if (board) {
+                    items.push({ name: board.name, spec: `${w}m×${h}m ${board.spec}`, qty: Math.ceil(area * 1.1), unit: '㎡', unitPrice: board.unitPrice, category: '基层板' });
+                }
+            }
             // 铝塑板
-            items.push({ name: '铝塑板', spec: `${w}m×${h}m 厚3mm`, qty: Math.ceil(area * 1.15), unit: '㎡', unitPrice: 95, category: '面板' });
+            const thickness = baseBoard === 'none' ? '厚4mm' : '厚3mm'; // 无基层板时需要更厚的铝塑板
+            items.push({ name: '铝塑板', spec: `${w}m×${h}m ${thickness}`, qty: Math.ceil(area * 1.15), unit: '㎡', unitPrice: baseBoard === 'none' ? 120 : 95, category: '面板' });
             // 龙骨
             const perimeter = (w + h) * 2;
             items.push({ name: '方管龙骨', spec: '25×25mm', qty: Math.ceil(perimeter * 1.3), unit: '米', unitPrice: 9, category: '骨架' });
             items.push({ name: '角钢加固', spec: '30×30mm', qty: Math.ceil(perimeter), unit: '米', unitPrice: 12, category: '骨架' });
             // 膨胀螺丝
             items.push({ name: '膨胀螺丝', spec: 'M8×60', qty: Math.ceil(perimeter / 0.5), unit: '个', unitPrice: 1.5, category: '配件' });
-            // 结构胶
+            // 结构胶/耐候胶
             items.push({ name: '结构胶/耐候胶', spec: '590ml/支', qty: Math.max(1, Math.ceil(area * 0.5)), unit: '支', unitPrice: 25, category: '辅料' });
             // 包边
             if (options.edge === 'yes') {
@@ -21344,11 +21510,16 @@ const doorHeaderConfig = {
         }
     },
     inkjet_cloth: {
-        name: '喷绘布门头',
-        desc: '喷绘布+龙骨，经济实惠',
+        name: '喷绘布+龙骨门头',
+        desc: '喷绘布直接固定在方管龙骨上，经济实惠，施工简单',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
+            // 底板（可选）- 喷绘布可以直接固定到龙骨上，也可以加底板
+            const needBaseBoard = options.needBaseBoard || 'yes'; // yes, no
+            if (needBaseBoard === 'yes') {
+                items.push({ name: '木工板底板', spec: `${w}m×${h}m 厚0.9cm`, qty: Math.ceil(area * 1.1), unit: '㎡', unitPrice: 45, category: '底板' });
+            }
             // 喷绘布
             items.push({ name: '户外喷绘布', spec: `${w}m×${h}m 550D`, qty: Math.ceil(area * 1.1), unit: '㎡', unitPrice: 35, category: '画面' });
             // 龙骨
@@ -21364,13 +21535,26 @@ const doorHeaderConfig = {
         }
     },
     stainless_steel: {
-        name: '不锈钢门头',
-        desc: '不锈钢面板，高端大气，耐腐蚀',
+        name: '不锈钢板+底板门头',
+        desc: '不锈钢面板+基层板+方管龙骨，高端大气，耐腐蚀',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
+            // 基层板（木工板/密度板）- 标准做法需要基层板
+            const baseBoard = options.baseBoard || 'wood_board'; // wood_board, density_board, none
+            if (baseBoard !== 'none') {
+                const baseBoardConfig = {
+                    wood_board: { name: '木工板基层', spec: '厚1.5cm', unitPrice: 60 },
+                    density_board: { name: '密度板基层', spec: '厚1.2cm', unitPrice: 55 }
+                };
+                const board = baseBoardConfig[baseBoard];
+                if (board) {
+                    items.push({ name: board.name, spec: `${w}m×${h}m ${board.spec}`, qty: Math.ceil(area * 1.1), unit: '㎡', unitPrice: board.unitPrice, category: '基层板' });
+                }
+            }
             // 不锈钢板
-            items.push({ name: '不锈钢板', spec: `${w}m×${h}m 厚1.0mm 304#`, qty: Math.ceil(area * 1.15), unit: '㎡', unitPrice: 180, category: '面板' });
+            const thickness = baseBoard === 'none' ? '厚1.2mm' : '厚1.0mm'; // 无基层板时需要更厚的不锈钢板
+            items.push({ name: '不锈钢板', spec: `${w}m×${h}m ${thickness} 304#`, qty: Math.ceil(area * 1.15), unit: '㎡', unitPrice: baseBoard === 'none' ? 200 : 180, category: '面板' });
             // 龙骨
             const perimeter = (w + h) * 2;
             items.push({ name: '方管龙骨', spec: '25×25mm', qty: Math.ceil(perimeter * 1.3), unit: '米', unitPrice: 9, category: '骨架' });
@@ -21385,8 +21569,8 @@ const doorHeaderConfig = {
         }
     },
     vacuum_lightbox: {
-        name: '吸塑灯箱门头',
-        desc: '吸塑面板+LED光源，立体感强',
+        name: '吸塑面板+灯箱箱体门头',
+        desc: '吸塑面板+镀锌板箱体+LED光源，立体感强，发光均匀',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21411,8 +21595,8 @@ const doorHeaderConfig = {
         }
     },
     aluminum_veneer: {
-        name: '铝单板门头',
-        desc: '铝单板幕墙工艺，高端大气，耐候性强',
+        name: '铝单板+方管框架门头',
+        desc: '铝单板+镀锌方管框架+角码挂件，幕墙工艺，高端大气，耐候性强',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21434,8 +21618,8 @@ const doorHeaderConfig = {
         }
     },
     painted_glass: {
-        name: '烤漆玻璃门头',
-        desc: '钢化烤漆玻璃，现代感强，色彩丰富',
+        name: '烤漆玻璃+底板门头',
+        desc: '钢化烤漆玻璃+木工板底板+方管龙骨，现代感强，色彩丰富',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21457,13 +21641,26 @@ const doorHeaderConfig = {
         }
     },
     perforated_aluminum: {
-        name: '穿孔铝板门头',
-        desc: '穿孔铝板+背光，时尚通透，夜间效果出众',
+        name: '穿孔铝板+背光门头',
+        desc: '穿孔铝板+基层板+LED背光，时尚通透，夜间效果出众',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
+            // 基层板（木工板/密度板）- 标准做法需要基层板
+            const baseBoard = options.baseBoard || 'wood_board'; // wood_board, density_board, none
+            if (baseBoard !== 'none') {
+                const baseBoardConfig = {
+                    wood_board: { name: '木工板基层', spec: '厚1.5cm', unitPrice: 60 },
+                    density_board: { name: '密度板基层', spec: '厚1.2cm', unitPrice: 55 }
+                };
+                const board = baseBoardConfig[baseBoard];
+                if (board) {
+                    items.push({ name: board.name, spec: `${w}m×${h}m ${board.spec}`, qty: Math.ceil(area * 1.1), unit: '㎡', unitPrice: board.unitPrice, category: '基层板' });
+                }
+            }
             // 穿孔铝板
-            items.push({ name: '穿孔铝板', spec: `${w}m×${h}m 厚2.0mm 孔径5mm`, qty: Math.ceil(area * 1.15), unit: '㎡', unitPrice: 230, category: '面板' });
+            const thickness = baseBoard === 'none' ? '厚2.5mm' : '厚2.0mm'; // 无基层板时需要更厚的穿孔铝板
+            items.push({ name: '穿孔铝板', spec: `${w}m×${h}m ${thickness} 孔径5mm`, qty: Math.ceil(area * 1.15), unit: '㎡', unitPrice: baseBoard === 'none' ? 260 : 230, category: '面板' });
             // 背光源
             items.push({ name: 'LED背光模组', spec: '5050贴片防水', qty: Math.ceil(area * 8), unit: '组', unitPrice: 5, category: '光源' });
             // 龙骨
@@ -21480,8 +21677,8 @@ const doorHeaderConfig = {
         }
     },
     soft_film_lightbox: {
-        name: '软膜灯箱门头',
-        desc: '卡布灯箱工艺，画面可更换，色彩鲜艳',
+        name: '软膜+铝型材灯箱门头',
+        desc: '软膜画面+铝型材框架+LED灯条+PVC背板，卡布灯箱工艺，画面可更换',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21501,8 +21698,8 @@ const doorHeaderConfig = {
         }
     },
     ultra_thin_lightbox: {
-        name: '超薄灯箱门头',
-        desc: '侧导光超薄设计，厚度仅3-5cm，精致美观',
+        name: '导光板+铝框超薄灯箱门头',
+        desc: '导光板+LED侧光灯条+铝框+PVC背板，侧导光超薄设计，厚度仅3-5cm',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21523,8 +21720,8 @@ const doorHeaderConfig = {
         }
     },
     '3m_lightbox': {
-        name: '3M灯箱门头',
-        desc: '3M灯箱布+柔性灯箱，高端连锁店首选',
+        name: '3M灯箱布+镀锌箱体门头',
+        desc: '3M灯箱布+镀锌板箱体+LED灯条，高端连锁店首选',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21548,8 +21745,8 @@ const doorHeaderConfig = {
         }
     },
     eco_wood: {
-        name: '生态木门头',
-        desc: '生态木/塑木材质，自然风格，防腐防潮',
+        name: '生态木格栅+底板门头',
+        desc: '生态木格栅+防水底板+镀锌方管龙骨，自然风格，防腐防潮',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21570,8 +21767,8 @@ const doorHeaderConfig = {
         }
     },
     pvc_carved: {
-        name: 'PVC雕花板门头',
-        desc: 'PVC雕花/罗马柱风格，欧式复古，适合咖啡店/甜品店',
+        name: 'PVC雕花板+底板门头',
+        desc: 'PVC雕花板+木工板底板+方管龙骨+PU欧式线条，欧式复古风格',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21594,8 +21791,8 @@ const doorHeaderConfig = {
         }
     },
     pvc_foam: {
-        name: '雪弗板门头',
-        desc: '雪弗板/PVC发泡板，经济轻便，适合临时/短期使用',
+        name: '雪弗板+底板门头',
+        desc: '雪弗板(PVC发泡板)+木工板底板+方管龙骨，经济轻便，适合临时/短期使用',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21614,16 +21811,29 @@ const doorHeaderConfig = {
         }
     },
     aluminum_profile: {
-        name: '铝型材门头',
-        desc: '铝合金型材框架，简约现代，模块化拼装',
+        name: '铝型材框架+面板门头',
+        desc: '工业铝型材框架+铝塑板面板+角码连接件，简约现代，模块化拼装',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
+            // 基层板（木工板/密度板）- 标准做法需要基层板
+            const baseBoard = options.baseBoard || 'wood_board'; // wood_board, density_board, none
+            if (baseBoard !== 'none') {
+                const baseBoardConfig = {
+                    wood_board: { name: '木工板基层', spec: '厚1.5cm', unitPrice: 60 },
+                    density_board: { name: '密度板基层', spec: '厚1.2cm', unitPrice: 55 }
+                };
+                const board = baseBoardConfig[baseBoard];
+                if (board) {
+                    items.push({ name: board.name, spec: `${w}m×${h}m ${board.spec}`, qty: Math.ceil(area * 1.1), unit: '㎡', unitPrice: board.unitPrice, category: '基层板' });
+                }
+            }
             // 铝型材框架
             const perimeter = (w + h) * 2;
             items.push({ name: '铝型材框架', spec: '40×40mm 工业铝型材', qty: Math.ceil(perimeter * 1.2), unit: '米', unitPrice: 30, category: '型材' });
             // 面板（铝塑板或亚克力）
-            items.push({ name: '铝塑板面板', spec: `${w}m×${h}m 厚3mm`, qty: Math.ceil(area * 1.15), unit: '㎡', unitPrice: 95, category: '面板' });
+            const thickness = baseBoard === 'none' ? '厚4mm' : '厚3mm'; // 无基层板时需要更厚的面板
+            items.push({ name: '铝塑板面板', spec: `${w}m×${h}m ${thickness}`, qty: Math.ceil(area * 1.15), unit: '㎡', unitPrice: baseBoard === 'none' ? 120 : 95, category: '面板' });
             // 角码连接件
             items.push({ name: '角码连接件', spec: '40×40mm', qty: Math.ceil(perimeter / 0.6), unit: '个', unitPrice: 3, category: '配件' });
             // 膨胀螺丝
@@ -21636,13 +21846,26 @@ const doorHeaderConfig = {
         }
     },
     micro_perforated: {
-        name: '微孔吸音板门头',
-        desc: '微孔金属吸音板，现代简约，吸音降噪，适合商场/影院',
+        name: '微孔吸音板+吸音棉门头',
+        desc: '微孔金属吸音板+吸音棉+防潮膜+方管龙骨，吸音降噪，适合商场/影院',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
+            // 基层板（木工板/密度板）- 标准做法需要基层板
+            const baseBoard = options.baseBoard || 'wood_board'; // wood_board, density_board, none
+            if (baseBoard !== 'none') {
+                const baseBoardConfig = {
+                    wood_board: { name: '木工板基层', spec: '厚1.5cm', unitPrice: 60 },
+                    density_board: { name: '密度板基层', spec: '厚1.2cm', unitPrice: 55 }
+                };
+                const board = baseBoardConfig[baseBoard];
+                if (board) {
+                    items.push({ name: board.name, spec: `${w}m×${h}m ${board.spec}`, qty: Math.ceil(area * 1.1), unit: '㎡', unitPrice: board.unitPrice, category: '基层板' });
+                }
+            }
             // 微孔吸音板
-            items.push({ name: '微孔吸音板', spec: `${w}m×${h}m 厚1.2mm`, qty: Math.ceil(area * 1.15), unit: '㎡', unitPrice: 160, category: '面板' });
+            const thickness = baseBoard === 'none' ? '厚1.5mm' : '厚1.2mm'; // 无基层板时需要更厚的吸音板
+            items.push({ name: '微孔吸音板', spec: `${w}m×${h}m ${thickness}`, qty: Math.ceil(area * 1.15), unit: '㎡', unitPrice: baseBoard === 'none' ? 180 : 160, category: '面板' });
             // 吸音棉
             items.push({ name: '吸音棉', spec: '50mm厚岩棉', qty: Math.ceil(area * 1.05), unit: '㎡', unitPrice: 45, category: '辅料' });
             // 防潮膜
@@ -21660,8 +21883,8 @@ const doorHeaderConfig = {
         }
     },
     grating: {
-        name: '金属格栅门头',
-        desc: '金属格栅/百叶结构，工业风，通风透光，适合汽车4S店/展厅',
+        name: '金属格栅+方管框架门头',
+        desc: '金属格栅板+方管龙骨+横撑，工业风，通风透光，适合汽车4S店/展厅',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21684,8 +21907,8 @@ const doorHeaderConfig = {
         }
     },
     polycarbonate: {
-        name: 'PC耐力板门头',
-        desc: '聚碳酸酯耐力板，轻便抗冲击，透光性好，适合雨棚/采光罩',
+        name: 'PC耐力板+铝框门头',
+        desc: 'PC耐力板+铝合金边框+防水胶条，轻便抗冲击，透光性好，适合雨棚/采光罩',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21704,8 +21927,8 @@ const doorHeaderConfig = {
         }
     },
     woven_mesh: {
-        name: '金属编织网门头',
-        desc: '金属丝编织网，装饰性强，透光透气，适合酒店/餐厅/艺术空间',
+        name: '金属编织网+龙骨门头',
+        desc: '金属编织网+方管龙骨+收紧钢丝，装饰性强，透光透气，适合酒店/餐厅/艺术空间',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21728,8 +21951,8 @@ const doorHeaderConfig = {
         }
     },
     smart_display: {
-        name: '智能LED屏门头',
-        desc: 'LED智能显示屏，可播放视频/图文，适合零售/餐饮/银行',
+        name: 'LED显示屏+铝框门头',
+        desc: 'LED显示模组+铝框+控制卡+电源+散热风扇，可播放视频/图文，适合零售/餐饮/银行',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21757,8 +21980,8 @@ const doorHeaderConfig = {
         }
     },
     holographic: {
-        name: '全息幻彩门头',
-        desc: '全息投影/幻彩膜技术，科技感强，适合酒吧/KTV/夜店/电竞馆',
+        name: '全息幻彩膜+亚克力门头',
+        desc: '全息幻彩膜+透明亚克力+LED幻彩灯带，科技感强，适合酒吧/KTV/夜店',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21783,8 +22006,8 @@ const doorHeaderConfig = {
         }
     },
     flexible_led: {
-        name: '柔性LED屏门头',
-        desc: '可弯曲柔性LED屏，适配弧形/圆柱造型，适合商场中庭/展厅',
+        name: '柔性LED屏+弧形铝框门头',
+        desc: '柔性LED模组+弧形铝框+柔性排线+散热铝基板，可弯曲，适配弧形/圆柱造型',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21809,8 +22032,8 @@ const doorHeaderConfig = {
         }
     },
     autostereoscopic: {
-        name: '裸眼3D显示屏门头',
-        desc: '无需佩戴3D眼镜的立体显示效果，视觉冲击强，适合商场/景区/影院',
+        name: '裸眼3D屏+铝框门头',
+        desc: '裸眼3D显示面板+铝合金框架+3D处理服务器+散热系统，无需眼镜，视觉冲击强',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21836,8 +22059,8 @@ const doorHeaderConfig = {
         }
     },
     smart_glass: {
-        name: '调光玻璃门头',
-        desc: '电控调光玻璃，可切换透明/雾化状态，科技感强，适合展厅/办公室',
+        name: '调光玻璃+不锈钢框门头',
+        desc: 'PDLC调光玻璃+不锈钢框架+调光变压器+控制开关，可切换透明/雾化状态',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21859,8 +22082,8 @@ const doorHeaderConfig = {
         }
     },
     photovoltaic: {
-        name: '光伏发电门头',
-        desc: '太阳能发电+LED显示，绿色节能，适合银行/新能源店/市政项目',
+        name: '太阳能板+LED门头',
+        desc: '柔性太阳能薄膜+磷酸铁锂电池+MPPT控制器+LED灯条，绿色节能，自给供电',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21882,8 +22105,8 @@ const doorHeaderConfig = {
         }
     },
     fiber_optic: {
-        name: '光纤发光门头',
-        desc: '光纤传导光源，高端定制，星星点点的光效，适合珠宝店/高端会所',
+        name: '光纤+底板发光门头',
+        desc: '光纤发光面板+木工板底板+光纤光源器+方管龙骨，星星点点光效，适合珠宝店/高端会所',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21904,8 +22127,8 @@ const doorHeaderConfig = {
         }
     },
     metal_emboss: {
-        name: '金属浮雕门头',
-        desc: '3D金属浮雕效果，立体感强，工艺精致，适合博物馆/艺术馆/餐厅',
+        name: '金属浮雕+龙骨门头',
+        desc: '不锈钢浮雕面板+方管龙骨+氟碳漆涂层+激光切割工艺，立体感强，工艺精致',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21929,8 +22152,8 @@ const doorHeaderConfig = {
         }
     },
     mirror_finish: {
-        name: '镜面反光门头',
-        desc: '全镜面不锈钢/铝板，炫酷反光效果，适合美容院/理发店/潮牌店',
+        name: '镜面不锈钢板+龙骨门头',
+        desc: '镜面不锈钢板+防指纹涂层+方管龙骨+橡胶垫块，炫酷反光效果，适合美容院/理发店',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21953,8 +22176,8 @@ const doorHeaderConfig = {
         }
     },
     etched_metal: {
-        name: '腐蚀雕刻门头',
-        desc: '化学腐蚀/蚀刻纹理，精致细腻，适合餐厅/咖啡店/茶楼/中式店面',
+        name: '蚀刻金属板+底板门头',
+        desc: '蚀刻金属板+防水底板+化学腐蚀工艺+仿古上色，精致细腻，适合餐厅/咖啡店/中式店面',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -21981,8 +22204,8 @@ const doorHeaderConfig = {
         }
     },
     liquid_metal: {
-        name: '液态金属门头',
-        desc: '液态金属漆面，金属质感极强，高端定制，适合超高端会所/奢侈品店',
+        name: '液态金属漆+钢板门头',
+        desc: '镀锌钢板+液态金属漆+固色罩面+方管龙骨，金属质感极强，高端定制',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -22007,8 +22230,8 @@ const doorHeaderConfig = {
         }
     },
     terrazzo: {
-        name: '水磨石门头',
-        desc: '水磨石纹理，复古文艺，网红风格，适合甜品店/烘焙店/网红餐厅',
+        name: '水磨石+龙骨门头',
+        desc: '水磨石预制板+方管龙骨+瓷砖胶+密封固化剂，复古文艺，网红风格',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -22031,8 +22254,8 @@ const doorHeaderConfig = {
         }
     },
     cement_fiber: {
-        name: '水泥纤维板门头',
-        desc: '清水混凝土风格，工业风/极简风，适合咖啡店/书店/文创店',
+        name: '水泥纤维板+龙骨门头',
+        desc: '水泥纤维板+混凝土保护剂+方管龙骨+防水密封，清水混凝土风格，工业风/极简风',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -22055,8 +22278,8 @@ const doorHeaderConfig = {
         }
     },
     living_moss: {
-        name: '立体绿植门头',
-        desc: '真实绿植或仿真绿植墙，自然清新，适合奶茶店/果汁店/花店/美妆店',
+        name: '绿植墙+铝框门头',
+        desc: '真绿植/仿真绿植墙+铝合金框架+固定网+补光灯，自然清新，适合奶茶店/花店',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -22081,8 +22304,8 @@ const doorHeaderConfig = {
         }
     },
     particle_effect: {
-        name: '粒子屏门头',
-        desc: 'LED粒子矩阵，可编程显示，可互动，适合科技馆/展览/商业综合体',
+        name: 'LED粒子屏+铝框门头',
+        desc: 'LED粒子模块+铝框+控制卡+电源，可编程显示，可互动，适合科技馆/展览',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -22107,8 +22330,8 @@ const doorHeaderConfig = {
         }
     },
     magnetic: {
-        name: '磁吸拼装门头',
-        desc: '磁吸模块化设计，可DIY拼装/更换，适合快闪店/便利店/改装店',
+        name: '磁吸模块+铝框门头',
+        desc: '磁吸面板模块+磁性底框+方管龙骨+钕铁硼磁铁，可DIY拼装/更换，适合快闪店',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -22131,8 +22354,8 @@ const doorHeaderConfig = {
         }
     },
     color_changing: {
-        name: '变色龙门头',
-        desc: '角度不同颜色不同，幻彩效果，适合潮牌店/眼镜店/潮玩店',
+        name: '幻彩变色板+龙骨门头',
+        desc: '幻彩变色板+防刮涂层+方管龙骨+隐形螺丝，角度不同颜色不同，适合潮牌店/眼镜店',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -22156,8 +22379,8 @@ const doorHeaderConfig = {
         }
     },
     breathing_light: {
-        name: '呼吸灯门头',
-        desc: 'LED渐变呼吸灯效果，柔和浪漫，适合酒吧/咖啡馆/清吧/音乐餐厅',
+        name: '呼吸灯+穿孔亚克力门头',
+        desc: '穿孔亚克力板+LED呼吸灯带+控制器+方管龙骨，渐变呼吸灯效果，柔和浪漫',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -22183,8 +22406,8 @@ const doorHeaderConfig = {
         }
     },
     interactive: {
-        name: '体感互动门头',
-        desc: '感应手势/人体动作互动，科技感强，适合展厅/零售店/展览',
+        name: '互动屏+铝框门头',
+        desc: '互动显示面板+体感传感器+控制主机+铝框，感应手势/人体动作互动，科技感强',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -22211,8 +22434,8 @@ const doorHeaderConfig = {
         }
     },
     voice_control: {
-        name: '语音控制门头',
-        desc: '语音识别控制显示/灯光，智能交互，适合银行/政务大厅/医院',
+        name: '语音识别+显示面板门头',
+        desc: '智能显示面板+语音识别模块+中控主机+铝框，语音控制显示/灯光，智能交互',
         baseMaterials: function(w, h, options) {
             const area = w * h;
             const items = [];
@@ -27070,15 +27293,55 @@ function applyDoorHeaderToQuote() {
     }
 
     // 检查报价单中是否已有项目，提示用户确认
-    const existingItems = appData.currentQuote.items.filter(item => 
+    const existingItems = appData.currentQuote.items.filter(item =>
         !item.id || !String(item.id).startsWith('temp_')
     );
     if (existingItems.length > 0) {
-        if (!confirm(`报价单中已有 ${existingItems.length} 个项目。\n\n点击"确定"将门头用料添加到现有项目之后。\n点击"取消"可先清空报价单再添加。`)) {
-            // 用户点击取消，先清空报价单
-            clearCurrentQuoteItems();
-        }
+        // 显示自定义选择对话框
+        showDoorHeaderInsertDialog(existingItems.length, result);
+        return;
     }
+
+    // 没有现有项目，直接添加
+    doApplyDoorHeaderToQuote(result);
+}
+
+// 显示门头插入选择对话框
+function showDoorHeaderInsertDialog(existingCount, result) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:400px;">
+            <div class="modal-header">
+                <h3 class="modal-title">📋 插入报价单</h3>
+                <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+            </div>
+            <div class="modal-body" style="text-align:center;padding:1.5rem;">
+                <div style="font-size:1rem;color:#374151;margin-bottom:1rem;">报价单中已有 <strong style="color:#b45309;">${existingCount}</strong> 个项目</div>
+                <div style="font-size:0.875rem;color:#6b7280;">请选择插入方式：</div>
+            </div>
+            <div class="modal-footer" style="justify-content:center;gap:0.75rem;">
+                <button class="btn btn-primary" onclick="doApplyDoorHeaderToQuote(doorHeaderLastResult);this.closest('.modal').remove();" style="min-width:120px;">
+                    ➕ 不清空添加
+                </button>
+                <button class="btn btn-outline" onclick="appData.currentQuote.items=[];renderQuoteItems();calculateTotals();doApplyDoorHeaderToQuote(doorHeaderLastResult);this.closest('.modal').remove();showToast('已清空报价单并添加门头用料', 'success');" style="min-width:120px;color:#dc2626;border-color:#dc2626;">
+                    🗑️ 清空后添加
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+// 执行门头报价插入操作
+function doApplyDoorHeaderToQuote(result) {
 
     // 获取税费信息
     const safeTaxRate = typeof result.taxRate === 'number' ? result.taxRate : 0;
