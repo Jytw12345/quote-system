@@ -16783,7 +16783,18 @@ async function exportPDF(showSaveAs){
                     
                     // 如果所有方案都失败，显示详细提示
                     if (!success) {
-                        alert('PDF导出成功！\n文件名：' + pdfFileName + '\n\n文件已保存到系统默认下载文件夹\n\n你可以通过以下方式找到文件：\n1. 打开文件资源管理器\n2. 在左侧导航栏点击"下载"\n3. 查找文件名包含 "' + pdfFileName + '" 的文件');
+                        var findGuide = '';
+                        if (isPhoneBrowser()) {
+                            // 手机端提示
+                            findGuide = '你可以通过以下方式找到文件：\n1. 打开手机"文件管理"或"文件"应用\n2. 进入"下载"或"Download"文件夹\n3. 查找文件名包含 "' + pdfFileName + '" 的文件\n\n提示：部分手机需要在"内部存储"→"Download"文件夹查找';
+                        } else if (navigator.userAgent.indexOf('Windows') !== -1) {
+                            // Windows端提示
+                            findGuide = '你可以通过以下方式找到文件：\n1. 打开文件资源管理器\n2. 在左侧导航栏点击"下载"\n3. 查找文件名包含 "' + pdfFileName + '" 的文件';
+                        } else {
+                            // 其他平台提示
+                            findGuide = '文件已保存到系统下载文件夹，请在文件管理器中查找文件名包含 "' + pdfFileName + '" 的文件';
+                        }
+                        alert('PDF导出成功！\n文件名：' + pdfFileName + '\n\n文件已保存到系统默认下载文件夹\n\n' + findGuide);
                     }
                 }, 100);
             }
@@ -17045,7 +17056,18 @@ async function exportJPG(showSaveAs){
                     
                     // 如果所有方案都失败，显示详细提示
                     if (!success) {
-                        alert('JPG导出成功！\n文件名：' + fileName + '\n\n文件已保存到系统默认下载文件夹\n\n你可以通过以下方式找到文件：\n1. 打开文件资源管理器\n2. 在左侧导航栏点击"下载"\n3. 查找文件名包含 "' + fileName + '" 的文件');
+                        var findGuide = '';
+                        if (isPhoneBrowser()) {
+                            // 手机端提示
+                            findGuide = '你可以通过以下方式找到文件：\n1. 打开手机"文件管理"或"文件"应用\n2. 进入"下载"或"Download"文件夹\n3. 查找文件名包含 "' + fileName + '" 的文件\n\n提示：部分手机需要在"内部存储"→"Download"文件夹查找';
+                        } else if (navigator.userAgent.indexOf('Windows') !== -1) {
+                            // Windows端提示
+                            findGuide = '你可以通过以下方式找到文件：\n1. 打开文件资源管理器\n2. 在左侧导航栏点击"下载"\n3. 查找文件名包含 "' + fileName + '" 的文件';
+                        } else {
+                            // 其他平台提示
+                            findGuide = '文件已保存到系统下载文件夹，请在文件管理器中查找文件名包含 "' + fileName + '" 的文件';
+                        }
+                        alert('JPG导出成功！\n文件名：' + fileName + '\n\n文件已保存到系统默认下载文件夹\n\n' + findGuide);
                     }
                 }, 100);
             }
