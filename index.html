@@ -16701,16 +16701,55 @@ async function exportPDF(showSaveAs){
                 var pdfBlob = new Blob([pdfData], { type: 'application/pdf' });
                 var pdfUrl = URL.createObjectURL(pdfBlob);
                 
-                var link = document.createElement('a');
-                link.href = pdfUrl;
-                link.download = pdfFileName;
-                link.target = '_blank';
-                
-                // 触发点击
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(pdfUrl);
+                // 尝试使用 Web Share API（支持的设备可以选择保存位置）
+                if (navigator.share && navigator.canShare && isPhoneBrowser()) {
+                    try {
+                        await navigator.share({
+                            title: pdfFileName,
+                            text: '报价单',
+                            files: [new File([pdfBlob], pdfFileName, { type: 'application/pdf' })]
+                        });
+                        showToast('文件已分享/保存', 'success');
+                    } catch (err) {
+                        // 用户取消或不支持，回退到传统下载
+                        console.log('Share API failed or canceled:', err);
+                        // 继续传统下载
+                        var link = document.createElement('a');
+                        link.href = pdfUrl;
+                        link.download = pdfFileName;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        document.body.appendChild(link);
+                        link.click();
+                        setTimeout(function() {
+                            window.open(pdfUrl, '_blank');
+                        }, 100);
+                        setTimeout(function() {
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(pdfUrl);
+                        }, 1000);
+                    }
+                } else {
+                    // 不支持 Web Share，使用传统下载
+                    var link = document.createElement('a');
+                    link.href = pdfUrl;
+                    link.download = pdfFileName;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    // 对于Android WebView，尝试用window.open触发系统下载
+                    setTimeout(function() {
+                        window.open(pdfUrl, '_blank');
+                    }, 100);
+                    
+                    setTimeout(function() {
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(pdfUrl);
+                    }, 1000);
+                }
                 
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 pdfExportLock = false;
@@ -16993,15 +17032,54 @@ async function exportJPG(showSaveAs){
                 var jpgBlob = new Blob([ab], { type: mimeString });
                 var jpgUrl = URL.createObjectURL(jpgBlob);
                 
-                var link = document.createElement('a');
-                link.href = jpgUrl;
-                link.download = fileName;
-                link.target = '_blank';
-                
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(jpgUrl);
+                // 尝试使用 Web Share API（支持的设备可以选择保存位置）
+                if (navigator.share && navigator.canShare && isPhoneBrowser()) {
+                    try {
+                        await navigator.share({
+                            title: fileName,
+                            text: '报价单图片',
+                            files: [new File([jpgBlob], fileName, { type: mimeString })]
+                        });
+                        showToast('文件已分享/保存', 'success');
+                    } catch (err) {
+                        // 用户取消或不支持，回退到传统下载
+                        console.log('Share API failed or canceled:', err);
+                        var link = document.createElement('a');
+                        link.href = jpgUrl;
+                        link.download = fileName;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        document.body.appendChild(link);
+                        link.click();
+                        setTimeout(function() {
+                            window.open(jpgUrl, '_blank');
+                        }, 100);
+                        setTimeout(function() {
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(jpgUrl);
+                        }, 1000);
+                    }
+                } else {
+                    // 不支持 Web Share，使用传统下载
+                    var link = document.createElement('a');
+                    link.href = jpgUrl;
+                    link.download = fileName;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    // 对于Android WebView，尝试用window.open触发系统下载
+                    setTimeout(function() {
+                        window.open(jpgUrl, '_blank');
+                    }, 100);
+                    
+                    setTimeout(function() {
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(jpgUrl);
+                    }, 1000);
+                }
                 
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 jpgExportLock = false;
