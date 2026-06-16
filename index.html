@@ -16266,50 +16266,58 @@ async function exportPDF(showSaveAs){
     if (pdfExportLock) return;
     pdfExportLock = true;
     
-    // 检测是否是PakePlus桌面应用（优先检测）
-    var isPakePlus = !!(window.Pake && window.Pake.openDownloadFolder);
+    // 检测运行环境
+    var isTauri = window.__TAURI__ && window.__TAURI__.dialog && window.__TAURI__.fs;
+    var isPakePlus = window.Pake && window.Pake.openDownloadFolder;
+    var canUseShowSaveFilePicker = typeof window.showSaveFilePicker === 'function';
+    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|MiuiBrowser|WeChat|MicroMessenger/i.test(navigator.userAgent);
     
-    // 检测是否是移动端浏览器（移动端通常不支持或有问题）
-    // PakePlus桌面应用即使User Agent不同，也应该被视为桌面环境
-    var isMobile = isPakePlus ? false : /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|MiuiBrowser|WeChat|MicroMessenger/i.test(navigator.userAgent);
+    console.log('=== PDF导出环境检测 ===');
+    console.log('isTauri:', isTauri, 'isPakePlus:', isPakePlus, 'canUseShowSaveFilePicker:', canUseShowSaveFilePicker, 'isMobile:', isMobile);
     
-    // 检测 showSaveFilePicker 是否真正可用（不仅检查存在性，还要能正常工作）
-    var canUseShowSaveFilePicker = false;
-    if (showSaveAs && window.showSaveFilePicker) {
-        try {
-            // 简单测试：创建文件句柄选项来验证API是否可用
-            var testOptions = {
-                suggestedName: 'test.txt',
-                types: [{
-                    description: 'Test',
-                    accept: {'text/plain': ['.txt']}
-                }]
-            };
-            // 如果浏览器实现了这个API但不支持某些选项，可能会同步抛出错误
-            // 我们用try-catch包裹，但不真正调用
-            canUseShowSaveFilePicker = typeof window.showSaveFilePicker === 'function';
-        } catch (e) {
-            canUseShowSaveFilePicker = false;
-        }
-    }
-    
-    // PakePlus桌面应用强制启用 showSaveFilePicker
-    if (isPakePlus) {
-        canUseShowSaveFilePicker = true;
-    }
-    
-    // 移动端或不支持 showSaveFilePicker 的环境直接跳过，使用传统下载
-    if (isMobile || !canUseShowSaveFilePicker) {
+    // 移动端直接使用传统下载
+    if (isMobile) {
         pdfUseFilePicker = false;
     }
     
-    // 在用户点击的直接回调中立即尝试 showSaveFilePicker
-    // 这必须在第一次调用时就执行，不能在 setTimeout 之后
-    // 只有从未尝试过（pdfUseFilePicker === null）才尝试
-    if (showSaveAs && canUseShowSaveFilePicker && pdfUseFilePicker === null && !isMobile) {
+    // Tauri/PakePlus桌面应用：使用原生保存对话框
+    if (showSaveAs && isTauri && pdfUseFilePicker === null && !isMobile) {
         var pdfFileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.pdf';
         try {
-            // 添加超时机制，防止某些浏览器卡住
+            console.log('使用Tauri原生保存对话框...');
+            // 使用 Tauri 的保存对话框
+            var savePath = await window.__TAURI__.dialog.save({
+                defaultPath: pdfFileName,
+                filters: [{
+                    name: 'PDF文件',
+                    extensions: ['pdf']
+                }]
+            });
+            
+            if (savePath) {
+                // 用户选择了保存路径，标记为使用Tauri
+                pdfUseFilePicker = 'tauri';
+                pdfFileHandle = savePath; // 存储路径
+                console.log('用户选择保存路径:', savePath);
+            } else {
+                // 用户取消了保存
+                pdfExportLock = false;
+                pdfFileHandle = null;
+                pdfUseFilePicker = null;
+                console.log('用户取消保存');
+                return;
+            }
+        } catch (err) {
+            console.warn('Tauri dialog.save failed:', err);
+            pdfUseFilePicker = false;
+        }
+    }
+    
+    // Web浏览器：使用 showSaveFilePicker
+    if (showSaveAs && canUseShowSaveFilePicker && pdfUseFilePicker === null && !isMobile && !isTauri) {
+        var pdfFileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.pdf';
+        try {
+            console.log('使用Web showSaveFilePicker...');
             var timeoutPromise = new Promise(function(_, reject) {
                 setTimeout(function() { reject(new Error('showSaveFilePicker timeout')); }, 3000);
             });
@@ -16327,14 +16335,13 @@ async function exportPDF(showSaveAs){
             pdfUseFilePicker = true;
         } catch (err) {
             if (err.name === 'AbortError') {
-                // 用户取消了保存
                 pdfExportLock = false;
                 pdfFileHandle = null;
                 pdfUseFilePicker = null;
                 return;
             }
-            console.warn('showSaveFilePicker failed, using fallback:', err);
-            pdfUseFilePicker = false; // 标记为失败，后续不再尝试
+            console.warn('showSaveFilePicker failed:', err);
+            pdfUseFilePicker = false;
         }
     }
     
@@ -16688,8 +16695,28 @@ async function exportPDF(showSaveAs){
             var pdfBuffer = pdf.output('arraybuffer');
             var pdfData = new Uint8Array(pdfBuffer);
             
-            if (pdfUseFilePicker && pdfFileHandle) {
-                // 使用 File System Access API 写入文件
+            // Tauri/PakePlus：使用原生文件写入
+            if (pdfUseFilePicker === 'tauri' && pdfFileHandle) {
+                var savedPath = pdfFileHandle; // 先保存路径用于显示
+                try {
+                    console.log('使用Tauri写入文件:', savedPath);
+                    await window.__TAURI__.fs.writeBinaryFile(savedPath, pdfData);
+                    if(clone.parentNode) clone.parentNode.removeChild(clone);
+                    pdfExportLock = false;
+                    pdfFileHandle = null;
+                    pdfUseFilePicker = null;
+                    showToast('PDF已保存到: ' + savedPath, 'success');
+                } catch (err) {
+                    console.error('Tauri fs.writeBinaryFile error:', err);
+                    pdf.save(pdfFileName);
+                    if(clone.parentNode) clone.parentNode.removeChild(clone);
+                    pdfExportLock = false;
+                    pdfFileHandle = null;
+                    pdfUseFilePicker = null;
+                    showToast('使用传统方式下载PDF', 'info');
+                }
+            } else if (pdfUseFilePicker === true && pdfFileHandle) {
+                // Web浏览器：使用 File System Access API 写入文件
                 try {
                     var writable = await pdfFileHandle.createWritable();
                     await writable.write(pdfData);
@@ -16822,49 +16849,55 @@ async function exportJPG(showSaveAs){
     if (jpgExportLock) return;
     jpgExportLock = true;
     
-    // 检测是否是PakePlus桌面应用（优先检测）
-    var isPakePlus = !!(window.Pake && window.Pake.openDownloadFolder);
+    // 检测运行环境
+    var isTauri = window.__TAURI__ && window.__TAURI__.dialog && window.__TAURI__.fs;
+    var isPakePlus = window.Pake && window.Pake.openDownloadFolder;
+    var canUseShowSaveFilePicker = typeof window.showSaveFilePicker === 'function';
+    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|MiuiBrowser|WeChat|MicroMessenger/i.test(navigator.userAgent);
     
-    // 检测是否是移动端浏览器（移动端通常不支持或有问题）
-    // PakePlus桌面应用即使User Agent不同，也应该被视为桌面环境
-    var isMobile = isPakePlus ? false : /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|MiuiBrowser|WeChat|MicroMessenger/i.test(navigator.userAgent);
+    console.log('=== JPG导出环境检测 ===');
+    console.log('isTauri:', isTauri, 'isPakePlus:', isPakePlus, 'canUseShowSaveFilePicker:', canUseShowSaveFilePicker, 'isMobile:', isMobile);
     
-    // 检测 showSaveFilePicker 是否真正可用（不仅检查存在性，还要能正常工作）
-    var canUseShowSaveFilePicker = false;
-    if (showSaveAs && window.showSaveFilePicker) {
-        try {
-            // 简单测试：创建文件句柄选项来验证API是否可用
-            var testOptions = {
-                suggestedName: 'test.txt',
-                types: [{
-                    description: 'Test',
-                    accept: {'text/plain': ['.txt']}
-                }]
-            };
-            // 如果浏览器实现了这个API但不支持某些选项，可能会同步抛出错误
-            // 我们用try-catch包裹，但不真正调用
-            canUseShowSaveFilePicker = typeof window.showSaveFilePicker === 'function';
-        } catch (e) {
-            canUseShowSaveFilePicker = false;
-        }
-    }
-    
-    // PakePlus桌面应用强制启用 showSaveFilePicker
-    if (isPakePlus) {
-        canUseShowSaveFilePicker = true;
-    }
-    
-    // 移动端或不支持 showSaveFilePicker 的环境直接跳过，使用传统下载
-    if (isMobile || !canUseShowSaveFilePicker) {
+    // 移动端直接使用传统下载
+    if (isMobile) {
         jpgUseFilePicker = false;
     }
     
-    // 在用户点击的直接回调中立即尝试 showSaveFilePicker
-    // 只有从未尝试过（jpgUseFilePicker === null）才尝试
-    if (showSaveAs && canUseShowSaveFilePicker && jpgUseFilePicker === null && !isMobile) {
+    // Tauri/PakePlus桌面应用：使用原生保存对话框
+    if (showSaveAs && isTauri && jpgUseFilePicker === null && !isMobile) {
         var jpgFileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.jpg';
         try {
-            // 添加超时机制，防止某些浏览器卡住
+            console.log('使用Tauri原生保存对话框...');
+            var savePath = await window.__TAURI__.dialog.save({
+                defaultPath: jpgFileName,
+                filters: [{
+                    name: 'JPG图片',
+                    extensions: ['jpg', 'jpeg']
+                }]
+            });
+            
+            if (savePath) {
+                jpgUseFilePicker = 'tauri';
+                jpgFileHandle = savePath;
+                console.log('用户选择保存路径:', savePath);
+            } else {
+                jpgExportLock = false;
+                jpgFileHandle = null;
+                jpgUseFilePicker = null;
+                console.log('用户取消保存');
+                return;
+            }
+        } catch (err) {
+            console.warn('Tauri dialog.save failed:', err);
+            jpgUseFilePicker = false;
+        }
+    }
+    
+    // Web浏览器：使用 showSaveFilePicker
+    if (showSaveAs && canUseShowSaveFilePicker && jpgUseFilePicker === null && !isMobile && !isTauri) {
+        var jpgFileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.jpg';
+        try {
+            console.log('使用Web showSaveFilePicker...');
             var timeoutPromise = new Promise(function(_, reject) {
                 setTimeout(function() { reject(new Error('showSaveFilePicker timeout')); }, 3000);
             });
@@ -16882,14 +16915,13 @@ async function exportJPG(showSaveAs){
             jpgUseFilePicker = true;
         } catch (err) {
             if (err.name === 'AbortError') {
-                // 用户取消了保存
                 jpgExportLock = false;
                 jpgFileHandle = null;
                 jpgUseFilePicker = null;
                 return;
             }
-            console.warn('showSaveFilePicker failed, using fallback:', err);
-            jpgUseFilePicker = false; // 标记为失败，后续不再尝试
+            console.warn('showSaveFilePicker failed:', err);
+            jpgUseFilePicker = false;
         }
     }
     
@@ -16968,16 +17000,40 @@ async function exportJPG(showSaveAs){
             var imgData = canvas.toDataURL('image/jpeg', 0.92);
             var fileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.jpg';
             
-            if (jpgUseFilePicker && jpgFileHandle) {
-                // 使用 File System Access API 写入文件
-                // 将base64转换为Blob
-                var byteString = atob(imgData.split(',')[1]);
-                var mimeString = imgData.split(',')[0].split(':')[1].split(';')[0];
-                var ab = new ArrayBuffer(byteString.length);
-                var ia = new Uint8Array(ab);
-                for (var i = 0; i < byteString.length; i++) {
-                    ia[i] = byteString.charCodeAt(i);
+            // 将base64转换为Uint8Array（用于Tauri和Web API）
+            var byteString = atob(imgData.split(',')[1]);
+            var ab = new ArrayBuffer(byteString.length);
+            var ia = new Uint8Array(ab);
+            for (var i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            
+            // Tauri/PakePlus：使用原生文件写入
+            if (jpgUseFilePicker === 'tauri' && jpgFileHandle) {
+                var savedPath = jpgFileHandle;
+                try {
+                    console.log('使用Tauri写入JPG文件:', savedPath);
+                    await window.__TAURI__.fs.writeBinaryFile(savedPath, ia);
+                    if(clone.parentNode) clone.parentNode.removeChild(clone);
+                    jpgExportLock = false;
+                    jpgFileHandle = null;
+                    jpgUseFilePicker = null;
+                    showToast('JPG已保存到: ' + savedPath, 'success');
+                } catch (err) {
+                    console.error('Tauri fs.writeBinaryFile error:', err);
+                    var link = document.createElement('a');
+                    link.download = fileName;
+                    link.href = imgData;
+                    link.click();
+                    if(clone.parentNode) clone.parentNode.removeChild(clone);
+                    jpgExportLock = false;
+                    jpgFileHandle = null;
+                    jpgUseFilePicker = null;
+                    showToast('使用传统方式下载JPG', 'info');
                 }
+            } else if (jpgUseFilePicker === true && jpgFileHandle) {
+                // Web浏览器：使用 File System Access API 写入文件
+                var mimeString = imgData.split(',')[0].split(':')[1].split(';')[0];
                 var blob = new Blob([ab], { type: mimeString });
                 
                 try {
@@ -16987,11 +17043,10 @@ async function exportJPG(showSaveAs){
                     if(clone.parentNode) clone.parentNode.removeChild(clone);
                     jpgExportLock = false;
                     jpgFileHandle = null;
-                    jpgUseFilePicker = null; // 重置为null，下次可以重新尝试
+                    jpgUseFilePicker = null;
                     showToast('JPG已保存到指定位置', 'success');
                 } catch (err) {
                     console.error('File write error:', err);
-                    // 写入失败，使用传统下载
                     var link = document.createElement('a');
                     link.download = fileName;
                     link.href = imgData;
@@ -16999,7 +17054,7 @@ async function exportJPG(showSaveAs){
                     if(clone.parentNode) clone.parentNode.removeChild(clone);
                     jpgExportLock = false;
                     jpgFileHandle = null;
-                    jpgUseFilePicker = null; // 重置为null，下次可以重新尝试
+                    jpgUseFilePicker = null;
                     showToast('使用传统方式下载JPG', 'info');
                 }
             } else {
@@ -17011,7 +17066,7 @@ async function exportJPG(showSaveAs){
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 jpgExportLock = false;
                 jpgFileHandle = null;
-                jpgUseFilePicker = null; // 重置为null，下次可以重新尝试
+                jpgUseFilePicker = null;
                 
                 // 显示导出成功提示并提供打开文件夹选项
                 setTimeout(function() {
@@ -17357,30 +17412,45 @@ async function exportXLS(){
         sheetStyles: true  // 启用工作表样式
     };
     
-    // 检测是否是PakePlus桌面应用（优先检测）
-    var isPakePlus = !!(window.Pake && window.Pake.openDownloadFolder);
+    // 检测运行环境
+    var isTauri = window.__TAURI__ && window.__TAURI__.dialog && window.__TAURI__.fs;
+    var isPakePlus = window.Pake && window.Pake.openDownloadFolder;
+    var canUseShowSaveFilePicker = typeof window.showSaveFilePicker === 'function';
+    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|MiuiBrowser|WeChat|MicroMessenger/i.test(navigator.userAgent);
     
-    // 检测是否是移动端浏览器（移动端通常不支持或有问题）
-    // PakePlus桌面应用即使User Agent不同，也应该被视为桌面环境
-    var isMobile = isPakePlus ? false : /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|MiuiBrowser|WeChat|MicroMessenger/i.test(navigator.userAgent);
+    console.log('=== XLS导出环境检测 ===');
+    console.log('isTauri:', isTauri, 'isPakePlus:', isPakePlus, 'canUseShowSaveFilePicker:', canUseShowSaveFilePicker, 'isMobile:', isMobile);
     
-    // 检测 showSaveFilePicker 是否真正可用
-    var canUseShowSaveFilePicker = false;
-    if (window.showSaveFilePicker) {
+    // Tauri/PakePlus桌面应用：使用原生保存对话框
+    if (isTauri && !isMobile) {
         try {
-            canUseShowSaveFilePicker = typeof window.showSaveFilePicker === 'function';
-        } catch (e) {
-            canUseShowSaveFilePicker = false;
+            console.log('使用Tauri原生保存对话框...');
+            var savePath = await window.__TAURI__.dialog.save({
+                defaultPath: filename,
+                filters: [{
+                    name: 'Excel文件',
+                    extensions: ['xlsx']
+                }]
+            });
+            
+            if (savePath) {
+                console.log('用户选择保存路径:', savePath);
+                var xlsData = XLSX.write(wb, writeOptions);
+                await window.__TAURI__.fs.writeBinaryFile(savePath, xlsData);
+                showToast('Excel已保存到: ' + savePath, 'success');
+                return;
+            } else {
+                console.log('用户取消保存');
+                return;
+            }
+        } catch (err) {
+            console.warn('Tauri dialog.save failed:', err);
+            // 继续使用传统下载方式
         }
     }
     
-    // PakePlus桌面应用强制启用 showSaveFilePicker
-    if (isPakePlus) {
-        canUseShowSaveFilePicker = true;
-    }
-    
-    // 尝试使用 File System Access API（仅桌面端且API可用）
-    if (canUseShowSaveFilePicker && !isMobile) {
+    // Web浏览器：尝试使用 File System Access API
+    if (canUseShowSaveFilePicker && !isMobile && !isTauri) {
         try {
             var xlsData = XLSX.write(wb, writeOptions);
             var blob = new Blob([xlsData], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
