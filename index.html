@@ -12869,30 +12869,76 @@ function clearCurrentQuote(){
     // 隐藏状态编辑面板
     hideEditingStatusPanel();
 
-    if(!appData.currentQuote || !appData.currentQuote.items || !appData.currentQuote.items.length || confirm('确定要清空当前报价所有项目吗？')){
-        // BUG修复：导入后清空不仅要清空items，还要清空表单
-        if(appData.currentQuote) appData.currentQuote.items = [];
-        document.getElementById('quoteClientName').value = '';
-        document.getElementById('quoteClientContactPerson').value = '';
-        document.getElementById('quoteClientPhone').value = '';
-        document.getElementById('quoteClientEmail').value = '';
-        document.getElementById('quoteClientAddress').value = '';
-        document.getElementById('quoteTitle').value = '';
-        document.getElementById('quoteNumber').value = '';
-        generateQuoteNumber();
-        setPaymentMethod('');
-        renderQuoteItems();
-        calculateTotals();
-        document.getElementById('quotePreview').classList.add('hidden');
-        clearDraftQuote();
-        
-        // 恢复默认设置
-        document.getElementById('taxRate').value = appData.systemSettings.defaultTaxRate;
-        document.getElementById('discountRate').value = appData.systemSettings.defaultDiscountRate;
-        const pmRadio = document.querySelector(`input[name="priceMode"][value="${appData.systemSettings.defaultPriceMode}"]`);
-        if (pmRadio) pmRadio.checked = true;
-        document.getElementById('showNotesCheckbox').checked = true;
+    // 检查是否有项目需要清空
+    if(!appData.currentQuote || !appData.currentQuote.items || !appData.currentQuote.items.length){
+        // 没有项目，直接清空表单
+        doClearQuoteForm();
+        return;
     }
+    
+    // 有项目，显示确认对话框（Electron兼容）
+    showClearQuoteConfirmDialog();
+}
+
+// 显示清空报价单确认对话框
+function showClearQuoteConfirmDialog() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.id = 'clearQuoteConfirmModal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:400px;">
+            <div class="modal-header">
+                <h3 class="modal-title">⚠️ 确认操作</h3>
+                <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+            </div>
+            <div class="modal-body" style="text-align:center;padding:1.5rem;">
+                <div style="font-size:1rem;color:#374151;">确定要清空当前报价所有项目吗？</div>
+            </div>
+            <div class="modal-footer" style="justify-content:center;gap:0.75rem;">
+                <button class="btn btn-primary" onclick="doClearQuoteItems();this.closest('.modal').remove();">确定</button>
+                <button class="btn btn-outline" onclick="this.closest('.modal').remove();">取消</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+// 执行清空报价单项目
+function doClearQuoteItems() {
+    if(appData.currentQuote) appData.currentQuote.items = [];
+    doClearQuoteForm();
+    showToast('报价单已清空', 'success');
+}
+
+// 执行清空报价单表单
+function doClearQuoteForm() {
+    document.getElementById('quoteClientName').value = '';
+    document.getElementById('quoteClientContactPerson').value = '';
+    document.getElementById('quoteClientPhone').value = '';
+    document.getElementById('quoteClientEmail').value = '';
+    document.getElementById('quoteClientAddress').value = '';
+    document.getElementById('quoteTitle').value = '';
+    document.getElementById('quoteNumber').value = '';
+    generateQuoteNumber();
+    setPaymentMethod('');
+    renderQuoteItems();
+    calculateTotals();
+    document.getElementById('quotePreview').classList.add('hidden');
+    clearDraftQuote();
+    
+    // 恢复默认设置
+    document.getElementById('taxRate').value = appData.systemSettings.defaultTaxRate;
+    document.getElementById('discountRate').value = appData.systemSettings.defaultDiscountRate;
+    const pmRadio = document.querySelector(`input[name="priceMode"][value="${appData.systemSettings.defaultPriceMode}"]`);
+    if (pmRadio) pmRadio.checked = true;
+    document.getElementById('showNotesCheckbox').checked = true;
 }
 
 // 从报价历史生成合同
@@ -14626,12 +14672,20 @@ let mouseOffsetY = 0;
 
 function handleDragStart(idx, event) {
     draggedItemIndex = idx;
+    // 在 Electron 环境中禁用 HTML5 拖放，避免显示禁止符号
+    // 检测是否在 Electron 环境中
+    if (typeof process !== 'undefined' && process.versions && process.versions.electron) {
+        event.preventDefault();
+        // 使用鼠标拖动代替
+        handleMouseDown(idx, event);
+        return;
+    }
     event.dataTransfer.effectAllowed = 'move';
     event.currentTarget.classList.add('dragging');
 }
 function handleDragOver(event, idx) {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    // 不设置 dropEffect，避免在 Electron 中显示禁止符号
     document.querySelectorAll('.quote-item-row[data-index]').forEach(r=>r.classList.remove('drag-over'));
     if (idx !== draggedItemIndex) event.currentTarget.closest('.quote-item-row').classList.add('drag-over');
 }
@@ -14659,6 +14713,10 @@ function handleDragEnd() {
 // 鼠标拖动开始（Electron兼容）
 function handleMouseDown(idx, event) {
     if (event.button !== 0) return;
+    
+    // 阻止 HTML5 拖放触发，避免显示禁止符号
+    event.preventDefault();
+    event.stopPropagation();
     
     mouseDragging = idx;
     const targetRow = event.currentTarget.closest('.quote-item-row');
