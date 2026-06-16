@@ -16311,6 +16311,7 @@ async function exportPDF(showSaveAs){
                 timeoutPromise
             ]);
             pdfUseFilePicker = true;
+            showSaveFilePickerFailed = false; // 成功调用，重置失败标记
         } catch (err) {
             if (err.name === 'AbortError') {
                 pdfExportLock = false;
@@ -16845,6 +16846,7 @@ async function exportJPG(showSaveAs){
                 timeoutPromise
             ]);
             jpgUseFilePicker = true;
+            showSaveFilePickerFailed = false; // 成功调用，重置失败标记
         } catch (err) {
             if (err.name === 'AbortError') {
                 jpgExportLock = false;
