@@ -16263,12 +16263,22 @@ var pdfFileHandle = null;
 var pdfUseFilePicker = null; // null=未尝试, true=成功, false=失败
 var showSaveFilePickerFailed = false; // 一旦showSaveFilePicker失败，整个会话不再重试
 
-// 检测是否为手机（精确匹配，不会误判PakePlus EXE等桌面WebView）
-// PakePlus EXE的UA是Windows，不含Android/iPhone等关键词，不会被匹配
+// 检测是否为手机浏览器
+// 关键：PakePlus小窗口模式可能设置手机UA，但运行在桌面OS上
+// 所以必须同时检测：UA像手机 AND 不是桌面OS → 才是真正的手机
 function isPhoneBrowser() {
     var ua = navigator.userAgent;
-    // Android手机UA包含"Mobile"，平板不含；iPhone/iPod明确是手机
-    // 微信/QQ内置浏览器也按手机处理
+    var platform = navigator.platform || '';
+    
+    // 先检测是否为桌面操作系统（Windows/Mac/Linux）
+    // PakePlus EXE即使小窗口模式UA像手机，platform仍然是Win32/MacIntel/Linux
+    var isDesktopOS = /Win32|Win64|MacIntel|MacPPC|Linux x86|Linux x86_64/i.test(platform);
+    if (isDesktopOS) {
+        // 桌面OS上运行，不管UA是什么，都不是手机
+        return false;
+    }
+    
+    // 非桌面OS，用UA判断是否手机
     return /Android.*Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|MiuiBrowser|WeChat|MicroMessenger|QQBrowser/i.test(ua);
 }
 
