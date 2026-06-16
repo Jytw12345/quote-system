@@ -16286,25 +16286,6 @@ async function exportPDF(showSaveAs){
     if (pdfExportLock) return;
     pdfExportLock = true;
     
-    // === 诊断信息（调试用，定位后删除）===
-    var _diag = {
-        platform: navigator.platform,
-        userAgent: navigator.userAgent.substring(0, 80),
-        hasShowSaveFilePicker: typeof window.showSaveFilePicker === 'function',
-        isPhone: isPhoneBrowser(),
-        showSaveFilePickerFailed: showSaveFilePickerFailed,
-        pdfUseFilePicker: pdfUseFilePicker
-    };
-    console.log('=== PDF导出诊断 ===', _diag);
-    // 用alert显示，确保在PakePlus中也能看到
-    alert('导出诊断信息：\n' +
-        'platform: ' + _diag.platform + '\n' +
-        'isPhone: ' + _diag.isPhone + '\n' +
-        'hasAPI: ' + _diag.hasShowSaveFilePicker + '\n' +
-        'failed: ' + _diag.showSaveFilePickerFailed + '\n' +
-        'useFilePicker: ' + _diag.pdfUseFilePicker);
-    // === 诊断信息结束 ===
-    
     // 手机浏览器：showSaveFilePicker可能存在但调用会卡死主线程，直接跳过
     // 桌面浏览器/PakePlus EXE：正常尝试showSaveFilePicker
     if (isPhoneBrowser() || typeof window.showSaveFilePicker !== 'function' || showSaveFilePickerFailed) {
@@ -16703,6 +16684,7 @@ async function exportPDF(showSaveAs){
                     pdfExportLock = false;
                     pdfFileHandle = null;
                     pdfUseFilePicker = null;
+                    showSaveFilePickerFailed = false; // 成功写入，重置失败标记
                     showToast('PDF已保存到指定位置', 'success');
                 } catch (err) {
                     console.error('File write error:', err);
