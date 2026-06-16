@@ -12883,8 +12883,7 @@ function clearCurrentQuote(){
 // 显示清空报价单确认对话框
 function showClearQuoteConfirmDialog() {
     const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
+    modal.className = 'modal active';
     modal.id = 'clearQuoteConfirmModal';
     modal.innerHTML = `
         <div class="modal-content" style="max-width:400px;">
@@ -27367,8 +27366,7 @@ function applyDoorHeaderToQuote() {
 // 显示门头插入选择对话框
 function showDoorHeaderInsertDialog(existingCount, result) {
     const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
+    modal.className = 'modal active';
     modal.innerHTML = `
         <div class="modal-content" style="max-width:400px;">
             <div class="modal-header">
