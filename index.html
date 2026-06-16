@@ -16261,26 +16261,33 @@ function updateSigPosition(prop, value){
 // PDF导出的文件句柄（用于跨异步调用传递）
 var pdfFileHandle = null;
 var pdfUseFilePicker = null; // null=未尝试, true=成功, false=失败
+var showSaveFilePickerFailed = false; // 一旦showSaveFilePicker失败，整个会话不再重试
+
+// 检测是否为手机（精确匹配，不会误判PakePlus EXE等桌面WebView）
+// PakePlus EXE的UA是Windows，不含Android/iPhone等关键词，不会被匹配
+function isPhoneBrowser() {
+    var ua = navigator.userAgent;
+    // Android手机UA包含"Mobile"，平板不含；iPhone/iPod明确是手机
+    // 微信/QQ内置浏览器也按手机处理
+    return /Android.*Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|MiuiBrowser|WeChat|MicroMessenger|QQBrowser/i.test(ua);
+}
 
 async function exportPDF(showSaveAs){
     if (pdfExportLock) return;
     pdfExportLock = true;
     
-    // 检测运行环境
-    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|MiuiBrowser|WeChat|MicroMessenger/i.test(navigator.userAgent);
-    var canUseShowSaveFilePicker = !isMobile && typeof window.showSaveFilePicker === 'function';
-    
-    // 移动端直接使用传统下载
-    if (isMobile) {
+    // 手机浏览器：showSaveFilePicker可能存在但调用会卡死主线程，直接跳过
+    // 桌面浏览器/PakePlus EXE：正常尝试showSaveFilePicker
+    if (isPhoneBrowser() || typeof window.showSaveFilePicker !== 'function' || showSaveFilePickerFailed) {
         pdfUseFilePicker = false;
     }
     
-    // Web浏览器：使用 showSaveFilePicker
-    if (showSaveAs && canUseShowSaveFilePicker && pdfUseFilePicker === null) {
+    // 尝试使用 showSaveFilePicker
+    if (showSaveAs && pdfUseFilePicker === null) {
         var pdfFileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.pdf';
         try {
             var timeoutPromise = new Promise(function(_, reject) {
-                setTimeout(function() { reject(new Error('showSaveFilePicker timeout')); }, 5000);
+                setTimeout(function() { reject(new Error('showSaveFilePicker timeout')); }, 3000);
             });
             
             pdfFileHandle = await Promise.race([
@@ -16301,8 +16308,9 @@ async function exportPDF(showSaveAs){
                 pdfUseFilePicker = null;
                 return;
             }
-            console.warn('showSaveFilePicker failed:', err);
+            console.warn('showSaveFilePicker failed, fallback to download:', err);
             pdfUseFilePicker = false;
+            showSaveFilePickerFailed = true;
         }
     }
     
@@ -16682,7 +16690,10 @@ async function exportPDF(showSaveAs){
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 pdfExportLock = false;
                 pdfFileHandle = null;
-                pdfUseFilePicker = null;
+                // 如果showSaveFilePicker已失败，保持pdfUseFilePicker=false，不再重试
+                if (!showSaveFilePickerFailed) {
+                    pdfUseFilePicker = null;
+                }
                 console.log('PDF exported successfully');
                 
                 // 显示导出成功提示并提供打开文件夹选项
@@ -16788,21 +16799,17 @@ async function exportJPG(showSaveAs){
     if (jpgExportLock) return;
     jpgExportLock = true;
     
-    // 检测运行环境
-    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|MiuiBrowser|WeChat|MicroMessenger/i.test(navigator.userAgent);
-    var canUseShowSaveFilePicker = !isMobile && typeof window.showSaveFilePicker === 'function';
-    
-    // 移动端直接使用传统下载
-    if (isMobile) {
+    // 手机浏览器：showSaveFilePicker可能存在但调用会卡死主线程，直接跳过
+    if (isPhoneBrowser() || typeof window.showSaveFilePicker !== 'function' || showSaveFilePickerFailed) {
         jpgUseFilePicker = false;
     }
     
-    // Web浏览器：使用 showSaveFilePicker
-    if (showSaveAs && canUseShowSaveFilePicker && jpgUseFilePicker === null) {
+    // 尝试使用 showSaveFilePicker
+    if (showSaveAs && jpgUseFilePicker === null) {
         var jpgFileName = '报价单_' + (appData.currentQuote.clientName || '客户') + '_' + new Date().toISOString().slice(0,10) + '.jpg';
         try {
             var timeoutPromise = new Promise(function(_, reject) {
-                setTimeout(function() { reject(new Error('showSaveFilePicker timeout')); }, 5000);
+                setTimeout(function() { reject(new Error('showSaveFilePicker timeout')); }, 3000);
             });
             
             jpgFileHandle = await Promise.race([
@@ -16823,8 +16830,10 @@ async function exportJPG(showSaveAs){
                 jpgUseFilePicker = null;
                 return;
             }
-            console.warn('showSaveFilePicker failed:', err);
+            // 失败，标记为失败，整个会话不再重试
+            console.warn('showSaveFilePicker failed, fallback to download:', err);
             jpgUseFilePicker = false;
+            showSaveFilePickerFailed = true;
         }
     }
     
@@ -16944,7 +16953,10 @@ async function exportJPG(showSaveAs){
                 if(clone.parentNode) clone.parentNode.removeChild(clone);
                 jpgExportLock = false;
                 jpgFileHandle = null;
-                jpgUseFilePicker = null;
+                // 如果showSaveFilePicker已失败，保持jpgUseFilePicker=false，不再重试
+                if (!showSaveFilePickerFailed) {
+                    jpgUseFilePicker = null;
+                }
                 
                 // 显示导出成功提示并提供打开文件夹选项
                 setTimeout(function() {
@@ -17290,18 +17302,15 @@ async function exportXLS(){
         sheetStyles: true  // 启用工作表样式
     };
     
-    // 检测运行环境
-    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|MiuiBrowser|WeChat|MicroMessenger/i.test(navigator.userAgent);
-    var canUseShowSaveFilePicker = !isMobile && typeof window.showSaveFilePicker === 'function';
-    
-    // Web浏览器：尝试使用 File System Access API
-    if (canUseShowSaveFilePicker) {
+    // 手机浏览器：showSaveFilePicker可能存在但调用会卡死主线程，直接跳过
+    // 桌面浏览器/PakePlus EXE：正常尝试showSaveFilePicker
+    if (typeof window.showSaveFilePicker === 'function' && !isPhoneBrowser() && !showSaveFilePickerFailed) {
         try {
             var xlsData = XLSX.write(wb, writeOptions);
             var blob = new Blob([xlsData], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             
             var timeoutPromise = new Promise(function(_, reject) {
-                setTimeout(function() { reject(new Error('showSaveFilePicker timeout')); }, 5000);
+                setTimeout(function() { reject(new Error('showSaveFilePicker timeout')); }, 3000);
             });
             
             var fileHandle = await Promise.race([
@@ -17323,12 +17332,14 @@ async function exportXLS(){
             if (err.name === 'AbortError') {
                 return;
             }
+            // 失败，标记为失败，整个会话不再重试
             console.warn('showSaveFilePicker failed, using fallback:', err);
+            showSaveFilePickerFailed = true;
             XLSX.writeFile(wb, filename, writeOptions);
             showToast('XLSX 导出成功！', 'success');
         }
     } else {
-        // 使用传统下载方式（兼容所有浏览器）
+        // showSaveFilePicker不可用，使用传统下载
         XLSX.writeFile(wb, filename, writeOptions);
         showToast('XLSX 导出成功！', 'success');
     }
