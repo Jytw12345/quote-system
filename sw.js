@@ -1,5 +1,5 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'quote-app-v34';
+const CACHE_NAME = 'quote-app-v35';
 
 const selfOrigin = self.location.origin;
 const basePath = '/quote-system/';

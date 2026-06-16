@@ -1718,7 +1718,7 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
     bottom: 0;
     background: rgba(0,0,0,0.5);
     z-index: 10000;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
     animation: modalFadeIn 0.2s ease;
     padding: 0.75rem;
@@ -5205,7 +5205,10 @@ var safeStorage = {
             var cancelBtn = document.createElement('button');
             cancelBtn.className = 'btn btn-outline';
             cancelBtn.textContent = opts.cancelText;
-            cancelBtn.onclick = window.globalCloseModal;
+            cancelBtn.onclick = function() {
+                if (modalCallback) modalCallback(false);
+                window.globalCloseModal();
+            };
             modalFooter.appendChild(cancelBtn);
         }
 
@@ -26125,6 +26128,7 @@ function addCultureWallToQuote() {
             confirmText: '清空后插入',
             cancelText: '追加到现有内容',
             showCancel: true,
+            allowHtml: true,
             callback: function(confirmed) {
                 if (confirmed) {
                     // 用户选择清空后插入
