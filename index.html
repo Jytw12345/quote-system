@@ -23893,6 +23893,10 @@ function generateItemParams(areaIndex, itemIndex, item) {
                         <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="2" step="0.1" min="0.5" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
                     </div>
                     <div>
+                        <label>数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
+                    </div>
+                    <div>
                         <label>类型</label>
                         <select id="itemType_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'type', this.value)" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
                             <option value="frosted" ${item.type === 'frosted' || !item.type ? 'selected' : ''}>磨砂贴</option>
@@ -24421,6 +24425,7 @@ function updateItemType(areaIndex, itemIndex, newType) {
             item.width = item.width || 1.5;
             item.height = item.height || 2;
             item.type = item.type || 'frosted';
+            item.qty = item.qty || 1;
             break;
         case 'floorSign': // 地面标识
             item.width = item.width || 0.6;
@@ -25384,7 +25389,8 @@ function calculateCultureWallQuote() {
         letters: { name: '立体字', items: [], subtotal: 0 },
         ledStrip: { name: 'LED灯带', items: [], subtotal: 0 },
         frame: { name: '框架/边框', items: [], subtotal: 0 },
-        install: { name: '安装辅材', items: [], subtotal: 0 }
+        install: { name: '安装辅材', items: [], subtotal: 0 },
+        other: { name: '其他材料', items: [], subtotal: 0 }
     };
 
     // 基础底板价格
@@ -25617,11 +25623,12 @@ function calculateCultureWallQuote() {
                     
                 case 'glassSticker': // 玻璃贴
                     const stickerPrice = item.type === 'reflection' ? 50 : item.type === 'frosted' ? 35 : 30;
-                    const stickerTotal = Math.ceil(itemArea * stickerPrice);
+                    const stickerQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
+                    const stickerTotal = Math.ceil(stickerQty * stickerPrice);
                     materials.push({
                         name: areaPrefix + '玻璃贴',
                         spec: item.type === 'reflection' ? '反光贴' : item.type === 'frosted' ? '磨砂贴' : item.type === 'color' ? '彩色贴' : '透明贴',
-                        qty: itemArea.toFixed(2),
+                        qty: stickerQty.toFixed(2),
                         unit: '㎡',
                         unitPrice: stickerPrice.toFixed(0),
                         total: stickerTotal
@@ -25809,6 +25816,201 @@ function calculateCultureWallQuote() {
                     });
                     totalCost += spiritTotal;
                     break;
+                    
+                case 'magnetBoard': // 磁性展板
+                    const magnetBoardPrice = getCustomPrice('magnetBoard', 120);
+                    const magnetBoardQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
+                    const magnetBoardTotal = Math.ceil(magnetBoardQty * magnetBoardPrice);
+                    materials.push({
+                        name: areaPrefix + '磁性展板',
+                        spec: `${itemWidth}×${itemHeight}m`,
+                        qty: magnetBoardQty.toFixed(2),
+                        unit: '㎡',
+                        unitPrice: magnetBoardPrice.toFixed(0),
+                        total: magnetBoardTotal
+                    });
+                    totalCost += magnetBoardTotal;
+                    break;
+                    
+                case 'photoFrame': // 挂墙相框
+                    const photoFramePrice = item.material === 'wood' ? 80 : item.material === 'metal' ? 120 : item.material === 'acrylic' ? 60 : 100;
+                    const photoFrameTotal = Math.ceil(photoFramePrice * (item.count || 1));
+                    materials.push({
+                        name: areaPrefix + '挂墙相框',
+                        spec: `${itemWidth}×${itemHeight}m ${item.material === 'wood' ? '木质' : item.material === 'metal' ? '金属' : item.material === 'acrylic' ? '亚克力' : '铝合金'}`,
+                        qty: item.count || 1,
+                        unit: '个',
+                        unitPrice: photoFramePrice.toFixed(0),
+                        total: photoFrameTotal
+                    });
+                    totalCost += photoFrameTotal;
+                    break;
+                    
+                case 'acrylicDecor': // 亚克力装饰
+                    const acrylicDecorPrice = getCustomPrice('acrylic', 120);
+                    const acrylicDecorQty = itemArea * (1 + wasteRate / 100);
+                    const acrylicDecorTotal = Math.ceil(acrylicDecorQty * acrylicDecorPrice);
+                    materials.push({
+                        name: areaPrefix + '亚克力装饰',
+                        spec: `${itemWidth}×${itemHeight}m`,
+                        qty: acrylicDecorQty.toFixed(2),
+                        unit: '㎡',
+                        unitPrice: acrylicDecorPrice.toFixed(0),
+                        total: acrylicDecorTotal
+                    });
+                    totalCost += acrylicDecorTotal;
+                    break;
+                    
+                case 'metalDecor': // 金属装饰
+                    const metalDecorPrice = item.material === 'stainless' ? 180 : item.material === 'aluminum' ? 140 : 160;
+                    const metalDecorQty = itemArea * (1 + wasteRate / 100);
+                    const metalDecorTotal = Math.ceil(metalDecorQty * metalDecorPrice);
+                    materials.push({
+                        name: areaPrefix + '金属装饰',
+                        spec: `${itemWidth}×${itemHeight}m ${item.material === 'stainless' ? '不锈钢' : item.material === 'aluminum' ? '铝合金' : '镀锌板'}`,
+                        qty: metalDecorQty.toFixed(2),
+                        unit: '㎡',
+                        unitPrice: metalDecorPrice.toFixed(0),
+                        total: metalDecorTotal
+                    });
+                    totalCost += metalDecorTotal;
+                    break;
+                    
+                case 'lightBox': // 发光灯箱
+                    const lightBoxPrice = item.type === 'led' ? 350 : item.type === 'neon' ? 400 : 280;
+                    const lightBoxQty = itemArea * (item.qty || 1);
+                    const lightBoxTotal = Math.ceil(lightBoxQty * lightBoxPrice);
+                    materials.push({
+                        name: areaPrefix + '发光灯箱',
+                        spec: `${itemWidth}×${itemHeight}m ${item.type === 'led' ? 'LED灯箱' : item.type === 'neon' ? '霓虹灯箱' : '超薄灯箱'}`,
+                        qty: lightBoxQty.toFixed(2),
+                        unit: '㎡',
+                        unitPrice: lightBoxPrice.toFixed(0),
+                        total: lightBoxTotal
+                    });
+                    totalCost += lightBoxTotal;
+                    break;
+                    
+                case 'neonSign': // 霓虹灯装饰
+                    const neonSignPrice = item.type === 'flex' ? 150 : item.type === 'glass' ? 250 : 200;
+                    const neonSignLength = item.length || 2;
+                    const neonSignTotal = Math.ceil(neonSignPrice * neonSignLength);
+                    materials.push({
+                        name: areaPrefix + '霓虹灯装饰',
+                        spec: `${neonSignLength}米 ${item.type === 'flex' ? '柔性霓虹' : item.type === 'glass' ? '玻璃霓虹' : 'LED霓虹'}`,
+                        qty: neonSignLength.toFixed(1),
+                        unit: '米',
+                        unitPrice: neonSignPrice.toFixed(0),
+                        total: neonSignTotal
+                    });
+                    totalCost += neonSignTotal;
+                    break;
+                    
+                case 'wallBelt': // 腰线/分隔条
+                    const wallBeltLength = item.length || 5;
+                    const wallBeltPrice = item.material === 'aluminum' ? 40 : item.material === 'stainless' ? 55 : 30;
+                    const wallBeltTotal = Math.ceil(wallBeltLength * wallBeltPrice);
+                    materials.push({
+                        name: areaPrefix + '腰线/分隔条',
+                        spec: `${wallBeltLength}米 ${item.material === 'aluminum' ? '铝合金' : item.material === 'stainless' ? '不锈钢' : 'PVC'}`,
+                        qty: wallBeltLength.toFixed(1),
+                        unit: '米',
+                        unitPrice: wallBeltPrice.toFixed(0),
+                        total: wallBeltTotal
+                    });
+                    totalCost += wallBeltTotal;
+                    break;
+                    
+                case 'podium': // 讲台/主持台
+                    const podiumPrice = item.material === 'wood' ? 1500 : item.material === 'metal' ? 1200 : 1000;
+                    const podiumTotal = Math.ceil(podiumPrice * (item.qty || 1));
+                    materials.push({
+                        name: areaPrefix + '讲台/主持台',
+                        spec: `${itemWidth}×${itemHeight}m ${item.material === 'wood' ? '实木' : item.material === 'metal' ? '金属' : '密度板'}`,
+                        qty: item.qty || 1,
+                        unit: '个',
+                        unitPrice: podiumPrice.toFixed(0),
+                        total: podiumTotal
+                    });
+                    totalCost += podiumTotal;
+                    break;
+                    
+                case 'awardBoard': // 荣誉墙/奖牌墙
+                    const awardBoardPrice = 180;
+                    const awardBoardQty = itemArea * (1 + wasteRate / 100);
+                    const awardBoardTotal = Math.ceil(awardBoardQty * awardBoardPrice);
+                    materials.push({
+                        name: areaPrefix + '荣誉墙/奖牌墙',
+                        spec: `${itemWidth}×${itemHeight}m`,
+                        qty: awardBoardQty.toFixed(2),
+                        unit: '㎡',
+                        unitPrice: awardBoardPrice.toFixed(0),
+                        total: awardBoardTotal
+                    });
+                    totalCost += awardBoardTotal;
+                    break;
+                    
+                case 'timeline': // 时间轴/历程墙
+                    const timelinePrice = item.material === 'acrylic' ? 100 : item.material === 'metal' ? 150 : 120;
+                    const timelineQty = itemArea * (1 + wasteRate / 100);
+                    const timelineTotal = Math.ceil(timelineQty * timelinePrice);
+                    materials.push({
+                        name: areaPrefix + '时间轴/历程墙',
+                        spec: `${itemWidth}×${itemHeight}m ${item.material === 'acrylic' ? '亚克力' : item.material === 'metal' ? '金属' : 'PVC'}`,
+                        qty: timelineQty.toFixed(2),
+                        unit: '㎡',
+                        unitPrice: timelinePrice.toFixed(0),
+                        total: timelineTotal
+                    });
+                    totalCost += timelineTotal;
+                    break;
+                    
+                case 'culturePillar': // 文化柱/造型柱
+                    const pillarHeight = item.height || 3;
+                    const pillarCircumference = (itemWidth || 0.6) * Math.PI;
+                    const pillarArea = pillarHeight * pillarCircumference;
+                    const pillarPrice = item.material === 'wood' ? 80 : item.material === 'metal' ? 120 : item.material === 'acrylic' ? 100 : 90;
+                    const pillarTotal = Math.ceil(pillarArea * pillarPrice * (item.qty || 1));
+                    materials.push({
+                        name: areaPrefix + '文化柱/造型柱',
+                        spec: `${itemWidth || 0.6}m直径×${pillarHeight}m高 ${item.material === 'wood' ? '木质' : item.material === 'metal' ? '金属' : item.material === 'acrylic' ? '亚克力' : 'PVC'}`,
+                        qty: item.qty || 1,
+                        unit: '根',
+                        unitPrice: Math.ceil(pillarArea * pillarPrice).toFixed(0),
+                        total: pillarTotal
+                    });
+                    totalCost += pillarTotal;
+                    break;
+                    
+                case 'windowDisplay': // 橱窗展示
+                    const windowDisplayPrice = item.type === 'lightbox' ? 280 : item.type === 'poster' ? 120 : 200;
+                    const windowDisplayQty = itemArea * (1 + wasteRate / 100);
+                    const windowDisplayTotal = Math.ceil(windowDisplayQty * windowDisplayPrice);
+                    materials.push({
+                        name: areaPrefix + '橱窗展示',
+                        spec: `${itemWidth}×${itemHeight}m ${item.type === 'lightbox' ? '灯箱橱窗' : item.type === 'poster' ? '海报橱窗' : '装饰橱窗'}`,
+                        qty: windowDisplayQty.toFixed(2),
+                        unit: '㎡',
+                        unitPrice: windowDisplayPrice.toFixed(0),
+                        total: windowDisplayTotal
+                    });
+                    totalCost += windowDisplayTotal;
+                    break;
+                    
+                case 'other': // 其他
+                    const otherPrice = parseFloat(item.customPrice) || 100;
+                    const otherQty = item.qty || 1;
+                    const otherTotal = Math.ceil(otherPrice * otherQty);
+                    materials.push({
+                        name: areaPrefix + '其他项目',
+                        spec: item.description || '自定义项目',
+                        qty: otherQty,
+                        unit: '项',
+                        unitPrice: otherPrice.toFixed(0),
+                        total: otherTotal
+                    });
+                    totalCost += otherTotal;
+                    break;
             }
         });
 
@@ -25937,18 +26139,20 @@ function calculateCultureWallQuote() {
             let matTotal = Math.ceil(unitPrice * qty);
 
             // 根据名称关键词分类
-            if (name.includes('底板') || name.includes('pvc') || name.includes('kt板') || name.includes('铝塑板') || name.includes('亚克力') || name.includes('蜂窝') || name.includes('木板')) {
+            if (name.includes('底板') || name.includes('pvc') || name.includes('kt板') || name.includes('铝塑板') || name.includes('亚克力') || name.includes('蜂窝') || name.includes('木板') || name.includes('磁性') || name.includes('展板')) {
                 category = 'baseBoard';
-            } else if (name.includes('uv') || name.includes('打印') || name.includes('喷绘') || name.includes('覆膜') || name.includes('写真') || name.includes('画') || name.includes('背胶') || name.includes('灯箱片') || name.includes('油画布')) {
+            } else if (name.includes('uv') || name.includes('打印') || name.includes('喷绘') || name.includes('覆膜') || name.includes('写真') || name.includes('画') || name.includes('背胶') || name.includes('灯箱片') || name.includes('油画布') || name.includes('背景') || name.includes('墙纸') || name.includes('壁布') || name.includes('布') || name.includes('贴') || name.includes('橱窗')) {
                 category = 'surfacePrint';
-            } else if (name.includes('字') || name.includes('水晶') || name.includes('金属') || name.includes('不锈钢') || name.includes('立体')) {
+            } else if (name.includes('字') || name.includes('水晶') || name.includes('金属') || name.includes('不锈钢') || name.includes('立体') || name.includes('logo') || name.includes('楼栋')) {
                 category = 'letters';
-            } else if (name.includes('led') || name.includes('灯带') || name.includes('灯条') || name.includes('电源')) {
+            } else if (name.includes('led') || name.includes('灯带') || name.includes('灯条') || name.includes('电源') || name.includes('灯箱') || name.includes('霓虹')) {
                 category = 'ledStrip';
-            } else if (name.includes('框架') || name.includes('龙骨') || name.includes('边框') || name.includes('方管') || name.includes('角钢')) {
+            } else if (name.includes('框架') || name.includes('龙骨') || name.includes('边框') || name.includes('方管') || name.includes('角钢') || name.includes('腰线') || name.includes('分隔条')) {
                 category = 'frame';
             } else if (name.includes('安装') || name.includes('辅材') || name.includes('运输') || name.includes('设计')) {
                 category = 'install';
+            } else {
+                category = 'other';
             }
 
             if (category) {
@@ -26055,14 +26259,15 @@ function renderCultureWallResult(data) {
     // 按材料算模式下的详细分类显示
     let detailHTML = '';
     if (data.calcMode === 'material' && data.materialDetail) {
-        const categories = ['baseBoard', 'surfacePrint', 'letters', 'ledStrip', 'frame', 'install'];
+        const categories = ['baseBoard', 'surfacePrint', 'letters', 'ledStrip', 'frame', 'install', 'other'];
         const categoryColors = {
             baseBoard: '#0891b2',
             surfacePrint: '#7c3aed',
             letters: '#dc2626',
             ledStrip: '#ca8a04',
             frame: '#16a34a',
-            install: '#ea580c'
+            install: '#ea580c',
+            other: '#64748b'
         };
 
         const detailParts = categories.map(cat => {
@@ -26148,11 +26353,29 @@ function renderCultureWallResult(data) {
                 </div>
             </div>
 
-            <!-- 材料明细表格（当detailHTML有内容时显示分类明细，否则显示普通表格） -->
-            ${detailHTML && detailHTML.trim().length > 0 ? detailHTML : materialsTableHTML}
+            <!-- 分类明细（当detailHTML有内容时显示） -->
+            ${detailHTML && detailHTML.trim().length > 0 ? detailHTML : ''}
             
-            <!-- 手机端卡片列表（仅在显示普通表格时隐藏） -->
-            ${detailHTML && detailHTML.trim().length > 0 ? `<div class="culture-material-cards" style="display:none;">${materialsCardsHTML}</div>` : ''}
+            <!-- 完整材料明细表（始终显示） -->
+            <div class="culture-result-table-wrapper" style="display:block;overflow-x:auto;margin:1rem 0;">
+                <table class="culture-result-table" style="display:table;width:100%;table-layout:fixed;border-collapse:collapse;border:2px solid #fcd34d;font-size:0.85rem;min-width:700px;">
+                    <thead style="display:table-header-group;">
+                        <tr style="background:#fef3c7;display:table-row;">
+                            <th style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #fcd34d;color:#92400e;font-weight:600;white-space:nowrap;text-align:center !important;width:20%;">材料名称</th>
+                            <th style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #fcd34d;color:#92400e;font-weight:600;white-space:nowrap;text-align:center !important;width:18%;">规格</th>
+                            <th style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #fcd34d;color:#92400e;font-weight:600;white-space:nowrap;text-align:center !important;width:10%;">数量</th>
+                            <th style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #fcd34d;color:#92400e;font-weight:600;white-space:nowrap;text-align:center !important;width:8%;">单位</th>
+                            <th style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #fcd34d;color:#92400e;font-weight:600;white-space:nowrap;text-align:center !important;width:12%;">成本</th>
+                            <th style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #fcd34d;color:#92400e;font-weight:600;white-space:nowrap;text-align:center !important;width:12%;">单价</th>
+                            <th style="display:table-cell;padding:0.75rem 0.5rem;border:1px solid #fcd34d;color:#92400e;font-weight:600;white-space:nowrap;text-align:center !important;width:15%;">小计</th>
+                        </tr>
+                    </thead>
+                    <tbody style="display:table-row-group;">${materialsHTML}</tbody>
+                </table>
+            </div>
+            
+            <!-- 手机端卡片列表 -->
+            <div class="culture-material-cards" style="display:none;">${materialsCardsHTML}</div>
 
             <div class="culture-result-footer" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;padding:1rem;background:#fef3c7;border-radius:8px;border:2px solid #fcd34d;">
                 <div class="culture-result-footer-info" style="display:flex;flex-direction:column;gap:0.5rem;">
