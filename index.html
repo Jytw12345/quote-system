@@ -1125,7 +1125,7 @@
                 width: 100% !important;
                 min-width: 0 !important;
             }
-            /* 公司信息手机端优化：公司名称单独一行，联系人 + 电话一行，邮箱一行，地址一行，备注一行 */
+            /* 公司信息手机端优化：公司名称一行，联系人+电话+邮箱一行，地址一行，备注一行 */
             .company-info-grid {
                 display: flex !important;
                 flex-direction: column !important;
@@ -1134,13 +1134,17 @@
             .company-info-grid > div {
                 width: 100% !important;
             }
-            /* 联系人和电话已经在同一行（HTML 结构），手机端保持并排 */
+            /* 联系人、电话、邮箱在一行显示 */
             .company-info-grid > div:nth-child(2) {
                 display: flex !important;
                 width: 100% !important;
+                gap: 0.375rem !important;
             }
             .company-info-grid > div:nth-child(2) > div {
-                flex: 1 !important;
+                flex-shrink: 0;
+            }
+            .company-info-grid > div:nth-child(2) > div:last-child {
+                flex: 1;
             }
             .char-pricing-container {
                 gap: 0.75rem !important;
@@ -1351,7 +1355,7 @@
     .section-title { font-size: 1.1rem; }
     .btn { padding: 0.5rem 0.625rem; font-size: 0.75rem; }
     .btn-group { gap: 0.25rem; }
-    .modal-content { width: 98%; margin: 0.5rem auto; max-height: 98vh; max-height: -webkit-fill-available; overflow-y: auto; display: flex; flex-direction: column; }
+    .modal-content { width: 90%; max-width: 480px; margin: 0.5rem auto; max-height: 85vh; max-height: -webkit-fill-available; overflow-y: auto; display: flex; flex-direction: column; }
     .modal-body { padding: 0.75rem; overflow-y: auto; flex: 1; min-height: 0; }
     .modal-footer { padding: 0.5rem 0.75rem; flex-wrap: wrap; gap: 0.5rem; flex-shrink: 0; }
     .modal-footer .btn { padding: 0.5rem 1rem; }
@@ -1524,6 +1528,20 @@
     .btn { padding: 0.375rem 0.5rem; font-size: 0.6875rem; }
     .section-title { font-size: 1rem; flex-direction: column; align-items: flex-start; }
     .section-title .btn-group { width: 100%; justify-content: flex-end; }
+    
+    /* 系统设置页面标题保持水平布局 */
+    #settings .section-title {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+    
+    #settings .section-title .btn {
+        flex: none !important;
+        min-width: auto !important;
+        white-space: nowrap;
+    }
     /* 移动端头部优化 */
     .header-content { flex-direction: column; align-items: center; gap: 0.5rem; }
     .header-content h1 { font-size: 1.25rem; }
@@ -1886,9 +1904,10 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
     
     /* 自定义弹窗移动端优化 */
     .custom-modal-content {
-        max-width: 100% !important;
+        max-width: 90% !important;
         width: 100% !important;
-        max-height: 90vh;
+        max-width: 480px !important;
+        max-height: 85vh;
         overflow-y: auto;
     }
     
@@ -2022,7 +2041,7 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
     white-space: nowrap;
 }
 
-/* 移动端模态框全屏 */
+/* 移动端模态框优化 */
 @media (max-width: 576px) {
     /* 全局移动端防止横向滚动 */
     html, body {
@@ -2035,8 +2054,9 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
     }
     
     .modal {
-        padding: 0;
-        align-items: flex-start;
+        padding: 0.5rem;
+        align-items: center;
+        justify-content: center;
     }
     
     .modal.active {
@@ -2044,18 +2064,12 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
     }
     
     .modal-content {
-        width: 100%;
-        max-width: 100%;
-        height: 100vh;
-        max-height: 100vh;
-        border-radius: 0;
-        margin: 0;
-        animation: slideUpMobile 0.3s ease;
-    }
-    
-    @keyframes slideUpMobile {
-        from { transform: translateY(100%); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
+        width: 90%;
+        max-width: 420px;
+        max-height: 85vh;
+        border-radius: var(--radius-lg);
+        margin: 0.5rem auto;
+        animation: slideUp 0.3s ease;
     }
     
     .modal-header {
@@ -2068,7 +2082,7 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
     
     .modal-body {
         padding: 1rem;
-        max-height: calc(100vh - 130px);
+        max-height: calc(85vh - 120px);
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
     }
@@ -2082,9 +2096,9 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
     }
     
     .modal-footer .btn {
-        min-height: 48px;
+        min-height: 44px;
         flex: 1;
-        font-size: 0.9375rem;
+        font-size: 0.875rem;
     }
 }
 
@@ -2176,19 +2190,24 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
 
 /* 手机端模板编辑模态框优化 */
 @media (max-width: 768px) {
-    #templateModal .modal-content {
-        max-width: 100% !important;
-        margin: 0 !important;
-        border-radius: 0 !important;
-        max-height: 100vh !important;
+    #templateModal .modal-content,
+    #templateDetailModal .modal-content {
+        max-width: 90% !important;
+        max-width: 520px !important;
+        margin: 0.5rem auto !important;
+        border-radius: var(--radius-lg) !important;
+        max-height: 85vh !important;
         width: 100% !important;
         overflow: hidden !important;
+        box-sizing: border-box !important;
     }
     
-    #templateModal .modal-body {
-        max-height: calc(100vh - 120px) !important;
+    #templateModal .modal-body,
+    #templateDetailModal .modal-body {
+        max-height: calc(85vh - 120px) !important;
         overflow-y: auto !important;
         padding: 1rem !important;
+        overflow-x: hidden !important;
     }
     
     #templateModal .form-grid {
@@ -2285,22 +2304,39 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
 }
 
 @media (max-width: 480px) {
-    #templateModal .modal-body {
+    #templateModal .modal-body,
+    #templateDetailModal .modal-body {
         padding: 0.75rem;
     }
     
-    #templateModal .modal-header {
+    #templateModal .modal-header,
+    #templateDetailModal .modal-header {
         padding: 0.75rem;
     }
     
-    #templateModal .modal-footer {
+    #templateModal .modal-footer,
+    #templateDetailModal .modal-footer {
         padding: 0.75rem;
         flex-direction: column;
         gap: 0.5rem;
     }
     
-    #templateModal .modal-footer .btn {
+    #templateModal .modal-footer .btn,
+    #templateDetailModal .modal-footer .btn {
         width: 100%;
+    }
+    
+    /* 模板详情表格移动端横向滚动 */
+    #templateDetailModal .modal-body > div:first-child table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    #templateDetailModal .modal-body > div:first-child table th,
+    #templateDetailModal .modal-body > div:first-child table td {
+        min-width: 80px;
     }
     
     /* 模板名称行移动端堆叠 */
@@ -2761,6 +2797,24 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+    
+    .selling-price {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .selling-price .discount-badge {
+        flex-shrink: 0;
+        padding: 0.0625rem 0.25rem;
+        background: #fef3c7;
+        color: #d97706;
+        border-radius: 0.2rem;
+        font-size: 0.5625rem;
+        font-weight: 600;
+        min-width: 28px;
+        text-align: center;
     }
     
     .product-price {
@@ -6515,8 +6569,17 @@ function safeExecuteAsync(fn, defaultVal) {
                     }
                     /* 卡片按钮缩小字体但保留文字 */
                     .template-card-actions .btn {
-                        padding: 0.2rem 0.25rem !important;
-                        font-size: 0.75rem !important;
+                        padding: 0.15rem 0.3rem !important;
+                        font-size: 0.6875rem !important;
+                        min-height: 28px !important;
+                        height: 28px !important;
+                    }
+                    .template-card-actions .btn .btn-icon {
+                        font-size: 0.7rem !important;
+                        margin-right: 0.2rem !important;
+                    }
+                    .template-card-actions .btn .btn-label {
+                        font-size: 0.65rem !important;
                     }
                 }
             </style>
@@ -6883,70 +6946,76 @@ function safeExecuteAsync(fn, defaultVal) {
                                     </div>
                                 </div>
                             </div>
-                            <!-- 延伸区域参数 -->
-                            <div style="background:#f0f9ff;border-radius:var(--radius);padding:0.5rem;margin-bottom:0.375rem;">
-                                <div style="font-size:0.75rem;color:#0891b2;margin-bottom:0.375rem;font-weight:600;">📏 延伸区域</div>
-                                <div style="display:grid;grid-template-columns:repeat(6, 1fr);gap:0.25rem;">
-                                    <div>
-                                        <label for="doorHeaderThickness" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">探出(米)</label>
-                                        <input type="number" id="doorHeaderThickness" placeholder="0.3" step="0.1" min="0" max="1" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
-                                    </div>
-                                    <div>
-                                        <label for="doorHeaderTopExtend" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">顶部延伸</label>
-                                        <input type="number" id="doorHeaderTopExtend" placeholder="0.4" step="0.1" min="0" max="2" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
-                                    </div>
-                                    <div>
-                                        <label for="doorHeaderBottomExtend" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">底部延伸</label>
-                                        <input type="number" id="doorHeaderBottomExtend" placeholder="0.3" step="0.1" min="0" max="2" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
-                                    </div>
-                                    <div>
-                                        <label for="doorHeaderTopMaterial" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">顶部材质</label>
-                                        <select id="doorHeaderTopMaterial" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
-                                            <option value="aluminum_plastic">铝塑板</option>
-                                            <option value="acrylic">亚克力板</option>
-                                            <option value="pvc">PVC板</option>
-                                            <option value="wood">木纹板</option>
-                                            <option value="honeycomb">蜂窝铝板</option>
-                                            <option value="eco_board">生态板</option>
-                                            <option value="cement">水泥纤维板</option>
-                                            <option value="soft_film">软膜</option>
-                                            <option value="stone">石材面板</option>
-                                            <option value="metal_mesh">金属网板</option>
-                                            <option value="bamboo">竹木纤维板</option>
-                                            <option value="soft_pack">软包面板</option>
-                                            <option value="carved_metal">金属雕花板</option>
-                                            <option value="fluorocarbon">氟碳喷涂板</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label for="doorHeaderBottomMaterial" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">底部材质</label>
-                                        <select id="doorHeaderBottomMaterial" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
-                                            <option value="aluminum_plastic">铝塑板</option>
-                                            <option value="acrylic">亚克力板</option>
-                                            <option value="pvc">PVC板</option>
-                                            <option value="wood">木纹板</option>
-                                            <option value="honeycomb">蜂窝铝板</option>
-                                            <option value="eco_board">生态板</option>
-                                            <option value="cement">水泥纤维板</option>
-                                            <option value="soft_film">软膜</option>
-                                            <option value="stone">石材面板</option>
-                                            <option value="metal_mesh">金属网板</option>
-                                            <option value="bamboo">竹木纤维板</option>
-                                            <option value="soft_pack">软包面板</option>
-                                            <option value="carved_metal">金属雕花板</option>
-                                            <option value="fluorocarbon">氟碳喷涂板</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label for="doorHeaderFrameType" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">框架类型</label>
-                                        <select id="doorHeaderFrameType" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
-                                            <option value="steel">方管铁架</option>
-                                            <option value="wood">木龙骨</option>
-                                            <option value="both">铁架+木龙骨</option>
-                                        </select>
+                            <!-- 延伸区域参数 - 可折叠 -->
+                            <div id="doorHeaderExtendSection" style="display:none;">
+                                <div style="background:#f0f9ff;border-radius:var(--radius);padding:0.5rem;margin-bottom:0.375rem;">
+                                    <div style="font-size:0.75rem;color:#0891b2;margin-bottom:0.375rem;font-weight:600;">📏 延伸区域</div>
+                                    <div style="display:grid;grid-template-columns:repeat(6, 1fr);gap:0.25rem;">
+                                        <div>
+                                            <label for="doorHeaderThickness" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">探出(米)</label>
+                                            <input type="number" id="doorHeaderThickness" placeholder="0.3" step="0.1" min="0" max="1" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
+                                        </div>
+                                        <div>
+                                            <label for="doorHeaderTopExtend" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">顶部延伸</label>
+                                            <input type="number" id="doorHeaderTopExtend" placeholder="0.4" step="0.1" min="0" max="2" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
+                                        </div>
+                                        <div>
+                                            <label for="doorHeaderBottomExtend" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">底部延伸</label>
+                                            <input type="number" id="doorHeaderBottomExtend" placeholder="0.3" step="0.1" min="0" max="2" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
+                                        </div>
+                                        <div>
+                                            <label for="doorHeaderTopMaterial" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">顶部材质</label>
+                                            <select id="doorHeaderTopMaterial" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
+                                                <option value="aluminum_plastic">铝塑板</option>
+                                                <option value="acrylic">亚克力板</option>
+                                                <option value="pvc">PVC板</option>
+                                                <option value="wood">木纹板</option>
+                                                <option value="honeycomb">蜂窝铝板</option>
+                                                <option value="eco_board">生态板</option>
+                                                <option value="cement">水泥纤维板</option>
+                                                <option value="soft_film">软膜</option>
+                                                <option value="stone">石材面板</option>
+                                                <option value="metal_mesh">金属网板</option>
+                                                <option value="bamboo">竹木纤维板</option>
+                                                <option value="soft_pack">软包面板</option>
+                                                <option value="carved_metal">金属雕花板</option>
+                                                <option value="fluorocarbon">氟碳喷涂板</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="doorHeaderBottomMaterial" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">底部材质</label>
+                                            <select id="doorHeaderBottomMaterial" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
+                                                <option value="aluminum_plastic">铝塑板</option>
+                                                <option value="acrylic">亚克力板</option>
+                                                <option value="pvc">PVC板</option>
+                                                <option value="wood">木纹板</option>
+                                                <option value="honeycomb">蜂窝铝板</option>
+                                                <option value="eco_board">生态板</option>
+                                                <option value="cement">水泥纤维板</option>
+                                                <option value="soft_film">软膜</option>
+                                                <option value="stone">石材面板</option>
+                                                <option value="metal_mesh">金属网板</option>
+                                                <option value="bamboo">竹木纤维板</option>
+                                                <option value="soft_pack">软包面板</option>
+                                                <option value="carved_metal">金属雕花板</option>
+                                                <option value="fluorocarbon">氟碳喷涂板</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="doorHeaderFrameType" style="font-size:0.625rem;color:#0891b2;display:block;margin-bottom:0.1rem;">框架类型</label>
+                                            <select id="doorHeaderFrameType" style="width:100%;padding:0.2rem 0.25rem;font-size:0.6875rem;border:1px solid #7dd3fc;border-radius:3px;">
+                                                <option value="steel">方管铁架</option>
+                                                <option value="wood">木龙骨</option>
+                                                <option value="both">铁架+木龙骨</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                            <!-- 展开/收起延伸区域按钮 -->
+                            <button id="toggleExtendSection" onclick="toggleDoorHeaderExtend()" style="width:100%;padding:0.375rem;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:var(--radius);color:#64748b;font-size:0.75rem;cursor:pointer;margin-bottom:0.375rem;">
+                                ➕ 添加延伸区域
+                            </button>
                             <!-- 主面板分段材质 -->
                             <div style="background:#fef3c7;border-radius:var(--radius);padding:0.5rem;margin-bottom:0.375rem;">
                                 <div style="font-size:0.75rem;color:#92400e;margin-bottom:0.375rem;font-weight:600;">🎨 主面板分段材质</div>
@@ -8078,20 +8147,20 @@ function safeExecuteAsync(fn, defaultVal) {
                         <label for="companyName" style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">公司名称</label>
                         <input type="text" id="companyName" placeholder="请输入公司名称" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
                     </div>
-                    <div style="display:flex;gap:0.5rem;">
-                        <div style="display:flex;flex-direction:column;gap:0.0625rem;flex:1;">
-                            <label for="companyContact" style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">联系人</label>
-                            <input type="text" id="companyContact" placeholder="姓名" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
+                    <!-- 联系人、电话、邮箱一行显示 -->
+                    <div style="display:flex;gap:0.375rem;grid-column:1/-1;">
+                        <div style="display:flex;flex-direction:column;gap:0.0625rem;min-width:70px;max-width:80px;">
+                            <label for="companyContact" style="font-size:0.65rem;color:var(--gray-500);font-weight:500;">联系人</label>
+                            <input type="text" id="companyContact" placeholder="姓名" maxlength="3" style="width:100%;padding:0.2rem 0.25rem;font-size:0.7rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;text-align:center;">
                         </div>
-                        <div style="display:flex;flex-direction:column;gap:0.0625rem;flex:1;">
-                            <label for="companyPhone" style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">电话</label>
-                            <input type="text" id="companyPhone" placeholder="联系电话" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
+                        <div style="display:flex;flex-direction:column;gap:0.0625rem;min-width:100px;max-width:120px;">
+                            <label for="companyPhone" style="font-size:0.65rem;color:var(--gray-500);font-weight:500;">电话</label>
+                            <input type="tel" id="companyPhone" placeholder="电话" maxlength="11" style="width:100%;padding:0.2rem 0.25rem;font-size:0.7rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
                         </div>
-                    </div>
-                    <!-- 第二行：邮箱 + 地址 -->
-                    <div style="display:flex;flex-direction:column;gap:0.0625rem;">
-                        <label for="companyEmail" style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">邮箱</label>
-                        <input type="email" id="companyEmail" placeholder="email@example.com" style="width:100%;padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
+                        <div style="display:flex;flex-direction:column;gap:0.0625rem;flex:1.2;min-width:140px;">
+                            <label for="companyEmail" style="font-size:0.65rem;color:var(--gray-500);font-weight:500;">邮箱</label>
+                            <input type="email" id="companyEmail" placeholder="邮箱" style="width:100%;padding:0.2rem 0.25rem;font-size:0.7rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
+                        </div>
                     </div>
                     <div style="display:flex;flex-direction:column;gap:0.0625rem;">
                         <label for="companyAddress" style="font-size:0.7rem;color:var(--gray-500);font-weight:500;">地址</label>
@@ -26259,6 +26328,26 @@ function calcInstallFee(w, h, floor, highWorkType, wallType, needWaterproof, nee
     return Math.ceil(baseFee);
 }
 
+// 切换延伸区域显示/隐藏
+function toggleDoorHeaderExtend() {
+    const section = document.getElementById('doorHeaderExtendSection');
+    const button = document.getElementById('toggleExtendSection');
+    
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        button.innerHTML = '➖ 收起延伸区域';
+        button.style.background = '#f1f5f9';
+    } else {
+        section.style.display = 'none';
+        button.innerHTML = '➕ 添加延伸区域';
+        button.style.background = '#f8fafc';
+        // 重置延伸区域参数为0，避免影响计算
+        document.getElementById('doorHeaderThickness').value = '';
+        document.getElementById('doorHeaderTopExtend').value = '';
+        document.getElementById('doorHeaderBottomExtend').value = '';
+    }
+}
+
 // 主计算函数（增强版：支持损耗率、成本/售价分离、工期估算、材料汇总、历史记录）
 let doorHeaderLastResult = null; // 上次计算结果（用于对比）
 
@@ -31485,7 +31574,7 @@ function renderProducts(useSmartResults = false){
         div.innerHTML = `
             <div class="product-image ${productViewMode === 'large' ? 'large' : ''} ${isTileMode ? 'tile' : ''}">${ih}</div>
             <div class="product-info ${isTileMode ? 'tile' : ''}">
-                <div class="product-name ${isTileMode ? 'tile' : ''}" title="${escapeHtml(p.name || '')}">${escapeHtml(p.name || '未命名产品')}${p.tierPricing ? '<span style="margin-left:0.375rem;padding:0.125rem 0.375rem;background:#fef3c7;color:#d97706;border-radius:0.25rem;font-size:0.625rem;font-weight:600;">折扣</span>' : ''}</div>
+                <div class="product-name ${isTileMode ? 'tile' : ''}" title="${escapeHtml(p.name || '')}">${escapeHtml(p.name || '未命名产品')}</div>
                 ${catText ? `<div class="product-breadcrumb ${isTileMode ? 'tile' : ''}" title="${escapeHtml(catText)}">📁 ${escapeHtml(catText)}</div>` : ''}
                 ${isAdminMode() ? `<div class="product-meta">
                     <span class="cost">💲 成本: ¥${costPrice}</span>
@@ -31494,7 +31583,7 @@ function renderProducts(useSmartResults = false){
                     <span class="profit-rate">📈 利润率: ${pp}%</span>
                 </div>` : ''}
                 <div class="product-pricing">
-                    <div class="selling-price ${isTileMode ? 'tile' : ''}" title="售价 ¥${sellingPrice}">¥${sellingPrice}</div>
+                    <div class="selling-price ${isTileMode ? 'tile' : ''}" title="售价 ¥${sellingPrice}">¥${sellingPrice}${p.tierPricing ? '<span class="discount-badge" style="margin-left:0.375rem;padding:0.125rem 0.375rem;background:#fef3c7;color:#d97706;border-radius:0.25rem;font-size:0.625rem;font-weight:600;">折扣</span>' : ''}</div>
                 </div>
                 ${isTileMode ? `<div class="product-desc-tile" title="${escapeHtml(p.description || '暂无描述')}">📝 ${escapeHtml(p.description || '暂无描述')}</div>` : ''}
                 <div class="product-actions ${isTileMode ? 'tile' : ''}">
@@ -32168,9 +32257,9 @@ function renderTemplates(){
                     <span class="template-total-label">模板总价</span>
                     <span class="template-total-value">¥${total.toFixed(2)}</span>
                 </div>
-                <div class="btn-group template-card-actions" style="margin-top:0.75rem;gap:0.25rem;">
-                    <button class="btn btn-outline btn-sm" style="flex:1;" onclick="viewTemplateDetail(${t.id})"><span class="btn-icon">👁️</span><span class="btn-label">详情</span></button>
-                    <button class="btn btn-primary btn-sm" style="flex:1;" onclick="useTemplate(${t.id})"><span class="btn-icon">📥</span><span class="btn-label">使用</span></button>
+                <div class="btn-group template-card-actions" style="margin-top:0.5rem;gap:0.15rem;">
+                    <button class="btn btn-outline btn-sm" style="flex:1;max-width:80px;" onclick="viewTemplateDetail(${t.id})"><span class="btn-icon">👁️</span><span class="btn-label">详情</span></button>
+                    <button class="btn btn-primary btn-sm" style="flex:1;max-width:80px;" onclick="useTemplate(${t.id})"><span class="btn-icon">📥</span><span class="btn-label">使用</span></button>
                     <button class="btn btn-outline btn-sm" onclick="toggleTemplateFavorite(${t.id})" title="${t.isFavorite?'取消收藏':'添加收藏'}">${t.isFavorite?'⭐':'☆'}</button>
                     <button class="btn btn-outline btn-sm" onclick="openEditTemplateModal(${t.id})">✏️</button>
                     ${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteTemplate(${t.id})">🗑️</button>` : ''}
