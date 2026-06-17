@@ -155,6 +155,105 @@
             }
         }
         
+        /* 文化空间算价 - 手机端优化 */
+        @media (max-width: 768px) {
+            /* 区域尺寸配置：手机端改为2列 - 使用最强优先级 */
+            #cultureWallAreas .areaDimGrid,
+            #cultureWallAreas [class*="areaDimGrid"],
+            [id*="cultureWallArea"] .areaDimGrid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 0.375rem !important;
+            }
+            
+            /* 项目参数输入：手机端优化 */
+            #cultureWallAreas .item-params-grid,
+            #cultureWallAreas [class*="item-params-grid"],
+            [id*="cultureWallArea"] .item-params-grid {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 0.375rem !important;
+            }
+            
+            /* 项目类型选择器优化 */
+            #cultureWallAreas .item-type-select,
+            #cultureWallAreas select {
+                font-size: 0.8rem !important;
+                padding: 0.25rem !important;
+            }
+            
+            /* 区域头部布局优化 */
+            #cultureWallAreas .area-header,
+            [id*="cultureWallArea"] .area-header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 0.375rem !important;
+            }
+            
+            /* 项目卡片间距调整 */
+            #cultureWallAreas .area-item,
+            [id*="cultureWallArea"] .area-item {
+                padding: 0.5rem !important;
+                margin-bottom: 0.375rem !important;
+            }
+            
+            /* 安装参数下拉框优化 */
+            #cultureWallAreas select {
+                font-size: 0.8rem !important;
+                padding: 0.25rem 0.5rem !important;
+            }
+            
+            /* 输入框优化 */
+            #cultureWallAreas input[type="number"],
+            #cultureWallAreas input[type="text"] {
+                font-size: 16px !important;
+                padding: 0.25rem 0.375rem !important;
+            }
+            
+            /* 按钮优化 */
+            #cultureWallAreas .btn-xs {
+                padding: 0.25rem 0.5rem !important;
+                font-size: 0.75rem !important;
+            }
+        }
+        
+        /* 手机端（更小屏幕）进一步优化 */
+        @media (max-width: 480px) {
+            /* 区域尺寸配置：小屏保持2列，不改成1列 */
+            #cultureWallAreas .areaDimGrid,
+            #cultureWallAreas [class*="areaDimGrid"],
+            [id*="cultureWallArea"] .areaDimGrid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 0.25rem !important;
+            }
+            
+            /* 项目参数输入：小屏保持2列但更紧凑 */
+            #cultureWallAreas .item-params-grid,
+            #cultureWallAreas [class*="item-params-grid"],
+            [id*="cultureWallArea"] .item-params-grid {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 0.25rem !important;
+            }
+            
+            /* 尺寸标签和输入框同行显示 */
+            #cultureWallAreas .areaDimGrid > div,
+            [id*="cultureWallArea"] .areaDimGrid > div {
+                display: flex !important;
+                align-items: center !important;
+                gap: 0.25rem !important;
+            }
+            
+            #cultureWallAreas .areaDimGrid label,
+            [id*="cultureWallArea"] .areaDimGrid label {
+                white-space: nowrap !important;
+                font-size: 0.7rem !important;
+            }
+            
+            #cultureWallAreas .areaDimGrid input,
+            [id*="cultureWallArea"] .areaDimGrid input {
+                flex: 1 !important;
+                min-width: 0 !important;
+            }
+        }
+        
         /* 登录页面样式 */
         #login-overlay {
             position: fixed;
@@ -753,18 +852,10 @@
             .areaItemsGrid { grid-template-columns: 1fr !important; gap: 0.25rem !important; }
             .areaItemsGrid > div { min-width: 0; }
         }
-        /* 移动端内容项参数网格强制2列垂直排列 */
-        @media (max-width: 640px) {
-            #aiPanelCultureWall .item-params-grid {
-                grid-template-columns: 1fr 1fr !important;
-            }
-        }
+        /* 移动端内容项参数网格强制2列垂直排列 - 已合并到主媒体查询 */
         .cultureWallPreviewGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.375rem; }
-        @media (max-width: 640px) { .cultureWallPreviewGrid { grid-template-columns: repeat(3, 1fr) !important; gap: 0.25rem !important; } }
         .areaDimGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.25rem; }
-        @media (max-width: 640px) { .areaDimGrid { grid-template-columns: repeat(2, 1fr) !important; gap: 0.2rem !important; } }
         .additional-fee-amount { font-size: 0.625rem; color: #6b7280; }
-        @media (max-width: 640px) { .additional-fee-amount { font-size: 0.5rem; } }
         .form-group { display: flex; flex-direction: column; gap: 0.375rem; }
         .form-group.full-width { grid-column: 1 / -1; }
         label { font-weight: 500; color: var(--gray-700); font-size: 0.8125rem; }
@@ -23476,9 +23567,18 @@ function loadCultureWallConfig() {
             if (config.lastResult) {
                 cultureWallLastResult = config.lastResult;
             }
+            // 重新渲染界面，让用户看到加载的配置
+            renderCultureWallAreas();
+            if (cultureWallLastResult) {
+                renderCultureWallResult(cultureWallLastResult);
+            }
+            alert('配置加载成功！');
+        } else {
+            alert('没有找到保存的配置');
         }
     } catch(e) {
         console.error('加载文化墙配置失败:', e);
+        alert('加载配置失败，请重试');
     }
 }
 
@@ -23533,9 +23633,9 @@ function generateAreaHTML(areaIndex) {
     const itemsHTML = (area.items || []).map((item, itemIndex) => {
         const ct = allContentTypes.find(c => c.type === item.type) || allContentTypes[0];
         return `
-        <div id="areaItem_${areaIndex}_${itemIndex}" style="background:white;border:1px solid #e5e7eb;border-radius:6px;padding:0.375rem;" onclick="event.stopPropagation()">
+        <div id="areaItem_${areaIndex}_${itemIndex}" class="area-item" style="background:white;border:1px solid #e5e7eb;border-radius:6px;padding:0.375rem;margin-bottom:0.25rem;" onclick="event.stopPropagation()">
             <div style="display:flex;gap:0.25rem;align-items:center;margin-bottom:0.25rem;">
-                <select id="itemType_${areaIndex}_${itemIndex}" onchange="updateItemType(${areaIndex}, ${itemIndex}, this.value)" onclick="event.stopPropagation()" 
+                <select id="itemType_${areaIndex}_${itemIndex}" class="item-type-select" onchange="updateItemType(${areaIndex}, ${itemIndex}, this.value)" onclick="event.stopPropagation()" 
                     style="flex:1;padding:0.2rem 0.25rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;background:white;">
                     ${allContentTypes.map(c => `<option value="${c.type}" ${item.type === c.type ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
                 </select>
@@ -23554,7 +23654,7 @@ function generateAreaHTML(areaIndex) {
     return `
         <div id="cultureWallArea_${areaIndex}" style="background:white;border:${isSelected ? '2px solid #d97706' : '1px solid #e5e7eb'};border-radius:var(--radius-lg);padding:0.625rem;margin-bottom:0.5rem;box-shadow:${isSelected ? '0 4px 12px rgba(217,119,6,0.15)' : '0 1px 3px rgba(0,0,0,0.05)'};" onclick="selectCultureWallArea(${areaIndex})">
             <!-- 区域头部：标题和操作 -->
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+            <div class="area-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
                 <div style="display:flex;align-items:center;gap:0.375rem;flex-wrap:wrap;">
                     <span style="background:${isSelected ? '#d97706' : '#f3f4f6'};color:${isSelected ? 'white' : '#6b7280'};width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:600;">${areaIndex + 1}</span>
                     <input type="text" id="areaName_${areaIndex}" placeholder="区域名称" value="${area.name || ''}" style="padding:0.2rem 0.3rem;font-size:0.75rem;border:1px solid ${isSelected ? '#fcd34d' : '#e5e7eb'};border-radius:4px;min-width:80px;max-width:120px;background:${isSelected ? '#fef3c7' : 'white'};" onchange="updateAreaName(${areaIndex}, this.value)" onclick="event.stopPropagation()">
@@ -23621,7 +23721,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
     switch(itemType) {
         case 'backdrop': // 背景画面
             return `
-                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr 1.8fr;gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="4" step="0.1" min="0.1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -23629,6 +23729,10 @@ function generateItemParams(areaIndex, itemIndex, item) {
                     <div>
                         <label>高(米)</label>
                         <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="2.4" step="0.1" min="0.1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                    </div>
+                    <div>
+                        <label>数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
                     </div>
                     <div>
                         <label>材质</label>
@@ -23640,7 +23744,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'board': // 展板
             return `
-                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr 1.8fr;gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1.2" step="0.1" min="0.1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -23763,7 +23867,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'signage': // 导视牌
             return `
-                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr 1.8fr;gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="0.8" step="0.1" min="0.3" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -23771,6 +23875,10 @@ function generateItemParams(areaIndex, itemIndex, item) {
                     <div>
                         <label>高(米)</label>
                         <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="1.8" step="0.1" min="0.5" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                    </div>
+                    <div>
+                        <label>数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
                     </div>
                     <div>
                         <label>材质</label>
@@ -23784,7 +23892,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'billboard': // 宣传栏
             return `
-                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr 1.8fr;gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="3" step="0.1" min="1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -23792,6 +23900,10 @@ function generateItemParams(areaIndex, itemIndex, item) {
                     <div>
                         <label>高(米)</label>
                         <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="2" step="0.1" min="1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                    </div>
+                    <div>
+                        <label>数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
                     </div>
                     <div>
                         <label>类型</label>
@@ -23822,7 +23934,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'logo': // LOGO墙
             return `
-                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr 1.8fr;gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="2" step="0.1" min="0.5" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -23830,6 +23942,10 @@ function generateItemParams(areaIndex, itemIndex, item) {
                     <div>
                         <label>高(米)</label>
                         <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="0.8" step="0.1" min="0.2" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                    </div>
+                    <div>
+                        <label>数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
                     </div>
                     <div>
                         <label>工艺</label>
@@ -23844,7 +23960,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'decor': // 装饰造型
             return `
-                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr 1.8fr;gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1" step="0.1" min="0.2" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -23852,6 +23968,10 @@ function generateItemParams(areaIndex, itemIndex, item) {
                     <div>
                         <label>高(米)</label>
                         <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="1" step="0.1" min="0.2" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                    </div>
+                    <div>
+                        <label>数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
                     </div>
                     <div>
                         <label>材质</label>
@@ -23883,7 +24003,7 @@ function generateItemParams(areaIndex, itemIndex, item) {
             `;
         case 'glassSticker': // 玻璃贴
             return `
-                <div class="item-params-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr 1.8fr;gap:0.25rem;font-size:0.625rem;">
                     <div>
                         <label>宽(米)</label>
                         <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1.5" step="0.1" min="0.3" style="width:100%;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
@@ -24268,47 +24388,337 @@ function generateItemParams(areaIndex, itemIndex, item) {
                     </div>
                 </div>
             `;
+        case 'magnetBoard': // 磁性展板
+            return `
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr;gap:0.3rem;font-size:0.625rem;">
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">宽(米)</label>
+                        <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1.2" step="0.1" min="0.5" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">高(米)</label>
+                        <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="2" step="0.1" min="0.8" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
+                    </div>
+                </div>
+            `;
+        case 'photoFrame': // 挂墙相框
+            return `
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr 1.8fr;gap:0.3rem;font-size:0.625rem;">
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">宽(米)</label>
+                        <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="0.5" step="0.1" min="0.2" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">高(米)</label>
+                        <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="0.7" step="0.1" min="0.3" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">材质</label>
+                        <select id="itemMaterial_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'material', this.value)" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
+                            <option value="wood" ${item.material === 'wood' || !item.material ? 'selected' : ''}>木质</option>
+                            <option value="metal" ${item.material === 'metal' ? 'selected' : ''}>金属</option>
+                            <option value="acrylic" ${item.material === 'acrylic' ? 'selected' : ''}>亚克力</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        case 'acrylicDecor': // 亚克力装饰
+            return `
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr;gap:0.3rem;font-size:0.625rem;">
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">宽(米)</label>
+                        <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1" step="0.1" min="0.3" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">高(米)</label>
+                        <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="1" step="0.1" min="0.3" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
+                    </div>
+                </div>
+            `;
+        case 'metalDecor': // 金属装饰
+            return `
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr 1.8fr;gap:0.3rem;font-size:0.625rem;">
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">宽(米)</label>
+                        <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1" step="0.1" min="0.3" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">高(米)</label>
+                        <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="1" step="0.1" min="0.3" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">材质</label>
+                        <select id="itemMaterial_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'material', this.value)" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
+                            <option value="stainless" ${item.material === 'stainless' || !item.material ? 'selected' : ''}>不锈钢</option>
+                            <option value="aluminum" ${item.material === 'aluminum' ? 'selected' : ''}>铝合金</option>
+                            <option value="galvanized" ${item.material === 'galvanized' ? 'selected' : ''}>镀锌板</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        case 'lightBox': // 发光灯箱
+            return `
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr 1.8fr;gap:0.3rem;font-size:0.625rem;">
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">宽(米)</label>
+                        <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1" step="0.1" min="0.5" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">高(米)</label>
+                        <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="1.5" step="0.1" min="0.8" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">类型</label>
+                        <select id="itemType_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'type', this.value)" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
+                            <option value="led" ${item.type === 'led' || !item.type ? 'selected' : ''}>LED灯箱</option>
+                            <option value="neon" ${item.type === 'neon' ? 'selected' : ''}>霓虹灯箱</option>
+                            <option value="slim" ${item.type === 'slim' ? 'selected' : ''}>超薄灯箱</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        case 'neonSign': // 霓虹灯装饰
+            return `
+                <div class="item-params-grid" style="display:grid;grid-template-columns:1fr 0.5fr 1.5fr;gap:0.3rem;font-size:0.625rem;">
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">长度(米)</label>
+                        <input type="number" id="itemLength_${areaIndex}_${itemIndex}" value="${item.length || ''}" placeholder="3" step="0.5" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'length', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">类型</label>
+                        <select id="itemType_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'type', this.value)" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
+                            <option value="flex" ${item.type === 'flex' || !item.type ? 'selected' : ''}>柔性霓虹</option>
+                            <option value="glass" ${item.type === 'glass' ? 'selected' : ''}>玻璃霓虹</option>
+                            <option value="led" ${item.type === 'led' ? 'selected' : ''}>LED霓虹</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        case 'wallBelt': // 腰线/分隔条
+            return `
+                <div class="item-params-grid" style="display:grid;grid-template-columns:1fr 0.5fr 1.5fr;gap:0.3rem;font-size:0.625rem;">
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">长度(米)</label>
+                        <input type="number" id="itemLength_${areaIndex}_${itemIndex}" value="${item.length || ''}" placeholder="5" step="0.5" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'length', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">材质</label>
+                        <select id="itemMaterial_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'material', this.value)" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
+                            <option value="aluminum" ${item.material === 'aluminum' || !item.material ? 'selected' : ''}>铝合金</option>
+                            <option value="stainless" ${item.material === 'stainless' ? 'selected' : ''}>不锈钢</option>
+                            <option value="pvc" ${item.material === 'pvc' ? 'selected' : ''}>PVC</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        case 'podium': // 讲台/主持台
+            return `
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr 1.8fr;gap:0.3rem;font-size:0.625rem;">
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">宽(米)</label>
+                        <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1.5" step="0.1" min="0.8" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">高(米)</label>
+                        <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="1" step="0.1" min="0.6" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">材质</label>
+                        <select id="itemMaterial_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'material', this.value)" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
+                            <option value="wood" ${item.material === 'wood' || !item.material ? 'selected' : ''}>实木</option>
+                            <option value="metal" ${item.material === 'metal' ? 'selected' : ''}>金属</option>
+                            <option value="mdf" ${item.material === 'mdf' ? 'selected' : ''}>密度板</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        case 'awardBoard': // 荣誉墙/奖牌墙
+            return `
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr;gap:0.3rem;font-size:0.625rem;">
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">宽(米)</label>
+                        <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="3" step="0.1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">高(米)</label>
+                        <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="2" step="0.1" min="0.8" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
+                    </div>
+                </div>
+            `;
+        case 'timeline': // 时间轴/历程墙
+            return `
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr 1.8fr;gap:0.3rem;font-size:0.625rem;">
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">宽(米)</label>
+                        <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="4" step="0.1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">高(米)</label>
+                        <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="1.5" step="0.1" min="0.6" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">材质</label>
+                        <select id="itemMaterial_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'material', this.value)" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
+                            <option value="acrylic" ${item.material === 'acrylic' || !item.material ? 'selected' : ''}>亚克力</option>
+                            <option value="metal" ${item.material === 'metal' ? 'selected' : ''}>金属</option>
+                            <option value="pvc" ${item.material === 'pvc' ? 'selected' : ''}>PVC</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        case 'culturePillar': // 文化柱/造型柱
+            return `
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr 1.8fr;gap:0.3rem;font-size:0.625rem;">
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">周长(米)</label>
+                        <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="1.2" step="0.1" min="0.5" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">高度(米)</label>
+                        <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="2.8" step="0.1" min="1.5" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">材质</label>
+                        <select id="itemMaterial_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'material', this.value)" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
+                            <option value="wood" ${item.material === 'wood' || !item.material ? 'selected' : ''}>木质</option>
+                            <option value="metal" ${item.material === 'metal' ? 'selected' : ''}>金属</option>
+                            <option value="acrylic" ${item.material === 'acrylic' ? 'selected' : ''}>亚克力</option>
+                            <option value="pvc" ${item.material === 'pvc' ? 'selected' : ''}>PVC</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        case 'windowDisplay': // 橱窗展示
+            return `
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr 1.8fr;gap:0.3rem;font-size:0.625rem;">
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">宽(米)</label>
+                        <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || ''}" placeholder="2" step="0.1" min="0.8" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">高(米)</label>
+                        <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || ''}" placeholder="1.5" step="0.1" min="0.6" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">类型</label>
+                        <select id="itemType_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'type', this.value)" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
+                            <option value="lightbox" ${item.type === 'lightbox' || !item.type ? 'selected' : ''}>灯箱橱窗</option>
+                            <option value="poster" ${item.type === 'poster' ? 'selected' : ''}>海报橱窗</option>
+                            <option value="decor" ${item.type === 'decor' ? 'selected' : ''}>装饰橱窗</option>
+                        </select>
+                    </div>
+                </div>
+            `;
         case 'spiritFortress': // 精神堡垒
             return `
-                <div style="display:grid;grid-template-columns:repeat(3,80px);gap:0.25rem;font-size:0.625rem;">
+                <div class="item-params-grid" style="display:grid;grid-template-columns:0.8fr 0.8fr 0.6fr;gap:0.3rem;font-size:0.625rem;">
                     <div>
-                        <label>宽(米)</label>
-                        <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || 4}" placeholder="4" step="0.5" min="2" style="width:80px;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
+                        <label style="display:block;margin-bottom:2px;">宽(米)</label>
+                        <input type="number" id="itemWidth_${areaIndex}_${itemIndex}" value="${item.width || 4}" placeholder="4" step="0.5" min="2" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'width', this.value)">
                     </div>
                     <div>
-                        <label>高(米)</label>
-                        <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || 8}" placeholder="8" step="0.5" min="4" style="width:80px;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
+                        <label style="display:block;margin-bottom:2px;">高(米)</label>
+                        <input type="number" id="itemHeight_${areaIndex}_${itemIndex}" value="${item.height || 8}" placeholder="8" step="0.5" min="4" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'height', this.value)">
                     </div>
                     <div>
-                        <label>数量</label>
-                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:80px;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
+                        <label style="display:block;margin-bottom:2px;">数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
                     </div>
                     <div>
-                        <label>材质</label>
-                        <select id="itemMaterial_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'material', this.value)" style="width:80px;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
+                        <label style="display:block;margin-bottom:2px;">材质</label>
+                        <select id="itemMaterial_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'material', this.value)" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
                             <option value="stainless" ${item.material === 'stainless' || !item.material ? 'selected' : ''}>不锈钢</option>
                             <option value="aluminum" ${item.material === 'aluminum' ? 'selected' : ''}>铝塑板</option>
                             <option value="galvanized" ${item.material === 'galvanized' ? 'selected' : ''}>镀锌板</option>
                         </select>
                     </div>
                     <div>
-                        <label>工艺</label>
-                        <select id="itemTech_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'tech', this.value)" style="width:80px;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
+                        <label style="display:block;margin-bottom:2px;">工艺</label>
+                        <select id="itemTech_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'tech', this.value)" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
                             <option value="uv" ${item.tech === 'uv' || !item.tech ? 'selected' : ''}>UV喷绘</option>
                             <option value="led" ${item.tech === 'led' ? 'selected' : ''}>LED发光</option>
                             <option value="paint" ${item.tech === 'paint' ? 'selected' : ''}>烤漆</option>
                         </select>
                     </div>
                     <div>
-                        <label>是否带基础</label>
-                        <select id="itemBase_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'base', this.value)" style="width:80px;padding:0.1rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
+                        <label style="display:block;margin-bottom:2px;">是否带基础</label>
+                        <select id="itemBase_${areaIndex}_${itemIndex}" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'base', this.value)" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;">
                             <option value="yes" ${item.base === 'yes' || !item.base ? 'selected' : ''}>带基础</option>
                             <option value="no" ${item.base === 'no' ? 'selected' : ''}>不带基础</option>
                         </select>
                     </div>
                 </div>
             `;
-        default: // 其他
+        case 'other': // 其他
+            return `
+                <div class="item-params-grid" style="display:grid;grid-template-columns:1.4fr 0.6fr;gap:0.3rem;font-size:0.625rem;">
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">项目名称</label>
+                        <input type="text" id="itemName_${areaIndex}_${itemIndex}" value="${item.name || ''}" placeholder="自定义名称" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'name', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">数量</label>
+                        <input type="number" id="itemQty_${areaIndex}_${itemIndex}" value="${item.qty || 1}" placeholder="1" min="1" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'qty', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">描述</label>
+                        <input type="text" id="itemDescription_${areaIndex}_${itemIndex}" value="${item.description || ''}" placeholder="项目描述" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'description', this.value)">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:2px;">单价(元)</label>
+                        <input type="number" id="itemCustomPrice_${areaIndex}_${itemIndex}" value="${item.customPrice || 100}" placeholder="100" min="0" style="width:100%;padding:0.2rem;font-size:0.625rem;border:1px solid #fcd34d;border-radius:4px;" onchange="updateItemParam(${areaIndex}, ${itemIndex}, 'customPrice', this.value)">
+                    </div>
+                </div>
+            `;
+        default: // 未知类型
             return `
                 <div style="display:grid;grid-template-columns:repeat(2,80px);gap:0.25rem;font-size:0.625rem;">
                     <div>
@@ -24361,6 +24771,7 @@ function updateItemType(areaIndex, itemIndex, newType) {
             item.width = item.width || 4;
             item.height = item.height || 2.4;
             item.material = item.material || 'pvc';
+            item.qty = item.qty || 1;
             break;
         case 'board':
             item.width = item.width || 1.2;
@@ -24395,11 +24806,13 @@ function updateItemType(areaIndex, itemIndex, newType) {
             item.width = item.width || 0.8;
             item.height = item.height || 1.8;
             item.material = item.material || 'acrylic';
+            item.qty = item.qty || 1;
             break;
         case 'billboard': // 宣传栏
             item.width = item.width || 3;
             item.height = item.height || 2;
             item.type = item.type || 'indoor';
+            item.qty = item.qty || 1;
             break;
         case 'directory': // 楼层导视
             item.width = item.width || 1.2;
@@ -24410,11 +24823,13 @@ function updateItemType(areaIndex, itemIndex, newType) {
             item.width = item.width || 2;
             item.height = item.height || 0.8;
             item.tech = item.tech || 'acrylic';
+            item.qty = item.qty || 1;
             break;
         case 'decor': // 装饰造型
             item.width = item.width || 1;
             item.height = item.height || 1;
             item.material = item.material || 'acrylic';
+            item.qty = item.qty || 1;
             break;
         case 'shelf': // 展示架
             item.width = item.width || 1.2;
@@ -24507,6 +24922,79 @@ function updateItemType(areaIndex, itemIndex, newType) {
             item.material = item.material || 'stainless';
             item.tech = item.tech || 'uv';
             item.base = item.base || 'yes';
+            break;
+        case 'magnetBoard': // 磁性展板
+            item.width = item.width || 1.2;
+            item.height = item.height || 2;
+            item.qty = item.qty || 1;
+            break;
+        case 'photoFrame': // 挂墙相框
+            item.width = item.width || 0.5;
+            item.height = item.height || 0.7;
+            item.qty = item.qty || 1;
+            item.material = item.material || 'wood';
+            break;
+        case 'acrylicDecor': // 亚克力装饰
+            item.width = item.width || 1;
+            item.height = item.height || 1;
+            item.qty = item.qty || 1;
+            break;
+        case 'metalDecor': // 金属装饰
+            item.width = item.width || 1;
+            item.height = item.height || 1;
+            item.qty = item.qty || 1;
+            item.material = item.material || 'stainless';
+            break;
+        case 'lightBox': // 发光灯箱
+            item.width = item.width || 1;
+            item.height = item.height || 1.5;
+            item.qty = item.qty || 1;
+            item.type = item.type || 'led';
+            break;
+        case 'neonSign': // 霓虹灯装饰
+            item.length = item.length || 3;
+            item.qty = item.qty || 1;
+            item.type = item.type || 'flex';
+            break;
+        case 'wallBelt': // 腰线/分隔条
+            item.length = item.length || 5;
+            item.qty = item.qty || 1;
+            item.material = item.material || 'aluminum';
+            break;
+        case 'podium': // 讲台/主持台
+            item.width = item.width || 1.5;
+            item.height = item.height || 1;
+            item.qty = item.qty || 1;
+            item.material = item.material || 'wood';
+            break;
+        case 'awardBoard': // 荣誉墙/奖牌墙
+            item.width = item.width || 3;
+            item.height = item.height || 2;
+            item.qty = item.qty || 1;
+            break;
+        case 'timeline': // 时间轴/历程墙
+            item.width = item.width || 4;
+            item.height = item.height || 1.5;
+            item.qty = item.qty || 1;
+            item.material = item.material || 'acrylic';
+            break;
+        case 'culturePillar': // 文化柱/造型柱
+            item.width = item.width || 1.2;
+            item.height = item.height || 2.8;
+            item.qty = item.qty || 1;
+            item.material = item.material || 'wood';
+            break;
+        case 'windowDisplay': // 橱窗展示
+            item.width = item.width || 2;
+            item.height = item.height || 1.5;
+            item.qty = item.qty || 1;
+            item.type = item.type || 'lightbox';
+            break;
+        case 'other': // 其他
+            item.qty = item.qty || 1;
+            item.customPrice = item.customPrice || 100;
+            item.description = item.description || '';
+            item.name = item.name || '';
             break;
         default:
             item.qty = item.qty || 1;
@@ -25426,7 +25914,7 @@ function calculateCultureWallQuote() {
                 case 'backdrop': // 背景画面
                     const backdropConfig = getBackdropConfig(item.material);
                     const backdropPrice = getCustomPrice('backdrop_' + item.material, backdropConfig.defaultPrice);
-                    const backdropQty = itemArea * (1 + wasteRate / 100);
+                    const backdropQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
                     const backdropTotal = Math.ceil(backdropQty * backdropPrice);
                     materials.push({
                         name: areaPrefix + backdropConfig.name,
@@ -25475,11 +25963,11 @@ function calculateCultureWallQuote() {
                     
                 case 'ledStrip': // LED灯带
                     const ledPrice = getCustomPrice('ledStrip', 80);
-                    const ledTotal = Math.ceil(ledPrice * (item.length || 1));
+                    const ledTotal = Math.ceil(ledPrice * (item.length || 1) * (item.qty || 1));
                     materials.push({
                         name: areaPrefix + 'LED灯带',
                         spec: item.color === 'rgb' ? 'RGB彩色' : item.color === 'blue' ? '蓝色' : item.color === 'red' ? '红色' : '暖白光',
-                        qty: (item.length || 1).toFixed(1),
+                        qty: ((item.length || 1) * (item.qty || 1)).toFixed(1),
                         unit: '米',
                         unitPrice: ledPrice.toFixed(0),
                         total: ledTotal
@@ -25492,11 +25980,11 @@ function calculateCultureWallQuote() {
                     const framePriceKey = item.material === 'aluminum' ? 'frameAluminum' : 
                                          item.material === 'wood' ? 'frameWood' : 'frameStainless';
                     const framePrice = getCustomPrice(framePriceKey, 60);
-                    const frameTotal = Math.ceil(frameLength * framePrice);
+                    const frameTotal = Math.ceil(frameLength * framePrice * (item.qty || 1));
                     materials.push({
                         name: areaPrefix + '边框装饰',
                         spec: item.material === 'aluminum' ? '铝合金边框' : item.material === 'wood' ? '木质边框' : '不锈钢边框',
-                        qty: frameLength.toFixed(1),
+                        qty: (frameLength * (item.qty || 1)).toFixed(1),
                         unit: '米',
                         unitPrice: framePrice.toFixed(0),
                         total: frameTotal
@@ -25522,7 +26010,7 @@ function calculateCultureWallQuote() {
                     
                 case 'info': // 信息牌
                     const infoPrice = getCustomPrice('pvc8mm', 70);
-                    const infoQty = itemArea * (item.qty || 1);
+                    const infoQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
                     const infoTotal = Math.ceil(infoQty * infoPrice);
                     materials.push({
                         name: areaPrefix + '信息牌',
@@ -25539,11 +26027,12 @@ function calculateCultureWallQuote() {
                     const signagePriceKey = item.material === 'aluminum' ? 'signageAluminum' : 
                                            item.material === 'stainless' ? 'signageStainless' : 'signageAcrylic';
                     const signagePrice = getCustomPrice(signagePriceKey, 120);
-                    const signageTotal = Math.ceil(itemArea * signagePrice);
+                    const signageQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
+                    const signageTotal = Math.ceil(signageQty * signagePrice);
                     materials.push({
                         name: areaPrefix + '导视牌',
                         spec: item.material === 'aluminum' ? '铝合金' : item.material === 'stainless' ? '不锈钢' : '亚克力',
-                        qty: itemArea.toFixed(2),
+                        qty: signageQty.toFixed(2),
                         unit: '㎡',
                         unitPrice: signagePrice.toFixed(0),
                         total: signageTotal
@@ -25553,11 +26042,12 @@ function calculateCultureWallQuote() {
                     
                 case 'billboard': // 宣传栏
                     const billboardPrice = item.type === 'lightbox' ? 280 : item.type === 'outdoor' ? 200 : 150;
-                    const billboardTotal = Math.ceil(itemArea * billboardPrice);
+                    const billboardQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
+                    const billboardTotal = Math.ceil(billboardQty * billboardPrice);
                     materials.push({
                         name: areaPrefix + '宣传栏',
                         spec: item.type === 'lightbox' ? '灯箱宣传栏' : item.type === 'outdoor' ? '户外宣传栏' : '室内宣传栏',
-                        qty: itemArea.toFixed(2),
+                        qty: billboardQty.toFixed(2),
                         unit: '㎡',
                         unitPrice: billboardPrice.toFixed(0),
                         total: billboardTotal
@@ -25581,11 +26071,12 @@ function calculateCultureWallQuote() {
                     
                 case 'logo': // LOGO墙
                     const logoPrice = item.tech === 'led' ? 300 : item.tech === 'metal' ? 220 : item.tech === 'uv' ? 80 : 150;
-                    const logoTotal = Math.ceil(itemArea * logoPrice);
+                    const logoQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
+                    const logoTotal = Math.ceil(logoQty * logoPrice);
                     materials.push({
                         name: areaPrefix + 'LOGO墙',
                         spec: item.tech === 'led' ? 'LED发光' : item.tech === 'metal' ? '金属烤漆' : item.tech === 'uv' ? 'UV喷绘' : '亚克力雕刻',
-                        qty: itemArea.toFixed(2),
+                        qty: logoQty.toFixed(2),
                         unit: '㎡',
                         unitPrice: logoPrice.toFixed(0),
                         total: logoTotal
@@ -25595,11 +26086,12 @@ function calculateCultureWallQuote() {
                     
                 case 'decor': // 装饰造型
                     const decorPrice = item.material === 'metal' ? 120 : item.material === 'wood' ? 80 : item.material === 'pvc' ? 60 : 100;
-                    const decorTotal = Math.ceil(itemArea * decorPrice);
+                    const decorQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
+                    const decorTotal = Math.ceil(decorQty * decorPrice);
                     materials.push({
                         name: areaPrefix + '装饰造型',
                         spec: item.material === 'metal' ? '金属' : item.material === 'wood' ? '木质' : item.material === 'pvc' ? 'PVC' : '亚克力',
-                        qty: itemArea.toFixed(2),
+                        qty: decorQty.toFixed(2),
                         unit: '㎡',
                         unitPrice: decorPrice.toFixed(0),
                         total: decorTotal
@@ -25638,11 +26130,12 @@ function calculateCultureWallQuote() {
                     
                 case 'floorSign': // 地面标识
                     const floorPrice = 45;
-                    const floorTotal = Math.ceil(itemArea * floorPrice * (item.qty || 1));
+                    const floorQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
+                    const floorTotal = Math.ceil(floorQty * floorPrice);
                     materials.push({
                         name: areaPrefix + '地面标识',
                         spec: `${itemWidth}×${itemHeight}m`,
-                        qty: itemArea.toFixed(2),
+                        qty: floorQty.toFixed(2),
                         unit: '㎡',
                         unitPrice: floorPrice.toFixed(0),
                         total: floorTotal
@@ -25848,7 +26341,7 @@ function calculateCultureWallQuote() {
                     
                 case 'acrylicDecor': // 亚克力装饰
                     const acrylicDecorPrice = getCustomPrice('acrylic', 120);
-                    const acrylicDecorQty = itemArea * (1 + wasteRate / 100);
+                    const acrylicDecorQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
                     const acrylicDecorTotal = Math.ceil(acrylicDecorQty * acrylicDecorPrice);
                     materials.push({
                         name: areaPrefix + '亚克力装饰',
@@ -25863,7 +26356,7 @@ function calculateCultureWallQuote() {
                     
                 case 'metalDecor': // 金属装饰
                     const metalDecorPrice = item.material === 'stainless' ? 180 : item.material === 'aluminum' ? 140 : 160;
-                    const metalDecorQty = itemArea * (1 + wasteRate / 100);
+                    const metalDecorQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
                     const metalDecorTotal = Math.ceil(metalDecorQty * metalDecorPrice);
                     materials.push({
                         name: areaPrefix + '金属装饰',
@@ -25878,7 +26371,7 @@ function calculateCultureWallQuote() {
                     
                 case 'lightBox': // 发光灯箱
                     const lightBoxPrice = item.type === 'led' ? 350 : item.type === 'neon' ? 400 : 280;
-                    const lightBoxQty = itemArea * (item.qty || 1);
+                    const lightBoxQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
                     const lightBoxTotal = Math.ceil(lightBoxQty * lightBoxPrice);
                     materials.push({
                         name: areaPrefix + '发光灯箱',
@@ -25893,8 +26386,8 @@ function calculateCultureWallQuote() {
                     
                 case 'neonSign': // 霓虹灯装饰
                     const neonSignPrice = item.type === 'flex' ? 150 : item.type === 'glass' ? 250 : 200;
-                    const neonSignLength = item.length || 2;
-                    const neonSignTotal = Math.ceil(neonSignPrice * neonSignLength);
+                    const neonSignLength = (item.length || 2) * (item.qty || 1);
+                    const neonSignTotal = Math.ceil(neonSignPrice * neonSignLength * (1 + wasteRate / 100));
                     materials.push({
                         name: areaPrefix + '霓虹灯装饰',
                         spec: `${neonSignLength}米 ${item.type === 'flex' ? '柔性霓虹' : item.type === 'glass' ? '玻璃霓虹' : 'LED霓虹'}`,
@@ -25907,7 +26400,7 @@ function calculateCultureWallQuote() {
                     break;
                     
                 case 'wallBelt': // 腰线/分隔条
-                    const wallBeltLength = item.length || 5;
+                    const wallBeltLength = (item.length || 5) * (item.qty || 1);
                     const wallBeltPrice = item.material === 'aluminum' ? 40 : item.material === 'stainless' ? 55 : 30;
                     const wallBeltTotal = Math.ceil(wallBeltLength * wallBeltPrice);
                     materials.push({
@@ -25937,7 +26430,7 @@ function calculateCultureWallQuote() {
                     
                 case 'awardBoard': // 荣誉墙/奖牌墙
                     const awardBoardPrice = 180;
-                    const awardBoardQty = itemArea * (1 + wasteRate / 100);
+                    const awardBoardQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
                     const awardBoardTotal = Math.ceil(awardBoardQty * awardBoardPrice);
                     materials.push({
                         name: areaPrefix + '荣誉墙/奖牌墙',
@@ -25952,7 +26445,7 @@ function calculateCultureWallQuote() {
                     
                 case 'timeline': // 时间轴/历程墙
                     const timelinePrice = item.material === 'acrylic' ? 100 : item.material === 'metal' ? 150 : 120;
-                    const timelineQty = itemArea * (1 + wasteRate / 100);
+                    const timelineQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
                     const timelineTotal = Math.ceil(timelineQty * timelinePrice);
                     materials.push({
                         name: areaPrefix + '时间轴/历程墙',
@@ -25984,7 +26477,7 @@ function calculateCultureWallQuote() {
                     
                 case 'windowDisplay': // 橱窗展示
                     const windowDisplayPrice = item.type === 'lightbox' ? 280 : item.type === 'poster' ? 120 : 200;
-                    const windowDisplayQty = itemArea * (1 + wasteRate / 100);
+                    const windowDisplayQty = itemArea * (item.qty || 1) * (1 + wasteRate / 100);
                     const windowDisplayTotal = Math.ceil(windowDisplayQty * windowDisplayPrice);
                     materials.push({
                         name: areaPrefix + '橱窗展示',
@@ -26001,8 +26494,9 @@ function calculateCultureWallQuote() {
                     const otherPrice = parseFloat(item.customPrice) || 100;
                     const otherQty = item.qty || 1;
                     const otherTotal = Math.ceil(otherPrice * otherQty);
+                    const otherName = item.name || '其他项目';
                     materials.push({
-                        name: areaPrefix + '其他项目',
+                        name: areaPrefix + otherName,
                         spec: item.description || '自定义项目',
                         qty: otherQty,
                         unit: '项',
