@@ -7760,7 +7760,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                     <!-- 损耗 -->
                                     <div style="display:flex;align-items:center;gap:0.375rem;">
                                         <label for="doorHeaderWasteRate" style="font-size:0.75rem;color:#92400e;font-weight:600;white-space:nowrap;">损耗:</label>
-                                        <input type="number" id="doorHeaderWasteRate" value="5" min="0" max="50" placeholder="5" style="width:55px;padding:0.3rem 0.375rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:var(--radius);">
+                                        <input type="number" id="doorHeaderWasteRate" value="0" min="0" max="50" placeholder="0" style="width:55px;padding:0.3rem 0.375rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:var(--radius);">
                                         <span style="font-size:0.6875rem;color:#92400e;">%</span>
                                         <div style="display:flex;gap:0.125rem;">
                                             <button class="btn btn-xs" onclick="document.getElementById('doorHeaderWasteRate').value=5" style="background:#fef3c7;color:#92400e;font-size:0.625rem;padding:0.125rem 0.25rem;">5%</button>
@@ -7873,7 +7873,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                             <div style="background:white;border-radius:6px;padding:0.375rem;">
                                                 <label for="cultureWallWasteRate" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">损耗率</label>
                                                 <div style="display:flex;gap:2px;">
-                                                    <input type="number" id="cultureWallWasteRate" value="5" min="0" max="50" step="0.5" onchange="updateCultureWallPreview()" style="flex:1;padding:0.25rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:4px;background:white;text-align:center;">
+                                                    <input type="number" id="cultureWallWasteRate" value="0" min="0" max="50" step="0.5" onchange="updateCultureWallPreview()" style="flex:1;padding:0.25rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:4px;background:white;text-align:center;">
                                                     <span style="padding:0.25rem;font-size:0.75rem;color:#92400e;font-weight:500;">%</span>
                                                 </div>
                                                 <div style="display:flex;gap:4px;margin-top:4px;">
@@ -7902,8 +7902,9 @@ function safeExecuteAsync(fn, defaultVal) {
                                             <div style="background:white;border-radius:6px;padding:0.375rem;">
                                                 <label for="cultureWallCalcMode" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">计算方式</label>
                                                 <select id="cultureWallCalcMode" onchange="updateCultureWallPreview()" style="width:100%;padding:0.25rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:4px;background:white;">
-                                                    <option value="area">按尺寸算</option>
-                                                    <option value="material" selected>按材料算</option>
+                                                    <option value="item" selected>📋 按项目清单算</option>
+                                                    <option value="area">📐 按整墙面积算</option>
+                                                    <option value="package">📦 按套餐算</option>
                                                 </select>
                                             </div>
                                             <div style="background:white;border-radius:6px;padding:0.375rem;">
@@ -7913,6 +7914,20 @@ function safeExecuteAsync(fn, defaultVal) {
                                                     <option value="20">郊区(+20km)</option>
                                                     <option value="50">远郊(+50km)</option>
                                                     <option value="100">外地(+100km)</option>
+                                                </select>
+                                            </div>
+                                            <div style="background:white;border-radius:6px;padding:0.375rem;">
+                                                <label for="cultureWallIncludeDesign" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">设计服务</label>
+                                                <select id="cultureWallIncludeDesign" style="width:100%;padding:0.25rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:4px;background:white;">
+                                                    <option value="yes" selected>✅ 含设计费</option>
+                                                    <option value="no">❌ 不含设计费</option>
+                                                </select>
+                                            </div>
+                                            <div style="background:white;border-radius:6px;padding:0.375rem;">
+                                                <label for="cultureWallInstallMode" style="font-size:0.625rem;color:#92400e;display:block;margin-bottom:0.125rem;font-weight:500;">安装费计算</label>
+                                                <select id="cultureWallInstallMode" style="width:100%;padding:0.25rem;font-size:0.75rem;border:1px solid #fcd34d;border-radius:4px;background:white;">
+                                                    <option value="area" selected>📐 按面积算</option>
+                                                    <option value="labor">👷 按人工算</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -7956,7 +7971,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                             </div>
                                             <div style="background:white;border-radius:6px;padding:0.375rem;text-align:center;">
                                                 <div style="font-size:0.625rem;color:#7c3aed;margin-bottom:0.125rem;">📉 损耗率</div>
-                                                <div style="font-size:0.9375rem;font-weight:700;color:#7c3aed;" id="cultureWallWastePreview">5%</div>
+                                                <div style="font-size:0.9375rem;font-weight:700;color:#7c3aed;" id="cultureWallWastePreview">0%</div>
                                             </div>
                                         </div>
                                     </div>
@@ -18328,11 +18343,20 @@ function calculatePriceByQty(product, quantity) {
 }
 
 function calculateProductPrice() {
-    const calcType = document.getElementById('productCalcType').value;
-    const costPrice = parseFloat(document.getElementById('productCostPrice').value) || 0;
-    const width = parseFloat(document.getElementById('productWidth').value) || 0;
-    const height = parseFloat(document.getElementById('productHeight').value) || 0;
-    const depth = parseFloat(document.getElementById('productDepth').value) || 0;
+    const calcTypeEl = document.getElementById('productCalcType');
+    const costPriceEl = document.getElementById('productCostPrice');
+    const widthEl = document.getElementById('productWidth');
+    const heightEl = document.getElementById('productHeight');
+    const depthEl = document.getElementById('productDepth');
+    
+    // 检查元素是否存在
+    if (!calcTypeEl || !costPriceEl) return;
+    
+    const calcType = calcTypeEl.value;
+    const costPrice = parseFloat(costPriceEl.value) || 0;
+    const width = widthEl ? parseFloat(widthEl.value) || 0 : 0;
+    const height = heightEl ? parseFloat(heightEl.value) || 0 : 0;
+    const depth = depthEl ? parseFloat(depthEl.value) || 0 : 0;
     const markupRate = 1.3;
     let sellingPrice = 0;
     let unit = '项';
@@ -23504,7 +23528,9 @@ function getCultureWallCharConfig(material) {
 
 // 文化墙安装费用计算
 function calcCultureWallInstallFee(area, installHeight, surfaceType) {
-    let baseFee = Math.max(200, Math.ceil(area * 80));
+    const installBase = getCustomPrice('installBase', 80);
+    const installMin = getCustomPrice('installMin', 80);
+    let baseFee = Math.max(installMin, Math.ceil(area * installBase));
     
     // 安装高度系数
     const heightFactors = {
@@ -23671,12 +23697,12 @@ function generateAreaHTML(areaIndex) {
             <div class="areaDimGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.25rem;margin-bottom:0.5rem;padding:0.375rem;background:${isSelected ? '#fefce8' : '#f9fafb'};border-radius:6px;">
                 <div style="display:flex;align-items:center;gap:0.125rem;">
                     <label style="font-size:0.75rem;color:#6b7280;">📐 墙宽</label>
-                    <input type="number" id="areaWidth_${areaIndex}" value="${area.width || ''}" placeholder="4" step="0.1" min="0.5" style="width:60px;padding:0.2rem 0.25rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;" oninput="updateAreaDimensions(${areaIndex})">
+                    <input type="number" id="areaWidth_${areaIndex}" value="${area.width || ''}" placeholder="4" step="0.1" min="0.5" style="width:60px;padding:0.2rem 0.25rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;" oninput="updateAreaDimensions(${areaIndex})" onclick="event.stopPropagation()">
                     <span style="font-size:0.625rem;color:#9ca3af;">m</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:0.125rem;">
                     <label style="font-size:0.75rem;color:#6b7280;">📏 墙高</label>
-                    <input type="number" id="areaHeight_${areaIndex}" value="${area.height || ''}" placeholder="2.4" step="0.1" min="0.5" style="width:60px;padding:0.2rem 0.25rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;" oninput="updateAreaDimensions(${areaIndex})">
+                    <input type="number" id="areaHeight_${areaIndex}" value="${area.height || ''}" placeholder="2.4" step="0.1" min="0.5" style="width:60px;padding:0.2rem 0.25rem;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:4px;" oninput="updateAreaDimensions(${areaIndex})" onclick="event.stopPropagation()">
                     <span style="font-size:0.625rem;color:#9ca3af;">m</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:0.125rem;">
@@ -25057,7 +25083,19 @@ function renderCultureWallAreas() {
         emptyHint.style.display = cultureWallAreas.length > 0 ? 'none' : 'block';
     }
     
+    // 更新区域数量badge
+    updateCultureWallAreaBadge();
+    
     updateCultureWallPreview();
+}
+
+// 更新区域数量badge
+function updateCultureWallAreaBadge() {
+    const badge = document.getElementById('cultureWallAreaBadge');
+    if (badge) {
+        const count = cultureWallAreas.length;
+        badge.textContent = count + ' 个区域';
+    }
 }
 
 // 选择区域
@@ -25574,6 +25612,36 @@ function toggleCultureWallPriceEdit() {
                 </div>
             </div>
             
+            <!-- 套餐与服务价格 -->
+            <div style="background:white;border-radius:6px;padding:0.5rem;margin-bottom:0.375rem;">
+                <div style="font-size:0.75rem;font-weight:600;color:#92400e;margin-bottom:0.25rem;padding-bottom:0.25rem;border-bottom:1px solid #fef3c7;">📦 套餐与服务 <span style="font-weight:400;color:#9ca3af;font-size:0.625rem;">(元/㎡)</span></div>
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.25rem;">
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">设计服务费</label><input type="number" id="customPrice_designService" placeholder="50" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">设计最低收费</label><input type="number" id="customPrice_designMin" placeholder="300" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">标准套餐</label><input type="number" id="customPrice_cultureWallPackage_standard" placeholder="380" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">精品套餐</label><input type="number" id="customPrice_cultureWallPackage_premium" placeholder="580" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">豪华套餐</label><input type="number" id="customPrice_cultureWallPackage_luxury" placeholder="880" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">按面积算单价</label><input type="number" id="customPrice_cultureWallAreaUnit" placeholder="280" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"></div>
+                </div>
+            </div>
+            
+            <!-- 安装费用设置 -->
+            <div style="background:white;border-radius:6px;padding:0.5rem;margin-bottom:0.375rem;">
+                <div style="font-size:0.75rem;font-weight:600;color:#92400e;margin-bottom:0.25rem;padding-bottom:0.25rem;border-bottom:1px solid #fef3c7;">🔧 安装费用</div>
+                <div style="font-size:0.625rem;color:#9ca3af;margin-bottom:0.25rem;">按面积算：</div>
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.25rem;">
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">安装费基础</label><input type="number" id="customPrice_installBase" placeholder="80" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"><span style="font-size:0.5rem;color:#9ca3af;">/㎡</span></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">安装最低费</label><input type="number" id="customPrice_installMin" placeholder="80" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"><span style="font-size:0.5rem;color:#9ca3af;">元</span></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">辅材费单价</label><input type="number" id="customPrice_installMaterial" placeholder="30" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"><span style="font-size:0.5rem;color:#9ca3af;">/㎡</span></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">辅材最低费</label><input type="number" id="customPrice_installMaterialMin" placeholder="0" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"><span style="font-size:0.5rem;color:#9ca3af;">元</span></div>
+                </div>
+                <div style="font-size:0.625rem;color:#9ca3af;margin:0.25rem 0;">按人工算：</div>
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.25rem;">
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">人工日薪</label><input type="number" id="customPrice_laborDaily" placeholder="400" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"><span style="font-size:0.5rem;color:#9ca3af;">/天</span></div>
+                    <div style="display:flex;align-items:center;gap:0.2rem;"><label style="font-size:0.6875rem;color:#6b7280;flex:1;">安装效率</label><input type="number" id="customPrice_installEfficiency" placeholder="8" style="width:55px;padding:0.2rem;font-size:0.6875rem;border:1px solid #e5e7eb;border-radius:4px;"><span style="font-size:0.5rem;color:#9ca3af;">㎡/人</span></div>
+                </div>
+            </div>
+            
             <!-- 快速操作按钮 -->
             <div style="margin-top:0.5rem;padding-top:0.375rem;border-top:1px dashed #fcd34d;display:flex;justify-content:space-between;">
                 <button type="button" onclick="resetCustomPrices()" style="background:#f3f4f6;color:#6b7280;font-size:0.75rem;padding:0.25rem 0.5rem;border-radius:4px;border:none;">🔄 重置默认</button>
@@ -25880,6 +25948,71 @@ function calculateCultureWallQuote() {
         install: { name: '安装辅材', items: [], subtotal: 0 },
         other: { name: '其他材料', items: [], subtotal: 0 }
     };
+
+    // 计算所有区域的总墙面积
+    let totalWallArea = 0;
+    cultureWallAreas.forEach((areaData, index) => {
+        const width = parseFloat(document.getElementById('areaWidth_' + index)?.value) || areaData.width || 0;
+        const height = parseFloat(document.getElementById('areaHeight_' + index)?.value) || areaData.height || 0;
+        totalWallArea += width * height;
+    });
+
+    // 根据计算方式分支处理
+    if (calcMode === 'area') {
+        // ===== 按整墙面积算 =====
+        // 简化计算：墙总面积 × 综合单价（适合快速报价）
+        const areaUnitPrice = getCustomPrice('cultureWallAreaUnit', 280); // 默认280元/㎡
+        const adjustedArea = totalWallArea * (1 + wasteRate / 100);
+        totalCost = Math.ceil(adjustedArea * areaUnitPrice);
+        
+        materials.push({
+            name: '文化墙综合报价',
+            spec: `总面积 ${totalWallArea.toFixed(2)}㎡`,
+            qty: adjustedArea.toFixed(2),
+            unit: '㎡',
+            unitPrice: areaUnitPrice.toFixed(0),
+            total: totalCost
+        });
+        
+        // 添加安装费用
+        const installCost = Math.ceil(totalWallArea * getCustomPrice('cultureWallInstall', 50));
+        materials.push({
+            name: '安装费用',
+            spec: '含辅材',
+            qty: totalWallArea.toFixed(2),
+            unit: '㎡',
+            unitPrice: getCustomPrice('cultureWallInstall', 50).toFixed(0),
+            total: installCost
+        });
+        totalCost += installCost;
+        
+    } else if (calcMode === 'package') {
+        // ===== 按套餐算 =====
+        // 预设套餐价格，标准化项目快速报价
+        const packagePrices = {
+            standard: { name: '标准文化墙套餐', price: 380, desc: 'PVC底板+UV画面+基础安装' },
+            premium: { name: '精品文化墙套餐', price: 580, desc: '铝塑板底板+UV画面+立体字+精装安装' },
+            luxury: { name: '豪华文化墙套餐', price: 880, desc: '亚克力底板+高清画面+LED灯带+立体字+豪华安装' }
+        };
+        // 默认使用标准套餐，可根据需要扩展选择
+        const selectedPackage = 'standard';
+        const pkg = packagePrices[selectedPackage];
+        const packagePrice = getCustomPrice('cultureWallPackage_' + selectedPackage, pkg.price);
+        
+        totalCost = Math.ceil(totalWallArea * packagePrice);
+        
+        materials.push({
+            name: pkg.name,
+            spec: pkg.desc,
+            qty: totalWallArea.toFixed(2),
+            unit: '㎡',
+            unitPrice: packagePrice.toFixed(0),
+            total: totalCost
+        });
+        
+    } else {
+        // ===== 按项目清单算（默认） =====
+        // 逐项计算每个内容项（背景画面、展板、立体字等）
 
     // 基础底板价格
     const baseMaterialPrices = {
@@ -26508,17 +26641,34 @@ function calculateCultureWallQuote() {
             }
         });
 
-        // 安装费用（基于项目总面积）
+        // 安装费用（根据计算方式选择）
+        const installMode = document.getElementById('cultureWallInstallMode')?.value || 'area';
         const areaItems = areaData.items || [];
         const areaFromItems = areaItems.reduce((sum, item) => {
             const w = parseFloat(item.width) || 0;
             const h = parseFloat(item.height) || 0;
             return sum + w * h;
         }, 0);
-        const installFee = calcCultureWallInstallFee(areaFromItems, installHeight, surfaceType);
+        
+        let installFee = 0;
+        let installSpec = '';
+        
+        if (installMode === 'labor') {
+            // 按人工算：工日数 × 人工日薪
+            const laborDaily = getCustomPrice('laborDaily', 400);
+            const installEfficiency = getCustomPrice('installEfficiency', 8);
+            const workDays = Math.max(0.5, Math.ceil(areaFromItems / installEfficiency * 10) / 10); // 最少0.5工日
+            installFee = Math.ceil(workDays * laborDaily);
+            installSpec = `${workDays}工日 × ${laborDaily}元/天`;
+        } else {
+            // 按面积算：使用原有计算方式
+            installFee = calcCultureWallInstallFee(areaFromItems, installHeight, surfaceType);
+            installSpec = '专业安装';
+        }
+        
         materials.push({
             name: areaPrefix + '安装费用',
-            spec: '专业安装',
+            spec: installSpec,
             qty: 1,
             unit: '项',
             unitPrice: installFee.toFixed(0),
@@ -26527,45 +26677,93 @@ function calculateCultureWallQuote() {
         totalCost += installFee;
     });
 
-    // 设计费用（全局）
-    let designFee = 0;
-    designFee = Math.max(300, Math.ceil(totalArea * 50));
-    materials.push({
-        name: '设计服务',
-        spec: 'standard',
-        qty: 1,
-        unit: '项',
-        unitPrice: designFee.toFixed(0),
-        total: designFee
-    });
-    totalCost += designFee;
-
-    // 安装辅材费用（全局）
-    let installMaterialFee = 0;
-    installMaterialFee = Math.max(100, Math.ceil(totalArea * 30));
-    materials.push({
-        name: '安装辅材',
-        spec: 'standard',
-        qty: 1,
-        unit: '项',
-        unitPrice: installMaterialFee.toFixed(0),
-        total: installMaterialFee
-    });
-    totalCost += installMaterialFee;
-
-    // 运输费用（全局）
-    let transportFee = 0;
-    if (transportDistance > 0) {
-        transportFee = Math.ceil(transportDistance * 5);
+    // 设计费用（全局）- 根据用户选择是否包含
+    const includeDesign = document.getElementById('cultureWallIncludeDesign')?.value || 'yes';
+    if (includeDesign === 'yes') {
+        let designFee = 0;
+        const designServiceRate = getCustomPrice('designService', 50);
+        const designMinFee = getCustomPrice('designMin', 300);
+        designFee = Math.max(designMinFee, Math.ceil(totalArea * designServiceRate));
         materials.push({
-            name: '运输费用',
-            spec: transportDistance + 'km',
+            name: '设计服务',
+            spec: '文化墙方案设计',
             qty: 1,
             unit: '项',
-            unitPrice: transportFee.toFixed(0),
-            total: transportFee
+            unitPrice: designFee.toFixed(0),
+            total: designFee
         });
-        totalCost += transportFee;
+        totalCost += designFee;
+    }
+
+    } // 结束按项目清单算
+
+    // 安装辅材费用（仅按项目清单算模式需要，且只针对需要辅材的项目）
+    if (calcMode === 'item') {
+        // 按项目类型分级收取辅材费
+        const materialRates = {
+            high: 30,   // 需要龙骨框架
+            medium: 15, // 需要简单固定
+            low: 8      // 只需少量配件
+        };
+        
+        // 项目类型分级
+        const materialTypeMap = {
+            backdrop: 'high',      // 背景画面 - 需要龙骨
+            logo: 'high',          // LOGO墙 - 需要底板
+            decor: 'high',         // 装饰造型 - 需要固定
+            lightBox: 'high',      // 发光灯箱 - 需要安装配件
+            
+            board: 'medium',       // 展板 - 需要支架
+            signage: 'medium',     // 导视牌 - 需要安装
+            acrylicDecor: 'medium',// 亚克力装饰 - 需要固定
+            metalDecor: 'medium',  // 金属装饰 - 需要固定
+            awardBoard: 'medium',  // 荣誉墙 - 需要安装
+            timeline: 'medium',    // 时间轴 - 需要安装
+            
+            magnetBoard: 'low'     // 磁性展板 - 只需少量配件
+        };
+        
+        // 计算辅材费用
+        let totalMaterialFee = 0;
+        cultureWallAreas.forEach(areaData => {
+            const items = areaData.items || [];
+            items.forEach(item => {
+                const rateLevel = materialTypeMap[item.type];
+                if (rateLevel) {
+                    const w = parseFloat(item.width) || 0;
+                    const h = parseFloat(item.height) || 0;
+                    const area = w * h * (item.qty || 1);
+                    totalMaterialFee += Math.ceil(area * materialRates[rateLevel]);
+                }
+            });
+        });
+        
+        if (totalMaterialFee > 0) {
+            materials.push({
+                name: '安装辅材',
+                spec: '含龙骨、胶、螺丝等',
+                qty: 1,
+                unit: '项',
+                unitPrice: totalMaterialFee.toFixed(0),
+                total: totalMaterialFee
+            });
+            totalCost += totalMaterialFee;
+        }
+        
+        // 运输费用（全局）
+        let transportFee = 0;
+        if (transportDistance > 0) {
+            transportFee = Math.ceil(transportDistance * 5);
+            materials.push({
+                name: '运输费用',
+                spec: transportDistance + 'km',
+                qty: 1,
+                unit: '项',
+                unitPrice: transportFee.toFixed(0),
+                total: transportFee
+            });
+            totalCost += transportFee;
+        }
     }
 
     // 计算加价和利润 - 在每个材料上加上利润
@@ -26623,8 +26821,8 @@ function calculateCultureWallQuote() {
         priceMode
     };
 
-    // 按材料分类汇总（按材料算模式使用）
-    if (calcMode === 'material') {
+    // 按材料分类汇总（按项目清单算模式使用）
+    if (calcMode === 'item') {
         materials.forEach(mat => {
             const name = mat.name.toLowerCase();
             let category = null;
@@ -26752,7 +26950,7 @@ function renderCultureWallResult(data) {
 
     // 按材料算模式下的详细分类显示
     let detailHTML = '';
-    if (data.calcMode === 'material' && data.materialDetail) {
+    if (data.calcMode === 'item' && data.materialDetail) {
         const categories = ['baseBoard', 'surfacePrint', 'letters', 'ledStrip', 'frame', 'install', 'other'];
         const categoryColors = {
             baseBoard: '#0891b2',
@@ -26937,7 +27135,7 @@ function insertCultureWallItems(result) {
     const pmRadio = document.querySelector(`input[name="priceMode"][value="${result.priceMode || 'in'}"]`);
     if (pmRadio) pmRadio.checked = true;
 
-    if (result.calcMode === 'material' && result.materials && result.materials.length > 0) {
+    if (result.calcMode === 'item' && result.materials && result.materials.length > 0) {
         result.materials.forEach(m => {
             const qty = parseFloat(m.qty) || 1;
             const unitCost = m.unitCost !== undefined ? m.unitCost : Math.round((parseFloat(m.unitPrice) || 0));
