@@ -27728,6 +27728,10 @@ function calculateDoorHeaderQuote() {
 
     // 2. 计算字体费用
     const fontItems = [];
+    // 新增：收集所有发光字体的总功率，用于统一计算电源数量
+    let totalLEDPower = 0;
+    const supplyCapacity = 30 * 12 * 0.7; // 12V30A电源的有效功率（70%利用率）
+    
     if (fontType !== 'none') {
         const fontResult = fontConfig.calcPrice(charCount, charSize);
 
@@ -27757,37 +27761,14 @@ function calculateDoorHeaderQuote() {
             costPrice: fontCostPrice,
             category: '字体'
         });
+        
+        // 修正：不再单独添加电源，而是累加功率
         if (fontConfig.isLighted && !['vacuum_lightbox', 'soft_film_lightbox', 'ultra_thin_lightbox', '3m_lightbox', 'perforated_aluminum'].includes(type)) {
-            const powerSupplyQty = calcLEDPowerSupply(charCount, charSize, fontType, true);
-            const elecWasteRate = getWasteRateByCategory('电气');
-            const elecMultiplier = (1 + elecWasteRate) * (1 + wasteRate / 100);
-
-            // 优先使用产品库价格，其次是临时价格，最后是默认价格
-            let ledPowerPrice = 45;
-            let ledCostPrice = 45;
-            
-            // 1. 尝试从产品库获取价格
-            const ledProductPrice = getProductPriceByName('LED电源', '门头材料');
-            if (ledProductPrice !== null) {
-                ledPowerPrice = ledProductPrice.sellingPrice;
-                ledCostPrice = ledProductPrice.costPrice;
-            } else {
-                // 2. 如果产品库没有，使用临时价格
-                const ledTempPrice = getDoorHeaderTempPrice(type, 'LED电源', null);
-                if (ledTempPrice !== null) {
-                    ledPowerPrice = ledTempPrice;
-                }
-            }
-
-            fontItems.push({
-                name: 'LED电源',
-                spec: '12V30A开关电源',
-                qty: Math.ceil(powerSupplyQty * elecMultiplier),
-                unit: '个',
-                unitPrice: ledPowerPrice,
-                costPrice: ledCostPrice,
-                category: '电气'
-            });
+            const powerDensity = {
+                led_exposed: 100, led_channel: 80, resin: 90, mini_led: 95, back_lit: 70, side_lit: 75
+            }[fontType] || 80;
+            const charArea = (charSize / 100) * (charSize / 100) * getCharComplexityFactor();
+            totalLEDPower += charCount * charArea * powerDensity;
         }
     }
 
@@ -27814,7 +27795,7 @@ function calculateDoorHeaderQuote() {
         }
 
         fontItems.push({
-            name: fontConfig2.name + '(小字)',
+            name: fontConfig2.name + '(第二字)',
             spec: `字高${charSize2}cm`,
             qty: charCount2,
             unit: '个',
@@ -27822,38 +27803,13 @@ function calculateDoorHeaderQuote() {
             costPrice: fontCostPrice2,
             category: '字体'
         });
+        // 修正：不再单独添加电源，而是累加功率
         if (fontConfig2.isLighted) {
-            const powerSupplyQty2 = calcLEDPowerSupply(charCount2, charSize2, fontType2, true);
-            const elecWasteRate2 = getWasteRateByCategory('电气');
-            const elecMultiplier2 = (1 + elecWasteRate2) * (1 + wasteRate / 100);
-
-            // 优先使用产品库价格，其次是临时价格，最后是默认价格
-            let ledPowerPrice2 = 45;
-            let ledCostPrice2 = powerSupplyQty2 <= 2 ? 30 : 45;
-            
-            // 1. 尝试从产品库获取价格（根据规格选择）
-            const ledProductName = powerSupplyQty2 <= 2 ? 'LED电源(12V10A)' : 'LED电源';
-            const ledProductPrice2 = getProductPriceByName(ledProductName, '门头材料');
-            if (ledProductPrice2 !== null) {
-                ledPowerPrice2 = ledProductPrice2.sellingPrice;
-                ledCostPrice2 = ledProductPrice2.costPrice;
-            } else {
-                // 2. 如果产品库没有，使用临时价格
-                const ledTempPrice2 = getDoorHeaderTempPrice(type, 'LED电源', null);
-                if (ledTempPrice2 !== null) {
-                    ledPowerPrice2 = ledTempPrice2;
-                }
-            }
-
-            fontItems.push({
-                name: 'LED电源(小字)',
-                spec: powerSupplyQty2 <= 2 ? '12V10A开关电源' : '12V30A开关电源',
-                qty: Math.ceil(powerSupplyQty2 * elecMultiplier2),
-                unit: '个',
-                unitPrice: ledPowerPrice2,
-                costPrice: ledCostPrice2,
-                category: '电气'
-            });
+            const powerDensity2 = {
+                led_exposed: 100, led_channel: 80, resin: 90, mini_led: 95, back_lit: 70, side_lit: 75
+            }[fontType2] || 80;
+            const charArea2 = (charSize2 / 100) * (charSize2 / 100) * getCharComplexityFactor();
+            totalLEDPower += charCount2 * charArea2 * powerDensity2;
         }
     }
 
@@ -27877,7 +27833,7 @@ function calculateDoorHeaderQuote() {
         }
 
         fontItems.push({
-            name: fontConfig3.name + '(辅助字)',
+            name: fontConfig3.name + '(第三字)',
             spec: `字高${charSize3}cm`,
             qty: charCount3,
             unit: '个',
@@ -27886,35 +27842,13 @@ function calculateDoorHeaderQuote() {
             category: '字体'
         });
 
+        // 修正：不再单独添加电源，而是累加功率
         if (fontConfig3.isLighted) {
-            const powerSupplyQty3 = calcLEDPowerSupply(charCount3, charSize3, fontType3, true);
-            const elecWasteRate3 = getWasteRateByCategory('电气');
-            const elecMultiplier3 = (1 + elecWasteRate3) * (1 + wasteRate / 100);
-
-            let ledPowerPrice3 = 45;
-            let ledCostPrice3 = powerSupplyQty3 <= 2 ? 30 : 45;
-
-            const ledProductName3 = powerSupplyQty3 <= 2 ? 'LED电源(12V10A)' : 'LED电源';
-            const ledProductPrice3 = getProductPriceByName(ledProductName3, '门头材料');
-            if (ledProductPrice3 !== null) {
-                ledPowerPrice3 = ledProductPrice3.sellingPrice;
-                ledCostPrice3 = ledProductPrice3.costPrice;
-            } else {
-                const ledTempPrice3 = getDoorHeaderTempPrice(type, 'LED电源', null);
-                if (ledTempPrice3 !== null) {
-                    ledPowerPrice3 = ledTempPrice3;
-                }
-            }
-
-            fontItems.push({
-                name: 'LED电源(辅助字)',
-                spec: powerSupplyQty3 <= 2 ? '12V10A开关电源' : '12V30A开关电源',
-                qty: Math.ceil(powerSupplyQty3 * elecMultiplier3),
-                unit: '个',
-                unitPrice: ledPowerPrice3,
-                costPrice: ledCostPrice3,
-                category: '电气'
-            });
+            const powerDensity3 = {
+                led_exposed: 100, led_channel: 80, resin: 90, mini_led: 95, back_lit: 70, side_lit: 75
+            }[fontType3] || 80;
+            const charArea3 = (charSize3 / 100) * (charSize3 / 100) * getCharComplexityFactor();
+            totalLEDPower += charCount3 * charArea3 * powerDensity3;
         }
     }
 
@@ -27947,35 +27881,13 @@ function calculateDoorHeaderQuote() {
             category: '字体'
         });
 
+        // 修正：不再单独添加电源，而是累加功率
         if (fontConfig4.isLighted) {
-            const powerSupplyQty4 = calcLEDPowerSupply(charCount4, charSize4, fontType4, true);
-            const elecWasteRate4 = getWasteRateByCategory('电气');
-            const elecMultiplier4 = (1 + elecWasteRate4) * (1 + wasteRate / 100);
-
-            let ledPowerPrice4 = 45;
-            let ledCostPrice4 = powerSupplyQty4 <= 2 ? 30 : 45;
-
-            const ledProductName4 = powerSupplyQty4 <= 2 ? 'LED电源(12V10A)' : 'LED电源';
-            const ledProductPrice4 = getProductPriceByName(ledProductName4, '门头材料');
-            if (ledProductPrice4 !== null) {
-                ledPowerPrice4 = ledProductPrice4.sellingPrice;
-                ledCostPrice4 = ledProductPrice4.costPrice;
-            } else {
-                const ledTempPrice4 = getDoorHeaderTempPrice(type, 'LED电源', null);
-                if (ledTempPrice4 !== null) {
-                    ledPowerPrice4 = ledTempPrice4;
-                }
-            }
-
-            fontItems.push({
-                name: 'LED电源(第四字)',
-                spec: powerSupplyQty4 <= 2 ? '12V10A开关电源' : '12V30A开关电源',
-                qty: Math.ceil(powerSupplyQty4 * elecMultiplier4),
-                unit: '个',
-                unitPrice: ledPowerPrice4,
-                costPrice: ledCostPrice4,
-                category: '电气'
-            });
+            const powerDensity4 = {
+                led_exposed: 100, led_channel: 80, resin: 90, mini_led: 95, back_lit: 70, side_lit: 75
+            }[fontType4] || 80;
+            const charArea4 = (charSize4 / 100) * (charSize4 / 100) * getCharComplexityFactor();
+            totalLEDPower += charCount4 * charArea4 * powerDensity4;
         }
     }
 
@@ -28008,35 +27920,13 @@ function calculateDoorHeaderQuote() {
             category: '字体'
         });
 
+        // 修正：不再单独添加电源，而是累加功率
         if (fontConfig5.isLighted) {
-            const powerSupplyQty5 = calcLEDPowerSupply(charCount5, charSize5, fontType5, true);
-            const elecWasteRate5 = getWasteRateByCategory('电气');
-            const elecMultiplier5 = (1 + elecWasteRate5) * (1 + wasteRate / 100);
-
-            let ledPowerPrice5 = 45;
-            let ledCostPrice5 = powerSupplyQty5 <= 2 ? 30 : 45;
-
-            const ledProductName5 = powerSupplyQty5 <= 2 ? 'LED电源(12V10A)' : 'LED电源';
-            const ledProductPrice5 = getProductPriceByName(ledProductName5, '门头材料');
-            if (ledProductPrice5 !== null) {
-                ledPowerPrice5 = ledProductPrice5.sellingPrice;
-                ledCostPrice5 = ledProductPrice5.costPrice;
-            } else {
-                const ledTempPrice5 = getDoorHeaderTempPrice(type, 'LED电源', null);
-                if (ledTempPrice5 !== null) {
-                    ledPowerPrice5 = ledTempPrice5;
-                }
-            }
-
-            fontItems.push({
-                name: 'LED电源(第五字)',
-                spec: powerSupplyQty5 <= 2 ? '12V10A开关电源' : '12V30A开关电源',
-                qty: Math.ceil(powerSupplyQty5 * elecMultiplier5),
-                unit: '个',
-                unitPrice: ledPowerPrice5,
-                costPrice: ledCostPrice5,
-                category: '电气'
-            });
+            const powerDensity5 = {
+                led_exposed: 100, led_channel: 80, resin: 90, mini_led: 95, back_lit: 70, side_lit: 75
+            }[fontType5] || 80;
+            const charArea5 = (charSize5 / 100) * (charSize5 / 100) * getCharComplexityFactor();
+            totalLEDPower += charCount5 * charArea5 * powerDensity5;
         }
     }
 
@@ -28069,35 +27959,13 @@ function calculateDoorHeaderQuote() {
             category: '字体'
         });
 
+        // 修正：不再单独添加电源，而是累加功率
         if (fontConfig6.isLighted) {
-            const powerSupplyQty6 = calcLEDPowerSupply(charCount6, charSize6, fontType6, true);
-            const elecWasteRate6 = getWasteRateByCategory('电气');
-            const elecMultiplier6 = (1 + elecWasteRate6) * (1 + wasteRate / 100);
-
-            let ledPowerPrice6 = 45;
-            let ledCostPrice6 = powerSupplyQty6 <= 2 ? 30 : 45;
-
-            const ledProductName6 = powerSupplyQty6 <= 2 ? 'LED电源(12V10A)' : 'LED电源';
-            const ledProductPrice6 = getProductPriceByName(ledProductName6, '门头材料');
-            if (ledProductPrice6 !== null) {
-                ledPowerPrice6 = ledProductPrice6.sellingPrice;
-                ledCostPrice6 = ledProductPrice6.costPrice;
-            } else {
-                const ledTempPrice6 = getDoorHeaderTempPrice(type, 'LED电源', null);
-                if (ledTempPrice6 !== null) {
-                    ledPowerPrice6 = ledTempPrice6;
-                }
-            }
-
-            fontItems.push({
-                name: 'LED电源(第六字)',
-                spec: powerSupplyQty6 <= 2 ? '12V10A开关电源' : '12V30A开关电源',
-                qty: Math.ceil(powerSupplyQty6 * elecMultiplier6),
-                unit: '个',
-                unitPrice: ledPowerPrice6,
-                costPrice: ledCostPrice6,
-                category: '电气'
-            });
+            const powerDensity6 = {
+                led_exposed: 100, led_channel: 80, resin: 90, mini_led: 95, back_lit: 70, side_lit: 75
+            }[fontType6] || 80;
+            const charArea6 = (charSize6 / 100) * (charSize6 / 100) * getCharComplexityFactor();
+            totalLEDPower += charCount6 * charArea6 * powerDensity6;
         }
     }
 
@@ -28130,14 +27998,104 @@ function calculateDoorHeaderQuote() {
             category: '字体'
         });
 
+        // 修正：不再单独添加电源，而是累加功率
         if (logoConfig.isLighted) {
-            const powerSupplyQty = Math.ceil((logoWidth * logoHeight / 10000) * 2); // LOGO发光功率估算
-            const elecWasteRate = getWasteRateByCategory('电气');
-            const elecMultiplier = (1 + elecWasteRate) * (1 + wasteRate / 100);
+            // LOGO发光功率估算：面积 × 功率密度
+            const logoArea = (logoWidth / 100) * (logoHeight / 100);
+            const logoPowerDensity = 100; // W/㎡，LOGO发光功率密度略高
+            totalLEDPower += logoArea * logoPowerDensity;
+        }
+    }
 
+    // 新增：所有字体处理完成后，智能计算LED电源数量（大字小字可分开供电）
+    if (totalLEDPower > 0) {
+        // 智能电源分配策略：
+        // 1. 如果只有主字发光，用一个电源
+        // 2. 如果主字+LOGO功率 > 电源容量的60%，主字+LOGO单独用一个电源，小字共用其他电源
+        // 3. 否则所有发光体共用电源
+        // （注：LOGO和主字往往离得近，所以优先共用电源）
+        
+        const elecWasteRate = getWasteRateByCategory('电气');
+        const elecMultiplier = (1 + elecWasteRate) * (1 + wasteRate / 100);
+        const thresholdRatio = 0.6; // 主字功率超过60%时分开供电
+        
+        // 获取主字+LOGO功率（第一字体+LOGO，因为它们通常离得近）
+        let mainGroupPower = 0;
+        
+        // 主字功率
+        if (fontType !== 'none' && fontConfig.isLighted && !['vacuum_lightbox', 'soft_film_lightbox', 'ultra_thin_lightbox', '3m_lightbox', 'perforated_aluminum'].includes(type)) {
+            const powerDensity = {
+                led_exposed: 100, led_channel: 80, resin: 90, mini_led: 95, back_lit: 70, side_lit: 75
+            }[fontType] || 80;
+            const charArea = (charSize / 100) * (charSize / 100) * getCharComplexityFactor();
+            mainGroupPower += charCount * charArea * powerDensity;
+        }
+        
+        // LOGO功率（和主字共用电源，因为通常离得近）
+        if (logoType !== 'none' && logoWidth > 0 && logoHeight > 0) {
+            const logoConfig = fontTypeConfig[logoType];
+            if (logoConfig.isLighted) {
+                const logoArea = (logoWidth / 100) * (logoHeight / 100);
+                const logoPowerDensity = 100;
+                mainGroupPower += logoArea * logoPowerDensity;
+            }
+        }
+        
+        // 判断是否需要分开供电
+        const needSeparate = mainGroupPower > 0 && mainGroupPower > supplyCapacity * thresholdRatio;
+        const hasSubFonts = totalLEDPower > mainGroupPower; // 是否有小字
+        
+        if (needSeparate && hasSubFonts) {
+            // 方案A：主字+LOGO 和 小字 分开供电
+            // 1. 主字+LOGO单独用一个电源
+            const mainPowerQty = Math.max(1, Math.ceil(mainGroupPower / supplyCapacity));
+            // 2. 小字用其他电源
+            const subPower = totalLEDPower - mainGroupPower;
+            const subPowerQty = Math.max(1, Math.ceil(subPower / supplyCapacity));
+            
+            // 添加主字+LOGO电源
+            let mainLedPrice = 45;
+            let mainLedCost = mainPowerQty <= 2 ? 30 : 45;
+            const mainLedName = mainPowerQty <= 2 ? 'LED电源(12V10A)' : 'LED电源';
+            const mainLedProduct = getProductPriceByName(mainLedName, '门头材料');
+            if (mainLedProduct !== null) {
+                mainLedPrice = mainLedProduct.sellingPrice;
+                mainLedCost = mainLedProduct.costPrice;
+            }
+            fontItems.push({
+                name: 'LED电源(主字+LOGO)',
+                spec: mainPowerQty <= 2 ? '12V10A开关电源' : '12V30A开关电源',
+                qty: Math.ceil(mainPowerQty * elecMultiplier),
+                unit: '个',
+                unitPrice: mainLedPrice,
+                costPrice: mainLedCost,
+                category: '电气'
+            });
+            
+            // 添加小字电源
+            let subLedPrice = 45;
+            let subLedCost = subPowerQty <= 2 ? 30 : 45;
+            const subLedName = subPowerQty <= 2 ? 'LED电源(12V10A)' : 'LED电源';
+            const subLedProduct = getProductPriceByName(subLedName, '门头材料');
+            if (subLedProduct !== null) {
+                subLedPrice = subLedProduct.sellingPrice;
+                subLedCost = subLedProduct.costPrice;
+            }
+            fontItems.push({
+                name: 'LED电源(小字)',
+                spec: subPowerQty <= 2 ? '12V10A开关电源' : '12V30A开关电源',
+                qty: Math.ceil(subPowerQty * elecMultiplier),
+                unit: '个',
+                unitPrice: subLedPrice,
+                costPrice: subLedCost,
+                category: '电气'
+            });
+        } else {
+            // 方案B：所有发光体共用电源
+            const powerSupplyQty = Math.max(1, Math.ceil(totalLEDPower / supplyCapacity));
+            
             let ledPowerPrice = 45;
             let ledCostPrice = powerSupplyQty <= 2 ? 30 : 45;
-
             const ledProductName = powerSupplyQty <= 2 ? 'LED电源(12V10A)' : 'LED电源';
             const ledProductPrice = getProductPriceByName(ledProductName, '门头材料');
             if (ledProductPrice !== null) {
@@ -28149,9 +28107,9 @@ function calculateDoorHeaderQuote() {
                     ledPowerPrice = ledTempPrice;
                 }
             }
-
+            
             fontItems.push({
-                name: 'LED电源(LOGO)',
+                name: 'LED电源',
                 spec: powerSupplyQty <= 2 ? '12V10A开关电源' : '12V30A开关电源',
                 qty: Math.ceil(powerSupplyQty * elecMultiplier),
                 unit: '个',
