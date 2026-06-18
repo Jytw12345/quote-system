@@ -25580,13 +25580,26 @@ function resetCustomPrices() {
     const inputs = document.querySelectorAll('[id^="customPrice_"]');
     inputs.forEach(input => {
         input.value = '';
+        // 同时清除 localStorage 中的保存
+        const key = input.id.replace('customPrice_', '');
+        localStorage.removeItem('cultureWallCustomPrice_' + key);
     });
     showToast('已重置为默认价格', 'success');
 }
 
-// 应用自定义价格
+// 应用自定义价格（保存到 localStorage）
 function applyCustomPrices() {
-    showToast('自定义价格已应用', 'success');
+    const inputs = document.querySelectorAll('[id^="customPrice_"]');
+    inputs.forEach(input => {
+        const key = input.id.replace('customPrice_', '');
+        const value = input.value.trim();
+        if (value) {
+            localStorage.setItem('cultureWallCustomPrice_' + key, value);
+        } else {
+            localStorage.removeItem('cultureWallCustomPrice_' + key);
+        }
+    });
+    showToast('自定义价格已保存', 'success');
 }
 
 // 切换自定义价格编辑
@@ -25721,6 +25734,16 @@ function toggleCultureWallPriceEdit() {
                 <button type="button" onclick="applyCustomPrices()" style="background:#16a34a;color:white;font-size:0.75rem;padding:0.25rem 0.5rem;border-radius:4px;border:none;">✅ 应用价格</button>
             </div>
         `;
+        
+        // 从 localStorage 读取保存的自定义价格
+        const savedInputs = document.querySelectorAll('[id^="customPrice_"]');
+        savedInputs.forEach(input => {
+            const key = input.id.replace('customPrice_', '');
+            const savedValue = localStorage.getItem('cultureWallCustomPrice_' + key);
+            if (savedValue !== null) {
+                input.value = savedValue;
+            }
+        });
     } else {
         panel.style.display = 'none';
         if (indicator) indicator.textContent = '(点击展开)';
