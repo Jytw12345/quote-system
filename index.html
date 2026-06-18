@@ -7769,6 +7769,20 @@ function safeExecuteAsync(fn, defaultVal) {
                                         </div>
                                     </div>
                                 </div>
+                                <!-- 损耗明细可见性开关（内部/对外报价切换） -->
+                                <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-top:0.5rem;padding:0.375rem;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;">
+                                    <label style="display:flex;align-items:center;gap:0.375rem;cursor:pointer;user-select:none;">
+                                        <input type="checkbox" id="showWasteDetail" onchange="onWasteDetailToggle()" style="width:14px;height:14px;cursor:pointer;accent-color:#0891b2;">
+                                        <span style="font-size:0.6875rem;color:#0c4a6e;font-weight:600;">🔍 内部核算模式</span>
+                                    </label>
+                                    <span style="font-size:0.625rem;color:#64748b;">显示损耗明细</span>
+                                    <select id="wasteDetailLevel" style="padding:0.2rem 0.375rem;font-size:0.625rem;border:1px solid #bae6fd;border-radius:4px;background:white;color:#0c4a6e;">
+                                        <option value="simple">简略（仅汇总）</option>
+                                        <option value="detailed" selected>详细（逐项）</option>
+                                        <option value="full">完整（实际vs损耗对比）</option>
+                                    </select>
+                                    <span id="wasteDetailStatus" style="font-size:0.625rem;color:#0891b2;font-weight:500;margin-left:auto;">✓ 对外报价（隐藏损耗）</span>
+                                </div>
                             </div>
                             <!-- 临时价格调整 -->
                             <div style="border-top:1px dashed #fcd34d;padding-top:0.375rem;margin-top:0.25rem;">
@@ -7827,7 +7841,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                 <!-- 左侧：区域管理（第1步） -->
                                 <div style="display:flex;flex-direction:column;gap:0.5rem;">
                                     <!-- 区域列表卡片 -->
-                                    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:var(--radius-lg);padding:0.75rem;flex:1;min-height:300px;">
+                                    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:var(--radius-lg);padding:0.75rem;">
                                         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.375rem;">
                                             <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
                                                 <span style="background:#16a34a;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.875rem;font-weight:600;box-shadow:0 2px 8px rgba(22,163,68,0.3);">1</span>
@@ -7837,7 +7851,7 @@ function safeExecuteAsync(fn, defaultVal) {
                                             <button class="btn btn-sm" onclick="addCultureWallArea()" style="background:#16a34a;color:white;font-size:0.7rem;padding:0.3rem 0.6rem;border-radius:var(--radius);box-shadow:0 2px 8px rgba(22,163,68,0.3);transition:all 0.2s;white-space:nowrap;">&plus; 添加区域</button>
                                         </div>
                                         <!-- 墙面/区域列表 -->
-                                        <div id="cultureWallAreasContainer" style="margin-bottom:0.25rem;max-height:calc(100% - 50px);overflow-x:auto;overflow-y:auto;">
+                                        <div id="cultureWallAreasContainer" style="margin-bottom:0.25rem;">
                                         </div>
                                         <!-- 空状态提示 -->
                                         <div id="cultureWallEmptyHint" style="text-align:center;padding:2rem;color:#9ca3af;font-size:0.8125rem;">
@@ -23564,10 +23578,32 @@ let cultureWallSelectedArea = 0;
 // 文化墙配置持久化函数
 function saveCultureWallConfig() {
     try {
+        // 获取价格参数设置
+        const priceSettings = {
+            taxRate: document.getElementById('cultureWallTaxRate')?.value || '3',
+            priceMode: document.getElementById('cultureWallPriceMode')?.value || 'in',
+            transportDistance: document.getElementById('cultureWallTransportDistance')?.value || '0',
+            markup: document.getElementById('cultureWallMarkup')?.value || '30',
+            wasteRate: document.getElementById('cultureWallWasteRate')?.value || '0',
+            includeDesign: document.getElementById('cultureWallIncludeDesign')?.value || 'yes',
+            installMode: document.getElementById('cultureWallInstallMode')?.value || 'area',
+            materialMarkup: document.getElementById('cultureWallMaterialMarkup')?.value || '0'
+        };
+        
+        // 获取自定义价格设置
+        const customPrices = {};
+        document.querySelectorAll('[id^="customPrice_"]').forEach(input => {
+            if (input.value.trim()) {
+                customPrices[input.id.replace('customPrice_', '')] = input.value.trim();
+            }
+        });
+        
         const config = {
             areas: cultureWallAreas,
             selectedArea: cultureWallSelectedArea,
             lastResult: cultureWallLastResult,
+            priceSettings: priceSettings,
+            customPrices: customPrices,
             savedTime: new Date().toISOString()
         };
         localStorage.setItem('cultureWallConfig', JSON.stringify(config));
@@ -23593,18 +23629,41 @@ function loadCultureWallConfig() {
             if (config.lastResult) {
                 cultureWallLastResult = config.lastResult;
             }
+            
+            // 恢复价格参数设置
+            if (config.priceSettings) {
+                const setValue = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+                setValue('cultureWallTaxRate', config.priceSettings.taxRate || '3');
+                setValue('cultureWallPriceMode', config.priceSettings.priceMode || 'in');
+                setValue('cultureWallTransportDistance', config.priceSettings.transportDistance || '0');
+                setValue('cultureWallMarkup', config.priceSettings.markup || '30');
+                setValue('cultureWallWasteRate', config.priceSettings.wasteRate || '0');
+                setValue('cultureWallIncludeDesign', config.priceSettings.includeDesign || 'yes');
+                setValue('cultureWallInstallMode', config.priceSettings.installMode || 'area');
+                setValue('cultureWallMaterialMarkup', config.priceSettings.materialMarkup || '0');
+            }
+            
+            // 恢复自定义价格设置
+            if (config.customPrices) {
+                Object.keys(config.customPrices).forEach(key => {
+                    const input = document.getElementById('customPrice_' + key);
+                    if (input) {
+                        input.value = config.customPrices[key];
+                    }
+                });
+            }
+            
             // 重新渲染界面，让用户看到加载的配置
             renderCultureWallAreas();
             if (cultureWallLastResult) {
                 renderCultureWallResult(cultureWallLastResult);
             }
-            alert('配置加载成功！');
+            console.log('文化墙配置加载成功');
         } else {
-            alert('没有找到保存的配置');
+            console.log('没有找到保存的配置');
         }
     } catch(e) {
         console.error('加载文化墙配置失败:', e);
-        alert('加载配置失败，请重试');
     }
 }
 
@@ -25492,13 +25551,27 @@ function applyWizardQuote() {
 
 // 重置文化墙表单
 function resetCultureWallForm() {
-    document.getElementById('cultureWallTaxRate').value = '3';
-    document.getElementById('cultureWallPriceMode').value = 'in';
-    document.getElementById('cultureWallTransportDistance').value = '0';
-    document.getElementById('cultureWallMarkup').value = '30';
-    document.getElementById('cultureWallWasteRate').value = '5';
-    document.getElementById('cultureWallResult').style.display = 'none';
-    initCultureWallAreas();
+    // 隐藏结果区域
+    const resultEl = document.getElementById('cultureWallResult');
+    if (resultEl) resultEl.style.display = 'none';
+    
+    // 清除保存的配置，确保完全重置
+    localStorage.removeItem('cultureWallConfig');
+    
+    // 重置为一个新的空区域（不含任何内容项）
+    cultureWallAreas = [{
+        name: '',
+        width: 4,
+        height: 2.4,
+        installHeight: 'medium',
+        surface: 'smooth',
+        items: []
+    }];
+    cultureWallSelectedArea = 0;
+    
+    // 重新渲染区域列表
+    renderCultureWallAreas();
+    
     showToast('表单已重置', 'success');
 }
 
@@ -27243,6 +27316,205 @@ function calcInstallFee(w, h, floor, highWorkType, wallType, needWaterproof, nee
     return Math.ceil(baseFee);
 }
 
+// 损耗明细可见性开关切换
+function onWasteDetailToggle() {
+    const checked = document.getElementById('showWasteDetail').checked;
+    const statusEl = document.getElementById('wasteDetailStatus');
+    if (checked) {
+        statusEl.textContent = '🔧 内部核算（显示损耗明细）';
+        statusEl.style.color = '#dc2626';
+    } else {
+        statusEl.textContent = '✓ 对外报价（隐藏损耗）';
+        statusEl.style.color = '#0891b2';
+    }
+    // 重新计算
+    if (typeof calculateDoorHeaderQuote === 'function') {
+        calculateDoorHeaderQuote();
+    }
+}
+
+// 读取损耗明细配置
+function getWasteDetailConfig() {
+    return {
+        show: document.getElementById('showWasteDetail')?.checked || false,
+        level: document.getElementById('wasteDetailLevel')?.value || 'detailed'
+    };
+}
+
+// 精准辅材费计算 - 按门头类型分别计算螺丝、胶、电气等明细用量
+function calcPreciseAuxiliaryFee(type, width, height, hasLight, hasPower) {
+    const S = width * height;
+    const P = 2 * (width + height);
+    let cost = 0;
+    const detail = [];
+
+    // 胶类与螺丝类单价值（默认售价，可与产品库联动）
+    const PRICE = {
+        expansionScrew_M8: 1.5,      // 膨胀螺丝 M8
+        selfTapScrew_M4: 0.3,        // 自攻螺丝 M4
+        fiberScrew_M5: 0.4,          // 纤维板螺丝 M5
+        waterproofScrew: 0.8,        // 防水螺丝 M4带垫片
+        structGlue: 25,              // 结构胶/耐候胶 590ml
+        weatherSealant: 28,          // 耐候密封胶 590ml
+        glassGlue: 18,               // 玻璃胶 中性硅酮
+        waterproofSealant: 18,       // 防水密封胶 聚氨酯
+        adNail: 2.5,                 // 广告钉 M6 不锈钢
+        alumHook: 3,                 // 铝单板挂件（角码+螺栓）
+        epdmStrip: 3,                // EPDM 防水胶条 /米
+        doubleTape: 8,               // 3M VHB 双面胶 /米
+        powerWire: 3.5,              // 电源线 RVV2×1.5 /米
+        electricMisc: 30             // 接线端子/扎带/绝缘胶带 固定项
+    };
+
+    switch (type) {
+        case 'aluminum_composite': // 铝塑板+底板
+        case 'led_channel_letter': // 发光字+底板（底板同铝塑板工艺）
+        case 'acrylic_flat': {     // 亚克力+底板（共用底板安装逻辑，按亚克力更细算）
+            if (type === 'acrylic_flat') {
+                const nails = Math.ceil(S * 6);
+                const glue = Math.max(2, Math.ceil(S * 0.5));
+                cost += nails * PRICE.adNail + glue * PRICE.glassGlue;
+                detail.push(`广告钉${nails}个×${PRICE.adNail}=${nails * PRICE.adNail}元`);
+                detail.push(`玻璃胶${glue}支×${PRICE.glassGlue}=${glue * PRICE.glassGlue}元`);
+            } else {
+                const screws = Math.ceil(P / 0.5);
+                const glue = Math.max(1, Math.ceil(S * 0.5));
+                cost += screws * PRICE.expansionScrew_M8 + glue * PRICE.structGlue;
+                detail.push(`膨胀螺丝M8×${screws}个×${PRICE.expansionScrew_M8}=${(screws * PRICE.expansionScrew_M8).toFixed(1)}元`);
+                detail.push(`结构胶/耐候胶${glue}支×${PRICE.structGlue}=${glue * PRICE.structGlue}元`);
+            }
+            break;
+        }
+        case 'aluminum_veneer': { // 铝单板+方管框架
+            const hooks = Math.ceil(S * 4);
+            const sealant = Math.max(2, Math.ceil(S * 0.8));
+            cost += hooks * PRICE.alumHook + sealant * PRICE.weatherSealant;
+            detail.push(`铝单板挂件${hooks}套×${PRICE.alumHook}=${hooks * PRICE.alumHook}元`);
+            detail.push(`耐候密封胶${sealant}支×${PRICE.weatherSealant}=${sealant * PRICE.weatherSealant}元`);
+            break;
+        }
+        case 'pvc_foam': { // 雪弗板+底板
+            const screws = Math.ceil(S * 20);
+            const sealant = Math.ceil(P * 0.8);
+            cost += screws * PRICE.fiberScrew_M5 + sealant * PRICE.waterproofSealant;
+            detail.push(`纤维板螺丝M5×${screws}套×${PRICE.fiberScrew_M5}=${(screws * PRICE.fiberScrew_M5).toFixed(1)}元`);
+            detail.push(`防水密封胶${sealant}支×${PRICE.waterproofSealant}=${sealant * PRICE.waterproofSealant}元`);
+            break;
+        }
+        case 'eco_wood': { // 生态木格栅+底板
+            const screws = Math.ceil(S * 10);
+            cost += screws * PRICE.selfTapScrew_M4;
+            detail.push(`自攻螺丝M4×${screws}个×${PRICE.selfTapScrew_M4}=${(screws * PRICE.selfTapScrew_M4).toFixed(1)}元`);
+            break;
+        }
+        case 'pvc_carved': { // PVC雕花板
+            const screws = Math.ceil(S * 8);
+            cost += screws * PRICE.selfTapScrew_M4;
+            detail.push(`自攻螺丝M4×${screws}个×${PRICE.selfTapScrew_M4}=${(screws * PRICE.selfTapScrew_M4).toFixed(1)}元`);
+            break;
+        }
+        case 'polycarbonate': { // PC耐力板+铝框
+            const screws = Math.ceil(P / 0.3);
+            const strip = Math.ceil(P * 2);
+            cost += screws * PRICE.waterproofScrew + strip * PRICE.epdmStrip;
+            detail.push(`防水螺丝${screws}套×${PRICE.waterproofScrew}=${(screws * PRICE.waterproofScrew).toFixed(1)}元`);
+            detail.push(`EPDM防水胶条${strip}米×${PRICE.epdmStrip}=${strip * PRICE.epdmStrip}元`);
+            break;
+        }
+        case 'painted_glass': { // 烤漆玻璃
+            const glue = Math.ceil(S * 0.3);
+            const tape = Math.ceil(P * 2);
+            cost += glue * PRICE.glassGlue + tape * PRICE.doubleTape;
+            detail.push(`玻璃胶${glue}支×${PRICE.glassGlue}=${glue * PRICE.glassGlue}元`);
+            detail.push(`3M VHB双面胶${tape}米×${PRICE.doubleTape}=${tape * PRICE.doubleTape}元`);
+            break;
+        }
+        case 'stainless_steel': { // 不锈钢板+底板
+            const screws = Math.ceil(P / 0.5);
+            const glue = Math.max(1, Math.ceil(S * 0.4));
+            cost += screws * PRICE.expansionScrew_M8 + glue * PRICE.structGlue;
+            detail.push(`膨胀螺丝M8×${screws}个=${(screws * PRICE.expansionScrew_M8).toFixed(1)}元`);
+            detail.push(`结构胶${glue}支×${PRICE.structGlue}=${glue * PRICE.structGlue}元`);
+            break;
+        }
+        case 'perforated_aluminum': { // 穿孔铝板+背光
+            const hooks = Math.ceil(S * 3);
+            const sealant = Math.max(2, Math.ceil(S * 0.6));
+            cost += hooks * PRICE.alumHook + sealant * PRICE.weatherSealant;
+            detail.push(`铝板挂件${hooks}套=${hooks * PRICE.alumHook}元`);
+            detail.push(`耐候密封胶${sealant}支=${sealant * PRICE.weatherSealant}元`);
+            break;
+        }
+        case 'inkjet_cloth': { // 喷绘布+龙骨
+            const screws = Math.ceil(P / 0.4);
+            cost += screws * PRICE.expansionScrew_M8;
+            detail.push(`膨胀螺丝M8×${screws}个=${(screws * PRICE.expansionScrew_M8).toFixed(1)}元`);
+            break;
+        }
+        case 'aluminum_profile': { // 铝型材框架+面板
+            const screws = Math.ceil(P / 0.5);
+            const sealant = Math.max(1, Math.ceil(S * 0.4));
+            cost += screws * PRICE.selfTapScrew_M4 + sealant * PRICE.weatherSealant;
+            detail.push(`自攻螺丝${screws}个=${(screws * PRICE.selfTapScrew_M4).toFixed(1)}元`);
+            detail.push(`耐候密封胶${sealant}支=${sealant * PRICE.weatherSealant}元`);
+            break;
+        }
+        case 'vacuum_lightbox':   // 吸塑面板+灯箱
+        case 'soft_film_lightbox': // 软膜+铝型材灯箱
+        case 'ultra_thin_lightbox':// 导光板+铝框超薄灯箱
+        case '3m_lightbox':       // 3M灯箱布+镀锌箱体
+        case 'smart_display':     // LED显示屏
+        case 'flexible_led':      // 柔性LED屏
+        case 'autostereoscopic':  // 裸眼3D屏
+        case 'holographic': {     // 全息幻彩膜
+            // 灯箱类按电源线+电气辅材计
+            const wire = Math.ceil(P + 5);
+            cost += wire * PRICE.powerWire + PRICE.electricMisc;
+            detail.push(`电源线RVV2×1.5 共${wire}米×${PRICE.powerWire}=${(wire * PRICE.powerWire).toFixed(1)}元`);
+            detail.push(`接线端子/扎带/绝缘胶带 固定项=${PRICE.electricMisc}元`);
+            break;
+        }
+        case 'micro_perforated': { // 微孔吸音板
+            const screws = Math.ceil(S * 8);
+            const sealant = Math.ceil(P * 0.6);
+            cost += screws * PRICE.selfTapScrew_M4 + sealant * PRICE.waterproofSealant;
+            detail.push(`自攻螺丝${screws}个=${(screws * PRICE.selfTapScrew_M4).toFixed(1)}元`);
+            detail.push(`防水密封胶${sealant}支=${sealant * PRICE.waterproofSealant}元`);
+            break;
+        }
+        case 'grating': { // 金属格栅+方管
+            const screws = Math.ceil(P / 0.4);
+            cost += screws * PRICE.expansionScrew_M8;
+            detail.push(`膨胀螺丝M8×${screws}个=${(screws * PRICE.expansionScrew_M8).toFixed(1)}元`);
+            break;
+        }
+        case 'woven_mesh': { // 金属编织网+龙骨
+            const screws = Math.ceil(P / 0.5);
+            const hooks = Math.ceil(S * 2);
+            cost += screws * PRICE.selfTapScrew_M4 + hooks * PRICE.alumHook;
+            detail.push(`自攻螺丝${screws}个=${(screws * PRICE.selfTapScrew_M4).toFixed(1)}元`);
+            detail.push(`挂件${hooks}套=${hooks * PRICE.alumHook}元`);
+            break;
+        }
+        default: { // 兜底：原6%算法
+            return { cost: 0, detail: ['采用默认6%材料费算法'] };
+        }
+    }
+
+    // 附加：带灯门头加电气辅材（数量上浮5%吸收损耗，客户看到的是整数用量）
+    if (hasLight) {
+        const wire = Math.ceil((P + 5) * 1.05);
+        cost += wire * PRICE.powerWire;
+        detail.push(`电源线${wire}米×${PRICE.powerWire}=${(wire * PRICE.powerWire).toFixed(1)}元`);
+    }
+    if (hasPower && !hasLight) {
+        cost += Math.ceil(PRICE.electricMisc * 1.05);
+        detail.push(`电气辅材固定项=${Math.ceil(PRICE.electricMisc * 1.05)}元`);
+    }
+
+    return { cost: Math.max(100, Math.round(cost)), detail };
+}
+
 // 切换延伸区域显示/隐藏
 function toggleDoorHeaderExtend() {
     const section = document.getElementById('doorHeaderExtendSection');
@@ -27427,10 +27699,28 @@ function calculateDoorHeaderQuote() {
             }
         }
 
+        // 损耗吸收策略：把损耗成本藏在数量精度里，客户看到的都是"实打实"整数用量
+        // - 面板/底板/画面(㎡)：向上取整到 0.5 ㎡，如 4.13→4.5、5.27→5.5
+        // - 骨架/型材/包边(米)：向上取整到 0.5 米
+        // - 配件/光源(个/支/套)：向上取整到整数
+        // - 电气(电源/线缆)：保持原逻辑
+        const rawQty = item.qty * categoryMultiplier;
+        let finalQty;
+        if (item.name === 'LED电源') {
+            finalQty = Math.ceil(rawQty);
+        } else if (item.unit === '㎡') {
+            finalQty = Math.ceil(rawQty * 2) / 2; // 0.5 ㎡ 精度，向上
+        } else if (item.unit === '米') {
+            finalQty = Math.ceil(rawQty * 2) / 2; // 0.5 米 精度，向上
+        } else if (['个', '支', '套', '只', '块', '根', '瓶', '组', '次', '张', '卷', '包'].includes(item.unit)) {
+            finalQty = Math.ceil(rawQty);
+        } else {
+            finalQty = Math.ceil(rawQty * 100) / 100;
+        }
+
         return {
             ...item,
-            // LED电源数量必须取整，不保留小数
-            qty: item.name === 'LED电源' ? Math.ceil(item.qty * categoryMultiplier) : Math.ceil(item.qty * categoryMultiplier * 100) / 100,
+            qty: finalQty,
             unitPrice: finalUnitPrice,
             costPrice: finalCostPrice
         };
@@ -27995,12 +28285,42 @@ function calculateDoorHeaderQuote() {
         extraItems.push({ name: fee.name, spec: fee.spec || '自定义费用', qty: 1, unit: '项', costPrice: fee.price, unitPrice: Math.ceil(fee.price * markupMultiplier), category: '附加费' });
     });
 
-    // 辅材费（螺丝、胶、焊条等，通常占材料费的5-10%）
-    // 先计算当前材料费用用于辅材费计算
-    const currentMaterialCost = baseItems.reduce((sum, item) => sum + (item.qty * item.costPrice), 0);
-    const auxiliaryCost = Math.max(100, Math.ceil(currentMaterialCost * 0.06)); // 6%作为辅材费
+    // 辅材费 - 按门头类型精准计算（螺丝、胶、电气辅材等明细）
+    // 检测门头是否带灯/带电
+    const hasLight = !!(document.querySelector('input[name="specialCraft"]:checked')?.value
+        || fontItems.some(fi => /LED|灯|电源|霓虹/i.test(fi.name || ''))
+        || /lightbox|light_box|smart_display|flexible_led|autostereoscopic|holographic|vacuum_lightbox|soft_film_lightbox|ultra_thin_lightbox|3m_lightbox|led_channel_letter/i.test(type));
+    const hasPower = hasLight || /lightbox|display|led/i.test(type);
+    const auxResult = calcPreciseAuxiliaryFee(type, width, height, hasLight, hasPower);
+    const wasteCfg = getWasteDetailConfig();
+    let auxiliaryCost;
+    let auxiliarySpec;
+    if (auxResult.cost > 0) {
+        auxiliaryCost = auxResult.cost;
+        // 根据损耗明细开关决定 spec 显示
+        if (!wasteCfg.show) {
+            // 对外报价：只显示汇总，不暴露具体螺丝/胶的数量细节
+            auxiliarySpec = '螺丝、胶、电气辅材等';
+        } else if (wasteCfg.level === 'simple') {
+            // 简略模式：按类别汇总
+            auxiliarySpec = `辅材明细：${auxResult.detail.length}类耗材`;
+        } else if (wasteCfg.level === 'detailed') {
+            // 详细模式：逐项显示
+            auxiliarySpec = auxResult.detail.join('；');
+        } else {
+            // 完整模式：附加损耗对比
+            const totalCount = auxResult.detail.length;
+            const baseSpec = auxResult.detail.join('；');
+            auxiliarySpec = `${baseSpec}（共${totalCount}项，含合理损耗）`;
+        }
+    } else {
+        // 兜底：原6%材料费算法
+        const currentMaterialCost = baseItems.reduce((sum, item) => sum + (item.qty * item.costPrice), 0);
+        auxiliaryCost = Math.max(100, Math.ceil(currentMaterialCost * 0.06));
+        auxiliarySpec = wasteCfg.show ? '按材料费6%估算(含5%损耗)' : '螺丝、胶、焊条等辅材';
+    }
     const auxiliarySell = Math.ceil(auxiliaryCost * markupMultiplier);
-    extraItems.push({ name: '辅材费', spec: '螺丝、胶、焊条等辅材', qty: 1, unit: '项', costPrice: auxiliaryCost, unitPrice: auxiliarySell, category: '辅材' });
+    extraItems.push({ name: '辅材费', spec: auxiliarySpec, qty: 1, unit: '项', costPrice: auxiliaryCost, unitPrice: auxiliarySell, category: '辅材' });
 
     // 注意：高空作业费、墙面处理费、防水处理费、吊车费等已在 calcInstallFee() 中计算
     // 此处不再重复添加，避免费用冲突
@@ -37289,6 +37609,58 @@ function prepareProductsForSync(products) {
     });
 }
 
+// 获取文化空间同步数据
+function getCultureWallSyncData() {
+    try {
+        // 获取价格参数设置
+        const priceSettings = {
+            taxRate: document.getElementById('cultureWallTaxRate')?.value || '3',
+            priceMode: document.getElementById('cultureWallPriceMode')?.value || 'in',
+            transportDistance: document.getElementById('cultureWallTransportDistance')?.value || '0',
+            markup: document.getElementById('cultureWallMarkup')?.value || '30',
+            wasteRate: document.getElementById('cultureWallWasteRate')?.value || '0',
+            includeDesign: document.getElementById('cultureWallIncludeDesign')?.value || 'yes',
+            installMode: document.getElementById('cultureWallInstallMode')?.value || 'area',
+            materialMarkup: document.getElementById('cultureWallMaterialMarkup')?.value || '0'
+        };
+        
+        // 获取自定义价格设置
+        const customPrices = {};
+        document.querySelectorAll('[id^="customPrice_"]').forEach(input => {
+            if (input.value.trim()) {
+                customPrices[input.id.replace('customPrice_', '')] = input.value.trim();
+            }
+        });
+        
+        return {
+            areas: window.cultureWallAreas || [],
+            selectedArea: window.cultureWallSelectedArea || 0,
+            lastResult: window.cultureWallLastResult || null,
+            priceSettings: priceSettings,
+            customPrices: customPrices
+        };
+    } catch (e) {
+        console.error('获取文化空间同步数据失败:', e);
+        return {};
+    }
+}
+
+// 获取全局自定义价格
+function getGlobalCustomPrices() {
+    try {
+        const customPrices = {};
+        document.querySelectorAll('[id^="customPrice_"]').forEach(input => {
+            if (input.value.trim()) {
+                customPrices[input.id.replace('customPrice_', '')] = input.value.trim();
+            }
+        });
+        return customPrices;
+    } catch (e) {
+        console.error('获取全局自定义价格失败:', e);
+        return {};
+    }
+}
+
 function gistUploadFull() {
     return new Promise(function(resolve, reject) {
         var startTime = Date.now();
@@ -37360,7 +37732,11 @@ function gistUploadFull() {
                     signatures: filteredSignatures,
                     favoriteIds: appData.favoriteIds || [],
                     categories: appData.categories || [],
-                    charPricingConfig: appData.charPricingConfig || {}
+                    charPricingConfig: appData.charPricingConfig || {},
+                    // 文化空间配置
+                    cultureWallConfig: getCultureWallSyncData(),
+                    // 全局自定义价格
+                    customPrices: getGlobalCustomPrices()
                 },
                 // 团队活动日志（最近20条）
                 activityLog: buildSyncActivityLog()
@@ -40894,6 +41270,55 @@ function mergeSyncData(serverData) {
     // 合并字符计算价格配置（团队共享，云端覆盖本地）
     if (serverData.charPricingConfig && Object.keys(serverData.charPricingConfig).length > 0) {
         appData.charPricingConfig = serverData.charPricingConfig;
+    }
+    
+    // 合并文化空间配置
+    if (syncData.cultureWallConfig && Object.keys(syncData.cultureWallConfig).length > 0) {
+        var config = syncData.cultureWallConfig;
+        
+        // 更新文化空间区域数据
+        if (config.areas && Array.isArray(config.areas)) {
+            window.cultureWallAreas = config.areas;
+        }
+        if (typeof config.selectedArea === 'number') {
+            window.cultureWallSelectedArea = config.selectedArea;
+        }
+        if (config.lastResult) {
+            window.cultureWallLastResult = config.lastResult;
+        }
+        
+        // 更新价格参数设置到表单
+        if (config.priceSettings) {
+            const setValue = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+            setValue('cultureWallTaxRate', config.priceSettings.taxRate || '3');
+            setValue('cultureWallPriceMode', config.priceSettings.priceMode || 'in');
+            setValue('cultureWallTransportDistance', config.priceSettings.transportDistance || '0');
+            setValue('cultureWallMarkup', config.priceSettings.markup || '30');
+            setValue('cultureWallWasteRate', config.priceSettings.wasteRate || '0');
+            setValue('cultureWallIncludeDesign', config.priceSettings.includeDesign || 'yes');
+            setValue('cultureWallInstallMode', config.priceSettings.installMode || 'area');
+            setValue('cultureWallMaterialMarkup', config.priceSettings.materialMarkup || '0');
+        }
+        
+        // 更新自定义价格设置
+        if (config.customPrices) {
+            Object.keys(config.customPrices).forEach(key => {
+                const input = document.getElementById('customPrice_' + key);
+                if (input) {
+                    input.value = config.customPrices[key];
+                }
+            });
+        }
+    }
+    
+    // 合并全局自定义价格
+    if (syncData.customPrices && Object.keys(syncData.customPrices).length > 0) {
+        Object.keys(syncData.customPrices).forEach(key => {
+            const input = document.getElementById('customPrice_' + key);
+            if (input) {
+                input.value = syncData.customPrices[key];
+            }
+        });
     }
     
     // 合并系统设置
