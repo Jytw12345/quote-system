@@ -44976,7 +44976,8 @@ async function testOcrSpace() {
             body: new URLSearchParams({
                 apikey: useKey,
                 url: 'https://ocr.space/Content/Images/examples/printed_text.png',
-                language: 'eng'
+                language: 'eng',
+                filetype: 'PNG'  // 新增：明确指定文件类型
             })
         });
         
