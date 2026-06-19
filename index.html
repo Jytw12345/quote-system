@@ -136,7 +136,7 @@
         }
         @media (max-width: 640px) {
             * { max-width: 100vw; }
-            .quote-preview-wrapper { max-width: none !important; overflow-x: auto !important; }
+            .quote-preview-wrapper { max-width: 100vw !important; overflow-x: auto !important; }
             #quotePreview, #quotePreview * { max-width: none !important; overflow-x: visible !important; }
             #quotePreview { overflow-x: auto; -webkit-overflow-scrolling: touch; }
             #quoteItemHeader { overflow-x: visible !important; max-width: none !important; }
@@ -892,7 +892,7 @@
         @media (max-width: 1024px) { .quote-builder { grid-template-columns: 1fr; } }
         .quote-sidebar { background: var(--gray-50); border-radius: var(--radius-lg); padding: 0.75rem; }
         .quote-sidebar h3 { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; padding-bottom: 0.375rem; border-bottom: 1px solid var(--gray-200); }
-        .quote-items { background: white; border-radius: var(--radius-lg); padding: 0.75rem; box-shadow: var(--shadow-sm); overflow: visible; }
+        .quote-items { background: white; border-radius: var(--radius-lg); padding: 0.75rem; box-shadow: var(--shadow-sm); overflow-x: auto; }
         .quote-item-row { display: grid; grid-template-columns: 50px 60px 1fr 1.5fr 0.5fr 0.8fr 80px 80px 80px 80px 90px; gap: 0.5rem; align-items: center; padding: 0.625rem; border-bottom: 1px solid var(--gray-200); background: white; cursor: grab; transition: all 0.2s; font-size: 0.8125rem; overflow: visible; }
         .quote-item-row:hover { background: var(--gray-50); }
         .quote-item-row.dragging { opacity: 0.5; background: var(--gray-100); }
@@ -3451,7 +3451,7 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
 /* 移动端报价单构建器优化 */
 @media (max-width: 576px) {
     .quote-items {
-        overflow: visible;
+        overflow-x: auto;
     }
 
     /* 移动端表格表头改为可滚动 */
@@ -16455,15 +16455,15 @@ function generateQuotePreview(isManualChange){
                         let headers = '';
                         colOrder.forEach(col => {
                             switch(col){
-                                case 'index': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">序号</th>`; break;
-                                case 'image': if(colVis.image !== false) headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">图片</th>`; break;
-                                case 'name': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">项目名称</th>`; break;
-                                case 'spec': if(colVis.spec !== false) headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">规格</th>`; break;
-                                case 'unit': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">单位</th>`; break;
-                                case 'note': if(colVis.note !== false) headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">备注</th>`; break;
-                                case 'qty': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">数量</th>`; break;
-                                case 'price': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">单价</th>`; break;
-                                case 'subtotal': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;">小计</th>`; break;
+                                case 'index': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#333;">序号</th>`; break;
+                                case 'image': if(colVis.image !== false) headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#333;">图片</th>`; break;
+                                case 'name': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#333;">项目名称</th>`; break;
+                                case 'spec': if(colVis.spec !== false) headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#333;">规格</th>`; break;
+                                case 'unit': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#333;">单位</th>`; break;
+                                case 'note': if(colVis.note !== false) headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#333;">备注</th>`; break;
+                                case 'qty': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#333;">数量</th>`; break;
+                                case 'price': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#333;">单价</th>`; break;
+                                case 'subtotal': headers += `<th style="padding:0.4rem;border:1px solid #333;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#333;">小计</th>`; break;
                             }
                         });
                         return headers;
@@ -16976,6 +16976,20 @@ async function exportPDF(showSaveAs){
             table.style.minWidth = '100%';
             table.style.maxWidth = 'none';
             table.style.tableLayout = 'auto';
+            table.style.display = 'table';
+            table.style.borderCollapse = 'collapse';
+        });
+        clone.querySelectorAll('th').forEach(function(th) {
+            th.style.position = 'static';
+            th.style.display = 'table-cell';
+            th.style.top = 'auto';
+            th.style.zIndex = 'auto';
+        });
+        clone.querySelectorAll('thead').forEach(function(thead) {
+            thead.style.display = 'table-header-group';
+        });
+        clone.querySelectorAll('tbody').forEach(function(tbody) {
+            tbody.style.display = 'table-row-group';
         });
         // 将日期输入框转换为普通文本格式，并设置所有日期相关文字为黑色
         clone.querySelectorAll('input[type="text"][placeholder="____"], input[type="text"][placeholder="__"]').forEach(function(input) {
@@ -17485,6 +17499,29 @@ async function exportJPG(showSaveAs){
             el.style.cursor = 'default';
             el.style.border = 'none';
             el.classList.remove('dragging');
+        });
+        clone.querySelectorAll('th').forEach(function(th) {
+            th.style.position = 'static';
+            th.style.display = 'table-cell';
+            th.style.top = 'auto';
+            th.style.zIndex = 'auto';
+            th.style.background = '#f0f0f0';
+            th.style.color = '#333';
+            th.style.fontWeight = '600';
+            th.style.fontSize = '14px';
+            th.style.textAlign = 'center';
+            th.style.padding = '0.4rem';
+            th.style.border = '1px solid #333';
+        });
+        clone.querySelectorAll('thead').forEach(function(thead) {
+            thead.style.display = 'table-header-group';
+        });
+        clone.querySelectorAll('tbody').forEach(function(tbody) {
+            tbody.style.display = 'table-row-group';
+        });
+        clone.querySelectorAll('table').forEach(function(table) {
+            table.style.display = 'table';
+            table.style.borderCollapse = 'collapse';
         });
         
         document.body.appendChild(clone);
