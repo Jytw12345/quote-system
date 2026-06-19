@@ -47704,8 +47704,7 @@ function saveQuoteItemToProduct(itemId) {
     
     // 填充表单数据（从报价项目获取）
     document.getElementById('productName').value = item.name;
-    document.getElementById('productCategory1').value = '';
-    document.getElementById('productCategory2').value = '';
+    document.getElementById('productCategory').value = '';
     document.getElementById('productDescription').value = item.note || '';
     document.getElementById('productCostPrice').value = item.cost || 0;
     document.getElementById('productSellingPrice').value = item.price;
