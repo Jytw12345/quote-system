@@ -5559,6 +5559,198 @@ var safeStorage = {
     window.showConfirmDialog = showConfirmDialog;
     window.showConfirmModal = showConfirmModal;
     
+    // ===== 统一对话框组件（替代原生 alert/confirm/prompt）=====
+    var dialogCallback = null;
+    var dialogInputValue = '';
+    
+    // 对话框主函数
+    function showDialogModal(options) {
+        var defaults = {
+            title: '提示',
+            message: '',
+            icon: '📋',
+            type: 'alert',  // alert | confirm | prompt
+            confirmText: '确定',
+            cancelText: '取消',
+            showCancel: false,
+            defaultValue: '',
+            placeholder: '',
+            callback: null,
+            allowHtml: false
+        };
+        var opts = Object.assign({}, defaults, options);
+        
+        var modalIcon = document.getElementById('customModalIcon');
+        var modalTitle = document.getElementById('customModalTitle');
+        var modalMessage = document.getElementById('customModalMessage');
+        var modalFooter = document.getElementById('customModalFooter');
+        var modal = document.getElementById('customModal');
+
+        if (!modalIcon || !modalTitle || !modalMessage || !modalFooter || !modal) {
+            console.error('Modal elements not found');
+            // 降级到原生对话框
+            if (opts.type === 'alert') {
+                window.alert(opts.message);
+            } else if (opts.type === 'confirm') {
+                window.confirm(opts.message);
+            }
+            return;
+        }
+
+        dialogCallback = opts.callback;
+        modalIcon.textContent = opts.icon;
+        modalTitle.textContent = opts.title;
+        modalMessage.innerHTML = '';
+        
+        if (opts.allowHtml) {
+            modalMessage.innerHTML = opts.message;
+        } else {
+            modalMessage.innerHTML = escapeHtml(opts.message);
+        }
+
+        // 如果是 prompt 类型，添加输入框
+        if (opts.type === 'prompt') {
+            var inputHtml = '<div style="margin-top: 0.75rem;"><input type="text" id="dialogPromptInput" value="' + escapeHtml(opts.defaultValue) + '" placeholder="' + escapeHtml(opts.placeholder) + '" style="width: 100%; padding: 0.5rem; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 0.875rem; box-sizing: border-box;" onkeydown="if(event.key===\'Enter\')document.getElementById(\'dialogConfirmBtn\').click();" /></div>';
+            modalMessage.innerHTML += inputHtml;
+        }
+
+        modalFooter.innerHTML = '';
+
+        if (opts.showCancel) {
+            var cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn btn-outline';
+            cancelBtn.textContent = opts.cancelText;
+            cancelBtn.onclick = function() {
+                if (opts.type === 'prompt') {
+                    if (dialogCallback) dialogCallback(null);
+                } else {
+                    if (dialogCallback) dialogCallback(false);
+                }
+                closeDialogModal();
+            };
+            modalFooter.appendChild(cancelBtn);
+        }
+
+        var confirmBtn = document.createElement('button');
+        confirmBtn.className = 'btn btn-primary';
+        confirmBtn.textContent = opts.confirmText;
+        confirmBtn.id = 'dialogConfirmBtn';
+        confirmBtn.onclick = function() {
+            if (opts.type === 'prompt') {
+                var inputEl = document.getElementById('dialogPromptInput');
+                var val = inputEl ? inputEl.value : '';
+                if (dialogCallback) dialogCallback(val);
+            } else {
+                if (dialogCallback) dialogCallback(true);
+            }
+            closeDialogModal();
+        };
+        modalFooter.appendChild(confirmBtn);
+
+        modal.classList.add('active');
+        document.addEventListener('keydown', handleDialogKeydown);
+        
+        // 如果是 prompt 类型，自动聚焦输入框
+        if (opts.type === 'prompt') {
+            setTimeout(function() {
+                var inputEl = document.getElementById('dialogPromptInput');
+                if (inputEl) inputEl.focus();
+            }, 100);
+        }
+    }
+    
+    function closeDialogModal() {
+        var modal = document.getElementById('customModal');
+        if (modal) modal.classList.remove('active');
+        document.removeEventListener('keydown', handleDialogKeydown);
+        dialogCallback = null;
+    }
+    
+    function handleDialogKeydown(e) {
+        if (e.key === 'Escape') {
+            closeDialogModal();
+        }
+    }
+    
+    // 统一对话框命名空间
+    window.dialog = {
+        // 提示框（替代 alert）
+        alert: function(message, title, icon) {
+            title = title || '提示';
+            icon = icon || 'ℹ️';
+            showDialogModal({
+                title: title,
+                message: message,
+                icon: icon,
+                type: 'alert',
+                showCancel: false,
+                confirmText: '确定'
+            });
+        },
+        
+        // 确认框（替代 confirm，返回 Promise 或使用回调）
+        confirm: function(message, callback, title, icon) {
+            title = title || '确认';
+            icon = icon || '⚠️';
+            
+            // 如果只传入 message 和 title（没有 callback），则返回 Promise
+            if (typeof callback === 'string') {
+                var tempTitle = callback;
+                callback = title;
+                title = tempTitle;
+            }
+            
+            showDialogModal({
+                title: title,
+                message: message,
+                icon: icon,
+                type: 'confirm',
+                showCancel: true,
+                confirmText: '确定',
+                cancelText: '取消',
+                callback: function(result) {
+                    if (callback) callback(result);
+                }
+            });
+        },
+        
+        // 输入框（替代 prompt，返回输入的值或 null）
+        prompt: function(message, defaultValue, callback, title, icon) {
+            title = title || '输入';
+            icon = icon || '📝';
+            defaultValue = defaultValue || '';
+            
+            // 处理参数顺序兼容
+            if (typeof defaultValue === 'function') {
+                var tempCb = defaultValue;
+                defaultValue = '';
+                callback = tempCb;
+            } else if (typeof callback === 'string') {
+                var tempTitle = callback;
+                callback = null;
+                title = tempTitle;
+            }
+            
+            showDialogModal({
+                title: title,
+                message: message,
+                icon: icon,
+                type: 'prompt',
+                defaultValue: defaultValue,
+                placeholder: '',
+                showCancel: true,
+                confirmText: '确定',
+                cancelText: '取消',
+                callback: function(result) {
+                    if (callback) callback(result);
+                }
+            });
+        }
+    };
+    
+    // 暴露 closeDialogModal 到 window
+    window.closeDialogModal = closeDialogModal;
+    
     // ===== Toast 通知组件 =====
     var toastContainer = null;
     var activeLoadingToast = null;
@@ -16900,7 +17092,7 @@ async function exportPDF(showSaveAs){
         console.log('Loading PDF libraries...');
         var script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        script.onerror = function() { pdfExportLock = false; alert('Failed to load html2canvas'); };
+        script.onerror = function() { pdfExportLock = false; dialog.alert('Failed to load html2canvas', '加载失败', '❌'); };
         script.onload = function() {
             var script2 = document.createElement('script');
             script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
@@ -16909,7 +17101,7 @@ async function exportPDF(showSaveAs){
                 pdfExportLock = false;
                 exportPDF(showSaveAs);
             };
-            script2.onerror = function() { pdfExportLock = false; alert('Failed to load jsPDF'); };
+            script2.onerror = function() { pdfExportLock = false; dialog.alert('Failed to load jsPDF', '加载失败', '❌'); };
             document.head.appendChild(script2);
         };
         document.head.appendChild(script);
@@ -17387,7 +17579,7 @@ async function exportPDF(showSaveAs){
                             // 其他平台提示
                             findGuide = '文件已保存到系统下载文件夹，请在文件管理器中查找文件名包含 "' + pdfFileName + '" 的文件';
                         }
-                        alert('PDF导出成功！\n文件名：' + pdfFileName + '\n\n文件已保存到系统默认下载文件夹\n\n' + findGuide);
+                        dialog.alert('PDF导出成功！\n文件名：' + pdfFileName + '\n\n文件已保存到系统默认下载文件夹\n\n' + findGuide, '导出成功', '✅');
                     }
                 }, 100);
             }
@@ -17395,12 +17587,12 @@ async function exportPDF(showSaveAs){
             console.error('html2canvas error:', err);
             if(clone.parentNode) clone.parentNode.removeChild(clone);
             pdfExportLock = false;
-            alert('导出失败: ' + err.message);
+            dialog.alert('导出失败: ' + err.message, '导出失败', '❌');
         });
     } catch(e) {
         console.error('exportPDF error:', e);
         pdfExportLock = false;
-        alert('导出出错: ' + e.message);
+        dialog.alert('导出出错: ' + e.message, '导出出错', '❌');
     }
 }
 
@@ -17466,7 +17658,7 @@ async function exportJPG(showSaveAs){
         console.log('Loading html2canvas...');
         var script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        script.onerror = function() { jpgExportLock = false; alert('加载html2canvas失败'); };
+        script.onerror = function() { jpgExportLock = false; dialog.alert('加载html2canvas失败', '加载失败', '❌'); };
         script.onload = function() { 
             jpgExportLock = false;
             exportJPG(showSaveAs); 
@@ -17709,7 +17901,7 @@ async function exportJPG(showSaveAs){
                             // 其他平台提示
                             findGuide = '文件已保存到系统下载文件夹，请在文件管理器中查找文件名包含 "' + fileName + '" 的文件';
                         }
-                        alert('JPG导出成功！\n文件名：' + fileName + '\n\n文件已保存到系统默认下载文件夹\n\n' + findGuide);
+                        dialog.alert('JPG导出成功！\n文件名：' + fileName + '\n\n文件已保存到系统默认下载文件夹\n\n' + findGuide, '导出成功', '✅');
                     }
                 }, 100);
             }
@@ -17717,12 +17909,12 @@ async function exportJPG(showSaveAs){
             console.error('html2canvas error:', err);
             if(clone.parentNode) clone.parentNode.removeChild(clone);
             jpgExportLock = false;
-            alert('导出失败: ' + err.message);
+            dialog.alert('导出失败: ' + err.message, '导出失败', '❌');
         });
     } catch(e) {
         console.error('exportJPG error:', e);
         jpgExportLock = false;
-        alert('导出出错: ' + e.message);
+        dialog.alert('导出出错: ' + e.message, '导出出错', '❌');
     }
 }
 async function exportXLS(){
@@ -18048,7 +18240,7 @@ function saveAsTemplate(){
     showToast('模板保存成功！', 'success');
 }
 function copyCurrentQuote(){
-    if(!appData.currentQuote || !appData.currentQuote.items || !appData.currentQuote.items.length){ alert('当前报价单为空，无法复制'); return; }
+    if(!appData.currentQuote || !appData.currentQuote.items || !appData.currentQuote.items.length){ dialog.alert('当前报价单为空，无法复制', '提示', 'ℹ️'); return; }
     const newTitle = prompt('请输入新报价单的名称：', appData.currentQuote.title + ' (副本)');
     if(!newTitle) return;
     appData.currentQuote.title = newTitle;
@@ -18447,7 +18639,7 @@ function addTierRow() {
     
     // 验证输入
     if (!qtyValue || !priceValue) {
-        alert('请填写数量和单价');
+        dialog.alert('请填写数量和单价', '提示', 'ℹ️');
         return;
     }
     
@@ -33258,7 +33450,7 @@ function addTemplateItemRow(){
     d.innerHTML='<div class="form-group"><label>项目名称</label><input type="text" class="template-item-name" placeholder="项目名称"></div><div class="form-group"><label>规格参数</label><input type="text" class="template-item-spec" placeholder="尺寸/材质"></div><div class="form-group"><label>备注</label><input type="text" class="template-item-note" placeholder="备注"></div>' + costField + '<div class="form-group"><label>数量</label><input type="number" class="template-item-qty" min="1" value="1"></div><div class="form-group"><label>单价</label><input type="number" class="template-item-price" step="0.01" min="0" placeholder="0"></div><div class="form-group"><button type="button" class="btn btn-danger btn-sm" onclick="removeTemplateItem(this)">删除</button></div>';
     c.appendChild(d);
 }
-function removeTemplateItem(btn){ const row=btn.closest('.template-item-row'); if(document.querySelectorAll('.template-item-row').length>1) row.remove(); else alert('至少保留一个项目'); }
+function removeTemplateItem(btn){ const row=btn.closest('.template-item-row'); if(document.querySelectorAll('.template-item-row').length>1) row.remove(); else dialog.alert('至少保留一个项目', '提示', 'ℹ️'); }
 function saveTemplate(){
     const id=document.getElementById('templateId').value;
     const rows=document.querySelectorAll('.template-item-row');
@@ -33293,7 +33485,7 @@ function saveTemplate(){
             }
         }
         if(idx === -1){
-            alert('模板不存在或已被删除');
+            dialog.alert('模板不存在或已被删除', '错误', '❌');
             return;
         }
         t.createdAt=appData.templates[idx].createdAt; 
@@ -33745,7 +33937,7 @@ function saveCustomer(){
     };
     const errors = validateCustomer(c);
     if(errors.length > 0){
-        alert('请修正以下问题：\n• ' + errors.join('\n• '));
+        dialog.alert('请修正以下问题：\n• ' + errors.join('\n• '), '请修正', '⚠️');
         return;
     }
     if(id){
@@ -33756,7 +33948,7 @@ function saveCustomer(){
             if(idx !== -1) c.id=appData.customers[idx].id;
         }
         if(idx === -1){
-            alert('客户不存在或已被删除');
+            dialog.alert('客户不存在或已被删除', '错误', '❌');
             return;
         }
         c.createdAt=appData.customers[idx].createdAt;
@@ -34769,7 +34961,7 @@ function clearOldHistory() {
 }
 function exportHistoryJSON() {
     downloadFile(JSON.stringify(appData.quoteHistory, null, 2), `quote-history_${new Date().toISOString().slice(0,10)}.json`,'application/json');
-    alert(`已导出 ${appData.quoteHistory.length} 条历史记录`);
+    dialog.alert(`已导出 ${appData.quoteHistory.length} 条历史记录`, '导出成功', '✅');
 }
 
 // ===== AI智能推荐 =====
@@ -36187,7 +36379,7 @@ function verifyPassword(callback) {
         if (callback) callback();
         return true;
     } else {
-        alert('密码错误！');
+        dialog.alert('密码错误！', '错误', '❌');
         return false;
     }
 }
@@ -36292,12 +36484,12 @@ function changeAdminPassword() {
     if (!newPwd || !confirmPwd) return;
     
     if (newPwd.value !== confirmPwd.value) {
-        alert('两次输入的密码不一致！');
+        dialog.alert('两次输入的密码不一致！', '错误', '❌');
         return;
     }
     
     if (newPwd.value.length < 6) {
-        alert('密码长度不能少于6位！');
+        dialog.alert('密码长度不能少于6位！', '错误', '❌');
         return;
     }
     
@@ -36450,7 +36642,7 @@ function cleanAllBackups() {
             }
         });
         renderBackupList();
-        alert('所有备份已清理');
+        dialog.alert('所有备份已清理', '清理完成', '✅');
     }
 }
 function renderBackupList() {
@@ -38736,7 +38928,7 @@ function gistSaveAndToggle() {
     var bandwidthAdapt = document.getElementById('bandwidthAdaptive').checked;
     
     if (!token) {
-        alert('请填写 GitHub Token\n\n获取方法：点击上方「📖 如何获取 GitHub Token」查看详细步骤');
+        dialog.alert('请填写 GitHub Token\n\n获取方法：点击上方「📖 如何获取 GitHub Token」查看详细步骤', '提示', 'ℹ️');
         return;
     }
     
@@ -41963,10 +42155,10 @@ function importTemplates(event){
                 saveDataImmediately(); 
                 renderTemplates(); 
                 populateTemplateForQuoteList(); 
-                alert(`成功导入 ${t.length} 个模板`); 
+                dialog.alert(`成功导入 ${t.length} 个模板`, '导入成功', '✅'); 
             } else throw new Error('格式错误'); 
         }catch(err){ 
-            alert('导入失败：'+err.message); 
+            dialog.alert('导入失败：'+err.message, '导入失败', '❌'); 
         } 
     }; 
     r.readAsText(file); 
@@ -41985,10 +42177,10 @@ function importCustomers(event){
                 }); 
                 saveDataImmediately(); 
                 renderCustomers(); 
-                alert(`成功导入 ${c.length} 个客户`); 
+                dialog.alert(`成功导入 ${c.length} 个客户`, '导入成功', '✅'); 
             } else throw new Error('格式不正确'); 
         }catch(err){ 
-            alert('导入失败：'+err.message); 
+            dialog.alert('导入失败：'+err.message, '导入失败', '❌'); 
         } 
     }; 
     r.readAsText(file); 
@@ -42004,7 +42196,7 @@ function importAllData(event){
         return;
     }
     if (pwd !== APP_PASSWORD) {
-        alert('密码错误！');
+        dialog.alert('密码错误！', '错误', '❌');
         event.target.value = '';
         return;
     }
@@ -42200,7 +42392,7 @@ function renderAll(){
 // ===== XLSX导入导出 =====
 function exportToXLSX(data, headers, filename, sheetName) {
     if (!window.XLSX) {
-        alert('正在加载Excel处理库，请稍后...');
+        dialog.alert('正在加载Excel处理库，请稍后...', '加载中', '⏳');
         var script = document.createElement('script');
         script.src = 'https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
         script.onload = function() { exportToXLSX(data, headers, filename, sheetName); };
@@ -42226,12 +42418,12 @@ function exportToXLSX(data, headers, filename, sheetName) {
 }
 function importFromXLSX(file, headers, callback) {
     if (!window.XLSX) { 
-        alert('正在加载Excel处理库，请稍后...'); 
+        dialog.alert('正在加载Excel处理库，请稍后...', '加载中', '⏳'); 
         var script = document.createElement('script'); 
         script.src = 'https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; 
         script.onload = function() { importFromXLSX(file, headers, callback); }; 
         script.onerror = function() { 
-            alert('Excel处理库加载失败，请检查网络连接后重试'); 
+            dialog.alert('Excel处理库加载失败，请检查网络连接后重试', '加载失败', '❌'); 
         };
         document.head.appendChild(script); 
         return; 
@@ -42253,7 +42445,7 @@ function importFromXLSX(file, headers, callback) {
             }); 
             callback(result); 
         } catch(err) { 
-            alert('导入XLSX失败：' + err.message); 
+            dialog.alert('导入XLSX失败：' + err.message, '导入失败', '❌'); 
         } 
     }; 
     reader.readAsArrayBuffer(file);
@@ -42357,7 +42549,7 @@ function importProductsXLSX(event) {
     ];
     importFromXLSX(file, headers, function(importedData) { 
         if (!importedData.length) { 
-            alert('导入的数据为空！'); 
+            dialog.alert('导入的数据为空！', '提示', 'ℹ️'); 
             event.target.value = ''; 
             return; 
         } 
@@ -42432,7 +42624,7 @@ function importProductsXLSX(event) {
         });
         
         if (!newProducts.length) { 
-            alert('没有有效的产品数据（产品名称为空）！'); 
+            dialog.alert('没有有效的产品数据（产品名称为空）！', '提示', 'ℹ️'); 
             event.target.value = ''; 
             return; 
         } 
@@ -42466,13 +42658,13 @@ function importProductsXLSX(event) {
         renderProducts(); 
         updateCategoryFilter(); 
         populateQuoteProductList(); 
-        alert('成功导入 ' + newProducts.length + ' 个产品！'); 
+        dialog.alert('成功导入 ' + newProducts.length + '个产品！', '导入成功', '✅'); 
         event.target.value = ''; 
     }); 
 }
 function exportTemplatesXLSX() { 
     if (!window.XLSX) { 
-        alert('正在加载Excel处理库，请稍后...'); 
+        dialog.alert('正在加载Excel处理库，请稍后...', '加载中', '⏳'); 
         var script = document.createElement('script'); 
         script.src = 'https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; 
         script.onload = function() { exportTemplatesXLSX(); }; 
@@ -42508,7 +42700,7 @@ function importTemplatesXLSX(event) {
     var file = event.target.files[0]; 
     if (!file) return; 
     if (!window.XLSX) { 
-        alert('正在加载Excel处理库，请稍后...'); 
+        dialog.alert('正在加载Excel处理库，请稍后...', '加载中', '⏳'); 
         var script = document.createElement('script'); 
         script.src = 'https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; 
         script.onload = function() { importTemplatesXLSX(event); }; 
@@ -42560,7 +42752,7 @@ function importTemplatesXLSX(event) {
                 }); 
             }); 
             if (!newTemplates.length) { 
-                alert('没有有效的模板数据！'); 
+                dialog.alert('没有有效的模板数据！', '提示', 'ℹ️'); 
                 event.target.value = ''; 
                 return; 
             } 
@@ -42576,10 +42768,10 @@ function importTemplatesXLSX(event) {
             saveDataImmediately(); 
             renderTemplates(); 
             populateTemplateForQuoteList(); 
-            alert('成功导入 ' + newTemplates.length + ' 个模板！'); 
+            dialog.alert('成功导入 ' + newTemplates.length + '个模板！', '导入成功', '✅'); 
             event.target.value = ''; 
         } catch(err) { 
-            alert('导入XLSX失败：' + err.message); 
+            dialog.alert('导入XLSX失败：' + err.message, '导入失败', '❌'); 
             event.target.value = ''; 
         } 
     }; 
@@ -42609,7 +42801,7 @@ function importCustomersXLSX(event) {
     ]; 
     importFromXLSX(file, headers, function(importedData) { 
         if (!importedData.length) { 
-            alert('导入的数据为空！'); 
+            dialog.alert('导入的数据为空！', '提示', 'ℹ️'); 
             event.target.value = ''; 
             return; 
         } 
@@ -42627,7 +42819,7 @@ function importCustomersXLSX(event) {
             }; 
         }).filter(function(c) { return c.name; }); 
         if (!newCustomers.length) { 
-            alert('没有有效的客户数据（客户名称为空）！'); 
+            dialog.alert('没有有效的客户数据（客户名称为空）！', '提示', 'ℹ️'); 
             event.target.value = ''; 
             return; 
         } 
@@ -42642,7 +42834,7 @@ function importCustomersXLSX(event) {
         } 
         saveDataImmediately(); 
         renderCustomers(); 
-        alert('成功导入 ' + newCustomers.length + ' 个客户！'); 
+        dialog.alert('成功导入 ' + newCustomers.length + '个客户！', '导入成功', '✅'); 
         event.target.value = ''; 
     }); 
 }
@@ -44519,7 +44711,7 @@ function addCalcToQuote() {
     var waste = parseFloat(document.getElementById('calcWaste').value) || 0;
     var profit = parseFloat(document.getElementById('calcProfit').value) || 0;
     var qty = parseInt(document.getElementById('calcQty').value) || 1;
-    if (!itemName) { alert('请输入项目名称！'); return; }
+    if (!itemName) { dialog.alert('请输入项目名称！', '提示', 'ℹ️'); return; }
     
     var baseQty = 0, spec = '', unit = '';
     
@@ -44541,9 +44733,9 @@ function addCalcToQuote() {
     } else {
         // 普通计算模式
         if (length <= 0 || (calcType !== 'length' && width <= 0) || (calcType === 'cubic' && height <= 0)) {
-            alert('请输入有效的尺寸！'); return;
+            dialog.alert('请输入有效的尺寸！', '提示', 'ℹ️'); return;
         }
-        if (unitPrice <= 0 && costPrice <= 0) { alert('请输入单价或成本价！'); return; }
+        if (unitPrice <= 0 && costPrice <= 0) { dialog.alert('请输入单价或成本价！', '提示', 'ℹ️'); return; }
         
         if (calcType === 'square') {
             baseQty = length * width; spec = length + 'm×' + width + 'm'; unit = '平方';
@@ -45474,7 +45666,7 @@ function clearAllData() {
         return;
     }
     if (pwd !== APP_PASSWORD) {
-        alert('密码错误！');
+        dialog.alert('密码错误！', '错误', '❌');
         return;
     }
     
@@ -47177,7 +47369,7 @@ function applyMobileQuickCalc(type) {
     }
     
     if (result > 0) {
-        alert(type + '：' + result.toFixed(3) + ' ' + unit);
+        dialog.alert(type + '：' + result.toFixed(3) + ' ' + unit, '计算结果', '📊');
     }
 }
 
