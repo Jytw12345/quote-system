@@ -10102,19 +10102,27 @@ function safeExecuteAsync(fn, defaultVal) {
             });
         },
         
-        saveImage: function(id, base64Data) {
+        saveImage: function(id, base64Data, metadata) {
             return new Promise(function(resolve, reject) {
                 if (!db) { reject(new Error('DB not initialized')); return; }
                 try {
                     var transaction = db.transaction(['images'], 'readwrite');
                     var store = transaction.objectStore('images');
                     var blob = IDB.base64ToBlob(base64Data);
-                    var request = store.put({ 
+                    var imageData = { 
                         id: id, 
                         blob: blob, 
                         size: blob.size,
-                        uploadedAt: new Date().toISOString() 
-                    });
+                        uploadedAt: new Date().toISOString()
+                    };
+                    // 如果有额外的元数据，合并保存
+                    if (metadata && typeof metadata === 'object') {
+                        imageData.name = metadata.name || id;
+                        imageData.originalName = metadata.originalName || '';
+                        imageData.photoType = metadata.type || 'other';
+                        imageData.photoSize = metadata.size || blob.size;
+                    }
+                    var request = store.put(imageData);
                     request.onsuccess = function() { resolve(request.result); };
                     request.onerror = function() { reject(request.error); };
                 } catch(e) {
@@ -12335,13 +12343,17 @@ function loadFromIndexedDB() {
         // 加载照片数据
         promises.push(IDB.getAllImages().then(function(images) {
             if (images && images.length > 0) {
-                results.photos = images.map(function(img) {
+                results.photos = images.filter(function(img) {
+                    // 只提取照片（以 photo_ 开头的 ID）
+                    return img.id && img.id.startsWith('photo_');
+                }).map(function(img) {
                     var photoId = img.id.replace('photo_', '');
                     return {
                         id: photoId,
-                        name: photoId,
-                        data: img.data,
-                        size: img.size || 0,
+                        name: img.name || photoId,
+                        originalName: img.originalName || '',
+                        type: img.photoType || 'other',
+                        size: img.photoSize || img.size || 0,
                         uploadedAt: img.uploadedAt || new Date().toISOString()
                     };
                 });
@@ -19695,11 +19707,18 @@ function saveProduct(){
             p.imageId = null;
             completeSave();
         } else if(imagePreviewSrc && imagePreviewSrc.startsWith('data:')) {
-            p.image = imagePreviewSrc;
+            var finalImageSrc = imagePreviewSrc;
+            // 如果base64超过60KB（约80KB字符），进行二次压缩以确保同步数据不会过大
+            if (finalImageSrc.length > 60000) {
+                console.log('图片base64较大(' + finalImageSrc.length + '字符)，进行二次压缩...');
+                finalImageSrc = compressBase64ImageSync(finalImageSrc, 350, 0.5);
+                console.log('二次压缩后大小:', finalImageSrc.length, '字符');
+            }
+            p.image = finalImageSrc;
             if(idbInitialized && IDB.isSupported()) {
                 const imageId = id ? 'product_' + id : 'product_' + p.id;
                 p.imageId = imageId;
-                IDB.saveImage(imageId, imagePreviewSrc).then(function() {
+                IDB.saveImage(imageId, finalImageSrc).then(function() {
                     console.log('图片成功保存到 IndexedDB:', imageId);
                     completeSave();
                 }).catch(function(e) {
@@ -38141,94 +38160,24 @@ function adaptSyncStrategy() {
 }
 
 // ==================== 上传完整数据 ====================
-// 将产品图片从IndexedDB读取并转换为可同步的格式
+// 准备产品数据用于同步 - 只同步 imageId，不同步图片数据以避免数据过大
 function prepareProductsForSync(products) {
     return new Promise(function(resolve) {
-        var productsWithImages = [];
-        var productsNeedingImage = products.filter(p => p.imageId && !p.image);
-        var processedCount = 0;
-        
-        // 如果没有需要处理的图片，直接返回
-        if (productsNeedingImage.length === 0) {
-            resolve(products.map(function(p) { return Object.assign({}, p); }));
-            return;
-        }
-        
-        showSyncProgress('正在准备图片数据...', 5);
-        
-        productsNeedingImage.forEach(function(product, index) {
-            // 复制产品对象
-            var productCopy = Object.assign({}, product);
-            
-            // 从IndexedDB读取图片
-            if (idbInitialized && IDB.isSupported() && product.imageId) {
-                IDB.getImage(product.imageId)
-                .then(function(imageUrl) {
-                    if (imageUrl && imageUrl.startsWith('blob:')) {
-                        // 将Blob URL转换为Base64
-                        fetch(imageUrl)
-                        .then(function(res) { return res.blob(); })
-                        .then(function(blob) {
-                            var reader = new FileReader();
-                            reader.onloadend = function() {
-                                productCopy.image = reader.result;
-                                productCopy.imageLocation = 'embedded';
-                                productCopy.imageRef = product.imageId;
-                                productsWithImages[index] = productCopy;
-                                processedCount++;
-                                checkComplete();
-                            };
-                            reader.readAsDataURL(blob);
-                        })
-                        .catch(function() {
-                            // 读取失败，保留原数据
-                            productCopy.imageLocation = 'indexeddb';
-                            productCopy.imageRef = product.imageId;
-                            productsWithImages[index] = productCopy;
-                            processedCount++;
-                            checkComplete();
-                        });
-                    } else {
-                        // 已经是Base64或其他格式
-                        productCopy.image = imageUrl;
-                        productCopy.imageLocation = 'embedded';
-                        productsWithImages[index] = productCopy;
-                        processedCount++;
-                        checkComplete();
-                    }
-                })
-                .catch(function() {
-                    // 读取失败，保留原数据
-                    productCopy.imageLocation = 'indexeddb';
-                    productCopy.imageRef = product.imageId;
-                    productsWithImages[index] = productCopy;
-                    processedCount++;
-                    checkComplete();
-                });
-            } else {
-                productsWithImages[index] = productCopy;
-                processedCount++;
-                checkComplete();
+        // 直接复制产品数据，清空 image 字段（只保留 imageId）
+        // 这样可以大大减少同步数据大小，避免超过 Gist 限制
+        var result = products.map(function(p) {
+            var copy = Object.assign({}, p);
+            // 只保留 imageId，清空 base64 图片数据
+            // 下载时会通过 imageId 从本地 IndexedDB 读取
+            if (copy.imageId) {
+                copy.image = null; // 不同步 base64 数据，只同步 ID
+                copy.imageLocation = 'indexeddb';
             }
+            return copy;
         });
         
-        function checkComplete() {
-            if (processedCount >= productsNeedingImage.length) {
-                // 合并处理后的产品和不需要处理的产品
-                var result = [];
-                var needImageIndex = 0;
-                
-                products.forEach(function(product) {
-                    if (product.imageId && !product.image) {
-                        result.push(productsWithImages[needImageIndex++] || product);
-                    } else {
-                        result.push({ ...product });
-                    }
-                });
-                
-                resolve(result);
-            }
-        }
+        console.log('产品同步数据准备完成，共', result.length, '个产品，图片将以 ID 形式同步');
+        resolve(result);
     });
 }
 
@@ -46434,7 +46383,13 @@ function compressAndSavePhoto(file, base64Data, callback) {
             appData.photos.push(photo);
             
             if (idbInitialized && IDB.isSupported()) {
-                IDB.saveImage('photo_' + photo.id, compressedData).catch(function(e) {
+                // 保存照片时传递元数据
+                IDB.saveImage('photo_' + photo.id, compressedData, {
+                    name: photo.name,
+                    originalName: photo.originalName,
+                    type: photo.type,
+                    size: photo.size
+                }).catch(function(e) {
                     console.error('保存到 IndexedDB 失败:', e);
                 });
             }
@@ -46489,25 +46444,50 @@ function getPhotoType(fileName) {
 }
 
 function refreshPhotoList() {
-    initPhotos();
-    // 尝试从IndexedDB重新加载照片
+    // 从 IndexedDB 重新加载照片数据（包括元数据和图片数据）
     if (idbInitialized && IDB.isSupported()) {
         IDB.getAllImages().then(function(images) {
             if (images && images.length > 0) {
-                appData.photos = images.map(function(img) {
-                    var photoId = img.id.replace('photo_', '');
-                    return {
-                        id: photoId,
-                        name: photoId,
-                        data: img.data,
-                        size: img.size || 0,
-                        uploadedAt: img.uploadedAt || new Date().toISOString()
-                    };
+                // 创建图片映射表
+                var imageMap = {};
+                images.forEach(function(img) {
+                    imageMap[img.id] = img;
+                });
+                
+                // 更新照片列表：只保留存在于 IndexedDB 中的照片
+                var existingIds = new Set(images.filter(function(img) {
+                    return img.id && img.id.startsWith('photo_');
+                }).map(function(img) {
+                    return img.id.replace('photo_', '');
+                }));
+                
+                // 过滤掉已从 IndexedDB 删除的照片
+                appData.photos = appData.photos.filter(function(photo) {
+                    return existingIds.has(photo.id);
+                });
+                
+                // 为每个照片加载对应的图片数据和元数据
+                appData.photos.forEach(function(photo) {
+                    var imageId = 'photo_' + photo.id;
+                    var imgData = imageMap[imageId];
+                    if (imgData) {
+                        // 从 IndexedDB 更新元数据（如果有）
+                        if (imgData.name) photo.name = imgData.name;
+                        if (imgData.originalName) photo.originalName = imgData.originalName;
+                        if (imgData.photoType) photo.type = imgData.photoType;
+                        if (imgData.photoSize) photo.size = imgData.photoSize;
+                        if (imgData.uploadedAt) photo.uploadedAt = imgData.uploadedAt;
+                        // 图片数据通过 blob URL 加载
+                        if (imgData.blob) {
+                            photo.data = URL.createObjectURL(imgData.blob);
+                        }
+                    }
                 });
             }
             updatePhotoStats();
             renderPhotoGrid();
-        }).catch(function() {
+        }).catch(function(e) {
+            console.error('从 IndexedDB 加载图片失败:', e);
             updatePhotoStats();
             renderPhotoGrid();
         });
@@ -46691,9 +46671,9 @@ function deleteSinglePhotoById(id) {
     const photo = appData.photos.find(p => p.id === id);
     if (!photo) return;
     
-    showConfirmDialog(`确定删除照片 "${photo.name}" 吗？`, () => {
-        // 先关闭确认模态框
-        closeModal();
+    showConfirmDialog(`确定删除照片 "${photo.name}" 吗？`, (confirmed) => {
+        if (!confirmed) return;
+        
         const index = appData.photos.findIndex(p => p.id === id);
         if (index !== -1) {
             appData.photos.splice(index, 1);
@@ -46726,7 +46706,9 @@ function downloadPhoto() {
 }
 
 function clearAllPhotos() {
-    showConfirmDialog('确定清空所有照片吗？此操作不可恢复！', () => {
+    showConfirmDialog('确定清空所有照片吗？此操作不可恢复！', (confirmed) => {
+        if (!confirmed) return;
+        
         appData.photos.forEach(photo => {
             if (idbInitialized && IDB.isSupported()) {
                 IDB.delete('images', 'photo_' + photo.id).catch(function(e) {
