@@ -9651,20 +9651,19 @@ function safeExecuteAsync(fn, defaultVal) {
                         </select>
                     </div>
                     <div class="tier-row-2" style="display:flex;align-items:center;gap:0.35rem;">
-                        <span style="font-size:0.7rem;color:#374151;font-weight:500;flex-shrink:0;white-space:nowrap;">满</span>
-                        <input type="number" class="tier-qty" min="1" step="1" placeholder="10" style="flex:1;min-width:0;max-width:80px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
-                        <span style="font-size:0.7rem;color:#6b7280;flex-shrink:0;white-space:nowrap;" id="tierQtyLabel">件</span>
-                        <span style="color:#2563eb;font-size:0.8rem;font-weight:600;flex-shrink:0;">→</span>
-                        <span style="font-size:0.7rem;color:#374151;font-weight:500;flex-shrink:0;white-space:nowrap;">享</span>
-                        <span style="color:#6b7280;font-size:0.7rem;flex-shrink:0;white-space:nowrap;">¥</span>
-                        <input type="number" class="tier-price" min="0" step="0.01" placeholder="9.00" style="flex:1;min-width:0;max-width:80px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
-                        <span style="font-size:0.7rem;color:#6b7280;flex-shrink:0;white-space:nowrap;" id="tierPriceLabel">/件</span>
-                        <button type="button" class="btn btn-xs btn-primary tier-add-btn" onclick="addTierRow()" style="font-size:0.7rem;padding:0.25rem 0.5rem;white-space:nowrap;flex-shrink:0;">➕添加</button>
+                        <span style="font-size:0.75rem;color:#374151;font-weight:500;flex-shrink:0;white-space:nowrap;">满</span>
+                        <input type="number" class="tier-qty" min="1" step="1" placeholder="10" style="flex:1;min-width:0;max-width:80px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;text-align:right;">
+                        <span style="font-size:0.75rem;color:#6b7280;flex-shrink:0;white-space:nowrap;" id="tierQtyLabel">件</span>
+                        <span style="color:#2563eb;font-size:0.85rem;font-weight:600;flex-shrink:0;">→</span>
+                        <span style="font-size:0.75rem;color:#374151;font-weight:500;flex-shrink:0;white-space:nowrap;">享</span>
+                        <input type="number" class="tier-price" min="0" step="0.01" placeholder="9.00" style="flex:1;min-width:0;max-width:80px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;text-align:right;">
+                        <span style="font-size:0.75rem;color:#6b7280;flex-shrink:0;white-space:nowrap;" id="tierPriceLabel">元/件</span>
+                        <button type="button" class="btn btn-xs btn-primary tier-add-btn" onclick="addTierRow()" style="font-size:0.75rem;padding:0.3rem 0.55rem;white-space:nowrap;flex-shrink:0;">➕添加</button>
                     </div>
                 </div>
                 <div id="tierModeHint" style="font-size:0.65rem;color:#6b7280;margin-top:0.3rem;padding:0 0.5rem;">💡 按件数：基于订单数量 | 按面积：基于总面积</div>
                 <div id="tierPricingContainer" style="margin-top:0.3rem;padding:0 0.5rem;">
-                    <div id="tierPricingList" style="display:flex;flex-direction:column;gap:0.25rem;"></div>
+                    <div id="tierPricingList" style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.4rem;"></div>
                 </div>
             </div>
             
@@ -9675,6 +9674,11 @@ function safeExecuteAsync(fn, defaultVal) {
                 .slider:before { position:absolute; content:""; height:14px; width:14px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%; }
                 input:checked + .slider { background-color:#2563eb; }
                 input:checked + .slider:before { transform:translateX(16px); }
+
+                /* 阶梯价格数字输入框右对齐 */
+                .tier-qty, .tier-price {
+                    text-align: right;
+                }
                 
                 /* 产品描述+图片区域 桌面端 */
                 .product-desc-image-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
@@ -9694,12 +9698,12 @@ function safeExecuteAsync(fn, defaultVal) {
                     .tier-row-2 .tier-price { flex:1 !important; max-width:65px !important; min-width:0 !important; font-size:0.75rem !important; padding:0.25rem 0.3rem !important; }
                     .tier-row-2 .tier-add-btn { padding:0.25rem 0.4rem !important; font-size:0.7rem !important; }
                     #tierModeHint { font-size:0.65rem !important; padding:0 0.35rem !important; }
-                    #tierPricingList { gap:0.25rem !important; }
-                    .tier-chip { gap:0.25rem !important; padding:0.35rem 0.4rem !important; width:100% !important; }
-                    .tier-chip .tier-qty { flex:1 !important; max-width:60px !important; min-width:0 !important; font-size:0.75rem !important; padding:0.25rem 0.3rem !important; }
-                    .tier-chip .tier-price { flex:1 !important; max-width:60px !important; min-width:0 !important; font-size:0.75rem !important; padding:0.25rem 0.3rem !important; }
-                    .tier-chip .btn { padding:0.2rem 0.4rem !important; font-size:0.7rem !important; }
-                    .tier-chip span { font-size:0.72rem !important; }
+                    #tierPricingList { grid-template-columns:1fr !important; gap:0.35rem !important; }
+                    .tier-chip { gap:0.3rem !important; padding:0.45rem 0.5rem !important; }
+                    .tier-chip .tier-qty { max-width:65px !important; font-size:0.8rem !important; padding:0.25rem 0.35rem !important; }
+                    .tier-chip .tier-price { max-width:70px !important; font-size:0.8rem !important; padding:0.25rem 0.35rem !important; }
+                    .tier-chip .btn { padding:0.2rem 0.45rem !important; font-size:0.7rem !important; }
+                    .tier-chip span { font-size:0.78rem !important; }
                 }
             </style>
             
@@ -18840,16 +18844,15 @@ function addTierRow() {
     
     const chip = document.createElement('div');
     chip.className = 'tier-chip';
-    chip.style.cssText = 'display:flex;align-items:center;gap:0.35rem;padding:0.4rem 0.5rem;background:#fff;border:1px solid #d1d5db;border-radius:8px;font-size:0.8rem;box-shadow:0 1px 2px rgba(0,0,0,0.05);width:100%;overflow:hidden;';
+    chip.style.cssText = 'display:flex;align-items:center;gap:0.3rem;padding:0.45rem 0.55rem;background:#fff;border:1px solid #d1d5db;border-radius:8px;font-size:0.8rem;box-shadow:0 1px 2px rgba(0,0,0,0.05);width:100%;overflow:hidden;';
     chip.innerHTML = `
-        <span style="color:#374151;font-weight:500;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">满</span>
-        <input type="number" class="tier-qty" min="1" step="1" value="${qtyValue}" style="flex:1;min-width:0;max-width:75px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
-        <span style="color:#6b7280;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">件</span>
+        <span style="color:#374151;font-weight:500;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">满</span>
+        <input type="number" class="tier-qty" min="1" step="1" value="${qtyValue}" style="flex:1;min-width:0;max-width:65px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;text-align:right;">
+        <span style="color:#6b7280;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">件</span>
         <span style="color:#2563eb;font-size:0.85rem;font-weight:600;flex-shrink:0;">→</span>
-        <span style="color:#374151;font-weight:500;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">享</span>
-        <span style="color:#6b7280;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">¥</span>
-        <input type="number" class="tier-price" min="0" step="0.01" value="${priceValue}" style="flex:1;min-width:0;max-width:75px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
-        <span style="color:#6b7280;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">/件</span>
+        <span style="color:#374151;font-weight:500;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">享</span>
+        <input type="number" class="tier-price" min="0" step="0.01" value="${priceValue}" style="flex:1;min-width:0;max-width:70px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;text-align:right;">
+        <span style="color:#6b7280;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">元/件</span>
         <button type="button" class="btn btn-xs btn-danger" onclick="removeTierRow(this)" style="padding:0.2rem 0.45rem;flex-shrink:0;font-size:0.7rem;white-space:nowrap;margin-left:auto;">删除</button>
     `;
     list.appendChild(chip);
@@ -18901,16 +18904,15 @@ function setTierPricesToForm(tierPrices) {
     tierPrices.forEach((tier) => {
         const chip = document.createElement('div');
         chip.className = 'tier-chip';
-        chip.style.cssText = 'display:flex;align-items:center;gap:0.35rem;padding:0.4rem 0.5rem;background:#fff;border:1px solid #d1d5db;border-radius:8px;font-size:0.8rem;box-shadow:0 1px 2px rgba(0,0,0,0.05);width:100%;overflow:hidden;';
+        chip.style.cssText = 'display:flex;align-items:center;gap:0.3rem;padding:0.45rem 0.55rem;background:#fff;border:1px solid #d1d5db;border-radius:8px;font-size:0.8rem;box-shadow:0 1px 2px rgba(0,0,0,0.05);width:100%;overflow:hidden;';
         chip.innerHTML = `
-            <span style="color:#374151;font-weight:500;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">满</span>
-            <input type="number" class="tier-qty" min="1" step="1" value="${tier.qty}" style="flex:1;min-width:0;max-width:75px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
-            <span style="color:#6b7280;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">件</span>
+            <span style="color:#374151;font-weight:500;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">满</span>
+            <input type="number" class="tier-qty" min="1" step="1" value="${tier.qty}" style="flex:1;min-width:0;max-width:65px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;text-align:right;">
+            <span style="color:#6b7280;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">件</span>
             <span style="color:#2563eb;font-size:0.85rem;font-weight:600;flex-shrink:0;">→</span>
-            <span style="color:#374151;font-weight:500;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">享</span>
-            <span style="color:#6b7280;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">¥</span>
-            <input type="number" class="tier-price" min="0" step="0.01" value="${tier.price}" style="flex:1;min-width:0;max-width:75px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
-            <span style="color:#6b7280;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">/件</span>
+            <span style="color:#374151;font-weight:500;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">享</span>
+            <input type="number" class="tier-price" min="0" step="0.01" value="${tier.price}" style="flex:1;min-width:0;max-width:70px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;text-align:right;">
+            <span style="color:#6b7280;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">元/件</span>
             <button type="button" class="btn btn-xs btn-danger" onclick="removeTierRow(this)" style="padding:0.2rem 0.45rem;flex-shrink:0;font-size:0.7rem;white-space:nowrap;margin-left:auto;">删除</button>
         `;
         list.appendChild(chip);
@@ -48176,6 +48178,11 @@ if ('serviceWorker' in navigator) {
                     swRegistration = registration;
                     console.log('[SW] 注册成功:', registration.scope);
                     
+                    // 立即向当前 controller 请求版本号，更新页面显示
+                    if (navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
+                    }
+                    
                     registration.addEventListener('updatefound', function() {
                         var newWorker = registration.installing;
                         newWorker.addEventListener('statechange', function() {
@@ -48184,18 +48191,25 @@ if ('serviceWorker' in navigator) {
                                     isUpdatePending = true;
                                     newWorker.postMessage({ type: 'GET_VERSION' });
                                 } else {
+                                    // 首次安装，不需要提示更新
                                     newWorker.postMessage({ type: 'GET_VERSION' });
                                 }
                             }
                         });
                     });
                     
+                    // 如果有 waiting 的 SW，提示用户更新
                     if (registration.waiting) {
                         isUpdatePending = true;
                         registration.waiting.postMessage({ type: 'GET_VERSION' });
                     }
                     
+                    // controller 变化时刷新页面（确认更新后会触发）
+                    var isReloading = false;
                     registration.addEventListener('controllerchange', function() {
+                        if (isReloading) return;
+                        isReloading = true;
+                        console.log('[SW] Controller 已切换，准备刷新...');
                         window.location.reload();
                     });
                 })
@@ -48234,22 +48248,79 @@ function closeUpdateModal() {
 }
 
 function confirmUpdate() {
-    if (swRegistration) {
-        if (swRegistration.waiting) {
-            swRegistration.waiting.postMessage({ type: 'ACTIVATE_UPDATE' });
-        } else if (swRegistration.installing) {
-            swRegistration.installing.postMessage({ type: 'ACTIVATE_UPDATE' });
+    var targetWorker = null;
+    var registrationToUse = swRegistration;
+
+    // 查找需要激活的 SW
+    if (registrationToUse && registrationToUse.waiting) {
+        targetWorker = registrationToUse.waiting;
+    } else if (registrationToUse && registrationToUse.installing) {
+        targetWorker = registrationToUse.installing;
+    }
+
+    // 如果本地缓存的 registration 没有 waiting worker，去全局查找
+    if (!targetWorker) {
+        try {
+            var regs = navigator.serviceWorker.getRegistrations();
+            if (regs && typeof regs.then === 'function') {
+                regs.then(function(registrations) {
+                    for (var i = 0; i < registrations.length; i++) {
+                        var reg = registrations[i];
+                        if (reg.waiting) {
+                            doActivate(reg.waiting, reg);
+                            return;
+                        } else if (reg.installing) {
+                            doActivate(reg.installing, reg);
+                            return;
+                        }
+                    }
+                    // 没有 waiting 或 installing worker，直接刷新以应用最新版本
+                    window.location.reload();
+                });
+                return;
+            }
+        } catch(e) {
+            console.warn('[SW] 获取 registration 失败:', e);
         }
-    } else {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            registrations.forEach(function(reg) {
-                if (reg.waiting) {
-                    reg.waiting.postMessage({ type: 'ACTIVATE_UPDATE' });
-                } else if (reg.installing) {
-                    reg.installing.postMessage({ type: 'ACTIVATE_UPDATE' });
-                }
-            });
-        });
+        window.location.reload();
+        return;
+    }
+
+    doActivate(targetWorker, registrationToUse);
+
+    function doActivate(worker, reg) {
+        console.log('[SW] 🔄 正在激活新版本 SW...');
+        worker.postMessage({ type: 'ACTIVATE_UPDATE' });
+
+        // 监听 worker 状态变化，确保激活完成后再刷新
+        var stateHandler = function() {
+            if (worker.state === 'activated') {
+                worker.removeEventListener('statechange', stateHandler);
+                console.log('[SW] ✅ 新版本 SW 已激活，准备刷新页面...');
+                setTimeout(function() {
+                    window.location.reload();
+                }, 300);
+            }
+        };
+        worker.addEventListener('statechange', stateHandler);
+
+        // 监控 controllerchange 作为兜底方案
+        var controllerChanged = false;
+        var origController = navigator.serviceWorker.controller;
+        var controllerHandler = function() {
+            if (navigator.serviceWorker.controller !== origController) {
+                controllerChanged = true;
+            }
+        };
+        navigator.serviceWorker.addEventListener('controllerchange', controllerHandler);
+
+        // 超时兜底：如果 3 秒内没有激活成功，强制刷新
+        setTimeout(function() {
+            worker.removeEventListener('statechange', stateHandler);
+            navigator.serviceWorker.removeEventListener('controllerchange', controllerHandler);
+            console.log('[SW] ⏱️ 激活超时，强制刷新页面...');
+            window.location.reload();
+        }, 3000);
     }
 }
 
@@ -48438,44 +48509,99 @@ function showUpdateNotification(version, logs) {
     showUpdateModal(version, logs);
 }
 
+// 记录已经处理过的版本，避免重复弹窗
+var lastPromptedVersion = sessionStorage.getItem('lastPromptedVersion') || '';
+var lastReceivedVersion = localStorage.getItem('lastReceivedVersion') || '';
+
 // 监听 Service Worker 的更新消息
 navigator.serviceWorker.addEventListener('message', function(event) {
-    if (event.data && event.data.type === 'VERSION_UPDATED') {
+    if (!event.data || !event.data.type) return;
+    console.log('[SW] 收到消息:', event.data.type, event.data.version);
+
+    // VERSION_UPDATED: 新版本 SW 激活后发送的消息
+    if (event.data.type === 'VERSION_UPDATED') {
+        // 记录新版本号，更新页面显示
+        lastReceivedVersion = event.data.version;
+        localStorage.setItem('lastReceivedVersion', event.data.version);
+        updateVersionDisplay(event.data.version, event.data.logs);
+
+        // 只有在非自动刷新页面时才显示通知（刷新后不需要再次弹窗）
         var updateMode = getUpdateMode();
         if (updateMode === 'auto') {
             showAutoUpdateNotification(event.data.version, event.data.logs);
         } else {
             showUpdateNotification(event.data.version, event.data.logs);
         }
+        return;
     }
-    if (event.data && event.data.type === 'VERSION_RESPONSE') {
-        var versionEl = document.getElementById('currentSoftwareVersion');
-        if (versionEl) {
-            versionEl.textContent = event.data.version;
-        }
-        
-        var logsEl = document.getElementById('currentVersionLogs');
-        var logsListEl = document.getElementById('currentVersionLogsList');
-        if (logsEl && logsListEl && event.data.logs && event.data.logs.length > 0) {
-            logsListEl.innerHTML = '';
-            event.data.logs.forEach(function(log) {
-                var li = document.createElement('li');
-                li.style.marginBottom = '0.125rem';
-                li.textContent = log;
-                logsListEl.appendChild(li);
-            });
-            logsEl.style.display = 'block';
-        }
+
+    // VERSION_RESPONSE: 当前 controller (已激活) SW 返回的版本号
+    if (event.data.type === 'VERSION_RESPONSE') {
+        updateVersionDisplay(event.data.version, event.data.logs);
+        return;
     }
-    if (event.data && event.data.type === 'PENDING_VERSION') {
+
+    // PENDING_VERSION: waiting (未激活) SW 返回的版本号，表示有更新待应用
+    if (event.data.type === 'PENDING_VERSION') {
+        // 如果是手动检查更新流程中，交给 checkSoftwareUpdate 的 handler 处理
+        if (isManualUpdateCheck) return;
+
+        // 避免重复弹窗：同一个版本号只提示一次（session 级别）
+        if (event.data.version === lastPromptedVersion) {
+            return;
+        }
+
+        // 检查是否当前 controller 和 waiting 版本不同（确实有更新）
+        if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
+            // 等待 controller 返回，然后比较（简化处理：直接弹窗，因为有 waiting 就表示有更新）
+        }
+
+        lastPromptedVersion = event.data.version;
+        sessionStorage.setItem('lastPromptedVersion', event.data.version);
+
         var updateMode = getUpdateMode();
         if (updateMode === 'auto') {
             showAutoUpdateNotification(event.data.version, event.data.logs);
         } else {
             showUpdateNotification(event.data.version, event.data.logs);
         }
+        return;
     }
 });
+
+// 更新页面上的版本号显示（所有有 id=currentSoftwareVersion 的地方）
+function updateVersionDisplay(version, logs) {
+    if (!version) return;
+
+    // 更新设置页面中的版本号
+    var versionEl = document.getElementById('currentSoftwareVersion');
+    if (versionEl) {
+        versionEl.textContent = version;
+    }
+
+    // 更新日志显示
+    var logsEl = document.getElementById('currentVersionLogs');
+    var logsListEl = document.getElementById('currentVersionLogsList');
+    if (logsEl && logsListEl && logs && logs.length > 0) {
+        logsListEl.innerHTML = '';
+        logs.forEach(function(log) {
+            var li = document.createElement('li');
+            li.style.marginBottom = '0.125rem';
+            li.textContent = log;
+            logsListEl.appendChild(li);
+        });
+        logsEl.style.display = 'block';
+    }
+
+    // 如果页面加载完成后还没更新版本号，延迟一点时间再试一次（处理 DOM 还没渲染完的情况）
+    if (!versionEl) {
+        setTimeout(function() {
+            var el = document.getElementById('currentSoftwareVersion');
+            if (el) el.textContent = version;
+        }, 500);
+    }
+}
 
 // 自动更新模式：显示桌面通知提示
 function showAutoUpdateNotification(version, logs) {
