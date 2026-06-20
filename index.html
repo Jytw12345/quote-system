@@ -48111,7 +48111,8 @@ if ('serviceWorker' in navigator) {
                         var newWorker = registration.installing;
                         newWorker.addEventListener('statechange', function() {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // 新的 Service Worker 已安装，等待激活后通过消息获取更新日志
+                                // 新的 Service Worker 已安装，请求版本信息
+                                newWorker.postMessage({ type: 'GET_VERSION' });
                             }
                         });
                     });
@@ -48129,6 +48130,40 @@ if ('serviceWorker' in navigator) {
     } else {
         console.log('[SW] 当前环境不支持 PWA（需要 HTTPS 或 localhost），已跳过 Service Worker 注册');
     }
+}
+
+function showUpdateModal(version, logs) {
+    var titleEl = document.getElementById('updateModalTitle');
+    var versionEl = document.getElementById('updateModalVersion');
+    var logsEl = document.getElementById('updateModalLogs');
+    
+    titleEl.textContent = '检测到新版本';
+    versionEl.textContent = version;
+    
+    if (logs && logs.length > 0) {
+        logsEl.innerHTML = '<strong style="color:#2563eb;">更新内容：</strong><br><br>' + 
+            logs.map(function(log) { return '<div style="margin:0.25rem 0;">' + log + '</div>'; }).join('');
+        logsEl.style.display = 'block';
+    } else {
+        logsEl.style.display = 'none';
+    }
+    
+    document.getElementById('updateModal').style.display = 'block';
+}
+
+function closeUpdateModal() {
+    document.getElementById('updateModal').style.display = 'none';
+}
+
+function confirmUpdate() {
+    if ('caches' in window) {
+        caches.keys().then(function(names) {
+            names.forEach(function(name) {
+                caches.delete(name);
+            });
+        });
+    }
+    window.location.reload();
 }
 
 function showUpdateNotification(version, logs) {
@@ -48168,42 +48203,6 @@ navigator.serviceWorker.addEventListener('message', function(event) {
         </div>
     </div>
 </div>
-
-<script>
-function showUpdateModal(version, logs) {
-    var titleEl = document.getElementById('updateModalTitle');
-    var versionEl = document.getElementById('updateModalVersion');
-    var logsEl = document.getElementById('updateModalLogs');
-    
-    titleEl.textContent = '📣 检测到新版本';
-    versionEl.textContent = version;
-    
-    if (logs && logs.length > 0) {
-        logsEl.innerHTML = '<strong style="color:#2563eb;">📋 更新内容：</strong><br><br>' + 
-            logs.map(function(log) { return '<div style="margin:0.25rem 0;">' + log + '</div>'; }).join('');
-        logsEl.style.display = 'block';
-    } else {
-        logsEl.style.display = 'none';
-    }
-    
-    document.getElementById('updateModal').style.display = 'block';
-}
-
-function closeUpdateModal() {
-    document.getElementById('updateModal').style.display = 'none';
-}
-
-function confirmUpdate() {
-    if ('caches' in window) {
-        caches.keys().then(function(names) {
-            names.forEach(function(name) {
-                caches.delete(name);
-            });
-        });
-    }
-    window.location.reload();
-}
-</script>
 
 <!-- 主图上传裁剪模态框 -->
 <div id="mainImageModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10000;overflow:auto;" onclick="if(event.target===this)closeMainImageModal()">
