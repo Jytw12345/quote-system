@@ -9642,25 +9642,29 @@ function safeExecuteAsync(fn, defaultVal) {
                 </label>
             </div>
             <div id="tierPricingSection" style="display:none;margin-top:0.5rem;">
-                <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;background:#f0f9ff;border:1px solid #bfdbfe;border-radius:var(--radius);">
-                    <span style="font-size:0.75rem;font-weight:500;color:#1e40af;white-space:nowrap;">🔢 阶梯价格</span>
-                    <select id="tierMode" style="font-size:0.75rem;padding:0.2rem 0.3rem;border:1px solid #d1d5db;border-radius:4px;background:#fff;" onchange="updateTierLabels()">
-                        <option value="qty">按件数</option>
-                        <option value="area" disabled>按面积</option>
-                    </select>
-                    <div style="display:flex;align-items:center;gap:0.4rem;flex:1;">
-                        <div style="display:flex;align-items:center;gap:0.25rem;">
-                            <span style="font-size:0.75rem;color:#6b7280;font-weight:500;">最低数量：</span>
-                            <input type="number" class="tier-qty" min="1" step="1" placeholder="10" style="width:60px;padding:0.2rem 0.3rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
-                            <span style="font-size:0.7rem;color:#6b7280;" id="tierQtyLabel">件</span>
+                <div class="tier-pricing-config" style="display:flex;flex-direction:column;gap:0.5rem;padding:0.5rem;background:#f0f9ff;border:1px solid #bfdbfe;border-radius:var(--radius);">
+                    <!-- 第一行：模式选择 -->
+                    <div class="tier-row-1" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                        <span style="font-size:0.75rem;font-weight:500;color:#1e40af;">🔢 阶梯价格</span>
+                        <select id="tierMode" class="tier-select" style="font-size:0.75rem;padding:0.2rem 0.3rem;border:1px solid #d1d5db;border-radius:4px;background:#fff;" onchange="updateTierLabels()">
+                            <option value="qty">按件数</option>
+                            <option value="area" disabled>按面积</option>
+                        </select>
+                    </div>
+                    <!-- 第二行：配置输入 -->
+                    <div class="tier-row-2" style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">
+                        <div class="tier-input-group" style="display:flex;align-items:center;gap:0.25rem;">
+                            <span style="font-size:0.7rem;color:#6b7280;">最低数量：</span>
+                            <input type="number" class="tier-qty" min="1" step="1" placeholder="10" style="width:55px;padding:0.2rem 0.3rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
+                            <span style="font-size:0.65rem;color:#6b7280;" id="tierQtyLabel">件</span>
                         </div>
-                        <span style="color:#9ca3af;">→</span>
-                        <div style="display:flex;align-items:center;gap:0.25rem;">
-                            <span style="font-size:0.75rem;color:#6b7280;font-weight:500;">折扣单价：</span>
-                            <input type="number" class="tier-price" min="0" step="0.01" placeholder="9.00" style="width:70px;padding:0.2rem 0.3rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
-                            <span style="font-size:0.7rem;color:#6b7280;" id="tierPriceLabel">元/件</span>
+                        <span style="color:#9ca3af;font-size:0.7rem;">→</span>
+                        <div class="tier-input-group" style="display:flex;align-items:center;gap:0.25rem;">
+                            <span style="font-size:0.7rem;color:#6b7280;">折扣单价：</span>
+                            <input type="number" class="tier-price" min="0" step="0.01" placeholder="9.00" style="width:65px;padding:0.2rem 0.3rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
+                            <span style="font-size:0.65rem;color:#6b7280;" id="tierPriceLabel">元/件</span>
                         </div>
-                        <button type="button" class="btn btn-xs btn-outline" onclick="addTierRow()" style="font-size:0.7rem;padding:0.2rem 0.4rem;">➕ 添加</button>
+                        <button type="button" class="btn btn-xs btn-outline tier-add-btn" onclick="addTierRow()" style="font-size:0.7rem;padding:0.2rem 0.4rem;">➕ 添加</button>
                     </div>
                 </div>
                 <div id="tierModeHint" style="font-size:0.7rem;color:#6b7280;margin-top:0.375rem;padding:0 0.5rem;">💡 按件数：基于订单数量 | 按面积：基于总面积（适合按尺寸计费产品）</div>
@@ -9687,6 +9691,16 @@ function safeExecuteAsync(fn, defaultVal) {
                     .product-desc-image-grid { grid-template-columns:1fr; gap:0.5rem; }
                     .product-desc-image-right { display:none; }
                     .product-image-preview-mobile { display:block !important; margin-top:0.5rem; }
+                    
+                    /* 阶梯价格配置手机端优化 */
+                    .tier-pricing-config { padding:0.4rem !important; }
+                    .tier-row-1 { gap:0.3rem !important; }
+                    .tier-row-2 { gap:0.3rem !important; }
+                    .tier-input-group { flex:1; min-width:0; }
+                    .tier-qty { width:50px !important; font-size:0.75rem !important; }
+                    .tier-price { width:55px !important; font-size:0.75rem !important; }
+                    .tier-add-btn { flex-shrink:0; }
+                    #tierModeHint { display:none; }
                 }
             </style>
             
@@ -48214,9 +48228,17 @@ function showUpdateModal(version, logs) {
 
 function closeUpdateModal() {
     document.getElementById('updateModal').style.display = 'none';
+    // 用户选择"稍后更新"，清除提示记录，下次打开页面时仍然显示更新提示
+    sessionStorage.removeItem('swUpdatePrompted');
 }
 
 function confirmUpdate() {
+    // 通知 Service Worker 激活新的版本
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'ACTIVATE_UPDATE' });
+    }
+    
+    // 清除缓存并刷新
     if ('caches' in window) {
         caches.keys().then(function(names) {
             names.forEach(function(name) {
@@ -48388,6 +48410,25 @@ function initSoftwareVersion() {
     if (navigator.serviceWorker && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
     }
+    
+    // 检测是否有等待激活的新版本 Service Worker
+    navigator.serviceWorker.addEventListener('controllerchange', function() {
+        console.log('[App] 🚀 新的 Service Worker 已激活');
+        window.location.reload();
+    });
+    
+    // 检测等待中的 SW
+    if (navigator.serviceWorker) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            registrations.forEach(function(registration) {
+                if (registration.waiting) {
+                    console.log('[App] ⏳ 发现等待激活的新版本');
+                    // 获取等待版本的信息
+                    registration.waiting.postMessage({ type: 'GET_VERSION' });
+                }
+            });
+        });
+    }
 }
 
 function showUpdateNotification(version, logs) {
@@ -48408,7 +48449,7 @@ navigator.serviceWorker.addEventListener('message', function(event) {
             showUpdateNotification(event.data.version, event.data.logs);
         }
     }
-    // 响应版本信息请求
+    // 响应版本信息请求（来自当前活跃的 SW）
     if (event.data && event.data.type === 'VERSION_RESPONSE') {
         // 更新版本显示
         var versionEl = document.getElementById('currentSoftwareVersion');
@@ -48435,6 +48476,15 @@ navigator.serviceWorker.addEventListener('message', function(event) {
             showManualUpdateResult(event.data.version, event.data.logs);
         }
     }
+    // 响应等待中 SW 的版本信息（检测到新版本）
+    if (event.data && event.data.type === 'PENDING_VERSION') {
+        var updateMode = getUpdateMode();
+        if (updateMode === 'auto') {
+            showAutoUpdateNotification(event.data.version, event.data.logs);
+        } else {
+            showUpdateNotification(event.data.version, event.data.logs);
+        }
+    }
 });
 
 // 自动更新模式：显示桌面通知提示
@@ -48445,7 +48495,7 @@ function showAutoUpdateNotification(version, logs) {
     // 创建桌面通知元素
     var notification = document.createElement('div');
     notification.id = 'autoUpdateNotification';
-    notification.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;padding:1rem 1.5rem;border-radius:12px;box-shadow:0 10px 40px rgba(37,99,235,0.4);z-index:10002;display:flex;flex-direction:column;align-items:center;animation:slideDown 0.3s ease;min-width:300px;max-width:90vw;';
+    notification.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;padding:1rem 1.5rem;border-radius:12px;box-shadow:0 10px 40px rgba(37,99,235,0.4);z-index:10002;display:flex;flex-direction:column;align-items:center;animation:slideDown 0.3s ease;min-width:320px;max-width:90vw;';
     
     var title = document.createElement('div');
     title.style.cssText = 'font-size:1rem;font-weight:700;margin-bottom:0.25rem;display:flex;align-items:center;gap:0.5rem;';
@@ -48455,36 +48505,74 @@ function showAutoUpdateNotification(version, logs) {
     versionText.style.cssText = 'font-size:0.8125rem;opacity:0.9;margin-bottom:0.5rem;';
     versionText.textContent = version;
     
-    // 显示更新日志（最多显示3条）
+    // 显示更新日志（最多显示5条）
     var logsContainer = document.createElement('div');
-    logsContainer.style.cssText = 'width:100%;padding:0.5rem;background:rgba(255,255,255,0.15);border-radius:8px;margin-bottom:0.5rem;max-height:80px;overflow-y:auto;';
+    logsContainer.style.cssText = 'width:100%;padding:0.5rem;background:rgba(255,255,255,0.15);border-radius:8px;margin-bottom:0.5rem;max-height:120px;overflow-y:auto;';
     if (logs && logs.length > 0) {
-        var displayLogs = logs.slice(0, 3);
+        var displayLogs = logs.slice(0, 5);
         displayLogs.forEach(function(log) {
             var logItem = document.createElement('div');
             logItem.style.cssText = 'font-size:0.75rem;margin-bottom:0.125rem;line-height:1.4;';
             logItem.textContent = log;
             logsContainer.appendChild(logItem);
         });
-        if (logs.length > 3) {
+        if (logs.length > 5) {
             var moreText = document.createElement('div');
             moreText.style.cssText = 'font-size:0.6875rem;opacity:0.7;margin-top:0.25rem;text-align:center;';
-            moreText.textContent = '...还有 ' + (logs.length - 3) + ' 条更新';
+            moreText.textContent = '...还有 ' + (logs.length - 5) + ' 条更新';
             logsContainer.appendChild(moreText);
         }
     }
     
+    // 进度条容器
+    var progressContainer = document.createElement('div');
+    progressContainer.id = 'autoUpdateProgressContainer';
+    progressContainer.style.cssText = 'width:100%;';
+    
+    var progressLabel = document.createElement('div');
+    progressLabel.style.cssText = 'font-size:0.6875rem;opacity:0.8;margin-bottom:0.25rem;text-align:center;';
+    progressLabel.textContent = '正在准备更新...';
+    
     var progress = document.createElement('div');
-    progress.style.cssText = 'width:100%;height:3px;background:rgba(255,255,255,0.3);border-radius:2px;overflow:hidden;margin-top:0.25rem;';
+    progress.style.cssText = 'width:100%;height:4px;background:rgba(255,255,255,0.3);border-radius:2px;overflow:hidden;';
     
     var progressBar = document.createElement('div');
     progressBar.style.cssText = 'height:100%;background:white;border-radius:2px;width:0%;transition:width 2s linear;';
     progress.appendChild(progressBar);
     
+    progressContainer.appendChild(progressLabel);
+    progressContainer.appendChild(progress);
+    
+    // 完成提示容器（初始隐藏）
+    var completeContainer = document.createElement('div');
+    completeContainer.id = 'autoUpdateCompleteContainer';
+    completeContainer.style.cssText = 'width:100%;display:none;text-align:center;';
+    
+    var completeIcon = document.createElement('div');
+    completeIcon.style.cssText = 'font-size:1.5rem;margin-bottom:0.25rem;';
+    completeIcon.innerHTML = '✅';
+    
+    var completeText = document.createElement('div');
+    completeText.style.cssText = 'font-size:0.8125rem;margin-bottom:0.75rem;';
+    completeText.textContent = '更新已准备完成';
+    
+    var confirmBtn = document.createElement('button');
+    confirmBtn.style.cssText = 'padding:0.5rem 1.5rem;background:white;color:#2563eb;border:none;border-radius:8px;font-size:0.875rem;font-weight:600;cursor:pointer;transition:all 0.2s;';
+    confirmBtn.textContent = '确认更新';
+    confirmBtn.onclick = function() {
+        notification.remove();
+        confirmUpdate();
+    };
+    
+    completeContainer.appendChild(completeIcon);
+    completeContainer.appendChild(completeText);
+    completeContainer.appendChild(confirmBtn);
+    
     notification.appendChild(title);
     notification.appendChild(versionText);
     notification.appendChild(logsContainer);
-    notification.appendChild(progress);
+    notification.appendChild(progressContainer);
+    notification.appendChild(completeContainer);
     
     document.body.appendChild(notification);
     
@@ -48493,10 +48581,10 @@ function showAutoUpdateNotification(version, logs) {
         progressBar.style.width = '100%';
     }, 100);
     
-    // 2秒后自动更新
+    // 2秒后显示完成提示
     setTimeout(function() {
-        notification.remove();
-        confirmUpdate();
+        progressContainer.style.display = 'none';
+        completeContainer.style.display = 'block';
     }, 2000);
 }
 

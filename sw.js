@@ -1,13 +1,13 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'V3.4.103  更新日期：20260620 ';
+const CACHE_NAME = 'V3.4.104  更新日期：20260620 ';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
-    '📌 优化自动更新：检测到新版本显示桌面通知，停留2秒后自动更新',
+    '📌 优化手机端产品编辑页面按量折扣界面显示',
+    '🐛 修复提醒更新模式：选择"稍后更新"后SW不会自动激活',
+    ' 优化自动更新：显示更新日志最多5条，完成后点击确认更新',
     '📌 提醒更新模式：显示更新日志，支持稍后更新和立即更新',
-    '📌 手动检查更新：有新版本时显示立即更新按钮',
-    '📌 相册管理现在显示所有IDB中的照片（包括产品库上传的）',
-    '📌 优化云同步：只同步图片ID，不同步图片数据'
+    '📌 手动检查更新：有新版本时显示立即更新按钮'
 ];const selfOrigin = self.location.origin;
 const basePath = '/quote-system/';
 
@@ -25,10 +25,10 @@ self.addEventListener('install', event => {
                 ]);
             })
             .then(() => {
-                console.log('[SW] ✅ 安装完成，等待激活');
+                console.log('[SW] ✅ 安装完成，等待用户确认后激活');
             })
     );
-    self.skipWaiting();
+    // 不使用 skipWaiting，等待用户确认更新后再激活
 });
 
 self.addEventListener('fetch', event => {
@@ -111,11 +111,33 @@ self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
+    if (event.data && event.data.type === 'ACTIVATE_UPDATE') {
+        console.log('[SW] 🚀 用户确认更新，激活新版本');
+        self.skipWaiting();
+    }
     if (event.data && event.data.type === 'GET_VERSION') {
-        event.source.postMessage({
-            type: 'VERSION_RESPONSE',
-            version: CACHE_NAME,
-            logs: UPDATE_LOGS
+        // 判断当前 SW 是否是活跃状态
+        self.clients.get(event.source.id).then(function(client) {
+            if (client) {
+                // 检查当前 SW 是否是该客户端的控制器
+                navigator.serviceWorker.getRegistration().then(function(reg) {
+                    if (reg && reg.active === self) {
+                        // 当前是活跃的 SW
+                        event.source.postMessage({
+                            type: 'VERSION_RESPONSE',
+                            version: CACHE_NAME,
+                            logs: UPDATE_LOGS
+                        });
+                    } else {
+                        // 当前是等待中的 SW
+                        event.source.postMessage({
+                            type: 'PENDING_VERSION',
+                            version: CACHE_NAME,
+                            logs: UPDATE_LOGS
+                        });
+                    }
+                });
+            }
         });
     }
 });
