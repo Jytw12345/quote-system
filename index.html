@@ -787,6 +787,18 @@
             font-size: 0.75rem;
             color: var(--gray-500);
         }
+        /* 确保选择器始终可见，即使在不分页模式 */
+        .pagination-container.just-select {
+            display: flex !important;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .pagination-container.just-select .pagination-row {
+            display: none;
+        }
+        .pagination-container.just-select .pagination-options {
+            margin: 0 auto;
+        }
         @media (max-width: 640px) {
             .pagination-container {
                 padding: 0.5rem;
@@ -810,8 +822,9 @@
                 font-size: 0.6875rem;
             }
             .pagination-select {
-                font-size: 0.6875rem;
-                padding: 0.2rem 0.375rem;
+                font-size: 16px !important;
+                padding: 0.375rem 0.5rem;
+                min-height: 36px;
             }
             .pagination-tip {
                 font-size: 0.6875rem;
@@ -1086,6 +1099,7 @@
         .client-info-block { background: var(--gray-50); padding: 0.75rem; border-radius: var(--radius); font-size: 0.875rem; }
         @media (max-width: 640px) { .quote-client-info { grid-template-columns: 1fr; } }
         .hidden { display: none !important; }
+        .file-input-hidden { display: none !important; }
         .product-thumb { width: 48px !important; height: 48px !important; object-fit: cover !important; border-radius: var(--radius); border: 1px solid var(--gray-200); }
         .no-image-placeholder { width: 48px !important; height: 48px !important; background: var(--gray-100); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; color: var(--gray-400); font-size: 0.6875rem; }
         .quote-footer { background: var(--gray-50); padding: 1.5rem 2rem; border-top: 1px solid var(--gray-200); display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; font-size: 0.875rem; }
@@ -3650,6 +3664,58 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
     /* 备份列表移动端优化 */
     .backup-list {
         font-size: 0.75rem;
+    }
+
+    /* 文件输入隐藏样式 */
+    .file-input-hidden {
+        display: none !important;
+    }
+
+    /* 数据导入导出区域移动端优化 - 确保导入按钮可点击 */
+    .data-import-export-grid .btn {
+        flex: none !important;
+        min-width: auto !important;
+        width: auto !important;
+        padding: 0.375rem 0.5rem !important;
+        font-size: 0.7rem !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+    }
+
+    /* 移动端小屏：数据导入导出按钮显示为2列 */
+    .data-import-export-grid > div > div[style*="display:flex;gap:0.25rem;flex-wrap:wrap;"] {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.375rem !important;
+    }
+
+    /* 确保2列布局中按钮宽度为100% */
+    .data-import-export-grid > div > div[style*="display:flex;gap:0.25rem;flex-wrap:wrap;"] .btn {
+        width: 100% !important;
+        min-width: 0 !important;
+        flex: none !important;
+        justify-content: center !important;
+        padding: 0.4rem 0.375rem !important;
+        font-size: 0.6875rem !important;
+    }
+
+    /* 确保文件输入元素在移动端可点击 */
+    .data-import-export-grid .file-upload-btn {
+        position: relative;
+        overflow: hidden !important;
+    }
+
+    .data-import-export-grid .file-upload-btn input[type="file"] {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        z-index: 10;
+        font-size: 100px;
     }
 
     .backup-list .backup-item {
@@ -8838,19 +8904,19 @@ function safeExecuteAsync(fn, defaultVal) {
 
             <div class="settings-section">
                 <h3>📥📤 数据导入导出</h3>
-                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;margin-bottom:0.75rem;">
+                <div class="data-import-export-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;margin-bottom:0.75rem;">
                     <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
                         <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">💾 全部数据</div>
                         <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
                             <button class="btn btn-primary btn-xs" onclick="exportAllData()">📤 导出数据</button>
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📥 导入数据<input type="file" id="importFile" accept=".json" hidden onchange="importAllData(event)"></label>
+                            <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入数据<input type="file" id="importFile" accept=".json,.txt" class="file-input-hidden" onchange="importAllData(event)"></label>
                         </div>
                     </div>
                     <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
                         <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">📦 产品库</div>
                         <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📥 导入JSON<input type="file" id="importProducts" accept=".json" hidden onchange="importProducts(event)"></label>
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📥 导入XLSX<input type="file" id="importProductsXLSX" accept=".xlsx,.xls" hidden onchange="importProductsXLSX(event)"></label>
+                            <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入JSON<input type="file" id="importProducts" accept=".json,.txt" class="file-input-hidden" onchange="importProducts(event)"></label>
+                            <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入XLSX<input type="file" id="importProductsXLSX" accept=".xlsx,.xls" class="file-input-hidden" onchange="importProductsXLSX(event)"></label>
                             <button class="btn btn-success btn-xs" onclick="exportProducts()">📤 导出JSON</button>
                             <button class="btn btn-success btn-xs" onclick="exportProductsXLSX()">📊 导出XLSX</button>
                         </div>
@@ -8858,8 +8924,8 @@ function safeExecuteAsync(fn, defaultVal) {
                     <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
                         <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">📋 报价模板</div>
                         <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📥 导入JSON<input type="file" id="importTemplates" accept=".json" hidden onchange="importTemplates(event)"></label>
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📥 导入XLSX<input type="file" id="importTemplatesXLSX" accept=".xlsx,.xls" hidden onchange="importTemplatesXLSX(event)"></label>
+                            <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入JSON<input type="file" id="importTemplates" accept=".json,.txt" class="file-input-hidden" onchange="importTemplates(event)"></label>
+                            <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入XLSX<input type="file" id="importTemplatesXLSX" accept=".xlsx,.xls" class="file-input-hidden" onchange="importTemplatesXLSX(event)"></label>
                             <button class="btn btn-success btn-xs" onclick="exportTemplates()">📤 导出JSON</button>
                             <button class="btn btn-success btn-xs" onclick="exportTemplatesXLSX()">📊 导出XLSX</button>
                         </div>
@@ -8867,8 +8933,8 @@ function safeExecuteAsync(fn, defaultVal) {
                     <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
                         <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">👥 客户管理</div>
                         <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📥 导入JSON<input type="file" id="importCustomers" accept=".json" hidden onchange="importCustomers(event)"></label>
-                            <label class="btn btn-outline btn-xs" style="cursor:pointer;">📥 导入XLSX<input type="file" id="importCustomersXLSX" accept=".xlsx,.xls" hidden onchange="importCustomersXLSX(event)"></label>
+                            <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入JSON<input type="file" id="importCustomers" accept=".json,.txt" class="file-input-hidden" onchange="importCustomers(event)"></label>
+                            <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入XLSX<input type="file" id="importCustomersXLSX" accept=".xlsx,.xls" class="file-input-hidden" onchange="importCustomersXLSX(event)"></label>
                             <button class="btn btn-success btn-xs" onclick="exportCustomers()">📤 导出JSON</button>
                             <button class="btn btn-success btn-xs" onclick="exportCustomersXLSX()">📊 导出XLSX</button>
                         </div>
@@ -33072,11 +33138,6 @@ function renderProducts(useSmartResults = false){
     // 更新分页信息
     updatePaginationInfo(f.length);
 
-    // 设置无限滚动监听
-    if (productPagination.isInfiniteScroll) {
-        setupInfiniteScroll();
-    }
-
     // 获取当前页的产品
     let displayProducts = getCurrentPageProducts(f);
 
@@ -33119,6 +33180,11 @@ function renderProducts(useSmartResults = false){
         } else {
             c.innerHTML = '<div style="background:white;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);">' + generateTable(firstHalf) + '</div>' + 
                           '<div style="background:white;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);">' + generateTable(secondHalf) + '</div>';
+        }
+        
+        // 设置无限滚动监听（列表视图也需要）
+        if (productPagination.isInfiniteScroll) {
+            setupInfiniteScroll();
         }
         return;
     }
@@ -33240,6 +33306,12 @@ function renderProducts(useSmartResults = false){
         `;
         document.body.appendChild(batchHint);
     }
+
+    // 设置无限滚动监听（在所有内容渲染完成后）
+    if (productPagination.isInfiniteScroll) {
+        setupInfiniteScroll();
+    }
+
     } catch(e) { console.error('renderProducts error:', e); }
 }
 // ===== 模板库 =====
@@ -37264,7 +37336,9 @@ var productPagination = {
     loadedCount: 0,
     infiniteBatchSize: 30, // 每次加载的数量
     isLoadingMore: false,
-    hasMore: true
+    hasMore: true,
+    // 保存 IntersectionObserver 引用，用于清理
+    infiniteScrollObserver: null
 };
 
 // 初始化分页
@@ -37287,11 +37361,23 @@ function initPagination() {
 function updatePaginationInfo(totalItems) {
     productPagination.totalItems = totalItems;
 
+    // 始终显示分页选择器，方便用户切换模式
+    var paginationOptions = document.querySelector('.pagination-options');
+    if (paginationOptions) {
+        paginationOptions.style.display = 'flex';
+    }
+
     if (productPagination.pageSize === 0) {
         // 不分页模式
         productPagination.totalPages = 1;
         productPagination.currentPage = 1;
-        document.getElementById('paginationContainer').style.display = 'none';
+        // 添加 just-select 类，只显示选择器
+        var container = document.getElementById('paginationContainer');
+        container.classList.add('just-select');
+        document.getElementById('paginationPrev').style.display = 'none';
+        document.getElementById('paginationNext').style.display = 'none';
+        document.querySelector('.pagination-info').style.display = 'none';
+        document.getElementById('infiniteScrollTip').style.display = 'none';
     } else if (productPagination.pageSize === -1) {
         // 无限滚动模式
         productPagination.isInfiniteScroll = true;
@@ -37304,6 +37390,7 @@ function updatePaginationInfo(totalItems) {
 
         // 更新显示
         var container = document.getElementById('paginationContainer');
+        container.classList.remove('just-select');
         container.style.display = 'flex';
         document.getElementById('paginationPrev').style.display = 'none';
         document.getElementById('paginationNext').style.display = 'none';
@@ -37324,10 +37411,11 @@ function updatePaginationInfo(totalItems) {
 
         // 显示分页控件
         var container = document.getElementById('paginationContainer');
+        container.classList.remove('just-select');
         if (totalItems > productPagination.pageSize) {
             container.style.display = 'flex';
         } else {
-            container.style.display = 'none';
+            container.style.display = 'flex';
         }
 
         // 更新显示
@@ -37358,6 +37446,19 @@ function changePageSize() {
         productPagination.isInfiniteScroll = true;
     } else {
         productPagination.isInfiniteScroll = false;
+        // 断开无限滚动的 observer
+        if (productPagination.infiniteScrollObserver) {
+            productPagination.infiniteScrollObserver.disconnect();
+            productPagination.infiniteScrollObserver = null;
+        }
+        // 重置加载计数
+        productPagination.loadedCount = 0;
+        productPagination.hasMore = true;
+        // 移除触发元素
+        var trigger = document.getElementById('infiniteScrollTrigger');
+        if (trigger) {
+            trigger.remove();
+        }
     }
 
     renderProducts();
@@ -37404,6 +37505,12 @@ function loadMoreProducts(products) {
 
     productPagination.isLoadingMore = true;
 
+    // 显示加载中提示
+    var trigger = document.getElementById('infiniteScrollTrigger');
+    if (trigger) {
+        trigger.innerHTML = '<div style="text-align:center;padding:10px;color:#2563eb;font-size:12px;">加载中...</div>';
+    }
+
     // 模拟加载延迟，提升体验
     setTimeout(function() {
         var newCount = productPagination.loadedCount + productPagination.infiniteBatchSize;
@@ -37417,7 +37524,7 @@ function loadMoreProducts(products) {
         renderProducts();
 
         productPagination.isLoadingMore = false;
-    }, 100);
+    }, 300);
 }
 
 // 设置无限滚动监听
@@ -37427,11 +37534,17 @@ function setupInfiniteScroll() {
     var container = document.getElementById('productGrid');
     if (!container) return;
 
+    // 先断开旧的 observer，避免重复监听
+    if (productPagination.infiniteScrollObserver) {
+        productPagination.infiniteScrollObserver.disconnect();
+        productPagination.infiniteScrollObserver = null;
+    }
+
     // 使用 IntersectionObserver 监听滚动到底部
     if ('IntersectionObserver' in window) {
         var observer = new IntersectionObserver(function(entries) {
             entries.forEach(function(entry) {
-                if (entry.isIntersecting && productPagination.hasMore && !productPagination.isLoadingMore) {
+                if (entry.isIntersecting && productPagination.hasMore && !productPagination.isLoadingMore && productPagination.isInfiniteScroll) {
                     // 获取当前筛选后的产品列表
                     var s = document.getElementById('productSearch').value.toLowerCase();
                     var f = appData.products;
@@ -37468,12 +37581,20 @@ function setupInfiniteScroll() {
         if (!trigger) {
             trigger = document.createElement('div');
             trigger.id = 'infiniteScrollTrigger';
-            trigger.style.height = '1px';
-            trigger.style.marginTop = '10px';
+            trigger.style.cssText = 'height: 60px; width: 100%; margin-top: 10px; background: transparent; grid-column: 1 / -1;';
+            trigger.innerHTML = '<div style="text-align:center;padding:10px;color:#9ca3af;font-size:12px;">滚动加载更多...</div>';
             container.appendChild(trigger);
+        } else {
+            // 更新提示文字
+            trigger.innerHTML = '<div style="text-align:center;padding:10px;color:#9ca3af;font-size:12px;">滚动加载更多...</div>';
+            trigger.style.display = 'block';
+            trigger.style.gridColumn = '1 / -1';
         }
 
         observer.observe(trigger);
+        
+        // 保存 observer 引用，用于后续清理
+        productPagination.infiniteScrollObserver = observer;
     }
 }
 
