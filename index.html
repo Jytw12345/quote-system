@@ -48169,8 +48169,8 @@ function saveQuoteItemToProduct(itemId) {
 }
 
 // ==================== PWA Service Worker ====================
+var swRegistration = null;
 if ('serviceWorker' in navigator) {
-    // 检查是否为安全环境（HTTPS 或 localhost）
     var isSecureContext = window.location.protocol === 'https:' || 
                           window.location.hostname === 'localhost' || 
                           window.location.hostname === '127.0.0.1';
@@ -48179,24 +48179,25 @@ if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
             navigator.serviceWorker.register('/quote-system/sw.js')
                 .then(function(registration) {
+                    swRegistration = registration;
                     console.log('[SW] 注册成功:', registration.scope);
                     
-                    // 监听 Service Worker 更新（只有当 sw.js 文件真正改变时才触发）
                     registration.addEventListener('updatefound', function() {
                         var newWorker = registration.installing;
                         newWorker.addEventListener('statechange', function() {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // 新的 Service Worker 已安装，请求版本信息
                                 newWorker.postMessage({ type: 'GET_VERSION' });
                             }
                         });
                     });
                     
-                    // 检查是否有等待中的 Service Worker
                     if (registration.waiting) {
-                        // 请求等待中的SW返回版本信息
                         registration.waiting.postMessage({ type: 'GET_VERSION' });
                     }
+                    
+                    registration.addEventListener('controllerchange', function() {
+                        window.location.reload();
+                    });
                 })
                 .catch(function(error) {
                     console.log('[SW] 注册失败:', error);
@@ -48233,20 +48234,11 @@ function closeUpdateModal() {
 }
 
 function confirmUpdate() {
-    // 通知 Service Worker 激活新的版本
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    if (swRegistration && swRegistration.waiting) {
+        swRegistration.waiting.postMessage({ type: 'ACTIVATE_UPDATE' });
+    } else if (navigator.serviceWorker && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({ type: 'ACTIVATE_UPDATE' });
     }
-    
-    // 清除缓存并刷新
-    if ('caches' in window) {
-        caches.keys().then(function(names) {
-            names.forEach(function(name) {
-                caches.delete(name);
-            });
-        });
-    }
-    window.location.reload();
 }
 
 // 软件更新手动检查状态
@@ -48295,29 +48287,46 @@ function checkSoftwareUpdate() {
         statusEl.style.color = '#92400e';
     }
     
-    // 先获取本地版本
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
-        // 监听本地版本响应
+    if (swRegistration && swRegistration.waiting) {
+        swRegistration.waiting.postMessage({ type: 'GET_VERSION' });
         var handler = function(event) {
-            if (event.data && event.data.type === 'VERSION_RESPONSE') {
+            if (event.data && event.data.type === 'PENDING_VERSION') {
                 navigator.serviceWorker.removeEventListener('message', handler);
                 localVersionCache = event.data.version;
-                // 获取到本地版本后，检查远程版本
+                fetchRemoteAndCompare(localVersionCache, versionEl, statusEl);
+            } else if (event.data && event.data.type === 'VERSION_RESPONSE') {
+                navigator.serviceWorker.removeEventListener('message', handler);
+                localVersionCache = event.data.version;
                 fetchRemoteAndCompare(localVersionCache, versionEl, statusEl);
             }
         };
         navigator.serviceWorker.addEventListener('message', handler);
-        // 超时处理
         setTimeout(function() {
             navigator.serviceWorker.removeEventListener('message', handler);
             if (localVersionCache === null) {
-                localVersionCache = 'V3.4.1'; // 默认本地版本
+                localVersionCache = 'V3.4.1';
+                fetchRemoteAndCompare(localVersionCache, versionEl, statusEl);
+            }
+        }, 2000);
+    } else if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
+        var handler2 = function(event) {
+            if (event.data && event.data.type === 'VERSION_RESPONSE') {
+                navigator.serviceWorker.removeEventListener('message', handler2);
+                localVersionCache = event.data.version;
+                fetchRemoteAndCompare(localVersionCache, versionEl, statusEl);
+            }
+        };
+        navigator.serviceWorker.addEventListener('message', handler2);
+        setTimeout(function() {
+            navigator.serviceWorker.removeEventListener('message', handler2);
+            if (localVersionCache === null) {
+                localVersionCache = 'V3.4.1';
                 fetchRemoteAndCompare(localVersionCache, versionEl, statusEl);
             }
         }, 2000);
     } else {
-        localVersionCache = 'V3.4.1'; // 默认本地版本
+        localVersionCache = 'V3.4.1';
         fetchRemoteAndCompare(localVersionCache, versionEl, statusEl);
     }
 }
