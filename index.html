@@ -3666,7 +3666,7 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
         font-size: 0.75rem;
     }
 
-    /* 文件输入隐藏样式 */
+    /* 文件输入隐藏样式 - 桌面端 */
     .file-input-hidden {
         display: none !important;
     }
@@ -3700,13 +3700,14 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
         font-size: 0.6875rem !important;
     }
 
-    /* 确保文件输入元素在移动端可点击 */
+    /* 移动端：文件输入元素使用opacity隐藏，保持可点击 */
     .data-import-export-grid .file-upload-btn {
         position: relative;
         overflow: hidden !important;
     }
 
     .data-import-export-grid .file-upload-btn input[type="file"] {
+        display: block !important;
         position: absolute;
         width: 100%;
         height: 100%;
@@ -3716,6 +3717,29 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
         left: 0;
         z-index: 10;
         font-size: 100px;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* 移动端：通用文件上传按钮样式 */
+    .settings-section .file-upload-btn {
+        position: relative;
+        overflow: hidden !important;
+    }
+
+    .settings-section .file-upload-btn input[type="file"] {
+        display: block !important;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        z-index: 10;
+        font-size: 100px;
+        margin: 0;
+        padding: 0;
     }
 
     .backup-list .backup-item {
@@ -9320,7 +9344,7 @@ function safeExecuteAsync(fn, defaultVal) {
                         <button class="btn btn-outline btn-sm" onclick="loadDefaultCharPricing()">📥 恢复默认价格</button>
                         <button class="btn btn-primary btn-sm" onclick="applyCharPricing()">✅ 应用价格配置</button>
                         <button class="btn btn-outline btn-sm" onclick="exportCharPricingXLS()">📊 导出价格表</button>
-                        <label class="btn btn-outline btn-sm">📥 导入价格表<input type="file" id="importCharPricingFile" accept=".xlsx,.xls,.csv" hidden onchange="importCharPricing(event)"></label>
+                        <label class="btn btn-outline btn-sm file-upload-btn" style="cursor:pointer;">📥 导入价格表<input type="file" id="importCharPricingFile" accept=".xlsx,.xls,.csv" class="file-input-hidden" onchange="importCharPricing(event)"></label>
                     </div>
                 </div>
 
