@@ -48184,6 +48184,49 @@ if ('serviceWorker' in navigator) {
                         navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
                     }
 
+                    // 辅助函数：向 waiting SW 请求版本号，收到后显示更新通知
+                    function promptUpdateFromWaiting() {
+                        if (!registration.waiting) return;
+                        // 避免重复弹窗
+                        if (sessionStorage.getItem('swUpdatePrompted')) return;
+
+                        console.log('[SW] 向 waiting SW 请求版本号，准备提示更新');
+
+                        // 设置一次性消息监听器
+                        var tempHandler = function(event) {
+                            if (event.data && event.data.type === 'VERSION_RESPONSE') {
+                                navigator.serviceWorker.removeEventListener('message', tempHandler);
+                                console.log('[SW] 收到 waiting 版本号:', event.data.version);
+
+                                // 避免重复弹窗
+                                if (sessionStorage.getItem('swUpdatePrompted')) return;
+
+                                var updateMode = getUpdateMode();
+                                if (updateMode === 'auto') {
+                                    showAutoUpdateNotification(event.data.version, event.data.logs);
+                                } else {
+                                    showUpdateNotification(event.data.version, event.data.logs);
+                                }
+                            }
+                        };
+                        navigator.serviceWorker.addEventListener('message', tempHandler);
+                        // 超时兜底：2 秒没收到消息就直接提示
+                        setTimeout(function() {
+                            navigator.serviceWorker.removeEventListener('message', tempHandler);
+                            if (!sessionStorage.getItem('swUpdatePrompted')) {
+                                console.log('[SW] 请求版本号超时，直接提示更新');
+                                var updateMode = getUpdateMode();
+                                if (updateMode === 'auto') {
+                                    showAutoUpdateNotification('新版本', null);
+                                } else {
+                                    showUpdateNotification('新版本', null);
+                                }
+                            }
+                        }, 2000);
+                        // 向 waiting SW 发送请求
+                        registration.waiting.postMessage({ type: 'GET_VERSION' });
+                    }
+
                     // 检测到新 SW 正在安装
                     registration.addEventListener('updatefound', function() {
                         var newWorker = registration.installing;
@@ -48193,11 +48236,9 @@ if ('serviceWorker' in navigator) {
                                 if (navigator.serviceWorker.controller) {
                                     // 已有 controller → 有更新待应用
                                     isUpdatePending = true;
-                                    console.log('[SW] 新版本 SW 已安装完成，等待激活');
-                                    // 向 waiting SW 请求版本号，触发更新通知
-                                    if (registration.waiting) {
-                                        registration.waiting.postMessage({ type: 'GET_VERSION' });
-                                    }
+                                    console.log('[SW] 新版本 SW 已安装完成，进入 waiting 状态');
+                                    // 延迟一下确保 waiting 属性已更新，然后提示用户
+                                    setTimeout(promptUpdateFromWaiting, 300);
                                 } else {
                                     // 首次安装，不需要提示
                                     console.log('[SW] 首次安装 SW，无需提示更新');
@@ -48210,17 +48251,15 @@ if ('serviceWorker' in navigator) {
                     if (registration.waiting) {
                         isUpdatePending = true;
                         console.log('[SW] 发现已存在的 waiting SW，提示更新');
-                        registration.waiting.postMessage({ type: 'GET_VERSION' });
+                        promptUpdateFromWaiting();
                     }
 
                     // 统一：controller 变化时刷新页面（新 SW 激活后会触发）
-                    // 注意：confirmUpdate() 中不再单独刷新，统一由这里处理
                     var isReloading = false;
                     navigator.serviceWorker.addEventListener('controllerchange', function() {
                         if (isReloading) return;
                         isReloading = true;
                         console.log('[SW] Controller 已切换，刷新页面应用新版本');
-                        // 延迟一点，确保新 SW 完全激活
                         setTimeout(function() {
                             window.location.reload();
                         }, 200);
@@ -48693,9 +48732,6 @@ function showUpdateNotification(version, logs) {
     showUpdateModal(version, logs);
 }
 
-// 记录已经显示过更新提示的版本号，避免重复弹窗
-var lastPromptedVersion = sessionStorage.getItem('lastPromptedVersion') || '';
-
 // 监听 Service Worker 的更新消息
 navigator.serviceWorker.addEventListener('message', function(event) {
     if (!event.data || !event.data.type) return;
@@ -48705,7 +48741,6 @@ navigator.serviceWorker.addEventListener('message', function(event) {
     if (event.data.type === 'VERSION_UPDATED') {
         // 关键：更新页面上显示的版本号！
         updateVersionDisplay(event.data.version, event.data.logs);
-        // 记录最新版本号（持久化
         localStorage.setItem('lastReceivedVersion', event.data.version);
 
         var updateMode = getUpdateMode();
@@ -48717,24 +48752,11 @@ navigator.serviceWorker.addEventListener('message', function(event) {
         return;
     }
 
-    // VERSION_RESPONSE: GET_VERSION 的回复（来自当前 controller 或 waiting SW）
+    // VERSION_RESPONSE: GET_VERSION 的回复
+    // 重要：只更新页面版本号显示，不在此消息处理中触发更新通知
+    // （更新通知由 SW 注册流程中的 updatefound/registration.waiting 检查来触发）
     if (event.data.type === 'VERSION_RESPONSE') {
-        // 始终更新页面版本号显示（进入设置页时调用 initSoftwareVersion 也会走这里
         updateVersionDisplay(event.data.version, event.data.logs);
-
-        // 如果有 waiting worker 并且版本不同 → 提示有更新（只在非手动检查时
-        if (!isManualUpdateCheck && swRegistration && swRegistration.waiting && navigator.serviceWorker.controller) {
-            if (event.data.version !== lastPromptedVersion) {
-                var updateMode = getUpdateMode();
-                if (updateMode === 'auto') {
-                    showAutoUpdateNotification(event.data.version, event.data.logs);
-                } else {
-                    showUpdateNotification(event.data.version, event.data.logs);
-                }
-                lastPromptedVersion = event.data.version;
-                sessionStorage.setItem('lastPromptedVersion', event.data.version);
-            }
-        }
         return;
     }
 });
