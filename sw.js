@@ -1,5 +1,5 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'V3.4.107  更新日期：20260620 ';
+const CACHE_NAME = 'V3.4.108  更新日期：20260620 ';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
@@ -121,24 +121,13 @@ self.addEventListener('message', event => {
         });
     }
     if (event.data && event.data.type === 'GET_VERSION') {
-        var isActive = false;
-        try {
-            isActive = self.registration && self.registration.active === self;
-        } catch(e) {
-            isActive = false;
-        }
-        if (isActive) {
-            event.source.postMessage({
-                type: 'VERSION_RESPONSE',
-                version: CACHE_NAME,
-                logs: UPDATE_LOGS
-            });
-        } else {
-            event.source.postMessage({
-                type: 'PENDING_VERSION',
-                version: CACHE_NAME,
-                logs: UPDATE_LOGS
-            });
-        }
+        // 简化：总是返回 VERSION_RESPONSE
+        // 前端根据发送对象（controller 还是 waiting）来判断是当前版本还是新版本
+        console.log('[SW] GET_VERSION 返回:', CACHE_NAME);
+        event.source.postMessage({
+            type: 'VERSION_RESPONSE',
+            version: CACHE_NAME,
+            logs: UPDATE_LOGS
+        });
     }
 });
