@@ -1,5 +1,5 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'quote-app-v61';
+const CACHE_NAME = '图文广告快速算价软件-V3.4.100';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
