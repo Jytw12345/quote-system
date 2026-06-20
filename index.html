@@ -9000,6 +9000,28 @@ function safeExecuteAsync(fn, defaultVal) {
                 </div>
             </div>
             <div class="settings-section">
+                <h3>🔄 应用更新</h3>
+                <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem;">
+                    <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+                        <label for="updateMode" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);white-space:nowrap;">更新方式：</label>
+                        <select id="updateMode" style="padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;min-width:150px;">
+                            <option value="auto">🚀 自动更新</option>
+                            <option value="notify">🔔 提醒我</option>
+                            <option value="manual">✋ 手动更新</option>
+                        </select>
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--gray-600);padding:0.5rem;background:var(--gray-50);border-radius:var(--radius);">
+                        <div style="margin-bottom:0.25rem;"><strong>🚀 自动更新：</strong>检测到新版本后自动下载并刷新页面</div>
+                        <div style="margin-bottom:0.25rem;"><strong>🔔 提醒我：</strong>检测到新版本时弹出提示，可选择立即更新或稍后更新</div>
+                        <div><strong>✋ 手动更新：</strong>不自动提示，需要点击下方「检查更新」按钮</div>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.25rem;">
+                        <button class="btn btn-primary btn-sm" onclick="checkForUpdate()">🔍 检查更新</button>
+                        <span id="updateCheckResult" style="font-size:0.75rem;color:var(--gray-600);align-self:center;"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-section">
                 <h3>💾 存储管理</h3>
                 <div style="display:flex;gap:0.375rem;flex-wrap:wrap;margin-bottom:0.75rem;">
                     <button class="btn btn-outline btn-sm" onclick="toggleStorageStats()">📊 存储统计</button>
@@ -36474,6 +36496,7 @@ function saveSystemSettings(){
     appData.systemSettings.defaultPriceMode=document.getElementById('defaultPriceMode').value;
     appData.systemSettings.defaultDiscountRate=parseFloat(document.getElementById('defaultDiscountRate').value||100);
     appData.systemSettings.quoteValidDays=parseInt(document.getElementById('quoteValidDays').value||7);
+    appData.systemSettings.updateMode=document.getElementById('updateMode').value;
     createAutoBackup();
     saveData();
     showToast('✅ 设置保存成功', 'success');
@@ -36504,6 +36527,11 @@ function loadSystemSettings(){
     if(document.getElementById('deepseekApiKey')) document.getElementById('deepseekApiKey').value = deepseekConfig.apiKey || '';
     if(document.getElementById('deepseekModel')) document.getElementById('deepseekModel').value = deepseekConfig.model || 'deepseek-chat';
     updateDeepSeekStatus();
+    
+    // 加载更新设置
+    if(document.getElementById('updateMode')) {
+        document.getElementById('updateMode').value = appData.systemSettings.updateMode || 'notify';
+    }
 }
 const APP_PASSWORD = getDecryptedPassword();
 function verifyPassword(callback) {
@@ -48166,10 +48194,84 @@ function confirmUpdate() {
     window.location.reload();
 }
 
+// 根据更新设置处理更新
+function handleUpdateAction(version, logs) {
+    const updateMode = appData.systemSettings.updateMode || 'notify';
+    
+    if (updateMode === 'auto') {
+        // 自动更新：直接刷新
+        if ('caches' in window) {
+            caches.keys().then(function(names) {
+                names.forEach(function(name) {
+                    caches.delete(name);
+                });
+            });
+        }
+        window.location.reload();
+    } else if (updateMode === 'notify') {
+        // 提醒模式：显示提示框
+        showUpdateModal(version, logs);
+    }
+    // manual 模式：不自动处理
+}
+
 function showUpdateNotification(version, logs) {
-    if (sessionStorage.getItem('swUpdatePrompted')) return;
-    sessionStorage.setItem('swUpdatePrompted', 'true');
-    showUpdateModal(version, logs);
+    const updateMode = appData.systemSettings.updateMode || 'notify';
+    
+    if (updateMode === 'auto') {
+        // 自动更新模式不存储提示标记，直接更新
+        handleUpdateAction(version, logs);
+    } else if (updateMode === 'notify') {
+        // 提醒模式检查是否已提示过
+        if (sessionStorage.getItem('swUpdatePrompted')) return;
+        sessionStorage.setItem('swUpdatePrompted', 'true');
+        handleUpdateAction(version, logs);
+    }
+    // manual 模式不处理
+}
+
+// 手动检查更新
+function checkForUpdate() {
+    var resultEl = document.getElementById('updateCheckResult');
+    if (!navigator.serviceWorker.controller) {
+        resultEl.textContent = '⚠️ Service Worker 未激活';
+        resultEl.style.color = '#f59e0b';
+        return;
+    }
+    
+    // 发送消息请求版本信息
+    navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
+    
+    // 临时设置 updateMode 为 notify 以显示模态框
+    const originalMode = appData.systemSettings.updateMode;
+    appData.systemSettings.updateMode = 'notify';
+    
+    // 监听响应
+    function handleResponse(event) {
+        if (event.data && event.data.type === 'VERSION_RESPONSE') {
+            navigator.serviceWorker.removeEventListener('message', handleResponse);
+            // 恢复原始设置
+            appData.systemSettings.updateMode = originalMode;
+            
+            // 显示更新提示
+            sessionStorage.removeItem('swUpdatePrompted');
+            showUpdateModal(event.data.version, event.data.logs);
+            resultEl.textContent = '✓ 已检测到版本: ' + event.data.version;
+            resultEl.style.color = '#10b981';
+        }
+    }
+    
+    navigator.serviceWorker.addEventListener('message', handleResponse);
+    
+    // 超时处理
+    setTimeout(function() {
+        navigator.serviceWorker.removeEventListener('message', handleResponse);
+        appData.systemSettings.updateMode = originalMode;
+        if (resultEl.textContent === '') {
+            resultEl.textContent = '⚠️ 检查超时，请重试';
+            resultEl.style.color = '#ef4444';
+        }
+    }, 3000);
 }
 
 // 监听 Service Worker 的更新消息
