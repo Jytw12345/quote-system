@@ -1,5 +1,5 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'V3.4.108  更新日期：20260620 ';
+const CACHE_NAME = 'V3.4.109  更新日期：20260620 ';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
@@ -81,9 +81,11 @@ self.addEventListener('fetch', event => {
 self.addEventListener('activate', event => {
     console.log('[SW] 🔄 激活新版本:', CACHE_NAME);
     event.waitUntil(
-        Promise.all([
-            self.clients.claim(),
-            caches.keys().then(cacheNames => {
+        // 第一步：让新 SW 立即接管所有 client
+        self.clients.claim().then(function() {
+            console.log('[SW] ✅ 已接管所有客户端');
+            // 第二步：删除旧缓存
+            return caches.keys().then(cacheNames => {
                 return Promise.all(
                     cacheNames.map(cacheName => {
                         if (cacheName !== CACHE_NAME) {
@@ -92,16 +94,21 @@ self.addEventListener('activate', event => {
                         }
                     })
                 );
-            })
-        ]).then(() => {
-            console.log('[SW] ✅ 版本更新完成，当前版本:', CACHE_NAME);
+            });
+        }).then(function() {
+            // 第三步：向所有客户端发送版本更新通知
+            console.log('[SW] ✅ 版本更新完成，发送 VERSION_UPDATED');
             return self.clients.matchAll().then(clients => {
                 clients.forEach(client => {
-                    client.postMessage({
-                        type: 'VERSION_UPDATED',
-                        version: CACHE_NAME,
-                        logs: UPDATE_LOGS
-                    });
+                    try {
+                        client.postMessage({
+                            type: 'VERSION_UPDATED',
+                            version: CACHE_NAME,
+                            logs: UPDATE_LOGS
+                        });
+                    } catch(e) {
+                        console.log('[SW] 发送消息失败:', e);
+                    }
                 });
             });
         })

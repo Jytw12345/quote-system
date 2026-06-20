@@ -48165,52 +48165,65 @@ function saveQuoteItemToProduct(itemId) {
 // ==================== PWA Service Worker ====================
 var swRegistration = null;
 var isUpdatePending = false;
+var swWorkerIsActivating = false; // 标记是否正在激活新 SW
 
 if ('serviceWorker' in navigator) {
-    var isSecureContext = window.location.protocol === 'https:' || 
-                          window.location.hostname === 'localhost' || 
+    var isSecureContext = window.location.protocol === 'https:' ||
+                          window.location.hostname === 'localhost' ||
                           window.location.hostname === '127.0.0.1';
-    
+
     if (isSecureContext) {
         window.addEventListener('load', function() {
             navigator.serviceWorker.register('/quote-system/sw.js')
                 .then(function(registration) {
                     swRegistration = registration;
                     console.log('[SW] 注册成功:', registration.scope);
-                    
+
                     // 立即向当前 controller 请求版本号，更新页面显示
                     if (navigator.serviceWorker.controller) {
                         navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
                     }
-                    
+
+                    // 检测到新 SW 正在安装
                     registration.addEventListener('updatefound', function() {
                         var newWorker = registration.installing;
+                        console.log('[SW] 发现新版本 SW，正在安装...');
                         newWorker.addEventListener('statechange', function() {
                             if (newWorker.state === 'installed') {
                                 if (navigator.serviceWorker.controller) {
+                                    // 已有 controller → 有更新待应用
                                     isUpdatePending = true;
-                                    newWorker.postMessage({ type: 'GET_VERSION' });
+                                    console.log('[SW] 新版本 SW 已安装完成，等待激活');
+                                    // 向 waiting SW 请求版本号，触发更新通知
+                                    if (registration.waiting) {
+                                        registration.waiting.postMessage({ type: 'GET_VERSION' });
+                                    }
                                 } else {
-                                    // 首次安装，不需要提示更新
-                                    newWorker.postMessage({ type: 'GET_VERSION' });
+                                    // 首次安装，不需要提示
+                                    console.log('[SW] 首次安装 SW，无需提示更新');
                                 }
                             }
                         });
                     });
-                    
-                    // 如果有 waiting 的 SW，提示用户更新
+
+                    // 如果页面加载时已经有 waiting 的 SW，提示用户更新
                     if (registration.waiting) {
                         isUpdatePending = true;
+                        console.log('[SW] 发现已存在的 waiting SW，提示更新');
                         registration.waiting.postMessage({ type: 'GET_VERSION' });
                     }
-                    
-                    // controller 变化时刷新页面（确认更新后会触发）
+
+                    // 统一：controller 变化时刷新页面（新 SW 激活后会触发）
+                    // 注意：confirmUpdate() 中不再单独刷新，统一由这里处理
                     var isReloading = false;
-                    registration.addEventListener('controllerchange', function() {
+                    navigator.serviceWorker.addEventListener('controllerchange', function() {
                         if (isReloading) return;
                         isReloading = true;
-                        console.log('[SW] Controller 已切换，准备刷新...');
-                        window.location.reload();
+                        console.log('[SW] Controller 已切换，刷新页面应用新版本');
+                        // 延迟一点，确保新 SW 完全激活
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 200);
                     });
                 })
                 .catch(function(error) {
@@ -48252,7 +48265,7 @@ function confirmUpdate() {
     var statusEl = document.getElementById('softwareUpdateStatus');
     if (statusEl) {
         statusEl.style.display = 'block';
-        statusEl.innerHTML = '正在应用新版本...';
+        statusEl.innerHTML = '正在应用新版本，请稍候...';
         statusEl.style.background = '#fef3c7';
         statusEl.style.color = '#92400e';
     }
@@ -48269,40 +48282,90 @@ function confirmUpdate() {
         console.log('[SW] 找到 registration.installing');
     }
 
-    // 2. 如果没有找到，尝试获取全局 registration
+    // 2. 如果没有找到，从全局 registration 查找
     if (!targetWorker && navigator.serviceWorker.getRegistrations) {
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
             for (var i = 0; i < registrations.length; i++) {
                 var reg = registrations[i];
                 if (reg.waiting) {
-                    console.log('[SW] 从全局找到 waiting worker');
-                    doActivate(reg.waiting, reg);
+                    console.log('[SW] 从全局找到 waiting worker，激活它');
+                    doActivate(reg.waiting);
                     return;
                 } else if (reg.installing) {
-                    console.log('[SW] 从全局找到 installing worker');
-                    doActivate(reg.installing, reg);
+                    console.log('[SW] 从全局找到 installing worker，等待安装完成后激活');
+                    waitAndActivate(reg.installing);
                     return;
                 }
             }
-            // 3. 仍然没有，强制调用 update() 让浏览器检测新 SW
-            console.log('[SW] 没有 waiting/installing，调用 registration.update()');
-            forceUpdateAndActivate(registrations);
+            // 3. 没有任何 worker，强制调用 update() 让浏览器检测新 SW
+            console.log('[SW] 没有 waiting/installing，调用 registration.update() 检测并安装');
+            forceUpdateThenActivate(registrations);
         });
         return;
     }
 
     if (targetWorker) {
-        doActivate(targetWorker, targetReg);
+        doActivate(targetWorker);
     } else {
-        // 没有任何可用 worker，直接刷新
-        console.log('[SW] 没有可用的 SW，直接刷新');
-        window.location.reload();
+        console.log('[SW] swRegistration 为空，查找全局 registration');
+        if (navigator.serviceWorker.getRegistrations) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                if (registrations.length > 0) {
+                    forceUpdateThenActivate(registrations);
+                } else {
+                    console.log('[SW] 没有任何 registration，直接刷新');
+                    window.location.reload();
+                }
+            });
+        } else {
+            console.log('[SW] 浏览器不支持 getRegistrations，直接刷新');
+            window.location.reload();
+        }
     }
 
-    // ---------- 核心：强制检测并安装新 SW ----------
-    function forceUpdateAndActivate(registrations) {
-        var regToUse = registrations && registrations.length > 0 ? registrations[0] : swRegistration;
-        if (!regToUse || !regToUse.update) {
+    // ---------- 核心 1：发送 skipWaiting 激活 SW ----------
+    // controllerchange 监听器（在 SW 注册处）会自动刷新页面
+    function doActivate(worker) {
+        console.log('[SW] 🚀 发送 ACTIVATE_UPDATE，等待 controllerchange 触发刷新');
+        worker.postMessage({ type: 'ACTIVATE_UPDATE' });
+        // 超时兜底：如果 8 秒内没有 controllerchange，强制刷新
+        setTimeout(function() {
+            console.log('[SW] ⏱️ 8 秒超时兜底：强制刷新');
+            window.location.reload();
+        }, 8000);
+    }
+
+    // ---------- 核心 2：等待 installing SW 安装完成后激活 ----------
+    function waitAndActivate(worker) {
+        worker.addEventListener('statechange', function handler() {
+            console.log('[SW] 安装中 worker 状态:', worker.state);
+            if (worker.state === 'installed') {
+                worker.removeEventListener('statechange', handler);
+                console.log('[SW] 安装完成，发送 ACTIVATE_UPDATE');
+                doActivate(worker);
+            }
+        });
+        // 超时兜底
+        setTimeout(function() {
+            console.log('[SW] ⏱️ 安装等待超时，直接发送 ACTIVATE_UPDATE');
+            doActivate(worker);
+        }, 10000);
+    }
+
+    // ---------- 核心 3：强制检测并安装新 SW，然后激活 ----------
+    function forceUpdateThenActivate(registrations) {
+        var regToUse = null;
+        if (registrations && registrations.length > 0) {
+            regToUse = registrations[0];
+        } else if (swRegistration) {
+            regToUse = swRegistration;
+        } else {
+            console.log('[SW] 没有可用的 registration，直接刷新');
+            window.location.reload();
+            return;
+        }
+
+        if (!regToUse.update) {
             console.log('[SW] registration.update 不可用，直接刷新');
             window.location.reload();
             return;
@@ -48310,68 +48373,24 @@ function confirmUpdate() {
 
         console.log('[SW] 调用 registration.update()');
         regToUse.update().then(function() {
-            // update 完成后，检查是否有新的 waiting 或 installing
+            // update 完成后，再检查一次 waiting/installing
             if (regToUse.waiting) {
-                console.log('[SW] update 完成，找到 waiting');
-                doActivate(regToUse.waiting, regToUse);
+                console.log('[SW] update 完成，找到 waiting，激活');
+                doActivate(regToUse.waiting);
             } else if (regToUse.installing) {
-                console.log('[SW] update 完成，找到 installing，等待安装完成');
-                var installWorker = regToUse.installing;
-                installWorker.addEventListener('statechange', function stateHandler() {
-                    if (installWorker.state === 'installed' || installWorker.state === 'activating') {
-                        installWorker.removeEventListener('statechange', stateHandler);
-                        console.log('[SW] 新 SW 已安装完成，开始激活');
-                        doActivate(installWorker, regToUse);
-                    }
-                });
-                // 超时兜底
-                setTimeout(function() {
-                    if (regToUse.waiting) {
-                        doActivate(regToUse.waiting, regToUse);
-                    } else {
-                        console.log('[SW] 安装超时，直接刷新');
-                        window.location.reload();
-                    }
-                }, 5000);
+                console.log('[SW] update 完成，找到 installing，等待安装');
+                waitAndActivate(regToUse.installing);
             } else {
-                // 没有新 SW 需要安装（当前已是最新）
-                console.log('[SW] update() 完成，但没有新版本，直接刷新');
-                window.location.reload();
+                // 没有新版本，但刷新一次确保一致性
+                console.log('[SW] update() 完成但无新版本，刷新确认');
+                setTimeout(function() {
+                    window.location.reload();
+                }, 500);
             }
         }).catch(function(err) {
             console.warn('[SW] update() 失败:', err);
             window.location.reload();
         });
-    }
-
-    // ---------- 核心：激活 SW 并刷新 ----------
-    function doActivate(worker, reg) {
-        console.log('[SW] 🚀 发送 ACTIVATE_UPDATE (skipWaiting)');
-        worker.postMessage({ type: 'ACTIVATE_UPDATE' });
-
-        // 监听 statechange，等待 activated
-        var isDone = false;
-        var stateHandler = function() {
-            console.log('[SW] worker state:', worker.state);
-            if (worker.state === 'activated') {
-                isDone = true;
-                worker.removeEventListener('statechange', stateHandler);
-                console.log('[SW] ✅ SW 已激活，刷新页面...');
-                setTimeout(function() {
-                    window.location.reload();
-                }, 300);
-            }
-        };
-        worker.addEventListener('statechange', stateHandler);
-
-        // 超时兜底 5 秒
-        setTimeout(function() {
-            if (!isDone) {
-                worker.removeEventListener('statechange', stateHandler);
-                console.log('[SW] ⏱️ 激活超时，强制刷新');
-                window.location.reload();
-            }
-        }, 5000);
     }
 }
 
@@ -48413,9 +48432,6 @@ function checkSoftwareUpdate() {
     isManualUpdateCheck = true;
     var statusEl = document.getElementById('softwareUpdateStatus');
     var versionEl = document.getElementById('currentSoftwareVersion');
-    var currentVersion = null;
-    var waitingVersion = null;
-    var waitingLogs = null;
 
     if (statusEl) {
         statusEl.style.display = 'block';
@@ -48426,173 +48442,128 @@ function checkSoftwareUpdate() {
 
     console.log('[SW] checkSoftwareUpdate 开始...');
 
-    // 1. 获取当前 controller 版本（用于更新页面显示）
-    var controller = navigator.serviceWorker.controller;
-    var waiting = swRegistration ? swRegistration.waiting : null;
-    var pendingWorker = null;
-    var activeWorker = null;
-
-    // 同时向 controller 和 waiting 发送 GET_VERSION（用计数器确保两次回复
-    var responsesNeeded = 0;
-    var controllerVersion = null;
-    var waitingVersion = null;
-    var waitingLogs = null;
-    var tempHandler = function(event) {
-        if (!event.data || event.data.type !== 'VERSION_RESPONSE') return;
-        responsesNeeded++;
-        console.log('[SW] 收到版本回复:', event.data.version);
-        if (responsesNeeded === 1 && controller) {
-            controllerVersion = event.data.version;
-            // 更新页面版本号显示
-            if (versionEl) versionEl.textContent = event.data.version;
-        } else {
-            waitingVersion = event.data.version;
-            waitingLogs = event.data.logs;
-        }
-        // 收到两次回复或超时后，调用 update()
-        if (responsesNeeded >= 2) {
-            navigator.serviceWorker.removeEventListener('message', tempHandler);
-            checkByUpdate();
-        }
-    };
-
-    // 设置消息监听
-    navigator.serviceWorker.addEventListener('message', tempHandler);
-
-    // 向 controller 发送（如果有）
-    if (controller) {
-        controller.postMessage({ type: 'GET_VERSION' });
-    } else {
-        responsesNeeded = 1; // 没有 controller，等 waiting 的回复
-        controllerVersion = '未激活';
+    // 1. 如果已有 waiting SW → 直接提示有新版本
+    if (swRegistration && swRegistration.waiting) {
+        console.log('[SW] 已有 waiting SW，获取版本号提示更新');
+        swRegistration.waiting.postMessage({ type: 'GET_VERSION' });
+        var versionHandler = function(event) {
+            if (event.data && event.data.type === 'VERSION_RESPONSE') {
+                navigator.serviceWorker.removeEventListener('message', versionHandler);
+                showUpdateAvailable(event.data.version, event.data.logs, statusEl);
+            }
+        };
+        navigator.serviceWorker.addEventListener('message', versionHandler);
+        setTimeout(function() {
+            navigator.serviceWorker.removeEventListener('message', versionHandler);
+            // 超时兜底：有 waiting 就提示有更新
+            if (swRegistration && swRegistration.waiting) {
+                showUpdateAvailable('新版本', null, statusEl);
+            }
+        }, 2000);
+        return;
     }
 
-    // 向 waiting 发送（如果有）
-    if (waiting) {
-        waiting.postMessage({ type: 'GET_VERSION' });
-    } else {
-        // 没有 waiting，立即开始 update()
-        // 需要等待 controller 的回复，然后触发 update()
-        if (controller) {
-            // controller 发了，等待回复
-        } else {
-            navigator.serviceWorker.removeEventListener('message', tempHandler);
-            checkByUpdate();
-            return;
-        }
-    }
-
-    // 超时兜底：2 秒后强制进入下一步
-    setTimeout(function() {
-        navigator.serviceWorker.removeEventListener('message', tempHandler);
-        checkByUpdate();
-    }, 2000);
-
-    function checkByUpdate() {
-        // 更新当前显示
-        if (controllerVersion && versionEl) versionEl.textContent = controllerVersion;
-
-        // 如果已经有 waiting 且版本不同
-        if (waitingVersion && controllerVersion && waitingVersion !== controllerVersion) {
-            showUpdateAvailable(waitingVersion, waitingLogs, statusEl);
-            return;
-        }
-
-        // 否则调用 registration.update() 让浏览器检测新 SW
-        if (!swRegistration) {
-            try {
-                navigator.serviceWorker.getRegistration().then(function(reg) {
-                    if (reg) swRegistration = reg;
-                    doUpdateCheck();
-                }).catch(function() {
-                    doUpdateCheck();
-                });
-            } catch(e) {
-                doUpdateCheck();
-            }
-        } else {
-            doUpdateCheck();
-        }
-
-        function doUpdateCheck() {
-            if (!swRegistration || !swRegistration.update) {
-                showNoUpdate(controllerVersion, statusEl);
-                return;
-            }
-            console.log('[SW] 调用 registration.update() 检查更新...');
-            swRegistration.update().then(function() {
-                // update 完成后，检查是否有新的 waiting 或 installing
-                if (swRegistration.waiting) {
-                    // 有新版本 waiting，获取其版本号
-                    swRegistration.waiting.postMessage({ type: 'GET_VERSION' });
-                    var waitHandler = function(event) {
-                        if (event.data && event.data.type === 'VERSION_RESPONSE') {
-                            navigator.serviceWorker.removeEventListener('message', waitHandler);
-                            var newVersion = event.data.version;
-                            if (controllerVersion && newVersion !== controllerVersion) {
-                                showUpdateAvailable(newVersion, event.data.logs, statusEl);
-                            } else if (!controllerVersion) {
-                                showUpdateAvailable(newVersion, event.data.logs, statusEl);
-                            } else {
-                                showNoUpdate(controllerVersion, statusEl);
-                            }
-                        }
-                    };
-                    navigator.serviceWorker.addEventListener('message', waitHandler);
-                    setTimeout(function() {
-                        navigator.serviceWorker.removeEventListener('message', waitHandler);
-                        // 超时兜底：直接用 waiting 状态就提示有更新
-                        if (swRegistration.waiting) {
-                            showUpdateAvailable('新版本', null, statusEl);
-                        } else {
-                            showNoUpdate(controllerVersion, statusEl);
-                        }
-                    }, 2000);
-                } else if (swRegistration.installing) {
-                    console.log('[SW] 新 SW 正在安装中，等待安装完成...');
-                    var installWorker = swRegistration.installing;
-                    installWorker.addEventListener('statechange', function installHandler() {
-                        console.log('[SW] 安装状态:', installWorker.state);
-                        if (installWorker.state === 'installed' || installWorker.state === 'activating') {
-                            installWorker.removeEventListener('statechange', installHandler);
-                            installWorker.postMessage({ type: 'GET_VERSION' });
-                            var instHandler = function(event) {
-                                if (event.data && event.data.type === 'VERSION_RESPONSE') {
-                                    navigator.serviceWorker.removeEventListener('message', instHandler);
-                                    showUpdateAvailable(event.data.version, event.data.logs, statusEl);
-                                }
-                            };
-                            navigator.serviceWorker.addEventListener('message', instHandler);
-                            setTimeout(function() {
-                                navigator.serviceWorker.removeEventListener('message', instHandler);
-                                showUpdateAvailable('新版本', null, statusEl);
-                            }, 2000);
-                        }
-                    });
-                    // 超时兜底
-                    setTimeout(function() {
-                        if (swRegistration.waiting) {
-                            showUpdateAvailable('新版本', null, statusEl);
-                        } else if (swRegistration.installing) {
-                            showUpdateAvailable('新版本', null, statusEl);
-                        } else {
-                            showNoUpdate(controllerVersion, statusEl);
-                        }
-                    }, 8000);
+    // 2. 调用 registration.update() 让浏览器检测新 SW（核心机制）
+    if (!swRegistration) {
+        if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+            navigator.serviceWorker.getRegistration().then(function(reg) {
+                if (reg) {
+                    swRegistration = reg;
+                    doRealUpdateCheck();
                 } else {
-                    // 没有新版本
-                    showNoUpdate(controllerVersion, statusEl);
+                    console.log('[SW] 无 registration，用 fetch 兜底');
+                    fallbackCheck();
                 }
-            }).catch(function(err) {
-                console.warn('[SW] update() 失败:', err);
-                // update 失败，降级为 fetch 文本比较
+            }).catch(function() {
                 fallbackCheck();
             });
+        } else {
+            fallbackCheck();
         }
+    } else {
+        doRealUpdateCheck();
+    }
 
-        function fallbackCheck() {
-            if (!controllerVersion) controllerVersion = 'V3.4.1';
-            fetchRemoteAndCompare(controllerVersion, versionEl, statusEl);
+    function doRealUpdateCheck() {
+        if (!swRegistration || !swRegistration.update) {
+            fallbackCheck();
+            return;
+        }
+        console.log('[SW] 调用 registration.update() 检测新 SW');
+        swRegistration.update().then(function() {
+            if (swRegistration.waiting) {
+                // update() 触发了新 SW 安装，现已在 waiting 状态
+                console.log('[SW] update() 完成，找到 waiting SW');
+                swRegistration.waiting.postMessage({ type: 'GET_VERSION' });
+                var wh = function(event) {
+                    if (event.data && event.data.type === 'VERSION_RESPONSE') {
+                        navigator.serviceWorker.removeEventListener('message', wh);
+                        showUpdateAvailable(event.data.version, event.data.logs, statusEl);
+                    }
+                };
+                navigator.serviceWorker.addEventListener('message', wh);
+                setTimeout(function() {
+                    navigator.serviceWorker.removeEventListener('message', wh);
+                    showUpdateAvailable('新版本', null, statusEl);
+                }, 2000);
+            } else if (swRegistration.installing) {
+                // 新 SW 正在安装，等待安装完成
+                console.log('[SW] update() 完成，新 SW 正在安装，等待完成...');
+                var installWorker = swRegistration.installing;
+                installWorker.addEventListener('statechange', function installHandler() {
+                    if (installWorker.state === 'installed' || installWorker.state === 'activating') {
+                        installWorker.removeEventListener('statechange', installHandler);
+                        console.log('[SW] 新 SW 安装完成，提示更新');
+                        installWorker.postMessage({ type: 'GET_VERSION' });
+                        var ih = function(event) {
+                            if (event.data && event.data.type === 'VERSION_RESPONSE') {
+                                navigator.serviceWorker.removeEventListener('message', ih);
+                                showUpdateAvailable(event.data.version, event.data.logs, statusEl);
+                            }
+                        };
+                        navigator.serviceWorker.addEventListener('message', ih);
+                        setTimeout(function() {
+                            navigator.serviceWorker.removeEventListener('message', ih);
+                            showUpdateAvailable('新版本', null, statusEl);
+                        }, 2000);
+                    }
+                });
+                // 超时兜底 8 秒
+                setTimeout(function() {
+                    if (swRegistration.waiting || swRegistration.installing) {
+                        showUpdateAvailable('新版本', null, statusEl);
+                    } else {
+                        showNoUpdate(null, statusEl);
+                    }
+                }, 8000);
+            } else {
+                // 没有新版本
+                showNoUpdate(null, statusEl);
+            }
+        }).catch(function(err) {
+            console.warn('[SW] update() 失败:', err);
+            fallbackCheck();
+        });
+    }
+
+    function fallbackCheck() {
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
+            var fh = function(event) {
+                if (event.data && event.data.type === 'VERSION_RESPONSE') {
+                    navigator.serviceWorker.removeEventListener('message', fh);
+                    var cv = event.data.version;
+                    if (versionEl) versionEl.textContent = cv;
+                    fetchRemoteAndCompare(cv, versionEl, statusEl);
+                }
+            };
+            navigator.serviceWorker.addEventListener('message', fh);
+            setTimeout(function() {
+                navigator.serviceWorker.removeEventListener('message', fh);
+                fetchRemoteAndCompare('V3.4.1', versionEl, statusEl);
+            }, 2000);
+        } else {
+            fetchRemoteAndCompare('V3.4.1', versionEl, statusEl);
         }
     }
 }
@@ -49609,17 +49580,7 @@ function confirmMainImages() {
     showToast('主图已保存（' + count + '张）', 'success');
 }
 
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/quote-system/sw.js')
-            .then(registration => {
-                console.log('SW registered:', registration.scope);
-            })
-            .catch(error => {
-                console.log('SW registration failed:', error);
-            });
-    });
-}
+// 注意：Service Worker 注册已在上方 PWA Service Worker 区块完成，此处不再重复注册
 
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
