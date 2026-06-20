@@ -9642,34 +9642,29 @@ function safeExecuteAsync(fn, defaultVal) {
                 </label>
             </div>
             <div id="tierPricingSection" style="display:none;margin-top:0.5rem;">
-                <div class="tier-pricing-config" style="display:flex;flex-direction:column;gap:0.5rem;padding:0.5rem;background:#f0f9ff;border:1px solid #bfdbfe;border-radius:var(--radius);">
-                    <!-- 第一行：模式选择 -->
-                    <div class="tier-row-1" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-                        <span style="font-size:0.75rem;font-weight:500;color:#1e40af;">🔢 阶梯价格</span>
-                        <select id="tierMode" class="tier-select" style="font-size:0.75rem;padding:0.2rem 0.3rem;border:1px solid #d1d5db;border-radius:4px;background:#fff;" onchange="updateTierLabels()">
+                <div class="tier-pricing-config" style="display:flex;flex-direction:column;gap:0.4rem;padding:0.5rem;background:#f0f9ff;border:1px solid #bfdbfe;border-radius:var(--radius);">
+                    <div class="tier-row-1" style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+                        <span style="font-size:0.75rem;font-weight:500;color:#1e40af;white-space:nowrap;">🔢 阶梯价格</span>
+                        <select id="tierMode" class="tier-select" style="font-size:0.7rem;padding:0.2rem 0.35rem;border:1px solid #d1d5db;border-radius:4px;background:#fff;flex-shrink:0;" onchange="updateTierLabels()">
                             <option value="qty">按件数</option>
                             <option value="area" disabled>按面积</option>
                         </select>
                     </div>
-                    <!-- 第二行：配置输入 -->
-                    <div class="tier-row-2" style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">
-                        <div class="tier-input-group" style="display:flex;align-items:center;gap:0.25rem;">
-                            <span style="font-size:0.7rem;color:#6b7280;">最低数量：</span>
-                            <input type="number" class="tier-qty" min="1" step="1" placeholder="10" style="width:55px;padding:0.2rem 0.3rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
-                            <span style="font-size:0.65rem;color:#6b7280;" id="tierQtyLabel">件</span>
-                        </div>
-                        <span style="color:#9ca3af;font-size:0.7rem;">→</span>
-                        <div class="tier-input-group" style="display:flex;align-items:center;gap:0.25rem;">
-                            <span style="font-size:0.7rem;color:#6b7280;">折扣单价：</span>
-                            <input type="number" class="tier-price" min="0" step="0.01" placeholder="9.00" style="width:65px;padding:0.2rem 0.3rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
-                            <span style="font-size:0.65rem;color:#6b7280;" id="tierPriceLabel">元/件</span>
-                        </div>
-                        <button type="button" class="btn btn-xs btn-outline tier-add-btn" onclick="addTierRow()" style="font-size:0.7rem;padding:0.2rem 0.4rem;">➕ 添加</button>
+                    <div class="tier-row-2" style="display:flex;align-items:center;gap:0.35rem;">
+                        <span style="font-size:0.7rem;color:#374151;font-weight:500;flex-shrink:0;white-space:nowrap;">满</span>
+                        <input type="number" class="tier-qty" min="1" step="1" placeholder="10" style="flex:1;min-width:0;max-width:80px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
+                        <span style="font-size:0.7rem;color:#6b7280;flex-shrink:0;white-space:nowrap;" id="tierQtyLabel">件</span>
+                        <span style="color:#2563eb;font-size:0.8rem;font-weight:600;flex-shrink:0;">→</span>
+                        <span style="font-size:0.7rem;color:#374151;font-weight:500;flex-shrink:0;white-space:nowrap;">享</span>
+                        <span style="color:#6b7280;font-size:0.7rem;flex-shrink:0;white-space:nowrap;">¥</span>
+                        <input type="number" class="tier-price" min="0" step="0.01" placeholder="9.00" style="flex:1;min-width:0;max-width:80px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
+                        <span style="font-size:0.7rem;color:#6b7280;flex-shrink:0;white-space:nowrap;" id="tierPriceLabel">/件</span>
+                        <button type="button" class="btn btn-xs btn-primary tier-add-btn" onclick="addTierRow()" style="font-size:0.7rem;padding:0.25rem 0.5rem;white-space:nowrap;flex-shrink:0;">➕添加</button>
                     </div>
                 </div>
-                <div id="tierModeHint" style="font-size:0.7rem;color:#6b7280;margin-top:0.375rem;padding:0 0.5rem;">💡 按件数：基于订单数量 | 按面积：基于总面积（适合按尺寸计费产品）</div>
-                <div id="tierPricingContainer" style="margin-top:0.375rem;padding:0 0.5rem;">
-                    <div id="tierPricingList" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
+                <div id="tierModeHint" style="font-size:0.65rem;color:#6b7280;margin-top:0.3rem;padding:0 0.5rem;">💡 按件数：基于订单数量 | 按面积：基于总面积</div>
+                <div id="tierPricingContainer" style="margin-top:0.3rem;padding:0 0.5rem;">
+                    <div id="tierPricingList" style="display:flex;flex-direction:column;gap:0.25rem;"></div>
                 </div>
             </div>
             
@@ -9692,15 +9687,19 @@ function safeExecuteAsync(fn, defaultVal) {
                     .product-desc-image-right { display:none; }
                     .product-image-preview-mobile { display:block !important; margin-top:0.5rem; }
                     
-                    /* 阶梯价格配置手机端优化 */
-                    .tier-pricing-config { padding:0.4rem !important; }
+                    .tier-pricing-config { padding:0.4rem !important; gap:0.3rem !important; }
                     .tier-row-1 { gap:0.3rem !important; }
-                    .tier-row-2 { gap:0.3rem !important; }
-                    .tier-input-group { flex:1; min-width:0; }
-                    .tier-qty { width:50px !important; font-size:0.75rem !important; }
-                    .tier-price { width:55px !important; font-size:0.75rem !important; }
-                    .tier-add-btn { flex-shrink:0; }
-                    #tierModeHint { display:none; }
+                    .tier-row-2 { gap:0.25rem !important; flex-wrap:nowrap !important; }
+                    .tier-row-2 .tier-qty { flex:1 !important; max-width:65px !important; min-width:0 !important; font-size:0.75rem !important; padding:0.25rem 0.3rem !important; }
+                    .tier-row-2 .tier-price { flex:1 !important; max-width:65px !important; min-width:0 !important; font-size:0.75rem !important; padding:0.25rem 0.3rem !important; }
+                    .tier-row-2 .tier-add-btn { padding:0.25rem 0.4rem !important; font-size:0.7rem !important; }
+                    #tierModeHint { font-size:0.65rem !important; padding:0 0.35rem !important; }
+                    #tierPricingList { gap:0.25rem !important; }
+                    .tier-chip { gap:0.25rem !important; padding:0.35rem 0.4rem !important; width:100% !important; }
+                    .tier-chip .tier-qty { flex:1 !important; max-width:60px !important; min-width:0 !important; font-size:0.75rem !important; padding:0.25rem 0.3rem !important; }
+                    .tier-chip .tier-price { flex:1 !important; max-width:60px !important; min-width:0 !important; font-size:0.75rem !important; padding:0.25rem 0.3rem !important; }
+                    .tier-chip .btn { padding:0.2rem 0.4rem !important; font-size:0.7rem !important; }
+                    .tier-chip span { font-size:0.72rem !important; }
                 }
             </style>
             
@@ -18828,14 +18827,12 @@ function addTierRow() {
     const list = document.getElementById('tierPricingList');
     if (!list) return;
     
-    // 获取用户在输入框中填写的值
     const qtyInput = document.querySelector('#tierPricingSection .tier-qty');
     const priceInput = document.querySelector('#tierPricingSection .tier-price');
     
     const qtyValue = qtyInput ? qtyInput.value.trim() : '';
     const priceValue = priceInput ? priceInput.value.trim() : '';
     
-    // 验证输入
     if (!qtyValue || !priceValue) {
         dialog.alert('请填写数量和单价', '提示', 'ℹ️');
         return;
@@ -18843,23 +18840,20 @@ function addTierRow() {
     
     const chip = document.createElement('div');
     chip.className = 'tier-chip';
-    chip.style.cssText = 'display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:#fff;border:1px solid #d1d5db;border-radius:8px;font-size:0.8rem;box-shadow:0 1px 2px rgba(0,0,0,0.05);';
+    chip.style.cssText = 'display:flex;align-items:center;gap:0.35rem;padding:0.4rem 0.5rem;background:#fff;border:1px solid #d1d5db;border-radius:8px;font-size:0.8rem;box-shadow:0 1px 2px rgba(0,0,0,0.05);width:100%;overflow:hidden;';
     chip.innerHTML = `
-        <div style="display:flex;align-items:center;gap:0.35rem;">
-            <span style="color:#374151;font-weight:500;">≥</span>
-            <input type="number" class="tier-qty" min="1" step="1" value="${qtyValue}" style="width:55px;padding:0.25rem 0.4rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
-            <span style="color:#6b7280;">件</span>
-        </div>
-        <span style="color:#9ca3af;">→</span>
-        <div style="display:flex;align-items:center;gap:0.35rem;">
-            <input type="number" class="tier-price" min="0" step="0.01" value="${priceValue}" style="width:65px;padding:0.25rem 0.4rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
-            <span style="color:#6b7280;">元/件</span>
-        </div>
-        <button type="button" class="btn btn-xs btn-danger" onclick="removeTierRow(this)" style="padding:0.15rem 0.4rem;margin-left:0.25rem;">删除</button>
+        <span style="color:#374151;font-weight:500;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">满</span>
+        <input type="number" class="tier-qty" min="1" step="1" value="${qtyValue}" style="flex:1;min-width:0;max-width:75px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
+        <span style="color:#6b7280;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">件</span>
+        <span style="color:#2563eb;font-size:0.85rem;font-weight:600;flex-shrink:0;">→</span>
+        <span style="color:#374151;font-weight:500;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">享</span>
+        <span style="color:#6b7280;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">¥</span>
+        <input type="number" class="tier-price" min="0" step="0.01" value="${priceValue}" style="flex:1;min-width:0;max-width:75px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
+        <span style="color:#6b7280;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">/件</span>
+        <button type="button" class="btn btn-xs btn-danger" onclick="removeTierRow(this)" style="padding:0.2rem 0.45rem;flex-shrink:0;font-size:0.7rem;white-space:nowrap;margin-left:auto;">删除</button>
     `;
     list.appendChild(chip);
     
-    // 清空输入框以便下次输入
     if (qtyInput) qtyInput.value = '';
     if (priceInput) priceInput.value = '';
 }
@@ -18907,19 +18901,17 @@ function setTierPricesToForm(tierPrices) {
     tierPrices.forEach((tier) => {
         const chip = document.createElement('div');
         chip.className = 'tier-chip';
-        chip.style.cssText = 'display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:#fff;border:1px solid #d1d5db;border-radius:8px;font-size:0.8rem;box-shadow:0 1px 2px rgba(0,0,0,0.05);';
+        chip.style.cssText = 'display:flex;align-items:center;gap:0.35rem;padding:0.4rem 0.5rem;background:#fff;border:1px solid #d1d5db;border-radius:8px;font-size:0.8rem;box-shadow:0 1px 2px rgba(0,0,0,0.05);width:100%;overflow:hidden;';
         chip.innerHTML = `
-            <div style="display:flex;align-items:center;gap:0.35rem;">
-                <span style="color:#374151;font-weight:500;">≥</span>
-                <input type="number" class="tier-qty" min="1" step="1" value="${tier.qty}" style="width:55px;padding:0.25rem 0.4rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
-                <span style="color:#6b7280;">件</span>
-            </div>
-            <span style="color:#9ca3af;">→</span>
-            <div style="display:flex;align-items:center;gap:0.35rem;">
-                <input type="number" class="tier-price" min="0" step="0.01" value="${tier.price}" style="width:65px;padding:0.25rem 0.4rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
-                <span style="color:#6b7280;">元/件</span>
-            </div>
-            <button type="button" class="btn btn-xs btn-danger" onclick="removeTierRow(this)" style="padding:0.15rem 0.4rem;margin-left:0.25rem;">删除</button>
+            <span style="color:#374151;font-weight:500;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">满</span>
+            <input type="number" class="tier-qty" min="1" step="1" value="${tier.qty}" style="flex:1;min-width:0;max-width:75px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
+            <span style="color:#6b7280;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">件</span>
+            <span style="color:#2563eb;font-size:0.85rem;font-weight:600;flex-shrink:0;">→</span>
+            <span style="color:#374151;font-weight:500;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">享</span>
+            <span style="color:#6b7280;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">¥</span>
+            <input type="number" class="tier-price" min="0" step="0.01" value="${tier.price}" style="flex:1;min-width:0;max-width:75px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;">
+            <span style="color:#6b7280;font-size:0.75rem;flex-shrink:0;white-space:nowrap;">/件</span>
+            <button type="button" class="btn btn-xs btn-danger" onclick="removeTierRow(this)" style="padding:0.2rem 0.45rem;flex-shrink:0;font-size:0.7rem;white-space:nowrap;margin-left:auto;">删除</button>
         `;
         list.appendChild(chip);
     });
@@ -48170,6 +48162,8 @@ function saveQuoteItemToProduct(itemId) {
 
 // ==================== PWA Service Worker ====================
 var swRegistration = null;
+var isUpdatePending = false;
+
 if ('serviceWorker' in navigator) {
     var isSecureContext = window.location.protocol === 'https:' || 
                           window.location.hostname === 'localhost' || 
@@ -48185,13 +48179,19 @@ if ('serviceWorker' in navigator) {
                     registration.addEventListener('updatefound', function() {
                         var newWorker = registration.installing;
                         newWorker.addEventListener('statechange', function() {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                newWorker.postMessage({ type: 'GET_VERSION' });
+                            if (newWorker.state === 'installed') {
+                                if (navigator.serviceWorker.controller) {
+                                    isUpdatePending = true;
+                                    newWorker.postMessage({ type: 'GET_VERSION' });
+                                } else {
+                                    newWorker.postMessage({ type: 'GET_VERSION' });
+                                }
                             }
                         });
                     });
                     
                     if (registration.waiting) {
+                        isUpdatePending = true;
                         registration.waiting.postMessage({ type: 'GET_VERSION' });
                     }
                     
@@ -48234,10 +48234,22 @@ function closeUpdateModal() {
 }
 
 function confirmUpdate() {
-    if (swRegistration && swRegistration.waiting) {
-        swRegistration.waiting.postMessage({ type: 'ACTIVATE_UPDATE' });
-    } else if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({ type: 'ACTIVATE_UPDATE' });
+    if (swRegistration) {
+        if (swRegistration.waiting) {
+            swRegistration.waiting.postMessage({ type: 'ACTIVATE_UPDATE' });
+        } else if (swRegistration.installing) {
+            swRegistration.installing.postMessage({ type: 'ACTIVATE_UPDATE' });
+        }
+    } else {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            registrations.forEach(function(reg) {
+                if (reg.waiting) {
+                    reg.waiting.postMessage({ type: 'ACTIVATE_UPDATE' });
+                } else if (reg.installing) {
+                    reg.installing.postMessage({ type: 'ACTIVATE_UPDATE' });
+                }
+            });
+        });
     }
 }
 
@@ -48414,29 +48426,9 @@ function showManualUpdateResult(localVersion, remoteVersion, updateLogs, statusE
     isManualUpdateCheck = false;
 }
 
-// 初始化软件版本显示
 function initSoftwareVersion() {
     if (navigator.serviceWorker && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
-    }
-    
-    // 检测是否有等待激活的新版本 Service Worker
-    navigator.serviceWorker.addEventListener('controllerchange', function() {
-        console.log('[App] 🚀 新的 Service Worker 已激活');
-        window.location.reload();
-    });
-    
-    // 检测等待中的 SW
-    if (navigator.serviceWorker) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            registrations.forEach(function(registration) {
-                if (registration.waiting) {
-                    console.log('[App] ⏳ 发现等待激活的新版本');
-                    // 获取等待版本的信息
-                    registration.waiting.postMessage({ type: 'GET_VERSION' });
-                }
-            });
-        });
     }
 }
 
@@ -48451,22 +48443,17 @@ navigator.serviceWorker.addEventListener('message', function(event) {
     if (event.data && event.data.type === 'VERSION_UPDATED') {
         var updateMode = getUpdateMode();
         if (updateMode === 'auto') {
-            // 自动更新模式：显示桌面通知提示，停留2秒后自动更新
             showAutoUpdateNotification(event.data.version, event.data.logs);
         } else {
-            // 提醒更新模式：显示更新提示模态框
             showUpdateNotification(event.data.version, event.data.logs);
         }
     }
-    // 响应版本信息请求（来自当前活跃的 SW）
     if (event.data && event.data.type === 'VERSION_RESPONSE') {
-        // 更新版本显示
         var versionEl = document.getElementById('currentSoftwareVersion');
         if (versionEl) {
             versionEl.textContent = event.data.version;
         }
         
-        // 显示当前版本的更新日志
         var logsEl = document.getElementById('currentVersionLogs');
         var logsListEl = document.getElementById('currentVersionLogsList');
         if (logsEl && logsListEl && event.data.logs && event.data.logs.length > 0) {
@@ -48479,13 +48466,7 @@ navigator.serviceWorker.addEventListener('message', function(event) {
             });
             logsEl.style.display = 'block';
         }
-        
-        // 如果是手动检查更新，显示结果
-        if (isManualUpdateCheck) {
-            showManualUpdateResult(event.data.version, event.data.logs);
-        }
     }
-    // 响应等待中 SW 的版本信息（检测到新版本）
     if (event.data && event.data.type === 'PENDING_VERSION') {
         var updateMode = getUpdateMode();
         if (updateMode === 'auto') {
