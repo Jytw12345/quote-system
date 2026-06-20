@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>图文广告快速报价系统 V3专业版</title>
+    <title>图文广告快速报价系统 V3.4专业版</title>
     
     <!-- Tesseract.js OCR - 延迟加载，需要时再加载 -->
     <!-- <script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script> -->
@@ -1916,7 +1916,7 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
 }
 @media (max-width: 576px) {
     .custom-modal-content {
-        max-width: 85%;
+        max-width: 95%;
         margin-top: 1rem;
     }
     .custom-modal-header {
@@ -1936,16 +1936,17 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
         gap: 0.375rem !important;
         flex-direction: row !important;
         justify-content: center !important;
+        flex-wrap: wrap !important;
     }
     .custom-modal-footer .btn {
-        padding: 0.375rem 1.25rem !important;
-        font-size: 0.75rem !important;
+        padding: 0.375rem 0.75rem !important;
+        font-size: 0.7rem !important;
         min-width: auto !important;
         min-height: auto !important;
         flex: none !important;
         height: auto !important;
         line-height: 1.4 !important;
-        max-width: 120px !important;
+        max-width: 90px !important;
     }
 }
 
@@ -9417,6 +9418,10 @@ function safeExecuteAsync(fn, defaultVal) {
                         <span style="padding:0.125rem 0.5rem;background:#fef3c7;border-radius:9999px;font-size:0.6875rem;color:#92400e;">☁️ 云同步</span>
                     </div>
                     <div style="font-size:0.8125rem;color:var(--gray-600);">当前版本：<span id="currentSoftwareVersion" style="font-weight:600;color:var(--primary);">V3.4.1</span></div>
+                    <div id="currentVersionLogs" style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed var(--gray-300);display:none;">
+                        <div style="font-size:0.7rem;font-weight:500;color:var(--gray-500);margin-bottom:0.25rem;">📝 更新日志</div>
+                        <ul id="currentVersionLogsList" style="margin:0;padding-left:1rem;font-size:0.65rem;color:var(--gray-400);"></ul>
+                    </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);">
                     <span style="font-size:0.8125rem;color:var(--gray-600);white-space:nowrap;">更新方式：</span>
@@ -19180,15 +19185,15 @@ function openPhotoSelector() {
     photoSelectorModal.id = 'photoSelectorModal';
     photoSelectorModal.className = 'modal';
     photoSelectorModal.innerHTML = `
-        <div class="modal-content" style="max-width: min(800px, 100%); max-height: 80vh;">
+        <div class="modal-content" style="max-width: min(800px, 100%); max-height: 80vh; display: flex; flex-direction: column;">
             <div class="modal-header">
                 <h3 class="modal-title">📷 选择照片</h3>
                 <button class="modal-close" onclick="closePhotoSelector()">&times;</button>
             </div>
-            <div class="modal-body" style="padding: 1rem;">
-                <div id="photoSelectorGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem;"></div>
+            <div class="modal-body" style="padding: 1rem; overflow-y: auto; flex: 1; min-height: 0;">
+                <div id="photoSelectorGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem;"></div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="flex-shrink: 0;">
                 <button class="btn btn-outline" onclick="closePhotoSelector()">取消</button>
             </div>
         </div>
@@ -19224,12 +19229,12 @@ function renderPhotoSelectorGrid() {
     }
     
     grid.innerHTML = photos.map(photo => `
-        <div class="product-card" style="cursor: pointer; min-height: 100px;" onclick="selectPhotoForProduct('${photo.id}')">
-            <div class="product-image" style="min-height: 80px;">
-                <img src="${photo.data}" alt="${photo.name}" style="width: 100%; height: 100%; object-fit: cover;">
+        <div style="cursor: pointer; min-height: 120px; background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column;" onclick="selectPhotoForProduct('${photo.id}')">
+            <div style="width: 100%; height: 80px; background: #f3f4f6; flex-shrink: 0;">
+                <img src="${photo.data || ''}" alt="${photo.name || '照片'}" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
-            <div class="product-info" style="padding: 0.25rem;">
-                <div class="product-name" style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${photo.name}</div>
+            <div style="padding: 0.25rem; flex: 1; display: flex; align-items: center;">
+                <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${photo.name || '未命名'}</div>
             </div>
         </div>
     `).join('');
@@ -19243,18 +19248,48 @@ function selectPhotoForProduct(photoId) {
     preview.dataset.imageRemoved = 'false';
     preview.dataset.isUrl = 'false';
     preview.dataset.errorShown = 'false';
-    
-    // 同步更新桌面端和手机端预览
-    syncImagePreview(photo.data, true);
-    document.getElementById('productImageUrlField').value = ''; // 从相册选择本地图片，清空URL输入框
-    document.getElementById('removeImageBtn').style.display = 'inline-flex';
-    var selHint = document.getElementById('imageUrlHint');
-    if (selHint) { selHint.style.display = 'none'; selHint.textContent = ''; }
-    var selAiBtn = document.getElementById('aiMaterialBtn');
-    if (selAiBtn) selAiBtn.disabled = false;
 
-    closePhotoSelector();
-    showToast('已选择照片', 'success');
+    // 重新压缩图片以匹配产品上传的规格（400px jpeg 0.6），避免同步数据过大
+    var img = new Image();
+    img.onload = function() {
+        var canvas = document.createElement('canvas');
+        var width = img.width, height = img.height;
+        var maxWidth = 400, maxHeight = 400;
+        if (width > maxWidth) { height = height * (maxWidth / width); width = maxWidth; }
+        if (height > maxHeight) { width = width * (maxHeight / height); height = maxHeight; }
+        canvas.width = width;
+        canvas.height = height;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        var compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+
+        syncImagePreview(compressedDataUrl, true);
+        document.getElementById('productImageUrlField').value = '';
+        document.getElementById('removeImageBtn').style.display = 'inline-flex';
+        var selHint = document.getElementById('imageUrlHint');
+        if (selHint) { selHint.style.display = 'none'; selHint.textContent = ''; }
+        var selAiBtn = document.getElementById('aiMaterialBtn');
+        if (selAiBtn) selAiBtn.disabled = false;
+
+        closePhotoSelector();
+        showToast('已选择照片', 'success');
+    };
+    img.onerror = function() {
+        // 压缩失败时直接使用原图
+        syncImagePreview(photo.data, true);
+        document.getElementById('productImageUrlField').value = '';
+        document.getElementById('removeImageBtn').style.display = 'inline-flex';
+        var selHint = document.getElementById('imageUrlHint');
+        if (selHint) { selHint.style.display = 'none'; selHint.textContent = ''; }
+        var selAiBtn = document.getElementById('aiMaterialBtn');
+        if (selAiBtn) selAiBtn.disabled = false;
+
+        closePhotoSelector();
+        showToast('已选择照片', 'success');
+    };
+    img.src = photo.data;
 }
 
 function closePhotoSelector() {
@@ -48276,28 +48311,42 @@ function fetchRemoteAndCompare(localVersion, versionEl, statusEl) {
             return response.text();
         })
         .then(function(content) {
-            // 从sw.js中提取版本号
-            var match = content.match(/CACHE_NAME\s*=\s*['"]([^'"]+)['"]/);
-            if (match) {
-                var remoteVersion = match[1];
-                // 更新版本显示
+            var remoteVersion = null;
+            var updateLogs = [];
+            
+            var versionMatch = content.match(/CACHE_NAME\s*=\s*['"]([^'"]+)['"]/);
+            if (versionMatch) {
+                remoteVersion = versionMatch[1];
+            }
+            
+            var logsMatch = content.match(/UPDATE_LOGS\s*=\s*\[([\s\S]*?)\]/);
+            if (logsMatch) {
+                var logsContent = logsMatch[1];
+                var logItems = logsContent.match(/'([^']+)'/g);
+                if (logItems) {
+                    updateLogs = logItems.map(function(item) {
+                        return item.replace(/'/g, '');
+                    });
+                }
+            }
+            
+            if (remoteVersion) {
                 if (versionEl) {
                     versionEl.textContent = remoteVersion;
                 }
-                // 比较版本
-                showManualUpdateResult(localVersion, remoteVersion, statusEl);
+                showManualUpdateResult(localVersion, remoteVersion, updateLogs, statusEl);
             } else {
-                showManualUpdateResult(localVersion, null, statusEl);
+                showManualUpdateResult(localVersion, null, [], statusEl);
             }
         })
         .catch(function(err) {
             console.error('检查更新失败:', err);
-            showManualUpdateResult(localVersion, null, statusEl);
+            showManualUpdateResult(localVersion, null, [], statusEl);
         });
 }
 
 // 显示手动检查更新的结果
-function showManualUpdateResult(localVersion, remoteVersion, statusEl) {
+function showManualUpdateResult(localVersion, remoteVersion, updateLogs, statusEl) {
     if (statusEl) {
         if (remoteVersion) {
             if (localVersion === remoteVersion) {
@@ -48307,11 +48356,24 @@ function showManualUpdateResult(localVersion, remoteVersion, statusEl) {
                 statusEl.style.color = '#166534';
                 showToast('当前已是最新版本', 'success');
             } else {
+                var logsHtml = '';
+                if (updateLogs && updateLogs.length > 0) {
+                    logsHtml = '<div style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed #fcd34d;">' +
+                        '<div style="font-size:0.75rem;font-weight:600;margin-bottom:0.25rem;color:#b45309;">📝 更新日志：</div>' +
+                        '<ul style="margin:0;padding-left:1rem;font-size:0.7rem;color:#78350f;">';
+                    updateLogs.forEach(function(log) {
+                        logsHtml += '<li style="margin-bottom:0.125rem;">' + log + '</li>';
+                    });
+                    logsHtml += '</ul></div>';
+                }
+                
                 statusEl.style.display = 'block';
-                statusEl.innerHTML = '🎉 发现新版本！远程版本：' + remoteVersion + '，本地版本：' + localVersion;
+                statusEl.innerHTML = '🎉 发现新版本！<br>' +
+                    '远程版本：<strong>' + remoteVersion + '</strong><br>' +
+                    '本地版本：' + localVersion + logsHtml +
+                    '<div style="margin-top:0.75rem;"><button onclick="confirmUpdate()" class="btn btn-primary" style="font-size:0.75rem;padding:0.375rem 1rem;">立即更新</button></div>';
                 statusEl.style.background = '#fef3c7';
                 statusEl.style.color = '#92400e';
-                showToast('发现新版本！请刷新页面更新', 'info');
             }
         } else {
             statusEl.style.display = 'block';
@@ -48355,6 +48417,20 @@ navigator.serviceWorker.addEventListener('message', function(event) {
         var versionEl = document.getElementById('currentSoftwareVersion');
         if (versionEl) {
             versionEl.textContent = event.data.version;
+        }
+        
+        // 显示当前版本的更新日志
+        var logsEl = document.getElementById('currentVersionLogs');
+        var logsListEl = document.getElementById('currentVersionLogsList');
+        if (logsEl && logsListEl && event.data.logs && event.data.logs.length > 0) {
+            logsListEl.innerHTML = '';
+            event.data.logs.forEach(function(log) {
+                var li = document.createElement('li');
+                li.style.marginBottom = '0.125rem';
+                li.textContent = log;
+                logsListEl.appendChild(li);
+            });
+            logsEl.style.display = 'block';
         }
         
         // 如果是手动检查更新，显示结果
