@@ -1,15 +1,14 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = '更新日期：20260620 V3.4.102';
+const CACHE_NAME = '更新日期：20260620 V3.4.103';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
-    '📌 优化云同步：只同步图片ID，不同步图片数据',
-    '🐛 修复相册照片无法删除的问题',
-    '� 优化照片管理：保存元数据到IndexedDB',
-    '✨ 修复产品库选择相册照片预览问题'
-];
-
-const selfOrigin = self.location.origin;
+    '📌 优化自动更新：检测到新版本显示桌面通知，停留2秒后自动更新',
+    '📌 提醒更新模式：显示更新日志，支持稍后更新和立即更新',
+    '📌 手动检查更新：有新版本时显示立即更新按钮',
+    '📌 相册管理现在显示所有IDB中的照片（包括产品库上传的）',
+    '📌 优化云同步：只同步图片ID，不同步图片数据'
+];const selfOrigin = self.location.origin;
 const basePath = '/quote-system/';
 
 self.addEventListener('install', event => {

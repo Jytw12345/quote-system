@@ -9411,7 +9411,7 @@ function safeExecuteAsync(fn, defaultVal) {
             <div class="settings-section">
                 <h3>🚀 软件更新</h3>
                 <div style="padding:0.75rem;background:var(--gray-50);border-radius:var(--radius);margin-bottom:1rem;">
-                    <div style="font-size:1rem;font-weight:600;color:var(--primary);margin-bottom:0.25rem;">图文广告快速报价系统</div>
+                    <div style="font-size:1rem;font-weight:600;color:var(--primary);margin-bottom:0.25rem;">图文广告快速报价系统 V3.4</div>
                     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
                         <span style="padding:0.125rem 0.5rem;background:#dbeafe;border-radius:9999px;font-size:0.6875rem;color:#1e40af;">✨ PWA支持</span>
                         <span style="padding:0.125rem 0.5rem;background:#d1fae5;border-radius:9999px;font-size:0.6875rem;color:#065f46;">🧮 智能计算</span>
@@ -12340,21 +12340,29 @@ function loadFromIndexedDB() {
             }
         }).catch(function() { results.systemSettings = {}; }));
         
-        // 加载照片数据
+        // 加载照片数据（包括相册照片和产品图片）
         promises.push(IDB.getAllImages().then(function(images) {
             if (images && images.length > 0) {
-                results.photos = images.filter(function(img) {
-                    // 只提取照片（以 photo_ 开头的 ID）
-                    return img.id && img.id.startsWith('photo_');
-                }).map(function(img) {
-                    var photoId = img.id.replace('photo_', '');
+                results.photos = images.map(function(img) {
+                    // 提取照片ID（去掉前缀）
+                    var prefix = '';
+                    var photoId = img.id;
+                    if (img.id.startsWith('photo_')) {
+                        prefix = 'photo';
+                        photoId = img.id.replace('photo_', '');
+                    } else if (img.id.startsWith('product_')) {
+                        prefix = 'product';
+                        photoId = img.id.replace('product_', '');
+                    }
                     return {
                         id: photoId,
                         name: img.name || photoId,
                         originalName: img.originalName || '',
                         type: img.photoType || 'other',
                         size: img.photoSize || img.size || 0,
-                        uploadedAt: img.uploadedAt || new Date().toISOString()
+                        uploadedAt: img.uploadedAt || new Date().toISOString(),
+                        source: prefix, // 标记来源：photo（相册）、product（产品库）
+                        sourceId: img.id // 原始ID（包含前缀）
                     };
                 });
             }
@@ -33433,13 +33441,15 @@ function renderProducts(useSmartResults = false){
     if(existingBatchBar) existingBatchBar.remove();
     if(existingBatchHint) existingBatchHint.remove();
     if(batchMode && batchSelectedIds.length > 0){
+        const isMobile = window.innerWidth <= 576;
         const batchBar = document.createElement('div');
         batchBar.id = 'batchBar';
-        batchBar.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#dc2626;color:white;padding:1rem 2rem;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.3);z-index:9999;display:flex;gap:1rem;align-items:center;max-width:90vw;';
+        // 根据屏幕尺寸调整样式
+        batchBar.style.cssText = `position:fixed;bottom:${isMobile ? '10px' : '20px'};left:50%;transform:translateX(-50%);background:#dc2626;color:white;padding:${isMobile ? '0.5rem 1rem' : '1rem 2rem'};border-radius:${isMobile ? '8px' : '12px'};box-shadow:0 6px 20px rgba(0,0,0,0.3);z-index:9999;display:flex;gap:${isMobile ? '0.5rem' : '1rem'};align-items:center;max-width:${isMobile ? '95vw' : '90vw'};font-size:${isMobile ? '0.75rem' : '1rem'};`;
         batchBar.innerHTML = `
             <span style="font-weight:600;white-space:nowrap;">已选择 <strong>${batchSelectedIds.length}</strong> 个产品</span>
-            <button class="btn btn-success" style="background:white;color:#16a34a;padding:0.5rem 1rem;border:none;border-radius:6px;cursor:pointer;font-weight:600;" onclick="executeBatchDelete()">🗑️ 确认删除</button>
-            <button class="btn btn-outline" style="border:1px solid white;color:white;padding:0.5rem 1rem;border-radius:6px;cursor:pointer;background:transparent;" onclick="toggleBatchMode()">取消</button>
+            <button class="btn btn-success" style="background:white;color:#16a34a;padding:${isMobile ? '0.25rem 0.5rem' : '0.5rem 1rem'};border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:${isMobile ? '0.7rem' : '1rem'};" onclick="executeBatchDelete()">🗑️ 确认删除</button>
+            <button class="btn btn-outline" style="border:1px solid white;color:white;padding:${isMobile ? '0.25rem 0.5rem' : '0.5rem 1rem'};border-radius:4px;cursor:pointer;background:transparent;font-size:${isMobile ? '0.7rem' : '1rem'};" onclick="toggleBatchMode()">取消</button>
         `;
         document.body.appendChild(batchBar);
     }
@@ -46444,46 +46454,46 @@ function getPhotoType(fileName) {
 }
 
 function refreshPhotoList() {
-    // 从 IndexedDB 重新加载照片数据（包括元数据和图片数据）
+    // 从 IndexedDB 重新加载所有照片数据（包括相册照片和产品图片）
     if (idbInitialized && IDB.isSupported()) {
         IDB.getAllImages().then(function(images) {
-            if (images && images.length > 0) {
-                // 创建图片映射表
-                var imageMap = {};
-                images.forEach(function(img) {
-                    imageMap[img.id] = img;
-                });
-                
-                // 更新照片列表：只保留存在于 IndexedDB 中的照片
-                var existingIds = new Set(images.filter(function(img) {
-                    return img.id && img.id.startsWith('photo_');
-                }).map(function(img) {
-                    return img.id.replace('photo_', '');
-                }));
-                
-                // 过滤掉已从 IndexedDB 删除的照片
-                appData.photos = appData.photos.filter(function(photo) {
-                    return existingIds.has(photo.id);
-                });
-                
-                // 为每个照片加载对应的图片数据和元数据
-                appData.photos.forEach(function(photo) {
-                    var imageId = 'photo_' + photo.id;
-                    var imgData = imageMap[imageId];
-                    if (imgData) {
-                        // 从 IndexedDB 更新元数据（如果有）
-                        if (imgData.name) photo.name = imgData.name;
-                        if (imgData.originalName) photo.originalName = imgData.originalName;
-                        if (imgData.photoType) photo.type = imgData.photoType;
-                        if (imgData.photoSize) photo.size = imgData.photoSize;
-                        if (imgData.uploadedAt) photo.uploadedAt = imgData.uploadedAt;
-                        // 图片数据通过 blob URL 加载
-                        if (imgData.blob) {
-                            photo.data = URL.createObjectURL(imgData.blob);
-                        }
+            // 创建图片映射表（使用原始ID）
+            var imageMap = {};
+            images.forEach(function(img) {
+                imageMap[img.id] = img;
+            });
+            
+            // 获取所有存在于 IndexedDB 中的图片ID
+            var existingIds = new Set(images.map(function(img) {
+                return img.id;
+            }));
+            
+            // 更新照片列表：只保留存在于 IndexedDB 中的照片
+            appData.photos = appData.photos.filter(function(photo) {
+                // 使用 sourceId 检查（如果有），否则使用 photo_ + id
+                var checkId = photo.sourceId || ('photo_' + photo.id);
+                return existingIds.has(checkId);
+            });
+            
+            // 为每个照片加载对应的图片数据和元数据
+            appData.photos.forEach(function(photo) {
+                // 使用 sourceId 查找（如果有），否则使用 photo_ + id
+                var imageId = photo.sourceId || ('photo_' + photo.id);
+                var imgData = imageMap[imageId];
+                if (imgData) {
+                    // 从 IndexedDB 更新元数据（如果有）
+                    if (imgData.name) photo.name = imgData.name;
+                    if (imgData.originalName) photo.originalName = imgData.originalName;
+                    if (imgData.photoType) photo.type = imgData.photoType;
+                    if (imgData.photoSize) photo.size = imgData.photoSize;
+                    if (imgData.uploadedAt) photo.uploadedAt = imgData.uploadedAt;
+                    // 图片数据通过 blob URL 加载
+                    if (imgData.blob) {
+                        photo.data = URL.createObjectURL(imgData.blob);
                     }
-                });
-            }
+                }
+            });
+            
             updatePhotoStats();
             renderPhotoGrid();
         }).catch(function(e) {
@@ -46679,7 +46689,9 @@ function deleteSinglePhotoById(id) {
             appData.photos.splice(index, 1);
             
             if (idbInitialized && IDB.isSupported()) {
-                IDB.delete('images', 'photo_' + id).catch(function(e) {
+                // 使用 sourceId 删除（如果有），否则使用 photo_ + id
+                const imageId = photo.sourceId || ('photo_' + id);
+                IDB.delete('images', imageId).catch(function(e) {
                     console.error('删除图片失败:', e);
                 });
             }
@@ -46815,12 +46827,15 @@ function deleteSelectedPhotos() {
     
     const count = selectedPhotos.length;
     
-    showConfirmDialog(`确定删除选中的 ${count} 张照片吗？`, () => {
-        // 先关闭确认模态框
-        closeModal();
+    showConfirmDialog(`确定删除选中的 ${count} 张照片吗？`, (confirmed) => {
+        if (!confirmed) return;
+        
         selectedPhotos.forEach(photoId => {
             if (idbInitialized && IDB.isSupported()) {
-                IDB.delete('images', 'photo_' + photoId).catch(function(e) {
+                // 使用 sourceId 删除（如果有），否则使用 photo_ + id
+                const photo = appData.photos.find(p => p.id === photoId);
+                const imageId = photo && photo.sourceId ? photo.sourceId : ('photo_' + photoId);
+                IDB.delete('images', imageId).catch(function(e) {
                     console.error('删除图片失败:', e);
                 });
             }
@@ -48386,10 +48401,10 @@ navigator.serviceWorker.addEventListener('message', function(event) {
     if (event.data && event.data.type === 'VERSION_UPDATED') {
         var updateMode = getUpdateMode();
         if (updateMode === 'auto') {
-            // 自动更新模式：直接刷新应用
-            confirmUpdate();
+            // 自动更新模式：显示桌面通知提示，停留2秒后自动更新
+            showAutoUpdateNotification(event.data.version, event.data.logs);
         } else {
-            // 提醒更新模式：显示更新提示
+            // 提醒更新模式：显示更新提示模态框
             showUpdateNotification(event.data.version, event.data.logs);
         }
     }
@@ -48421,6 +48436,69 @@ navigator.serviceWorker.addEventListener('message', function(event) {
         }
     }
 });
+
+// 自动更新模式：显示桌面通知提示
+function showAutoUpdateNotification(version, logs) {
+    if (sessionStorage.getItem('swAutoUpdated')) return;
+    sessionStorage.setItem('swAutoUpdated', 'true');
+    
+    // 创建桌面通知元素
+    var notification = document.createElement('div');
+    notification.id = 'autoUpdateNotification';
+    notification.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;padding:1rem 1.5rem;border-radius:12px;box-shadow:0 10px 40px rgba(37,99,235,0.4);z-index:10002;display:flex;flex-direction:column;align-items:center;animation:slideDown 0.3s ease;min-width:300px;max-width:90vw;';
+    
+    var title = document.createElement('div');
+    title.style.cssText = 'font-size:1rem;font-weight:700;margin-bottom:0.25rem;display:flex;align-items:center;gap:0.5rem;';
+    title.innerHTML = '🔄 检测到新版本';
+    
+    var versionText = document.createElement('div');
+    versionText.style.cssText = 'font-size:0.8125rem;opacity:0.9;margin-bottom:0.5rem;';
+    versionText.textContent = version;
+    
+    // 显示更新日志（最多显示3条）
+    var logsContainer = document.createElement('div');
+    logsContainer.style.cssText = 'width:100%;padding:0.5rem;background:rgba(255,255,255,0.15);border-radius:8px;margin-bottom:0.5rem;max-height:80px;overflow-y:auto;';
+    if (logs && logs.length > 0) {
+        var displayLogs = logs.slice(0, 3);
+        displayLogs.forEach(function(log) {
+            var logItem = document.createElement('div');
+            logItem.style.cssText = 'font-size:0.75rem;margin-bottom:0.125rem;line-height:1.4;';
+            logItem.textContent = log;
+            logsContainer.appendChild(logItem);
+        });
+        if (logs.length > 3) {
+            var moreText = document.createElement('div');
+            moreText.style.cssText = 'font-size:0.6875rem;opacity:0.7;margin-top:0.25rem;text-align:center;';
+            moreText.textContent = '...还有 ' + (logs.length - 3) + ' 条更新';
+            logsContainer.appendChild(moreText);
+        }
+    }
+    
+    var progress = document.createElement('div');
+    progress.style.cssText = 'width:100%;height:3px;background:rgba(255,255,255,0.3);border-radius:2px;overflow:hidden;margin-top:0.25rem;';
+    
+    var progressBar = document.createElement('div');
+    progressBar.style.cssText = 'height:100%;background:white;border-radius:2px;width:0%;transition:width 2s linear;';
+    progress.appendChild(progressBar);
+    
+    notification.appendChild(title);
+    notification.appendChild(versionText);
+    notification.appendChild(logsContainer);
+    notification.appendChild(progress);
+    
+    document.body.appendChild(notification);
+    
+    // 动画进度条
+    setTimeout(function() {
+        progressBar.style.width = '100%';
+    }, 100);
+    
+    // 2秒后自动更新
+    setTimeout(function() {
+        notification.remove();
+        confirmUpdate();
+    }, 2000);
+}
 
 </script>
 
