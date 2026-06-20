@@ -5604,10 +5604,10 @@ var safeStorage = {
             var cancelBtn = document.createElement('button');
             cancelBtn.className = 'btn btn-outline';
             cancelBtn.textContent = opts.cancelText;
-            cancelBtn.onclick = function() {
+            cancelBtn.addEventListener('click', function() {
                 if (modalCallback) modalCallback(false);
                 window.globalCloseModal();
-            };
+            });
             modalFooter.appendChild(cancelBtn);
         }
 
@@ -5615,7 +5615,7 @@ var safeStorage = {
         confirmBtn.className = 'btn btn-primary';
         confirmBtn.textContent = opts.confirmText;
         confirmBtn.id = 'modalConfirmBtn';
-        confirmBtn.onclick = window.globalConfirmModal;
+        confirmBtn.addEventListener('click', window.globalConfirmModal);
         modalFooter.appendChild(confirmBtn);
 
         modal.classList.add('active');
@@ -8933,13 +8933,13 @@ function safeExecuteAsync(fn, defaultVal) {
                         <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">💾 全部数据</div>
                         <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
                             <button class="btn btn-primary btn-xs" onclick="exportAllData()">📤 导出数据</button>
-                            <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入数据<input type="file" id="importFile" accept=".json,.txt" class="file-input-hidden" onchange="importAllData(event)"></label>
+                            <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入数据<input type="file" id="importFile" accept="application/json,.json,.txt,text/plain" class="file-input-hidden" onchange="importAllData(event)"></label>
                         </div>
                     </div>
                     <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
                         <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">📦 产品库</div>
                         <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
-                            <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入JSON<input type="file" id="importProducts" accept=".json,.txt" class="file-input-hidden" onchange="importProducts(event)"></label>
+                            <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入JSON<input type="file" id="importProducts" accept="application/json,.json,.txt,text/plain" class="file-input-hidden" onchange="importProducts(event)"></label>
                             <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入XLSX<input type="file" id="importProductsXLSX" accept=".xlsx,.xls" class="file-input-hidden" onchange="importProductsXLSX(event)"></label>
                             <button class="btn btn-success btn-xs" onclick="exportProducts()">📤 导出JSON</button>
                             <button class="btn btn-success btn-xs" onclick="exportProductsXLSX()">📊 导出XLSX</button>
@@ -8948,7 +8948,7 @@ function safeExecuteAsync(fn, defaultVal) {
                     <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
                         <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">📋 报价模板</div>
                         <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
-                            <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入JSON<input type="file" id="importTemplates" accept=".json,.txt" class="file-input-hidden" onchange="importTemplates(event)"></label>
+                            <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入JSON<input type="file" id="importTemplates" accept="application/json,.json,.txt,text/plain" class="file-input-hidden" onchange="importTemplates(event)"></label>
                             <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入XLSX<input type="file" id="importTemplatesXLSX" accept=".xlsx,.xls" class="file-input-hidden" onchange="importTemplatesXLSX(event)"></label>
                             <button class="btn btn-success btn-xs" onclick="exportTemplates()">📤 导出JSON</button>
                             <button class="btn btn-success btn-xs" onclick="exportTemplatesXLSX()">📊 导出XLSX</button>
@@ -8957,7 +8957,7 @@ function safeExecuteAsync(fn, defaultVal) {
                     <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.625rem;">
                         <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:0.375rem;font-weight:500;">👥 客户管理</div>
                         <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
-                            <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入JSON<input type="file" id="importCustomers" accept=".json,.txt" class="file-input-hidden" onchange="importCustomers(event)"></label>
+                            <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入JSON<input type="file" id="importCustomers" accept="application/json,.json,.txt,text/plain" class="file-input-hidden" onchange="importCustomers(event)"></label>
                             <label class="btn btn-outline btn-xs file-upload-btn" style="cursor:pointer;">📥 导入XLSX<input type="file" id="importCustomersXLSX" accept=".xlsx,.xls" class="file-input-hidden" onchange="importCustomersXLSX(event)"></label>
                             <button class="btn btn-success btn-xs" onclick="exportCustomers()">📤 导出JSON</button>
                             <button class="btn btn-success btn-xs" onclick="exportCustomersXLSX()">📊 导出XLSX</button>
