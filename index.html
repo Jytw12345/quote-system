@@ -8758,9 +8758,9 @@ function safeExecuteAsync(fn, defaultVal) {
                             <label for="companyPhone" style="font-size:0.65rem;color:var(--gray-500);font-weight:500;">电话</label>
                             <input type="tel" id="companyPhone" placeholder="电话" maxlength="11" style="width:100%;padding:0.2rem 0.25rem;font-size:0.7rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
                         </div>
-                        <div style="display:flex;flex-direction:column;gap:0.0625rem;flex:1.2;min-width:140px;">
+                        <div style="display:flex;flex-direction:column;gap:0.0625rem;flex:1;min-width:0;">
                             <label for="companyEmail" style="font-size:0.65rem;color:var(--gray-500);font-weight:500;">邮箱</label>
-                            <input type="email" id="companyEmail" placeholder="邮箱" style="width:100%;padding:0.2rem 0.25rem;font-size:0.7rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
+                            <input type="email" id="companyEmail" placeholder="邮箱" style="width:100%;padding:0.2rem 0.25rem;font-size:0.7rem;border:1px solid #e5e7eb;border-radius:4px;background:#fff;min-width:0;">
                         </div>
                     </div>
                     <div style="display:flex;flex-direction:column;gap:0.0625rem;">
@@ -48951,12 +48951,14 @@ function showAutoUpdateNotification(version, logs) {
         progressBar.style.width = '100%';
     }, 100);
     
-    // 2秒后显示完成提示
+    // 2秒后自动触发更新
     setTimeout(function() {
         progressContainer.style.display = 'none';
         completeContainer.style.display = 'block';
         // 自动更新模式下，2秒后自动触发更新
         sessionStorage.setItem('swAutoUpdated', 'true');
+        // 自动触发更新
+        confirmUpdate();
     }, 2000);
 }
 
