@@ -9426,11 +9426,11 @@ function safeExecuteAsync(fn, defaultVal) {
                 <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);">
                     <span style="font-size:0.8125rem;color:var(--gray-600);white-space:nowrap;">更新方式：</span>
                     <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;font-size:0.8125rem;">
-                        <input type="radio" name="updateMode" value="auto" onchange="setUpdateMode('auto')" style="accent-color:var(--primary);">
+                        <input type="radio" name="updateMode" value="auto" checked onchange="setUpdateMode('auto')" style="accent-color:var(--primary);">
                         <span>自动更新</span>
                     </label>
                     <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;font-size:0.8125rem;">
-                        <input type="radio" name="updateMode" value="manual" checked onchange="setUpdateMode('manual')" style="accent-color:var(--primary);">
+                        <input type="radio" name="updateMode" value="manual" onchange="setUpdateMode('manual')" style="accent-color:var(--primary);">
                         <span>提醒更新</span>
                     </label>
                 </div>
@@ -48455,7 +48455,7 @@ function setUpdateMode(mode) {
 
 // 获取更新模式设置
 function getUpdateMode() {
-    return localStorage.getItem('updateMode') || 'manual';
+    return localStorage.getItem('updateMode') || 'auto';
 }
 
 // 加载更新模式设置
