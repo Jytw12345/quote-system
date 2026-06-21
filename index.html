@@ -48979,23 +48979,28 @@ function showAutoUpdateComplete() {
     title.textContent = '更新已完成';
     
     var text = document.createElement('div');
+    text.id = 'autoUpdateCompleteText';
     text.style.cssText = 'font-size:0.8125rem;opacity:0.9;margin-bottom:0.5rem;';
-    text.textContent = '新版本已成功应用';
-    
-    var confirmBtn = document.createElement('button');
-    confirmBtn.style.cssText = 'padding:0.5rem 1.5rem;background:white;color:#10b981;border:none;border-radius:8px;font-size:0.875rem;font-weight:600;cursor:pointer;transition:all 0.2s;';
-    confirmBtn.textContent = '知道了';
-    confirmBtn.onclick = function() {
-        notification.remove();
-        sessionStorage.removeItem('swAutoUpdated');
-    };
+    text.textContent = '新版本已成功应用 (2秒后自动关闭)';
     
     notification.appendChild(icon);
     notification.appendChild(title);
     notification.appendChild(text);
-    notification.appendChild(confirmBtn);
     
     document.body.appendChild(notification);
+    
+    // 倒计时2秒后自动关闭
+    var countdown = 2;
+    var countdownTimer = setInterval(function() {
+        countdown--;
+        if (countdown > 0) {
+            text.textContent = '新版本已成功应用 (' + countdown + '秒后自动关闭)';
+        } else {
+            clearInterval(countdownTimer);
+            notification.remove();
+            sessionStorage.removeItem('swAutoUpdated');
+        }
+    }, 1000);
 }
 
 </script>
