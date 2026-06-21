@@ -49004,14 +49004,21 @@ function showAutoUpdateNotification(version, logs) {
     progressLabel.style.cssText = 'font-size:0.6875rem;opacity:0.8;margin-bottom:0.25rem;text-align:center;';
     progressLabel.textContent = '正在准备更新...';
     
+    var countdownNum = document.createElement('div');
+    countdownNum.id = 'autoUpdateCountdown';
+    countdownNum.style.cssText = 'font-size:1.5rem;font-weight:700;margin-bottom:0.25rem;';
+    countdownNum.textContent = '2';
+    
     var progress = document.createElement('div');
     progress.style.cssText = 'width:100%;height:4px;background:rgba(255,255,255,0.3);border-radius:2px;overflow:hidden;';
     
     var progressBar = document.createElement('div');
-    progressBar.style.cssText = 'height:100%;background:white;border-radius:2px;width:0%;transition:width 2s linear;';
+    progressBar.id = 'autoUpdateProgressBar';
+    progressBar.style.cssText = 'height:100%;background:white;border-radius:2px;width:0%;transition:width 1s linear;';
     progress.appendChild(progressBar);
     
     progressContainer.appendChild(progressLabel);
+    progressContainer.appendChild(countdownNum);
     progressContainer.appendChild(progress);
     
     // 完成提示容器（初始隐藏）
@@ -49043,8 +49050,18 @@ function showAutoUpdateNotification(version, logs) {
         progressBar.style.width = '100%';
     }, 100);
     
-    // 2秒后自动触发更新
+    // 2秒倒计时后自动触发更新
+    var countdown = 2;
+    var countdownTimer = setInterval(function() {
+        countdown--;
+        if (countdown > 0) {
+            countdownNum.textContent = countdown;
+            progressBar.style.width = (countdown * 50) + '%';
+        }
+    }, 1000);
+    
     setTimeout(function() {
+        clearInterval(countdownTimer);
         progressContainer.style.display = 'none';
         completeContainer.style.display = 'block';
         // 自动更新模式下，2秒后自动触发更新
