@@ -48918,25 +48918,14 @@ function showAutoUpdateNotification(version, logs) {
     
     var completeIcon = document.createElement('div');
     completeIcon.style.cssText = 'font-size:1.5rem;margin-bottom:0.25rem;';
-    completeIcon.innerHTML = '✅';
+    completeIcon.innerHTML = '⏳';
     
     var completeText = document.createElement('div');
-    completeText.style.cssText = 'font-size:0.8125rem;margin-bottom:0.75rem;';
-    completeText.textContent = '更新已准备完成';
-    
-    var confirmBtn = document.createElement('button');
-    confirmBtn.style.cssText = 'padding:0.5rem 1.5rem;background:white;color:#2563eb;border:none;border-radius:8px;font-size:0.875rem;font-weight:600;cursor:pointer;transition:all 0.2s;';
-    confirmBtn.textContent = '确认更新';
-    confirmBtn.onclick = function() {
-        notification.remove();
-        // 标记用户已确认自动更新
-        sessionStorage.setItem('swAutoUpdated', 'true');
-        confirmUpdate();
-    };
+    completeText.style.cssText = 'font-size:0.8125rem;margin-bottom:0.5rem;';
+    completeText.textContent = '正在更新，请稍候...';
     
     completeContainer.appendChild(completeIcon);
     completeContainer.appendChild(completeText);
-    completeContainer.appendChild(confirmBtn);
     
     notification.appendChild(title);
     notification.appendChild(versionText);
