@@ -48301,6 +48301,10 @@ function closeUpdateModal() {
 
 function confirmUpdate() {
     console.log('[SW] 🔄 confirmUpdate 开始执行...');
+    // 标记用户已确认更新，防止 reload 后再次显示更新模态框
+    sessionStorage.setItem('swUpdatePrompted', 'confirmed');
+    sessionStorage.removeItem('swAutoUpdated');
+    
     var statusEl = document.getElementById('softwareUpdateStatus');
     if (statusEl) {
         statusEl.style.display = 'block';
@@ -48770,7 +48774,13 @@ function initSoftwareVersion() {
 }
 
 function showUpdateNotification(version, logs) {
-    if (sessionStorage.getItem('swUpdatePrompted')) return;
+    // 如果之前已确认过更新（用户点击了"立即更新"并触发了 reload），不重复显示模态框
+    // 清除标志以便下次能正常显示更新提示
+    if (sessionStorage.getItem('swUpdatePrompted') === 'confirmed') {
+        sessionStorage.removeItem('swUpdatePrompted');
+        return;
+    }
+    // 标记已显示过更新通知，防止重复显示
     sessionStorage.setItem('swUpdatePrompted', 'true');
     showUpdateModal(version, logs);
 }
@@ -48788,8 +48798,15 @@ navigator.serviceWorker.addEventListener('message', function(event) {
 
         var updateMode = getUpdateMode();
         if (updateMode === 'auto') {
-            showAutoUpdateNotification(event.data.version, event.data.logs);
+            // 自动更新模式：检查之前是否已显示通知
+            if (sessionStorage.getItem('swAutoUpdated')) {
+                // 之前已显示过自动更新通知并触发了确认，显示更新完成提示
+                showAutoUpdateComplete();
+            } else {
+                showAutoUpdateNotification(event.data.version, event.data.logs);
+            }
         } else {
+            // 手动/提醒更新模式：始终显示更新通知
             showUpdateNotification(event.data.version, event.data.logs);
         }
         return;
@@ -48840,8 +48857,8 @@ function updateVersionDisplay(version, logs) {
 
 // 自动更新模式：显示桌面通知提示
 function showAutoUpdateNotification(version, logs) {
-    if (sessionStorage.getItem('swAutoUpdated')) return;
-    sessionStorage.setItem('swAutoUpdated', 'true');
+    // 如果已有自动更新通知在显示中，不重复创建
+    if (document.getElementById('autoUpdateNotification')) return;
     
     // 创建桌面通知元素
     var notification = document.createElement('div');
@@ -48912,6 +48929,8 @@ function showAutoUpdateNotification(version, logs) {
     confirmBtn.textContent = '确认更新';
     confirmBtn.onclick = function() {
         notification.remove();
+        // 标记用户已确认自动更新
+        sessionStorage.setItem('swAutoUpdated', 'true');
         confirmUpdate();
     };
     
@@ -48936,7 +48955,47 @@ function showAutoUpdateNotification(version, logs) {
     setTimeout(function() {
         progressContainer.style.display = 'none';
         completeContainer.style.display = 'block';
+        // 自动更新模式下，2秒后自动触发更新
+        sessionStorage.setItem('swAutoUpdated', 'true');
     }, 2000);
+}
+
+// 显示自动更新完成提示（用于 VERSION_UPDATED 消息处理中）
+function showAutoUpdateComplete() {
+    // 如果已有通知在显示中，移除它
+    var existing = document.getElementById('autoUpdateNotification');
+    if (existing) existing.remove();
+    
+    var notification = document.createElement('div');
+    notification.id = 'autoUpdateNotification';
+    notification.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#10b981,#059669);color:white;padding:1rem 1.5rem;border-radius:12px;box-shadow:0 10px 40px rgba(16,185,129,0.4);z-index:10002;display:flex;flex-direction:column;align-items:center;animation:slideDown 0.3s ease;min-width:280px;max-width:90vw;';
+    
+    var icon = document.createElement('div');
+    icon.style.cssText = 'font-size:2rem;margin-bottom:0.5rem;';
+    icon.innerHTML = '✅';
+    
+    var title = document.createElement('div');
+    title.style.cssText = 'font-size:1rem;font-weight:700;margin-bottom:0.25rem;';
+    title.textContent = '更新已完成';
+    
+    var text = document.createElement('div');
+    text.style.cssText = 'font-size:0.8125rem;opacity:0.9;margin-bottom:0.5rem;';
+    text.textContent = '新版本已成功应用';
+    
+    var confirmBtn = document.createElement('button');
+    confirmBtn.style.cssText = 'padding:0.5rem 1.5rem;background:white;color:#10b981;border:none;border-radius:8px;font-size:0.875rem;font-weight:600;cursor:pointer;transition:all 0.2s;';
+    confirmBtn.textContent = '知道了';
+    confirmBtn.onclick = function() {
+        notification.remove();
+        sessionStorage.removeItem('swAutoUpdated');
+    };
+    
+    notification.appendChild(icon);
+    notification.appendChild(title);
+    notification.appendChild(text);
+    notification.appendChild(confirmBtn);
+    
+    document.body.appendChild(notification);
 }
 
 </script>
