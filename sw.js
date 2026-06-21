@@ -1,5 +1,5 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'V3.4.118  更新日期：20260620 ';
+const CACHE_NAME = 'V3.4.119  更新日期：20260620 ';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
@@ -7,7 +7,7 @@ const UPDATE_LOGS = [
     '🐛 修复提醒更新模式：选择"稍后更新"后SW不会自动激活',
     ' 优化自动更新：显示更新日志最多5条，完成后点击确认更新',
     '📌 提醒更新模式：显示更新日志，支持稍后更新和立即更新',
-    '📌 手动检查更新：有新版本时显示立即更新按钮'
+    '📌 云同步增加指示灯'
 ];const selfOrigin = self.location.origin;
 const basePath = '/quote-system/';
 

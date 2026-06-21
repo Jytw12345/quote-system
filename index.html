@@ -1791,6 +1791,23 @@
         appearance: none;
         padding-right: 2.5rem;
     }
+    
+    /* 手机端云同步指示灯：只显示圆点 */
+    #cloudSyncIndicator {
+        padding: 0.25rem 0.375rem !important;
+    }
+    #cloudSyncText {
+        display: none !important;
+    }
+}
+
+/* 云同步指示灯闪烁动画 */
+@keyframes cloudSyncBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+.cloud-sync-blinking {
+    animation: cloudSyncBlink 0.8s ease-in-out infinite;
 }
 
 /* 横屏模式优化 */
@@ -6485,9 +6502,15 @@ function safeExecuteAsync(fn, defaultVal) {
 <div class="container">
     <header>
         <div class="header-content">
-            <div>
-                <h1>📊 图文广告快速报价系统 <span class="version-badge">v3.4 专业版</span></h1>
-                <p class="subtitle">快速生成专业报价单 · 产品库模板库客户管理 · 利润分析看板 · 报价历史记录 · 多级分类 · 批量操作 · 云同步</p>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <div>
+                    <h1>📊 图文广告快速报价系统 <span class="version-badge">v3.4 专业版</span></h1>
+                    <p class="subtitle">快速生成专业报价单 · 产品库模板库客户管理 · 利润分析看板 · 报价历史记录 · 多级分类 · 批量操作 · 云同步</p>
+                </div>
+                <div id="cloudSyncIndicator" style="display:none;align-items:center;gap:0.25rem;padding:0.25rem 0.5rem;background:var(--gray-100);border-radius:var(--radius);font-size:0.75rem;white-space:nowrap;">
+                    <span id="cloudSyncDot" style="width:8px;height:8px;border-radius:50%;background:#9ca3af;display:inline-block;"></span>
+                    <span id="cloudSyncText">云同步</span>
+                </div>
             </div>
             <div class="btn-group" style="gap:0.5rem;align-items:center;position:relative;">
                 <button class="btn btn-outline btn-sm" onclick="switchTab('history')">📜 报价历史</button>
@@ -37049,6 +37072,7 @@ function restoreBackup(key) {
 // ===== 云同步功能（GitHub Gist）=====
 let syncTimer = null;
 var isSyncing = false;
+var syncFailed = false;
 
 // 构建团队活动日志（用于上传）
 function buildSyncActivityLog() {
@@ -37841,6 +37865,7 @@ function syncNow() {
     saveData();
     
     isSyncing = true;
+    updateCloudSyncStatus();
     showSyncProgress('正在检测变更...', 10);
     addSyncLog('info', '开始同步...');
     
@@ -37851,9 +37876,11 @@ function syncNow() {
         showSyncProgress('首次同步，上传完整数据...', 50);
         gistUploadFull().then(() => {
             isSyncing = false;
+            if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
             hideSyncProgress();
         }).catch(() => {
             isSyncing = false;
+            if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
             hideSyncProgress();
         });
         return;
@@ -37914,6 +37941,7 @@ function syncNow() {
             showSyncProgress('同步完成', 100);
             showToast('✅ 同步成功！', 'success');
             addSyncLog('success', '同步完成');
+            syncFailed = false;
             updateCloudSyncStatus();
         }
     })
@@ -37921,10 +37949,13 @@ function syncNow() {
         console.error('同步失败:', err);
         showToast('❌ 同步失败: ' + err.message, 'error');
         addSyncLog('error', '同步失败: ' + err.message);
+        syncFailed = true;
+        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
     })
     .then(function() {
         // 模拟 finally 块，确保 isSyncing 被重置
         isSyncing = false;
+        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
         setTimeout(hideSyncProgress, 500);
     });
 }
@@ -38616,6 +38647,7 @@ function gistUpload() {
 
 function proceedWithUpload() {
     isSyncing = true;
+    updateCloudSyncStatus();
     showSyncProgress('正在上传数据...', 50);
     
     // 强制全量上传：清空云端后需要重新上传所有数据
@@ -38625,6 +38657,7 @@ function proceedWithUpload() {
     // 重置同步状态
     function resetSync() {
         isSyncing = false;
+        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
         setTimeout(hideSyncProgress, 500);
     }
     
@@ -38849,16 +38882,19 @@ function gistDownload() {
         return;
     }
     isSyncing = true;
+    updateCloudSyncStatus();
     
     var token = appData.systemSettings.gistToken || document.getElementById('gistToken').value.trim();
     if (!token) {
         isSyncing = false;
+        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
         showToast('请先填写 GitHub Token', 'warning');
         return;
     }
     var gistId = appData.systemSettings.gistId || '';
     if (!gistId) {
         isSyncing = false;
+        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
         showToast('ℹ️ 尚未创建云端备份，请先上传', 'info');
         return;
     }
@@ -38983,6 +39019,7 @@ function gistDownload() {
         // 智能判断是否需要同步
         if (serverDevice === localDevice && serverTime <= localTime) {
             isSyncing = false;
+            if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
             showToast('ℹ️ 本地数据已是最新', 'info');
             addSyncLog('info', '本地数据已是最新');
             return;
@@ -38995,6 +39032,7 @@ function gistDownload() {
         
         if (!serverHasData && localHasData) {
             isSyncing = false;
+            if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
             showToast('ℹ️ 云端数据为空，保留本地数据', 'info');
             addSyncLog('info', '云端数据为空，保留本地数据');
             return;
@@ -39025,14 +39063,17 @@ function gistDownload() {
             addSyncLog('info', '用户确认下载并合并数据');
             mergeSyncData(serverData);
             isSyncing = false;
+            if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
             showToast('✅ 数据下载合并成功！', 'success');
             addSyncLog('success', '数据下载合并成功');
         } else {
             isSyncing = false;
+            if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
         }
     })
     .catch(function(err) {
         isSyncing = false;
+        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
         console.error('Gist下载失败:', err);
         showToast('❌ 下载失败: ' + err.message, 'error');
         addSyncLog('error', '下载失败: ' + err.message);
@@ -40450,15 +40491,54 @@ function checkCloudUpdate() {
     })
     .catch(function(err) {
         console.log('检查云端更新失败:', err);
+        syncFailed = true;
+        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
     });
 }
 
 function updateCloudSyncStatus() {
-    var enabled = appData.systemSettings.cloudSyncEnabled;
+    var cloudEnabled = appData.systemSettings.cloudSyncEnabled;
+    var teamEnabled = appData.systemSettings.teamEnabled;
     var lastSync = appData.systemSettings.lastSyncTime ? new Date(appData.systemSettings.lastSyncTime).toLocaleString() : '从未';
     var interval = appData.systemSettings.cloudSyncInterval || 0;
     var intervalText = interval > 0 ? (interval / 60000) + '分钟' : '手动';
     var syncMode = appData.systemSettings.syncMode || 'auto';
+    
+    // 更新标题栏云同步指示灯
+    var indicator = document.getElementById('cloudSyncIndicator');
+    var dot = document.getElementById('cloudSyncDot');
+    var text = document.getElementById('cloudSyncText');
+    if (indicator && dot) {
+        // 同步失败时显示黄灯
+        if (syncFailed) {
+            dot.classList.remove('cloud-sync-blinking');
+            indicator.style.display = 'inline-flex';
+            dot.style.background = '#f59e0b'; // 黄色 - 同步失败
+            if (text) text.textContent = '⚠️ 失败';
+        } else if (isSyncing) {
+            // 数据传输时闪烁
+            dot.classList.add('cloud-sync-blinking');
+            if (text) text.textContent = '🔄 同步中';
+        } else {
+            dot.classList.remove('cloud-sync-blinking');
+            if (teamEnabled) {
+                indicator.style.display = 'inline-flex';
+                dot.style.background = '#10b981'; // 绿色 - 团队模式
+            } else if (cloudEnabled) {
+                indicator.style.display = 'inline-flex';
+                dot.style.background = '#2563eb'; // 蓝色 - 云同步
+            } else {
+                indicator.style.display = 'none';
+            }
+        }
+    }
+    if (text && !syncFailed && !isSyncing) {
+        if (teamEnabled) {
+            text.textContent = '👥 团队';
+        } else if (cloudEnabled) {
+            text.textContent = '☁️ 同步';
+        }
+    }
     
     var statusEl = document.getElementById('syncStatusText');
     var lastSyncEl = document.getElementById('lastSyncTime');
@@ -40481,8 +40561,8 @@ function updateCloudSyncStatus() {
     
     // 更新状态显示（包含状态图标）
     if (statusEl) {
-        var statusIcon = isSyncing ? '🔄' : (enabled ? '✅' : '🔴');
-        statusEl.innerHTML = statusIcon + ' ' + (enabled ?
+        var statusIcon = isSyncing ? '🔄' : (cloudEnabled ? '✅' : '🔴');
+        statusEl.innerHTML = statusIcon + ' ' + (cloudEnabled ?
             '<span class="badge badge-success">已启用</span> · ' + getSyncModeText(syncMode) :
             '<span class="badge badge-warning">未启用</span>');
     }
@@ -40505,12 +40585,12 @@ function updateCloudSyncStatus() {
     
     // 更新按钮状态
     if (toggleBtn) {
-        toggleBtn.textContent = enabled ? '⏹️ 禁用同步' : '⚡ 启用同步';
-        toggleBtn.className = enabled ? 'btn btn-warning btn-sm' : 'btn btn-primary btn-sm';
+        toggleBtn.textContent = cloudEnabled ? '⏹️ 禁用同步' : '⚡ 启用同步';
+        toggleBtn.className = cloudEnabled ? 'btn btn-warning btn-sm' : 'btn btn-primary btn-sm';
         toggleBtn.disabled = isSyncing;
     }
     if (syncNowBtn) {
-        syncNowBtn.style.display = enabled ? 'inline-flex' : 'none';
+        syncNowBtn.style.display = cloudEnabled ? 'inline-flex' : 'none';
         syncNowBtn.disabled = isSyncing;
     }
     
@@ -41283,8 +41363,18 @@ function saveTeamGistId() {
 
 // 启动时检测云端更新
 function checkCloudUpdateOnStartup() {
-    if (!appData.systemSettings.cloudSyncEnabled) return;
-    if (!appData.systemSettings.gistToken || !appData.systemSettings.gistId) return;
+    // 如果云同步未启用，也更新一下指示灯状态
+    if (!appData.systemSettings.cloudSyncEnabled) {
+        syncFailed = false;
+        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
+        return;
+    }
+    if (!appData.systemSettings.gistToken || !appData.systemSettings.gistId) {
+        // token/gistId 缺失，不算失败，只是还没配置好
+        syncFailed = false;
+        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
+        return;
+    }
     
     addSyncLog('info', '启动时检测云端更新...');
     
@@ -41295,16 +41385,27 @@ function checkCloudUpdateOnStartup() {
         return res.json();
     })
     .then(function(gist) {
-        if (!gist) return;
+        if (!gist) {
+            syncFailed = false;
+            if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
+            return;
+        }
         var file = gist.files && gist.files['quote-data.json'];
         if (!file || !file.content) {
             file = gist.files && gist.files['products-price.json'];
-            if (!file || !file.content) return;
+            if (!file || !file.content) {
+                syncFailed = false;
+                if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
+                return;
+            }
         }
         
         var data = JSON.parse(file.content);
         var serverTime = new Date(data.uploadTime || data.updateTime || 0);
         var localTime = new Date(appData.systemSettings.lastSyncTime || 0);
+        
+        syncFailed = false;
+        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
         
         if (serverTime > localTime) {
             addSyncLog('info', '检测到云端有更新');
@@ -41319,6 +41420,8 @@ function checkCloudUpdateOnStartup() {
     })
     .catch(function(err) {
         addSyncLog('error', '检测云端更新失败: ' + err.message);
+        syncFailed = true;
+        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
     });
 }
 
@@ -48972,11 +49075,26 @@ function showAutoUpdateComplete() {
     var text = document.createElement('div');
     text.id = 'autoUpdateCompleteText';
     text.style.cssText = 'font-size:0.8125rem;opacity:0.9;margin-bottom:0.5rem;';
-    text.textContent = '新版本已成功应用 (2秒后自动关闭)';
+    text.textContent = '新版本已成功应用';
+    
+    var countdownNum = document.createElement('div');
+    countdownNum.id = 'autoUpdateCountdown';
+    countdownNum.style.cssText = 'font-size:1.5rem;font-weight:700;margin-bottom:0.5rem;';
+    countdownNum.textContent = '2';
+    
+    var progressBar = document.createElement('div');
+    progressBar.style.cssText = 'width:100%;height:4px;background:rgba(255,255,255,0.3);border-radius:2px;overflow:hidden;';
+    var progressFill = document.createElement('div');
+    progressFill.id = 'autoUpdateProgress';
+    progressFill.style.cssText = 'height:100%;background:white;transition:width 1s linear;';
+    progressFill.style.width = '100%';
+    progressBar.appendChild(progressFill);
     
     notification.appendChild(icon);
     notification.appendChild(title);
     notification.appendChild(text);
+    notification.appendChild(countdownNum);
+    notification.appendChild(progressBar);
     
     document.body.appendChild(notification);
     
@@ -48985,7 +49103,8 @@ function showAutoUpdateComplete() {
     var countdownTimer = setInterval(function() {
         countdown--;
         if (countdown > 0) {
-            text.textContent = '新版本已成功应用 (' + countdown + '秒后自动关闭)';
+            countdownNum.textContent = countdown;
+            progressFill.style.width = (countdown * 50) + '%';
         } else {
             clearInterval(countdownTimer);
             notification.remove();
