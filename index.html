@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>图文广告快速报价系统 V3.4专业版</title>
     
-    <!-- Tesseract.js OCR - 延迟加载，需要时再加载 -->
-    <!-- <script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script> -->
     <!-- PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
@@ -1791,23 +1789,6 @@
         appearance: none;
         padding-right: 2.5rem;
     }
-    
-    /* 手机端云同步指示灯：只显示圆点 */
-    #cloudSyncIndicator {
-        padding: 0.25rem 0.375rem !important;
-    }
-    #cloudSyncText {
-        display: none !important;
-    }
-}
-
-/* 云同步指示灯闪烁动画 */
-@keyframes cloudSyncBlink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-}
-.cloud-sync-blinking {
-    animation: cloudSyncBlink 0.8s ease-in-out infinite;
 }
 
 /* 横屏模式优化 */
@@ -5050,9 +5031,21 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
 
 // ===== 调试模式开关 =====
 const DEBUG = false;
-if (!DEBUG) {
-    console.log = console.warn = console.error = console.info = function() {};
-}
+
+var logger = {
+    log: DEBUG ? console.log.bind(console) : function() {},
+    warn: DEBUG ? console.warn.bind(console) : function() {},
+    error: DEBUG ? console.error.bind(console) : function() {},
+    info: DEBUG ? console.info.bind(console) : function() {}
+};
+
+// 保留原始console方法用于关键错误报告
+var originalConsole = {
+    log: console.log.bind(console),
+    warn: console.warn.bind(console),
+    error: console.error.bind(console),
+    info: console.info.bind(console)
+};
 
 // ===== 工具函数：安全的ID比较 =====
 function isSameId(id1, id2) {
@@ -5146,8 +5139,11 @@ const MATERIAL_LIST = window.MATERIAL_LIST;
     window.globalConfirmModal = function() {
         try {
             if (modalCallback) modalCallback(true);
-        } catch(e) { console.warn('模态框回调执行失败:', e); }
-        window.globalCloseModal();
+        } catch(e) { 
+            console.warn('模态框回调执行失败:', e); 
+        } finally {
+            window.globalCloseModal();
+        }
     };
     
     window.globalHandleKeydown = function(e) {
@@ -5467,9 +5463,6 @@ var safeStorage = {
     // 每分钟检查一次存储使用情况
     setInterval(checkStorageUsage, 60000);
     
-    // 页面加载时检查一次
-    document.addEventListener('DOMContentLoaded', checkStorageUsage);
-    
     // ===== 一键清理功能 =====
     function showCleanupOptions() {
         showModal({
@@ -5584,12 +5577,6 @@ var safeStorage = {
         };
     }
     
-    function clearOperationLog() {
-        operationLog = [];
-        safeStorage.removeItem('operationLog');
-        showToast('操作日志已清空', 'success');
-    }
-    
     window.showCleanupOptions = showCleanupOptions;
     
     if (document.readyState === 'complete') {
@@ -5657,8 +5644,13 @@ var safeStorage = {
             cancelBtn.className = 'btn btn-outline';
             cancelBtn.textContent = opts.cancelText;
             cancelBtn.addEventListener('click', function() {
-                if (modalCallback) modalCallback(false);
-                window.globalCloseModal();
+                try {
+                    if (modalCallback) modalCallback(false);
+                } catch(e) { 
+                    console.warn('模态框回调执行失败:', e); 
+                } finally {
+                    window.globalCloseModal();
+                }
             });
             modalFooter.appendChild(cancelBtn);
         }
@@ -6502,15 +6494,9 @@ function safeExecuteAsync(fn, defaultVal) {
 <div class="container">
     <header>
         <div class="header-content">
-            <div style="display:flex;align-items:center;gap:0.5rem;">
-                <div>
-                    <h1>📊 图文广告快速报价系统 <span class="version-badge">v3.4 专业版</span></h1>
-                    <p class="subtitle">快速生成专业报价单 · 产品库模板库客户管理 · 利润分析看板 · 报价历史记录 · 多级分类 · 批量操作 · 云同步</p>
-                </div>
-                <div id="cloudSyncIndicator" style="display:none;align-items:center;gap:0.25rem;padding:0.25rem 0.5rem;background:var(--gray-100);border-radius:var(--radius);font-size:0.75rem;white-space:nowrap;">
-                    <span id="cloudSyncDot" style="width:8px;height:8px;border-radius:50%;background:#9ca3af;display:inline-block;"></span>
-                    <span id="cloudSyncText">云同步</span>
-                </div>
+            <div>
+                <h1>📊 图文广告快速报价系统 <span class="version-badge">v3.4 专业版</span></h1>
+                <p class="subtitle">快速生成专业报价单 · 产品库模板库客户管理 · 利润分析看板 · 报价历史记录 · 多级分类 · 批量操作 · 云同步</p>
             </div>
             <div class="btn-group" style="gap:0.5rem;align-items:center;position:relative;">
                 <button class="btn btn-outline btn-sm" onclick="switchTab('history')">📜 报价历史</button>
@@ -11290,7 +11276,8 @@ function showOperationLog(){
 }
 function clearOperationLog(){
     operationLog = [];
-    closeModal('logModal');
+    try { safeStorage.removeItem('operationLog'); } catch(e) {}
+    try { closeModal('logModal'); } catch(e) {}
     showToast('操作日志已清空', 'success');
 }
 function validateProduct(p, showErrors){
@@ -11439,39 +11426,7 @@ function createModal(title, content, buttons, modalId){
     };
     return modal;
 }
-document.addEventListener('keydown', function(e){
-    if(e.ctrlKey || e.metaKey){
-        if(e.key === 'z' && !e.shiftKey){
-            e.preventDefault();
-            undo();
-        } else if((e.key === 'y') || (e.key === 'z' && e.shiftKey)){
-            e.preventDefault();
-            redo();
-        } else if(e.key === 's'){
-            e.preventDefault();
-            saveCurrentQuoteToHistory();
-        } else if(e.key === 'n'){
-            e.preventDefault();
-            clearCurrentQuote();
-        } else if(e.key === 'p'){
-            e.preventDefault();
-            exportPDF();
-        } else if(e.key === 'f'){
-            e.preventDefault();
-            document.getElementById('quickProductSearch').focus();
-        }
-    }
-    if(e.key === 'Delete' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA'){
-        const selectedItems = document.querySelectorAll('.quote-item-row.selected');
-        if(selectedItems.length > 0){
-            e.preventDefault();
-            selectedItems.forEach(row => {
-                const iid = row.dataset.id;
-                if(iid) removeQuoteItem(iid);
-            });
-        }
-    }
-});
+
 function showKeyboardShortcuts(){
     const shortcuts = [
         { key: 'Ctrl + Z', desc: '撤销' },
@@ -11535,18 +11490,25 @@ function initKeyboardShortcuts() {
         // 如果是输入框，只处理特殊快捷键
         if (isInputField) return;
         
-        // Ctrl+S - 保存报价
+        // Ctrl+S - 保存报价到历史
         if (e.ctrlKey && e.key === 's') {
             e.preventDefault();
-            saveCurrentQuote();
-            showToast('报价已保存', 'success');
+            saveCurrentQuoteToHistory();
             return;
         }
         
-        // Ctrl+P - 打印/预览
+        // Ctrl+P - 导出PDF
         if (e.ctrlKey && e.key === 'p') {
             e.preventDefault();
-            openQuotePreview();
+            exportPDF();
+            return;
+        }
+        
+        // Ctrl+F - 聚焦搜索框
+        if (e.ctrlKey && e.key === 'f') {
+            e.preventDefault();
+            const searchInput = document.getElementById('quickProductSearch');
+            if (searchInput) searchInput.focus();
             return;
         }
         
@@ -11576,13 +11538,13 @@ function initKeyboardShortcuts() {
         
         // Delete - 删除选中项目
         if (e.key === 'Delete') {
-            const selectedItems = document.querySelectorAll('.quote-item.selected');
-            if (selectedItems.length > 0 && confirm(`确定要删除选中的 ${selectedItems.length} 个项目吗？`)) {
-                selectedItems.forEach(item => {
-                    const itemId = item.dataset.id;
-                    removeQuoteItem(itemId);
+            const selectedItems = document.querySelectorAll('.quote-item-row.selected');
+            if (selectedItems.length > 0) {
+                e.preventDefault();
+                selectedItems.forEach(row => {
+                    const itemId = row.dataset.id;
+                    if (itemId) removeQuoteItem(itemId);
                 });
-                showToast(`已删除 ${selectedItems.length} 个项目`, 'success');
             }
             return;
         }
@@ -12131,6 +12093,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 初始化键盘快捷键
     initKeyboardShortcuts();
+    
+    // 检查存储使用情况
+    checkStorageUsage();
+    
+    // 成本价列相关初始化
+    const hideCostPriceCheckbox = document.getElementById('hideCostPrice');
+    if (hideCostPriceCheckbox) {
+        hideCostPriceCheckbox.addEventListener('change', function() { 
+            toggleCostPriceColumn(); 
+        }); 
+    }
+    updateCostPriceLabel();
+    toggleCostPriceColumn();
+    const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+    if (batchDeleteBtn) {
+        batchDeleteBtn.style.display = isAdminMode() ? 'inline-flex' : 'none';
+    }
+    
+    // 门头招牌计算回车触发
+    ['doorHeaderWidth', 'doorHeaderHeight', 'doorHeaderCharCount', 'doorHeaderCharSize'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    calculateDoorHeaderQuote();
+                }
+            });
+        }
+    });
+    
+    // 初始化DeepSeek状态
+    setTimeout(updateDeepSeekStatus, 500);
+    
+    // 更新计算器输入
+    updateCalcInputs();
+    
+    // 加载百度AI配置
+    loadBaiduConfig();
+    
+    // 初始化照片数据
+    initPhotos();
+    
+    // 移动端导航初始化
+    const currentTab = localStorage.getItem('currentTab') || 'builder';
+    updateMobileNavState(currentTab);
+    if (typeof switchTab === 'function') {
+        setTimeout(function() {
+            switchTab(currentTab);
+        }, 100);
+    }
 
     // 初始化分页
     initPagination();
@@ -12208,9 +12220,7 @@ function hideLoader() {
 var activeObjectURLs = []; // 记录所有创建的 objectURL 用于清理
 const MAX_OBJECT_URLS = 500; // 防止内存泄漏，限制最大数量
 
-// 页面卸载时清理所有 objectURL，防止内存泄漏
-window.addEventListener('beforeunload', cleanupObjectURLs);
-window.addEventListener('pagehide', cleanupObjectURLs);
+
 
 // 清理单个 objectURL
 function cleanupSingleObjectURL(url) {
@@ -15316,16 +15326,20 @@ function removeQuoteItem(iid){
     }
     // 找到要删除的项目
     const item = appData.currentQuote.items.find(i => isSameId(i.id, iid));
-    const itemName = item ? item.name : '项目';
+    if (!item) {
+        showToast('未找到该项目', 'error');
+        return;
+    }
+    const itemName = item.name || '项目';
     saveToUndoStack('删除项目', '删除: ' + itemName);
     
     // 使用 isSameId 进行精确匹配，只删除一个项目
     let deleted = false;
     appData.currentQuote.items = appData.currentQuote.items.filter(item => {
-        if (deleted) return true; // 已经删除了一个，保留其他所有
+        if (deleted) return true;
         if (isSameId(item.id, iid)) {
             deleted = true;
-            return false; // 删除这个
+            return false;
         }
         return true;
     });
@@ -17166,6 +17180,10 @@ function initDraggableElements(){
             e.preventDefault();
         },{passive:false});
     });
+    document.removeEventListener('mousemove',onDrag);
+    document.removeEventListener('touchmove',onDragTouch,{passive:false});
+    document.removeEventListener('mouseup',endDrag);
+    document.removeEventListener('touchend',endDrag);
     document.addEventListener('mousemove',onDrag);
     document.addEventListener('touchmove',onDragTouch,{passive:false});
     document.addEventListener('mouseup',endDrag);
@@ -18604,18 +18622,7 @@ if (typeof addEmptyQuoteItem === 'function') {
         toggleCostPriceColumn(); 
     };
 }
-document.addEventListener('DOMContentLoaded', function() { 
-    document.getElementById('hideCostPrice').addEventListener('change', function() { 
-        toggleCostPriceColumn(); 
-    }); 
-    updateCostPriceLabel(); // 初始化成本价标签
-    toggleCostPriceColumn(); 
-    // 根据用户身份显示/隐藏批量删除按钮
-    const batchDeleteBtn = document.getElementById('batchDeleteBtn');
-    if (batchDeleteBtn) {
-        batchDeleteBtn.style.display = isAdminMode() ? 'inline-flex' : 'none';
-    }
-});
+
 // ===== 产品库 =====
 function updateCategoryFilter(){
     const select = document.getElementById('productCategoryFilter');
@@ -19121,6 +19128,11 @@ function openEditProductModal(pid){
     if(p.imageId && idbInitialized && IDB.isSupported()) {
         IDB.getImage(p.imageId).then(function(url) {
             if(url) {
+                if (activeObjectURLs.length >= MAX_OBJECT_URLS) {
+                    const toRemove = activeObjectURLs.splice(0, Math.floor(MAX_OBJECT_URLS / 2));
+                    toRemove.forEach(function(u) { try { URL.revokeObjectURL(u); } catch(e) {} });
+                }
+                activeObjectURLs.push(url);
                 loadImage(url);
             } else {
                 loadImage(p.image);
@@ -30163,20 +30175,7 @@ function suggestCharSize() {
     }
 }
 
-// 回车触发计算
-document.addEventListener('DOMContentLoaded', function() {
-    const inputs = ['doorHeaderWidth', 'doorHeaderHeight', 'doorHeaderCharCount', 'doorHeaderCharSize'];
-    inputs.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    calculateDoorHeaderQuote();
-                }
-            });
-        }
-    });
-});
+
 
 // ==================== 方案对比功能 ====================
 let compareSlots = []; // 最多保存2个方案用于对比
@@ -32995,10 +32994,7 @@ ${historySummary}
     return null;
 }
 
-// 初始化DeepSeek状态
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(updateDeepSeekStatus, 500);
-});
+
 
 // 智能定价建议功能
 function generatePricingRecommendation(product){
@@ -37072,7 +37068,6 @@ function restoreBackup(key) {
 // ===== 云同步功能（GitHub Gist）=====
 let syncTimer = null;
 var isSyncing = false;
-var syncFailed = false;
 
 // 构建团队活动日志（用于上传）
 function buildSyncActivityLog() {
@@ -37865,7 +37860,6 @@ function syncNow() {
     saveData();
     
     isSyncing = true;
-    updateCloudSyncStatus();
     showSyncProgress('正在检测变更...', 10);
     addSyncLog('info', '开始同步...');
     
@@ -37876,11 +37870,9 @@ function syncNow() {
         showSyncProgress('首次同步，上传完整数据...', 50);
         gistUploadFull().then(() => {
             isSyncing = false;
-            if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
             hideSyncProgress();
         }).catch(() => {
             isSyncing = false;
-            if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
             hideSyncProgress();
         });
         return;
@@ -37941,7 +37933,6 @@ function syncNow() {
             showSyncProgress('同步完成', 100);
             showToast('✅ 同步成功！', 'success');
             addSyncLog('success', '同步完成');
-            syncFailed = false;
             updateCloudSyncStatus();
         }
     })
@@ -37949,13 +37940,10 @@ function syncNow() {
         console.error('同步失败:', err);
         showToast('❌ 同步失败: ' + err.message, 'error');
         addSyncLog('error', '同步失败: ' + err.message);
-        syncFailed = true;
-        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
     })
     .then(function() {
         // 模拟 finally 块，确保 isSyncing 被重置
         isSyncing = false;
-        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
         setTimeout(hideSyncProgress, 500);
     });
 }
@@ -38647,7 +38635,6 @@ function gistUpload() {
 
 function proceedWithUpload() {
     isSyncing = true;
-    updateCloudSyncStatus();
     showSyncProgress('正在上传数据...', 50);
     
     // 强制全量上传：清空云端后需要重新上传所有数据
@@ -38657,7 +38644,6 @@ function proceedWithUpload() {
     // 重置同步状态
     function resetSync() {
         isSyncing = false;
-        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
         setTimeout(hideSyncProgress, 500);
     }
     
@@ -38882,19 +38868,16 @@ function gistDownload() {
         return;
     }
     isSyncing = true;
-    updateCloudSyncStatus();
     
     var token = appData.systemSettings.gistToken || document.getElementById('gistToken').value.trim();
     if (!token) {
         isSyncing = false;
-        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
         showToast('请先填写 GitHub Token', 'warning');
         return;
     }
     var gistId = appData.systemSettings.gistId || '';
     if (!gistId) {
         isSyncing = false;
-        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
         showToast('ℹ️ 尚未创建云端备份，请先上传', 'info');
         return;
     }
@@ -39019,7 +39002,6 @@ function gistDownload() {
         // 智能判断是否需要同步
         if (serverDevice === localDevice && serverTime <= localTime) {
             isSyncing = false;
-            if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
             showToast('ℹ️ 本地数据已是最新', 'info');
             addSyncLog('info', '本地数据已是最新');
             return;
@@ -39032,7 +39014,6 @@ function gistDownload() {
         
         if (!serverHasData && localHasData) {
             isSyncing = false;
-            if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
             showToast('ℹ️ 云端数据为空，保留本地数据', 'info');
             addSyncLog('info', '云端数据为空，保留本地数据');
             return;
@@ -39063,17 +39044,14 @@ function gistDownload() {
             addSyncLog('info', '用户确认下载并合并数据');
             mergeSyncData(serverData);
             isSyncing = false;
-            if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
             showToast('✅ 数据下载合并成功！', 'success');
             addSyncLog('success', '数据下载合并成功');
         } else {
             isSyncing = false;
-            if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
         }
     })
     .catch(function(err) {
         isSyncing = false;
-        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
         console.error('Gist下载失败:', err);
         showToast('❌ 下载失败: ' + err.message, 'error');
         addSyncLog('error', '下载失败: ' + err.message);
@@ -40491,54 +40469,15 @@ function checkCloudUpdate() {
     })
     .catch(function(err) {
         console.log('检查云端更新失败:', err);
-        syncFailed = true;
-        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
     });
 }
 
 function updateCloudSyncStatus() {
-    var cloudEnabled = appData.systemSettings.cloudSyncEnabled;
-    var teamEnabled = appData.systemSettings.teamEnabled;
+    var enabled = appData.systemSettings.cloudSyncEnabled;
     var lastSync = appData.systemSettings.lastSyncTime ? new Date(appData.systemSettings.lastSyncTime).toLocaleString() : '从未';
     var interval = appData.systemSettings.cloudSyncInterval || 0;
     var intervalText = interval > 0 ? (interval / 60000) + '分钟' : '手动';
     var syncMode = appData.systemSettings.syncMode || 'auto';
-    
-    // 更新标题栏云同步指示灯
-    var indicator = document.getElementById('cloudSyncIndicator');
-    var dot = document.getElementById('cloudSyncDot');
-    var text = document.getElementById('cloudSyncText');
-    if (indicator && dot) {
-        // 同步失败时显示黄灯
-        if (syncFailed) {
-            dot.classList.remove('cloud-sync-blinking');
-            indicator.style.display = 'inline-flex';
-            dot.style.background = '#f59e0b'; // 黄色 - 同步失败
-            if (text) text.textContent = '⚠️ 失败';
-        } else if (isSyncing) {
-            // 数据传输时闪烁
-            dot.classList.add('cloud-sync-blinking');
-            if (text) text.textContent = '🔄 同步中';
-        } else {
-            dot.classList.remove('cloud-sync-blinking');
-            if (teamEnabled) {
-                indicator.style.display = 'inline-flex';
-                dot.style.background = '#10b981'; // 绿色 - 团队模式
-            } else if (cloudEnabled) {
-                indicator.style.display = 'inline-flex';
-                dot.style.background = '#2563eb'; // 蓝色 - 云同步
-            } else {
-                indicator.style.display = 'none';
-            }
-        }
-    }
-    if (text && !syncFailed && !isSyncing) {
-        if (teamEnabled) {
-            text.textContent = '👥 团队';
-        } else if (cloudEnabled) {
-            text.textContent = '☁️ 同步';
-        }
-    }
     
     var statusEl = document.getElementById('syncStatusText');
     var lastSyncEl = document.getElementById('lastSyncTime');
@@ -40561,8 +40500,8 @@ function updateCloudSyncStatus() {
     
     // 更新状态显示（包含状态图标）
     if (statusEl) {
-        var statusIcon = isSyncing ? '🔄' : (cloudEnabled ? '✅' : '🔴');
-        statusEl.innerHTML = statusIcon + ' ' + (cloudEnabled ?
+        var statusIcon = isSyncing ? '🔄' : (enabled ? '✅' : '🔴');
+        statusEl.innerHTML = statusIcon + ' ' + (enabled ?
             '<span class="badge badge-success">已启用</span> · ' + getSyncModeText(syncMode) :
             '<span class="badge badge-warning">未启用</span>');
     }
@@ -40585,12 +40524,12 @@ function updateCloudSyncStatus() {
     
     // 更新按钮状态
     if (toggleBtn) {
-        toggleBtn.textContent = cloudEnabled ? '⏹️ 禁用同步' : '⚡ 启用同步';
-        toggleBtn.className = cloudEnabled ? 'btn btn-warning btn-sm' : 'btn btn-primary btn-sm';
+        toggleBtn.textContent = enabled ? '⏹️ 禁用同步' : '⚡ 启用同步';
+        toggleBtn.className = enabled ? 'btn btn-warning btn-sm' : 'btn btn-primary btn-sm';
         toggleBtn.disabled = isSyncing;
     }
     if (syncNowBtn) {
-        syncNowBtn.style.display = cloudEnabled ? 'inline-flex' : 'none';
+        syncNowBtn.style.display = enabled ? 'inline-flex' : 'none';
         syncNowBtn.disabled = isSyncing;
     }
     
@@ -41363,18 +41302,8 @@ function saveTeamGistId() {
 
 // 启动时检测云端更新
 function checkCloudUpdateOnStartup() {
-    // 如果云同步未启用，也更新一下指示灯状态
-    if (!appData.systemSettings.cloudSyncEnabled) {
-        syncFailed = false;
-        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
-        return;
-    }
-    if (!appData.systemSettings.gistToken || !appData.systemSettings.gistId) {
-        // token/gistId 缺失，不算失败，只是还没配置好
-        syncFailed = false;
-        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
-        return;
-    }
+    if (!appData.systemSettings.cloudSyncEnabled) return;
+    if (!appData.systemSettings.gistToken || !appData.systemSettings.gistId) return;
     
     addSyncLog('info', '启动时检测云端更新...');
     
@@ -41385,27 +41314,16 @@ function checkCloudUpdateOnStartup() {
         return res.json();
     })
     .then(function(gist) {
-        if (!gist) {
-            syncFailed = false;
-            if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
-            return;
-        }
+        if (!gist) return;
         var file = gist.files && gist.files['quote-data.json'];
         if (!file || !file.content) {
             file = gist.files && gist.files['products-price.json'];
-            if (!file || !file.content) {
-                syncFailed = false;
-                if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
-                return;
-            }
+            if (!file || !file.content) return;
         }
         
         var data = JSON.parse(file.content);
         var serverTime = new Date(data.uploadTime || data.updateTime || 0);
         var localTime = new Date(appData.systemSettings.lastSyncTime || 0);
-        
-        syncFailed = false;
-        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
         
         if (serverTime > localTime) {
             addSyncLog('info', '检测到云端有更新');
@@ -41420,8 +41338,6 @@ function checkCloudUpdateOnStartup() {
     })
     .catch(function(err) {
         addSyncLog('error', '检测云端更新失败: ' + err.message);
-        syncFailed = true;
-        if (typeof updateCloudSyncStatus === 'function') updateCloudSyncStatus();
     });
 }
 
@@ -45263,9 +45179,7 @@ function clearCalc() {
     calculatePrice();
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    updateCalcInputs();
-});
+
 // ===== 图片点击和按钮处理 =====
 function initImageClickHandlers(){
     document.getElementById('quoteItemsList').addEventListener('click', function(e){
@@ -45964,10 +45878,7 @@ function extractMaterialInfo(results) {
     return null;
 }
 
-// 页面加载时加载百度AI配置
-document.addEventListener('DOMContentLoaded', function() {
-    loadBaiduConfig();
-});
+
 
 function clearAllData() {
     // 使用原生 confirm 对话框确保可靠执行
@@ -46365,32 +46276,14 @@ function deleteCategory(name, type, parentCat) {
     updateCategoryFilter();
 }
 
-// 页面卸载时清理 objectURL，防止内存泄漏
-window.addEventListener('beforeunload', function() {
-    cleanupObjectURLs();
-});
+
 
 // 定期清理（每10分钟一次），防止内存泄漏
 var objectURLCleanupTimer = setInterval(function() {
     cleanupObjectURLs();
 }, 600000); // 10分钟
 
-// ===== 页面卸载时清理定时器 =====
-window.addEventListener('beforeunload', function() {
-    // 清理草稿保存定时器
-    if (typeof draftSaveTimer !== 'undefined' && draftSaveTimer) {
-        clearInterval(draftSaveTimer);
-    }
-    // 清理云同步定时器
-    if (typeof syncTimer !== 'undefined' && syncTimer) {
-        clearInterval(syncTimer);
-    }
-    // 清理ObjectURL清理定时器
-    if (typeof objectURLCleanupTimer !== 'undefined' && objectURLCleanupTimer) {
-        clearInterval(objectURLCleanupTimer);
-    }
-    console.log('页面卸载，定时器已清理');
-});
+
 
 // ===== 照片管理模块 =====
 var currentViewPhoto = null;
@@ -46600,7 +46493,13 @@ function refreshPhotoList() {
                     if (imgData.uploadedAt) photo.uploadedAt = imgData.uploadedAt;
                     // 图片数据通过 blob URL 加载
                     if (imgData.blob) {
-                        photo.data = URL.createObjectURL(imgData.blob);
+                        const url = URL.createObjectURL(imgData.blob);
+                        photo.data = url;
+                        if (activeObjectURLs.length >= MAX_OBJECT_URLS) {
+                            const toRemove = activeObjectURLs.splice(0, Math.floor(MAX_OBJECT_URLS / 2));
+                            toRemove.forEach(function(u) { try { URL.revokeObjectURL(u); } catch(e) {} });
+                        }
+                        activeObjectURLs.push(url);
                     }
                 }
             });
@@ -46961,17 +46860,7 @@ function deleteSelectedPhotos() {
     });
 }
 
-// 在页面加载时初始化照片数据
-document.addEventListener('DOMContentLoaded', function() {
-    initPhotos();
-    // 等待IndexedDB加载完成后再刷新照片列表
-    idbInitPromise.then(function() {
-        // 数据加载完成后，照片应该已经在appData.photos中了
-        setTimeout(function() {
-            refreshPhotoList();
-        }, 500);
-    });
-});
+
 
 function showIndexedDBStats() {
     if (!IDB.isSupported()) {
@@ -48002,37 +47891,7 @@ function updateMobileNavState(tabName) {
     });
 }
 
-// 页面加载时初始化移动端导航
-document.addEventListener('DOMContentLoaded', function() {
-    const currentTab = localStorage.getItem('currentTab') || 'builder';
-    updateMobileNavState(currentTab);
-    
-    // 同时更新顶部导航状态
-    if (typeof switchTab === 'function') {
-        // 延迟执行，确保 DOM 已完全加载
-        setTimeout(function() {
-            switchTab(currentTab);
-        }, 100);
-    }
 
-    // 撤销/重做键盘快捷键
-    document.addEventListener('keydown', function(e) {
-        // 检查是否在输入框中（避免在输入时触发）
-        const isInputField = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.isContentEditable;
-
-        // Ctrl/Cmd + Z: 撤销
-        if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey && !isInputField) {
-            e.preventDefault();
-            undo();
-        }
-
-        // Ctrl/Cmd + Shift + Z 或 Ctrl/Cmd + Y: 重做
-        if ((e.ctrlKey || e.metaKey) && ((e.key === 'z' && e.shiftKey) || e.key === 'y') && !isInputField) {
-            e.preventDefault();
-            redo();
-        }
-    });
-});
 
 // 客户公司名称自动联想功能
 function getAllClientNames() {
@@ -49004,21 +48863,14 @@ function showAutoUpdateNotification(version, logs) {
     progressLabel.style.cssText = 'font-size:0.6875rem;opacity:0.8;margin-bottom:0.25rem;text-align:center;';
     progressLabel.textContent = '正在准备更新...';
     
-    var countdownNum = document.createElement('div');
-    countdownNum.id = 'autoUpdateCountdown';
-    countdownNum.style.cssText = 'font-size:1.5rem;font-weight:700;margin-bottom:0.25rem;';
-    countdownNum.textContent = '2';
-    
     var progress = document.createElement('div');
     progress.style.cssText = 'width:100%;height:4px;background:rgba(255,255,255,0.3);border-radius:2px;overflow:hidden;';
     
     var progressBar = document.createElement('div');
-    progressBar.id = 'autoUpdateProgressBar';
-    progressBar.style.cssText = 'height:100%;background:white;border-radius:2px;width:0%;transition:width 1s linear;';
+    progressBar.style.cssText = 'height:100%;background:white;border-radius:2px;width:0%;transition:width 2s linear;';
     progress.appendChild(progressBar);
     
     progressContainer.appendChild(progressLabel);
-    progressContainer.appendChild(countdownNum);
     progressContainer.appendChild(progress);
     
     // 完成提示容器（初始隐藏）
@@ -49050,18 +48902,8 @@ function showAutoUpdateNotification(version, logs) {
         progressBar.style.width = '100%';
     }, 100);
     
-    // 2秒倒计时后自动触发更新
-    var countdown = 2;
-    var countdownTimer = setInterval(function() {
-        countdown--;
-        if (countdown > 0) {
-            countdownNum.textContent = countdown;
-            progressBar.style.width = (countdown * 50) + '%';
-        }
-    }, 1000);
-    
+    // 2秒后自动触发更新
     setTimeout(function() {
-        clearInterval(countdownTimer);
         progressContainer.style.display = 'none';
         completeContainer.style.display = 'block';
         // 自动更新模式下，2秒后自动触发更新
@@ -49092,26 +48934,11 @@ function showAutoUpdateComplete() {
     var text = document.createElement('div');
     text.id = 'autoUpdateCompleteText';
     text.style.cssText = 'font-size:0.8125rem;opacity:0.9;margin-bottom:0.5rem;';
-    text.textContent = '新版本已成功应用';
-    
-    var countdownNum = document.createElement('div');
-    countdownNum.id = 'autoUpdateCountdown';
-    countdownNum.style.cssText = 'font-size:1.5rem;font-weight:700;margin-bottom:0.5rem;';
-    countdownNum.textContent = '2';
-    
-    var progressBar = document.createElement('div');
-    progressBar.style.cssText = 'width:100%;height:4px;background:rgba(255,255,255,0.3);border-radius:2px;overflow:hidden;';
-    var progressFill = document.createElement('div');
-    progressFill.id = 'autoUpdateProgress';
-    progressFill.style.cssText = 'height:100%;background:white;transition:width 1s linear;';
-    progressFill.style.width = '100%';
-    progressBar.appendChild(progressFill);
+    text.textContent = '新版本已成功应用 (2秒后自动关闭)';
     
     notification.appendChild(icon);
     notification.appendChild(title);
     notification.appendChild(text);
-    notification.appendChild(countdownNum);
-    notification.appendChild(progressBar);
     
     document.body.appendChild(notification);
     
@@ -49120,8 +48947,7 @@ function showAutoUpdateComplete() {
     var countdownTimer = setInterval(function() {
         countdown--;
         if (countdown > 0) {
-            countdownNum.textContent = countdown;
-            progressFill.style.width = (countdown * 50) + '%';
+            text.textContent = '新版本已成功应用 (' + countdown + '秒后自动关闭)';
         } else {
             clearInterval(countdownTimer);
             notification.remove();
