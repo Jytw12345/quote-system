@@ -1,16 +1,13 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'V3.4.123  更新日期：20260623';
+const CACHE_NAME = 'V3.4.124  更新日期：20260624';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
-    'bug 修复重复函数定义 clearOperationLog 导致的功能异常',
-    'bug 修复模态框回调执行失败时泄漏的问题',
-    'bug 修复拖拽事件监听器未清理导致的内存泄漏',
-    'bug 修复多个 DOMContentLoaded 监听器执行顺序不可预测的问题',
-    'bug 修复重复的全局 keydown 监听器导致快捷键冲突',
-    'bug 修复 Ctrl+S/Ctrl+P 快捷键行为不一致的问题',
-    'bug 修复 Delete 键选择器与HTML结构不匹配的问题',
-    'bug 修复 removeQuoteItem 函数空指针异常',
+    'feat 样式切换后自动更新预览，无需手动点击',
+    'feat 添加预览/关闭预览按钮切换功能',
+    'feat 修复自定义主题色设置不生效的问题',
+    'feat 修改系统设置中颜色设置描述，明确为现代风格颜色设置',
+    'bug 修复首次预览时默认样式不一致的问题',
     'bug 修复多个 beforeunload/pagehide 监听器重复清理的问题',
     'opt 优化 ObjectURL 管理，添加数量限制和定期清理机制',
     'opt 统一调试模式日志输出方式'

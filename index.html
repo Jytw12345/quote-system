@@ -6878,7 +6878,7 @@ function safeExecuteAsync(fn, defaultVal) {
                             <option value="imageFocus">图片展示</option>
                             <option value="mainImage">门头工程</option>
                         </select>
-                        <button class="btn btn-primary" onclick="generateQuotePreview()">👁️ 预览报价单</button>
+                        <button id="previewQuoteBtn" class="btn btn-primary" onclick="toggleQuotePreview()">👁️ 预览报价单</button>
                         <button class="btn btn-outline" onclick="copyCurrentQuote()">📋 复制报价</button>
                         <button class="btn btn-outline" onclick="exportPDF(true)">📄 导出PDF</button>
                         <button class="btn btn-outline" onclick="exportJPG(true)">🖼️ 导出JPG</button>
@@ -8784,14 +8784,14 @@ function safeExecuteAsync(fn, defaultVal) {
                 </div>
             </div>
             <div class="settings-section">
-                <h3>🖨️ 报价单样式配置</h3>
+                <h3>🎨 现代风格颜色设置</h3>
                 <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:1rem;padding:0.5rem;background:#eff6ff;border-radius:var(--radius);border:1px solid #bfdbfe;">
-                    💡 选择预设样式或自定义主题颜色，打造专属的报价单风格。
+                    💡 选择预设颜色或自定义主题颜色，更改现代风格报价单的颜色风格。
                 </div>
 
-                <!-- 预设样式选择 -->
+                <!-- 预设颜色选择 -->
                 <div style="margin-bottom:1rem;">
-                    <div style="font-weight:500;margin-bottom:0.5rem;font-size:0.8125rem;">📋 预设样式</div>
+                    <div style="font-weight:500;margin-bottom:0.5rem;font-size:0.8125rem;">📋 预设颜色</div>
                     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.375rem;" id="printStyleOptions">
                         <div class="style-card" data-style="classic" onclick="selectPrintStyle('classic')" style="cursor:pointer;padding:0.375rem;background:#fff;border:2px solid #e5e7eb;border-radius:6px;text-align:center;transition:all 0.2s;">
                             <div style="width:45px;height:32px;margin:0 auto 0.25rem;background:linear-gradient(135deg,#2563eb,#0ea5e9);border-radius:4px;"></div>
@@ -10318,6 +10318,7 @@ let appData = {
         companyAddress:'',
         companyNotes:'',
         printStyle:'classic',
+        quoteStyle:'modern',
         defaultTaxRate:1,
         defaultPriceMode:'in',
         defaultDiscountRate:100,
@@ -12530,7 +12531,7 @@ function fixAppDataCompat() {
     }
     if(!appData.systemSettings) appData.systemSettings={ 
         companyName:'', companyContact:'', companyPhone:'', companyEmail:'', companyAddress:'', companyNotes:'', 
-        printStyle:'classic', defaultTaxRate:1, defaultPriceMode:'in', defaultDiscountRate:100, quoteValidDays:7, selectedSealId:null,
+        printStyle:'classic', quoteStyle:'modern', defaultTaxRate:1, defaultPriceMode:'in', defaultDiscountRate:100, quoteValidDays:7, selectedSealId:null,
         cloudSyncEnabled: false, gistToken: '', gistId: '', cloudSyncInterval: 0, lastSyncTime: null,
         incrementalSyncEnabled: true, lastIncrementalSyncTime: null,
         autoRetryEnabled: true, desktopNotificationsEnabled: false, dataCompressionEnabled: true,
@@ -12545,6 +12546,7 @@ function fixAppDataCompat() {
         teamActivityLog: [],
         syncChangeTracking: true
     };
+    if(appData.systemSettings.quoteStyle === undefined) appData.systemSettings.quoteStyle = 'modern';
     if(appData.systemSettings.cloudSyncEnabled === undefined) {
         appData.systemSettings.cloudSyncEnabled = false;
         appData.systemSettings.gistToken = '';
@@ -12674,6 +12676,8 @@ function applyDefaults(){
     document.getElementById('companyAddress').value = appData.systemSettings.companyAddress||'';
     document.getElementById('companyNotes').value = appData.systemSettings.companyNotes||'';
     selectPrintStyle(appData.systemSettings.printStyle||'classic');
+    var styleSelect = document.getElementById('quoteStyleSelect');
+    if(styleSelect) styleSelect.value = appData.systemSettings.quoteStyle||'modern';
 }
 
 // ===== 初始化材料产品库（门头+文化墙原材料） =====
@@ -15809,6 +15813,44 @@ function changeQuoteStyle(style){
     saveData();
     var select = document.getElementById('quoteStyleSelect');
     if(select) select.value = style;
+    if(appData.currentQuote && appData.currentQuote.items && appData.currentQuote.items.length > 0){
+        generateQuotePreview();
+    }
+}
+function toggleQuotePreview(){
+    const preview = document.getElementById('quotePreview');
+    const btn = document.getElementById('previewQuoteBtn');
+    if(!preview || !btn) return;
+    
+    if(preview.classList.contains('hidden')){
+        if(!appData.currentQuote || !appData.currentQuote.items || !appData.currentQuote.items.length){
+            showToast('请至少添加一个报价项目', 'warning');
+            return;
+        }
+        generateQuotePreview();
+        btn.innerHTML = '✕ 关闭预览';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-danger');
+    } else {
+        preview.classList.add('hidden');
+        preview.innerHTML = '';
+        btn.innerHTML = '👁️ 预览报价单';
+        btn.classList.remove('btn-danger');
+        btn.classList.add('btn-primary');
+    }
+}
+function updatePreviewButton(showClose){
+    const btn = document.getElementById('previewQuoteBtn');
+    if(!btn) return;
+    if(showClose){
+        btn.innerHTML = '✕ 关闭预览';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-danger');
+    } else {
+        btn.innerHTML = '👁️ 预览报价单';
+        btn.classList.remove('btn-danger');
+        btn.classList.add('btn-primary');
+    }
 }
 let columnWidthSettings = {index:45,image:70,name:180,spec:120,unit:60,note:90,qty:55,price:90,subtotal:95,marginTop:10,marginSides:15,lineHeight:18};
 function toggleColumnWidthPanel(){
@@ -16162,6 +16204,7 @@ function generateQuotePreview(isManualChange){
     const settings=appData.systemSettings;
     const preview=document.getElementById('quotePreview');
     preview.classList.remove('hidden');
+    updatePreviewButton(true);
     let taxNote='';
     if(tr > 0){
         if(pm === 'in'){ taxNote=`<span style="font-size:0.85rem;font-weight:normal;color:rgba(255,255,255,0.8);">（含税额 ¥${tax.toFixed(2)}）</span>`; }
@@ -16923,6 +16966,164 @@ function generateQuotePreview(isManualChange){
             ${appData.currentQuote.paymentMethod?`付款方式：${appData.currentQuote.paymentMethod} | `:''}有效期：${vd}天 | 联系人：${settings.companyContact||'______________'}
         </div>`;
         preview.innerHTML=`<div style="background:white;max-width:100%;margin:0 auto;${innerPadding};font-family:'SimSun','Microsoft YaHei',Arial,sans-serif;">${headerHtml}${bodyHtml}${footerHtml}${saveBtnHtml}${sh}${sigHtml}</div>`;
+    } else if(quoteStyle === 'custom'){
+        saveBtnHtml=`<button class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:${hc};border:1px solid rgba(255,255,255,0.3);margin-left:1rem;" onclick="savePreviewEdits()">💾 保存修改</button>`;
+        let cw = getColumnWidths();
+        let mRows=appData.currentQuote.items.map((item,idx)=>{
+            const itemQty = item.qty || 1;
+            const itemPrice = item.price || 0;
+            let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
+            let bg=idx%2===0?'#fff':'#f8fafc';
+            let row = `<tr style="background:${bg};">`;
+            const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+            colOrder.forEach(col => {
+                switch(col){
+                    case 'index': row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
+                        <span style="display:inline-flex;width:22px;height:22px;background:${hg};color:white;border-radius:50%;font-size:${cw.contentFontSize-2}px;font-weight:600;align-items:center;justify-content:center;">${idx+1}</span>
+                    </td>`; break;
+                    case 'image': if(colVis.image !== false) {
+                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: 'width:40px !important;height:40px !important;object-fit:cover !important;border-radius:4px;border:1px solid #e5e7eb;' }) : `<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
+                        row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">${ic}</td>`;
+                    } break;
+                    case 'name': row += `<td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;">
+                        <div style="font-weight:600;color:#1f2937;font-size:${cw.contentFontSize+2}px;line-height:1.3;">${item.name}</div>
+                    </td>`; break;
+                    case 'spec': if(colVis.spec !== false) row += `<td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;font-size:${cw.contentFontSize}px;color:#6b7280;">${item.spec||'-'}</td>`; break;
+                    case 'unit': row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
+                        <span style="font-size:${cw.contentFontSize}px;color:#6b7280;">${item.unit||'项'}</span>
+                    </td>`; break;
+                    case 'note': if(colVis.note !== false) row += `<td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;font-size:${cw.contentFontSize}px;color:#6b7280;line-height:1.3;">${item.note||'-'}</td>`; break;
+                    case 'qty': row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;">
+                        <span style="background:#e5e7eb;padding:0.15rem 0.5rem;border-radius:6px;font-weight:600;color:#374151;font-size:${cw.contentFontSize}px;">${itemQty}</span>
+                    </td>`; break;
+                    case 'price': row += `<td style="padding:0.6rem 0.4rem;text-align:right;border-bottom:1px solid #e5e7eb;color:#4b5563;font-size:${cw.contentFontSize}px;font-weight:500;">¥${itemPrice.toFixed(2)}</td>`; break;
+                    case 'subtotal': row += `<td style="padding:0.6rem 0.4rem;text-align:right;border-bottom:1px solid #e5e7eb;"><span style="font-weight:700;color:#1f2937;font-size:${cw.contentFontSize+2}px;">¥${it}</span></td>`; break;
+                }
+            });
+            row += `</tr>`;
+            return row;
+        }).join('');
+        
+        const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+        let colCount = 0;
+        colOrder.forEach(col => {
+            switch(col){
+                case 'index': colCount++; break;
+                case 'image': if(colVis.image !== false) colCount++; break;
+                case 'name': colCount++; break;
+                case 'spec': if(colVis.spec !== false) colCount++; break;
+                case 'unit': colCount++; break;
+                case 'note': if(colVis.note !== false) colCount++; break;
+                case 'qty': colCount++; break;
+                case 'price': colCount++; break;
+                case 'subtotal': colCount++; break;
+            }
+        });
+        
+        let footerCol1 = colCount - 1;
+        let footerCol2 = colCount;
+        
+        let mFooterRows=`<tr><td colspan="${footerCol1}" style="padding:0.6rem 1rem;text-align:right;font-size:0.8rem;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;">报价金额</td><td style="padding:0.6rem 1rem;text-align:right;font-size:0.85rem;font-weight:600;background:#f9fafb;border-bottom:1px solid #e5e7eb;">¥${st.toFixed(2)}</td></tr>`;
+        if(dr<100){mFooterRows+=`<tr><td colspan="${footerCol1}" style="padding:0.6rem 1rem;text-align:right;font-size:0.8rem;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;">折扣 (${dr}%)</td><td style="padding:0.6rem 1rem;text-align:right;font-size:0.85rem;font-weight:600;color:#dc2626;background:#f9fafb;border-bottom:1px solid #e5e7eb;">-¥${da.toFixed(2)}</td></tr>`;}
+        mFooterRows+=`<tr><td colspan="${footerCol1}" style="padding:0.8rem 1rem;text-align:right;font-size:1rem;font-weight:700;color:${hc};background:${hg};border-bottom:none;">合计金额${pm==='in'&&tr>0?'（含税'+tr+'%）':pm==='in'&&tr===0?'':pm==='ex'&&tr>0?'（加税'+tr+'%，税金¥'+tax.toFixed(2)+'）':pm==='ex'&&tr===0?'（未税）':''}</td><td style="padding:0.8rem 1rem;text-align:right;font-size:1.15rem;font-weight:700;color:${hc};background:${hg};border-bottom:none;">¥${total.toFixed(2)}</td></tr>`;
+        mFooterRows+=`<tr><td colspan="${footerCol2}" style="padding:0.5rem 1rem;text-align:right;font-size:0.9rem;color:${hc};background:${hg};border-bottom:none;font-weight:500;">大写金额：${numberToChineseUpper(total)}</td></tr>`;
+        
+        preview.innerHTML=`<div style="background:white;max-width:100%;margin:0 auto;font-family:'Microsoft YaHei','PingFang SC',Arial,sans-serif;overflow:hidden;${innerPadding};">
+            <div style="background:${hg};padding:2.5rem 2rem;color:${hc};">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        ${settings.quoteLogo ? `<img src="${settings.quoteLogo}" style="max-width:80px;max-height:80px;object-fit:contain;border-radius:8px;background:white;padding:4px;">` : ''}
+                        <div>
+                            <div style="font-size:0.75rem;opacity:0.8;letter-spacing:0.15em;margin-bottom:0.5rem;">ADVERTISING QUOTATION</div>
+                            <h2 style="font-size:1.75rem;font-weight:700;margin:0 0 0.5rem 0;letter-spacing:0.02em;">${appData.currentQuote.title||'广告报价单'}</h2>
+                            ${appData.currentQuote.quoteNumber?`<div style="font-size:0.8rem;opacity:0.85;margin-bottom:0.25rem;">编号：${appData.currentQuote.quoteNumber}</div>`:''}
+                            <div style="font-size:0.85rem;opacity:0.9;">${ds}</div>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        ${settings.companyName?`<div style="font-size:1.1rem;font-weight:600;">${settings.companyName}</div>`:''}
+                        ${settings.companyPhone?`<div style="font-size:0.8rem;opacity:0.8;margin-top:0.25rem;">📞 ${settings.companyPhone}</div>`:''}
+                    </div>
+                </div>
+            </div>
+            <div style="padding:1.5rem 2rem;">
+                ${appData.currentQuote.clientName||appData.currentQuote.clientContactPerson||appData.currentQuote.clientPhone||appData.currentQuote.clientAddress||appData.currentQuote.clientEmail?`<div style="background:#f9fafb;padding:1rem 1.5rem;border-radius:8px;margin-bottom:1.5rem;">
+                    <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.5rem;">客户信息</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:1.5rem;font-size:0.85rem;color:#374151;">
+                        ${appData.currentQuote.clientName?`<div><strong style="color:#1f2937;">客户名称：</strong>${appData.currentQuote.clientName}</div>`:''}
+                        ${appData.currentQuote.clientContactPerson?`<div><strong style="color:#1f2937;">联系人：</strong>${appData.currentQuote.clientContactPerson}</div>`:''}
+                        ${appData.currentQuote.clientPhone?`<div><strong style="color:#1f2937;">电话：</strong>${appData.currentQuote.clientPhone}</div>`:''}
+                        ${appData.currentQuote.clientEmail?`<div><strong style="color:#1f2937;">邮箱：</strong>${appData.currentQuote.clientEmail}</div>`:''}
+                        ${appData.currentQuote.clientAddress?`<div><strong style="color:#1f2937;">地址：</strong>${appData.currentQuote.clientAddress}</div>`:''}
+                    </div>
+                </div>`:''}
+                <table style="width:100%;border-collapse:collapse;line-height:${lhPx}rem;">
+                    <colgroup>
+                        ${(()=>{
+                            const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+                            let cols = '';
+                            colOrder.forEach(col => {
+                                switch(col){
+                                    case 'index': cols += `<col style="width:${cw.index}px;">`; break;
+                                    case 'image': if(colVis.image !== false) cols += `<col style="width:${cw.image}px;">`; break;
+                                    case 'name': cols += `<col style="width:${cw.name}px;">`; break;
+                                    case 'spec': if(colVis.spec !== false) cols += `<col style="width:${cw.spec}px;">`; break;
+                                    case 'unit': cols += `<col style="width:${cw.unit}px;">`; break;
+                                    case 'note': if(colVis.note !== false) cols += `<col style="width:${cw.note}px;">`; break;
+                                    case 'qty': cols += `<col style="width:${cw.qty}px;">`; break;
+                                    case 'price': cols += `<col style="width:${cw.price}px;">`; break;
+                                    case 'subtotal': cols += `<col style="width:${cw.subtotal}px;">`; break;
+                                }
+                            });
+                            return cols;
+                        })()}
+                    </colgroup>
+                    <thead>
+                        <tr style="background:#f1f5f9;">
+                            ${(()=>{
+                                const colOrder = appData.systemSettings.columnOrder || ['index','image','name','spec','unit','note','qty','price','subtotal'];
+                                let headers = '';
+                                colOrder.forEach(col => {
+                                    switch(col){
+                                        case 'index': headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">序号</th>`; break;
+                                        case 'image': if(colVis.image !== false) headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">图片</th>`; break;
+                                        case 'name': headers += `<th style="padding:0.5rem 0.4rem;text-align:left;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">项目名称</th>`; break;
+                                        case 'spec': if(colVis.spec !== false) headers += `<th style="padding:0.5rem 0.4rem;text-align:left;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">规格参数</th>`; break;
+                                        case 'unit': headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">单位</th>`; break;
+                                        case 'note': if(colVis.note !== false) headers += `<th style="padding:0.5rem 0.4rem;text-align:left;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">备注说明</th>`; break;
+                                        case 'qty': headers += `<th style="padding:0.5rem 0.4rem;text-align:center;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">数量</th>`; break;
+                                        case 'price': headers += `<th style="padding:0.5rem 0.4rem;text-align:right;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">单价</th>`; break;
+                                        case 'subtotal': headers += `<th style="padding:0.5rem 0.4rem;text-align:right;font-size:${cw.headerFontSize}px;font-weight:600;color:#475569;letter-spacing:0.02em;">小计</th>`; break;
+                                    }
+                                });
+                                return headers;
+                            })()}
+                        </tr>
+                    </thead>
+                    <tbody>${mRows}</tbody>
+                    <tfoot>${mFooterRows}</tfoot>
+                </table>
+            </div>
+            <div style="background:#f8fafc;padding:1.5rem 2rem;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1.5rem;">
+                    <div style="flex:1;">
+                        <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#9ca3af;margin-bottom:0.5rem;font-weight:600;">备注信息</div>
+                        <div style="font-size:0.85rem;color:#4b5563;line-height:1.6;white-space:pre-wrap;">${dn}</div>
+                        ${appData.currentQuote.paymentMethod?`<div style="margin-top:0.75rem;font-size:0.8rem;color:#374151;"><strong>付款方式：</strong>${appData.currentQuote.paymentMethod}</div>`:''}
+                    </div>
+                    <div style="flex:1;text-align:right;">
+                        <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#9ca3af;margin-bottom:0.5rem;font-weight:600;">报价方</div>
+                        <div style="width:150px;height:50px;"></div>
+                        <div style="font-size:0.75rem;color:#9ca3af;margin-top:0.5rem;">签字：___________ &nbsp;&nbsp; 日期：___________</div>
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#9ca3af;margin-bottom:0.5rem;font-weight:600;">客户确认</div>
+                    <div style="width:150px;height:50px;"></div>
+                    <div style="font-size:0.75rem;color:#9ca3af;margin-top:0.5rem;">签字：___________ &nbsp;&nbsp; 日期：___________</div>
+                </div>
+            </div>
+        ${sh}${sigHtml}</div>${saveBtnHtml}`;
     } else {
         saveBtnHtml=`<button class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:${hc};border:1px solid rgba(255,255,255,0.3);margin-left:1rem;" onclick="savePreviewEdits()">💾 保存修改</button>`;
     }
@@ -36233,7 +36434,14 @@ function selectPrintStyle(style){
     }
 
     appData.systemSettings.printStyle = style;
+    
     saveData();
+
+    // 如果预览已打开，重新生成预览
+    const preview = document.getElementById('quotePreview');
+    if (preview && !preview.classList.contains('hidden')) {
+        generateQuotePreview();
+    }
 }
 
 // 自定义主题色预览
@@ -36266,6 +36474,12 @@ function applyCustomTheme() {
 
     saveData();
     showToast('自定义主题色已应用', 'success');
+
+    // 如果预览已打开，重新生成预览
+    const preview = document.getElementById('quotePreview');
+    if (preview && !preview.classList.contains('hidden')) {
+        generateQuotePreview();
+    }
 }
 
 // 预览报价单Logo
