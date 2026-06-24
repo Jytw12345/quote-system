@@ -19582,7 +19582,8 @@ function syncImagePreview(src, show) {
     var previewMobile = document.getElementById('imagePreviewMobile');
     
     if (preview) {
-        preview.src = src;
+        // 修复：当src为空时，使用空图片而不是空字符串（空字符串会被浏览器解析为当前页面URL）
+        preview.src = src || 'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=';
         if (show) {
             preview.classList.remove('hidden');
         } else {
@@ -19590,7 +19591,7 @@ function syncImagePreview(src, show) {
         }
     }
     if (previewMobile) {
-        previewMobile.src = src;
+        previewMobile.src = src || 'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=';
         if (show) {
             previewMobile.classList.remove('hidden');
         } else {
@@ -19603,7 +19604,8 @@ function syncImagePreview(src, show) {
 function applyProductImageUrl(input) {
     var url = input.value.trim();
     if (!url) {
-        // 清空时不做操作，用户可以通过「移除图片」按钮来删除
+        // 修复：清空URL时，调用移除图片函数来清除预览
+        removeProductImage();
         return;
     }
     if (!/^https?:\/\//i.test(url)) {
