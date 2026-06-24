@@ -10064,14 +10064,12 @@ function safeExecuteAsync(fn, defaultVal) {
                     var store = transaction.objectStore(storeName);
                     
                     if (Array.isArray(data)) {
-                        var promises = data.map(function(item) {
-                            return new Promise(function(res, rej) {
-                                var req = store.put(item);
-                                req.onsuccess = function() { res(req.result); };
-                                req.onerror = function() { rej(req.error); };
-                            });
+                        var results = [];
+                        data.forEach(function(item) {
+                            store.put(item);
                         });
-                        Promise.all(promises).then(resolve).catch(reject);
+                        transaction.oncomplete = function() { resolve(results); };
+                        transaction.onerror = function() { reject(transaction.error); };
                     } else {
                         var request = store.put(data);
                         request.onsuccess = function() { resolve(request.result); };
@@ -11268,13 +11266,16 @@ if (typeof window !== 'undefined') {
     
     window.addEventListener('unhandledrejection', function(event) {
         console.error('[Global] Unhandled promise rejection:', event.reason);
-        ErrorLogger.error('未处理的Promise拒绝:', event.reason);
-        event.preventDefault();
+        if (ErrorLogger && typeof ErrorLogger.error === 'function') {
+            ErrorLogger.error('未处理的Promise拒绝:', event.reason);
+        }
     });
     
     window.addEventListener('error', function(event) {
         console.error('[Global] Uncaught error:', event.error);
-        ErrorLogger.error('未捕获的错误:', event.error);
+        if (ErrorLogger && typeof ErrorLogger.error === 'function') {
+            ErrorLogger.error('未捕获的错误:', event.error);
+        }
     });
 }
 
@@ -37450,7 +37451,28 @@ function gistApi(path, options) {
         'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json'
     };
-    return fetch('https://api.github.com' + path, Object.assign({}, options, { headers: headers }));
+    
+    // 添加超时控制
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function() { controller.abort(); }, 30000); // 30秒超时
+    
+    var fetchOptions = Object.assign({}, options, { 
+        headers: headers,
+        signal: controller.signal
+    });
+    
+    return fetch('https://api.github.com' + path, fetchOptions)
+        .then(function(response) {
+            clearTimeout(timeoutId);
+            return response;
+        })
+        .catch(function(error) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                throw new Error('请求超时，请检查网络连接');
+            }
+            throw error;
+        });
 }
 
 function gistTest() {
@@ -38152,15 +38174,19 @@ function syncNow() {
         var serverTime = new Date(cloudData.uploadTime || 0);
         var localTime = new Date(appData.systemSettings.lastSyncTime || 0);
         
+        // 使用 UTC 时间戳进行比较，避免时区问题
+        var serverTimeUTC = serverTime.getTime();
+        var localTimeUTC = localTime.getTime();
+        
         // 检查是否需要同步
-        if (serverTime <= localTime && !buildIncrementalSyncPayload().hasChanges) {
+        if (serverTimeUTC <= localTimeUTC && !buildIncrementalSyncPayload().hasChanges) {
             showToast('✅ 数据已是最新，无需同步', 'success');
             addSyncLog('info', '数据已是最新，无需同步');
             return { skipped: true };
         }
         
         // 有差异，先合并云端更新
-        if (serverTime > localTime) {
+        if (serverTimeUTC > localTimeUTC) {
             showSyncProgress('合并云端更新...', 60);
             addSyncLog('info', '发现云端更新，正在合并...');
             mergeSyncData(cloudData.data || {});
@@ -38514,6 +38540,7 @@ function getGlobalCustomPrices() {
 
 function gistUploadFull() {
     return new Promise(function(resolve, reject) {
+        isSyncing = true;
         var startTime = Date.now();
         var strategy = adaptSyncStrategy();
         
@@ -38603,21 +38630,23 @@ function gistUploadFull() {
             // 安全序列化数据，处理特殊字符和循环引用
             var syncPayloadString;
             try {
-                // 使用 visited 集合正确检测循环引用
-                var visited = new WeakSet();
+                // 使用 Set 正确检测循环引用（WeakSet 无法检测数组中的循环引用）
+                var visited = new Set();
                 syncPayloadString = JSON.stringify(syncPayload, function(key, value) {
                     // 处理特殊字符
                     if (typeof value === 'string') {
                         // 移除控制字符，保留换行符和制表符
                         return value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
                     }
-                    // 正确检查循环引用：使用 WeakSet 跟踪已访问的对象
+                    // 正确检查循环引用：使用 Set 跟踪已访问的对象
+                    // 使用对象 ID 或对象本身作为 key
                     if (typeof value === 'object' && value !== null) {
-                        if (visited.has(value)) {
+                        var id = value._cid || (value._cid = Math.random().toString(36).substr(2, 9));
+                        if (visited.has(id)) {
                             // 跳过循环引用，返回 undefined 会被 JSON.stringify 忽略
                             return undefined;
                         }
-                        visited.add(value);
+                        visited.add(id);
                     }
                     return value;
                 }, 2);
@@ -38964,37 +38993,40 @@ function gistUploadIncremental() {
         
         var lastSyncDate = new Date(lastSync);
         
-        // 找出变化的数据
+        // 找出变化的数据：使用 updatedAt 与 lastSyncTime 比较
+        // 增项：createdAt > lastSyncDate
+        // 修改：updatedAt > lastSyncDate 且 (createdAt <= lastSyncDate 或 updatedAt > createdAt)
         var changes = {
             added: {
-                products: appData.products.filter(p => {
-                    var createdAt = new Date(p.createdAt || 0);
+                products: appData.products.filter(function(p) {
+                    var createdAt = new Date(p.createdAt || p.updatedAt || 0);
                     return createdAt > lastSyncDate;
                 }),
-                customers: appData.customers.filter(c => {
-                    var createdAt = new Date(c.createdAt || 0);
+                customers: appData.customers.filter(function(c) {
+                    var createdAt = new Date(c.createdAt || c.updatedAt || 0);
                     return createdAt > lastSyncDate;
                 }),
-                templates: appData.templates.filter(t => {
-                    var createdAt = new Date(t.createdAt || 0);
+                templates: appData.templates.filter(function(t) {
+                    var createdAt = new Date(t.createdAt || t.updatedAt || 0);
                     return createdAt > lastSyncDate;
                 })
             },
             updated: {
-                products: appData.products.filter(p => {
+                products: appData.products.filter(function(p) {
                     var updatedAt = new Date(p.updatedAt || 0);
                     var createdAt = new Date(p.createdAt || 0);
-                    return updatedAt > lastSyncDate && createdAt <= lastSyncDate;
+                    // 修改时间在同步之后，且不是新建的
+                    return updatedAt > lastSyncDate && (createdAt <= lastSyncDate || updatedAt > createdAt);
                 }),
-                customers: appData.customers.filter(c => {
+                customers: appData.customers.filter(function(c) {
                     var updatedAt = new Date(c.updatedAt || 0);
                     var createdAt = new Date(c.createdAt || 0);
-                    return updatedAt > lastSyncDate && createdAt <= lastSyncDate;
+                    return updatedAt > lastSyncDate && (createdAt <= lastSyncDate || updatedAt > createdAt);
                 }),
-                templates: appData.templates.filter(t => {
+                templates: appData.templates.filter(function(t) {
                     var updatedAt = new Date(t.updatedAt || 0);
                     var createdAt = new Date(t.createdAt || 0);
-                    return updatedAt > lastSyncDate && createdAt <= lastSyncDate;
+                    return updatedAt > lastSyncDate && (createdAt <= lastSyncDate || updatedAt > createdAt);
                 })
             },
             deleted: {
@@ -39003,6 +39035,15 @@ function gistUploadIncremental() {
                 templateIds: []
             }
         };
+        
+        // 从修改列表中排除新增的项（避免重复）
+        var addedProductIds = new Set(changes.added.products.map(function(p) { return p.id; }));
+        var addedCustomerIds = new Set(changes.added.customers.map(function(c) { return c.id; }));
+        var addedTemplateIds = new Set(changes.added.templates.map(function(t) { return t.id; }));
+        
+        changes.updated.products = changes.updated.products.filter(function(p) { return !addedProductIds.has(p.id); });
+        changes.updated.customers = changes.updated.customers.filter(function(c) { return !addedCustomerIds.has(c.id); });
+        changes.updated.templates = changes.updated.templates.filter(function(t) { return !addedTemplateIds.has(t.id); });
         
         // 检查是否有变化
         var hasChanges = changes.added.products.length > 0 || 
@@ -39236,13 +39277,17 @@ function gistDownload() {
         var serverDevice = serverData.deviceId || '';
         var localDevice = getDeviceId();
         
+        // 使用 UTC 时间戳进行比较，避免时区问题
+        var serverTimeUTC = serverTime.getTime();
+        var localTimeUTC = localTime.getTime();
+        
         // 检查云端数据是否有效（非空）
         var serverHasData = (serverData.data.products && serverData.data.products.length > 0) ||
                            (serverData.data.templates && serverData.data.templates.length > 0) ||
                            (serverData.data.customers && serverData.data.customers.length > 0);
         
         // 智能判断是否需要同步
-        if (serverDevice === localDevice && serverTime <= localTime) {
+        if (serverDevice === localDevice && serverTimeUTC <= localTimeUTC) {
             isSyncing = false;
             showToast('ℹ️ 本地数据已是最新', 'info');
             addSyncLog('info', '本地数据已是最新');
@@ -39272,11 +39317,11 @@ function gistDownload() {
         
         var msg = '确定要从云端下载数据吗？\n\n';
         msg += '云端上传时间: ' + serverTime.toLocaleString() + '\n';
-        msg += '本地同步时间: ' + (localTime.getTime() ? localTime.toLocaleString() : '从未') + '\n';
+        msg += '本地同步时间: ' + (localTimeUTC ? localTime.toLocaleString() : '从未') + '\n';
         if (serverDevice !== localDevice) {
             msg += '\n⚠️ 数据来自另一台设备，将进行智能合并';
         }
-        if (serverTime > localTime) {
+        if (serverTimeUTC > localTimeUTC) {
             msg += '\n\n云端数据较新，将合并覆盖本地数据';
         } else {
             msg += '\n\n本地数据较新，合并时以较新数据为准';
@@ -41567,7 +41612,11 @@ function checkCloudUpdateOnStartup() {
         var serverTime = new Date(data.uploadTime || data.updateTime || 0);
         var localTime = new Date(appData.systemSettings.lastSyncTime || 0);
         
-        if (serverTime > localTime) {
+        // 使用 UTC 时间戳进行比较，避免时区问题
+        var serverTimeUTC = serverTime.getTime();
+        var localTimeUTC = localTime.getTime();
+        
+        if (serverTimeUTC > localTimeUTC) {
             addSyncLog('info', '检测到云端有更新');
             setTimeout(function() {
                 if (confirm('检测到云端有更新，是否立即同步？')) {
@@ -41907,12 +41956,12 @@ function mergeSyncData(serverData) {
     // 注意：当服务器数据为 undefined 时，说明对方设置了不共享该数据类型，
     // 此时不进行合并（保留本地数据），而不是使用空数组覆盖
     // 团队模式下，只有明确设置为false才不共享，undefined或true都共享
-    var serverProducts = (isTeamData && teamEnabled && teamDataSharing.products === false) ? [] : 
-                         (syncData.products === undefined ? [] : (syncData.products || []));
-    var serverTemplates = (isTeamData && teamEnabled && teamDataSharing.templates === false) ? [] : 
-                          (syncData.templates === undefined ? [] : (syncData.templates || []));
-    var serverCustomers = (isTeamData && teamEnabled && teamDataSharing.customers === false) ? [] : 
-                          (syncData.customers === undefined ? [] : (syncData.customers || []));
+    var serverProducts = (isTeamData && teamEnabled && teamDataSharing.products === false) ? undefined : 
+                         (syncData.products === undefined ? undefined : (syncData.products || []));
+    var serverTemplates = (isTeamData && teamEnabled && teamDataSharing.templates === false) ? undefined : 
+                          (syncData.templates === undefined ? undefined : (syncData.templates || []));
+    var serverCustomers = (isTeamData && teamEnabled && teamDataSharing.customers === false) ? undefined : 
+                          (syncData.customers === undefined ? undefined : (syncData.customers || []));
     var serverQuoteHistory = (isTeamData && teamEnabled && teamDataSharing.quoteHistory === false) ? [] : 
                              (syncData.quoteHistory === undefined ? [] : (syncData.quoteHistory || []));
     var serverSeals = (isTeamData && teamEnabled && teamDataSharing.seals === false) ? [] : 
@@ -41922,7 +41971,8 @@ function mergeSyncData(serverData) {
     
     // 合并产品（带团队追踪信息）
     var localProducts = new Map(appData.products.map(function(p) { return [String(p.id), p]; }));
-    serverProducts.forEach(function(sp) {
+    if (serverProducts) {
+        serverProducts.forEach(function(sp) {
         var lp = localProducts.get(String(sp.id));
         if (!lp) {
             // 尝试用宽松比较查找
@@ -41947,13 +41997,15 @@ function mergeSyncData(serverData) {
             }
         }
     });
+    }
     
     // 合并模板 - 增强去重逻辑
     var localTemplates = new Map(appData.templates.map(function(t) { return [String(t.id), t]; }));
     // 按名称创建映射用于去重
     var localTemplateNames = new Map(appData.templates.map(function(t) { return [t.name ? t.name.toLowerCase() : '']; }));
     
-    serverTemplates.forEach(function(st) {
+    if (serverTemplates) {
+        serverTemplates.forEach(function(st) {
         var lt = localTemplates.get(String(st.id));
         
         // 如果ID匹配失败，尝试按名称匹配
@@ -42013,10 +42065,12 @@ function mergeSyncData(serverData) {
             }
         }
     });
+    }
     
     // 合并客户
     var localCustomers = new Map(appData.customers.map(function(c) { return [String(c.id), c]; }));
-    serverCustomers.forEach(function(sc) {
+    if (serverCustomers) {
+        serverCustomers.forEach(function(sc) {
         var lc = localCustomers.get(String(sc.id));
         if (!lc) {
             // 尝试用宽松比较查找
@@ -42035,6 +42089,7 @@ function mergeSyncData(serverData) {
             }
         }
     });
+    }
     
     // 合并报价历史（只添加本地没有的）
     if (serverQuoteHistory && serverQuoteHistory.length > 0) {

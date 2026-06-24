@@ -1,5 +1,5 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'V3.4.128  更新日期：20260624';
+const CACHE_NAME = 'V3.4.130  更新日期：20260624';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
@@ -24,9 +24,19 @@ const UPDATE_LOGS = [
     'bug 修复 index.html 全局消息监听器未验证消息来源的问题',
     'bug 修复 safeDataOperation 无法捕获异步错误的问题',
     'bug 修复 IndexedDB save 方法批量保存未等待完成的问题',
-    'feat 添加全局 unhandledrejection 和 error 事件监听'
+    'feat 添加全局 unhandledrejection 和 error 事件监听',
+    'bug 修复 sw.js basePath 硬编码导致部署兼容性问题',
+    'bug 修复 sw.js skipWaiting 未使用 event.waitUntil 的问题',
+    'bug 修复 IndexedDB 批量保存 transaction 可能提前关闭的问题',
+    'bug 修复全局错误监听器 preventDefault 阻止正常错误上报的问题',
+    'bug 修复云同步 gistUploadFull 中 isSyncing 状态管理问题',
+    'bug 修复云同步增量上传时间比较逻辑错误的问题',
+    'bug 修复云同步团队模式下数据过滤逻辑不一致的问题',
+    'bug 修复云同步 API 请求缺少超时控制的问题',
+    'bug 修复云同步时间比较未处理时区差异的问题',
+    'bug 修复云同步 JSON 序列化使用 WeakSet 无法检测循环引用的问题'
 ];
-const basePath = '/quote-system/';
+const basePath = self.location.pathname.replace(/sw\.js$/, '') || '/quote-system/';
 
 self.addEventListener('install', event => {
     console.log('[SW] 开始安装新版本:', CACHE_NAME);
@@ -143,17 +153,15 @@ self.addEventListener('activate', event => {
 self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         console.log('[SW] 跳过等待，立即激活');
-        self.skipWaiting();
+        event.waitUntil(self.skipWaiting());
     }
     if (event.data && event.data.type === 'ACTIVATE_UPDATE') {
         console.log('[SW] 用户确认更新，立即激活新版本');
-        self.skipWaiting().then(function() {
+        event.waitUntil(self.skipWaiting().then(function() {
             console.log('[SW] skipWaiting 完成，正在激活...');
-        });
+        }));
     }
     if (event.data && event.data.type === 'GET_VERSION') {
-        // 简化：总是返回 VERSION_RESPONSE
-        // 前端根据发送对象（controller 还是 waiting）来判断是当前版本还是新版本
         console.log('[SW] GET_VERSION 返回:', CACHE_NAME);
         event.source.postMessage({
             type: 'VERSION_RESPONSE',
