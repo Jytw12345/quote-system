@@ -1,5 +1,5 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'V3.4.125  更新日期：20260624';
+const CACHE_NAME = 'V3.4.128  更新日期：20260624';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
@@ -12,7 +12,19 @@ const UPDATE_LOGS = [
     'bug 修复首次预览时默认样式不一致的问题',
     'bug 修复多个 beforeunload/pagehide 监听器重复清理的问题',
     'opt 优化 ObjectURL 管理，添加数量限制和定期清理机制',
-    'opt 统一调试模式日志输出方式'
+    'opt 统一调试模式日志输出方式',
+    'bug 修复 manifest.json 版本号与 SW 不一致的问题',
+    'bug 修复 sw.js fetch 事件缓存更新 Promise 未正确返回的问题',
+    'bug 修复 sw.js 离线 fallback 逻辑不一致的问题',
+    'bug 修复 sw.js 未处理非 GET 请求导致 POST 请求失败的问题',
+    'bug 修复 index.html SW 注册路径硬编码导致部署兼容性问题',
+    'bug 修复 index.html 消息监听器未验证消息来源的安全问题',
+    'bug 修复 sw.js 非 GET 请求未使用 event.respondWith 的问题',
+    'bug 修复 sw.js caches.match 返回 Promise 时误用 || 操作符的问题',
+    'bug 修复 index.html 全局消息监听器未验证消息来源的问题',
+    'bug 修复 safeDataOperation 无法捕获异步错误的问题',
+    'bug 修复 IndexedDB save 方法批量保存未等待完成的问题',
+    'feat 添加全局 unhandledrejection 和 error 事件监听'
 ];
 const basePath = '/quote-system/';
 
@@ -39,26 +51,33 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
     const request = event.request;
 
-    // 对于 index.html，总是从网络获取最新版本
+    if (request.method !== 'GET') {
+        event.respondWith(fetch(request));
+        return;
+    }
+
     if (request.url.includes('index.html')) {
         event.respondWith(
             fetch(request).then(fetchResponse => {
-                // 先克隆响应，避免后续使用时出错
                 const responseToCache = fetchResponse.clone();
                 if (fetchResponse && fetchResponse.status === 200) {
-                    caches.open(CACHE_NAME).then(cache => {
-                        cache.put(request, responseToCache);
+                    return caches.open(CACHE_NAME).then(cache => {
+                        return cache.put(request, responseToCache).then(() => {
+                            return fetchResponse;
+                        });
                     });
                 }
-                return fetchResponse || caches.match(request);
+                return fetchResponse;
             }).catch(() => {
-                return caches.match(request);
+                return caches.match(request).then(cachedResponse => {
+                    if (cachedResponse) return cachedResponse;
+                    return caches.match(basePath + 'index.html');
+                });
             })
         );
         return;
     }
 
-    // 其他资源：先缓存，后网络
     event.respondWith(
         caches.match(event.request)
             .then(response => {
@@ -70,11 +89,12 @@ self.addEventListener('fetch', event => {
                         return fetchResponse;
                     }
                     const responseToCache = fetchResponse.clone();
-                    caches.open(CACHE_NAME)
+                    return caches.open(CACHE_NAME)
                         .then(cache => {
-                            cache.put(event.request, responseToCache);
+                            return cache.put(event.request, responseToCache).then(() => {
+                                return fetchResponse;
+                            });
                         });
-                    return fetchResponse;
                 });
             })
             .catch(() => {

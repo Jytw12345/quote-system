@@ -6314,6 +6314,16 @@ var PerformanceOptimizer = {
 function safeDataOperation(operationName, fn, ...args) {
     try {
         const result = fn(...args);
+        if (result && typeof result.then === 'function') {
+            return result.then(function(res) {
+                console.log(`[Data Operation] ${operationName} succeeded`);
+                return res;
+            }).catch(function(e) {
+                console.error(`[Data Operation] ${operationName} failed:`, e);
+                showToast(`${operationName}失败，请检查存储权限`, 'error');
+                throw e;
+            });
+        }
         console.log(`[Data Operation] ${operationName} succeeded`);
         return result;
     } catch (e) {
@@ -10052,13 +10062,18 @@ function safeExecuteAsync(fn, defaultVal) {
                 try {
                     var transaction = db.transaction([storeName], 'readwrite');
                     var store = transaction.objectStore(storeName);
-                    var request;
                     
                     if (Array.isArray(data)) {
-                        data.forEach(function(item) { store.put(item); });
-                        resolve();
+                        var promises = data.map(function(item) {
+                            return new Promise(function(res, rej) {
+                                var req = store.put(item);
+                                req.onsuccess = function() { res(req.result); };
+                                req.onerror = function() { rej(req.error); };
+                            });
+                        });
+                        Promise.all(promises).then(resolve).catch(reject);
                     } else {
-                        request = store.put(data);
+                        var request = store.put(data);
                         request.onsuccess = function() { resolve(request.result); };
                         request.onerror = function() { reject(request.error); };
                     }
@@ -11250,6 +11265,17 @@ function cleanupBeforeUnload() {
 if (typeof window !== 'undefined') {
     window.addEventListener('beforeunload', cleanupBeforeUnload);
     window.addEventListener('pagehide', cleanupBeforeUnload);
+    
+    window.addEventListener('unhandledrejection', function(event) {
+        console.error('[Global] Unhandled promise rejection:', event.reason);
+        ErrorLogger.error('未处理的Promise拒绝:', event.reason);
+        event.preventDefault();
+    });
+    
+    window.addEventListener('error', function(event) {
+        console.error('[Global] Uncaught error:', event.error);
+        ErrorLogger.error('未捕获的错误:', event.error);
+    });
 }
 
 function addToHistory(action, details){
@@ -48352,7 +48378,7 @@ if ('serviceWorker' in navigator) {
 
     if (isSecureContext) {
         window.addEventListener('load', function() {
-            navigator.serviceWorker.register('/quote-system/sw.js')
+            navigator.serviceWorker.register('sw.js')
                 .then(function(registration) {
                     swRegistration = registration;
                     console.log('[SW] 注册成功:', registration.scope);
@@ -48372,11 +48398,11 @@ if ('serviceWorker' in navigator) {
 
                         // 设置一次性消息监听器
                         var tempHandler = function(event) {
+                            if (event.source !== registration.waiting) return;
                             if (event.data && event.data.type === 'VERSION_RESPONSE') {
                                 navigator.serviceWorker.removeEventListener('message', tempHandler);
                                 console.log('[SW] 收到 waiting 版本号:', event.data.version);
 
-                                // 避免重复弹窗
                                 if (sessionStorage.getItem('swUpdatePrompted')) return;
 
                                 var updateMode = getUpdateMode();
@@ -48670,31 +48696,29 @@ function checkSoftwareUpdate() {
     if (navigator.serviceWorker && navigator.serviceWorker.controller) {
         console.log('[SW] 向当前 controller SW 请求版本号');
         var cvHandler = function(event) {
+            if (event.source !== navigator.serviceWorker.controller) return;
             if (event.data && event.data.type === 'VERSION_RESPONSE') {
                 navigator.serviceWorker.removeEventListener('message', cvHandler);
                 currentVersion = event.data.version;
                 console.log('[SW] 当前版本:', currentVersion);
-                // 更新页面版本号显示
                 if (versionEl) versionEl.textContent = currentVersion;
             }
         };
         navigator.serviceWorker.addEventListener('message', cvHandler);
-        // 超时兜底
         setTimeout(function() {
             navigator.serviceWorker.removeEventListener('message', cvHandler);
         }, 2000);
         navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
     }
 
-    // 延迟一小段时间，确保先收到 controller 版本号后再进入检测流程
     setTimeout(function() {
         proceedToCheck();
     }, 500);
 
     function proceedToCheck() {
-        // 如果还没获取到版本号，再尝试一次
         if (!currentVersion && navigator.serviceWorker && navigator.serviceWorker.controller) {
             var retryHandler = function(event) {
+                if (event.source !== navigator.serviceWorker.controller) return;
                 if (event.data && event.data.type === 'VERSION_RESPONSE') {
                     navigator.serviceWorker.removeEventListener('message', retryHandler);
                     currentVersion = event.data.version;
@@ -48713,6 +48737,7 @@ function checkSoftwareUpdate() {
             console.log('[SW] 已有 waiting SW，获取版本号提示更新');
             swRegistration.waiting.postMessage({ type: 'GET_VERSION' });
             var versionHandler = function(event) {
+                if (event.source !== swRegistration.waiting) return;
                 if (event.data && event.data.type === 'VERSION_RESPONSE') {
                     navigator.serviceWorker.removeEventListener('message', versionHandler);
                     showUpdateAvailable(event.data.version, event.data.logs, statusEl);
@@ -48761,6 +48786,7 @@ function checkSoftwareUpdate() {
                 console.log('[SW] update() 完成，找到 waiting SW');
                 swRegistration.waiting.postMessage({ type: 'GET_VERSION' });
                 var wh = function(event) {
+                    if (event.source !== swRegistration.waiting) return;
                     if (event.data && event.data.type === 'VERSION_RESPONSE') {
                         navigator.serviceWorker.removeEventListener('message', wh);
                         showUpdateAvailable(event.data.version, event.data.logs, statusEl);
@@ -48780,6 +48806,7 @@ function checkSoftwareUpdate() {
                         console.log('[SW] 新 SW 安装完成，提示更新');
                         installWorker.postMessage({ type: 'GET_VERSION' });
                         var ih = function(event) {
+                            if (event.source !== installWorker) return;
                             if (event.data && event.data.type === 'VERSION_RESPONSE') {
                                 navigator.serviceWorker.removeEventListener('message', ih);
                                 showUpdateAvailable(event.data.version, event.data.logs, statusEl);
@@ -48814,6 +48841,7 @@ function checkSoftwareUpdate() {
         if (navigator.serviceWorker && navigator.serviceWorker.controller) {
             navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
             var fh = function(event) {
+                if (event.source !== navigator.serviceWorker.controller) return;
                 if (event.data && event.data.type === 'VERSION_RESPONSE') {
                     navigator.serviceWorker.removeEventListener('message', fh);
                     var cv = event.data.version;
@@ -48963,36 +48991,28 @@ function showUpdateNotification(version, logs) {
     showUpdateModal(version, logs);
 }
 
-// 监听 Service Worker 的更新消息
 navigator.serviceWorker.addEventListener('message', function(event) {
     if (!event.data || !event.data.type) return;
+    if (swRegistration && event.source !== swRegistration.active && event.source !== swRegistration.waiting) return;
     console.log('[SW] 收到消息:', event.data.type, event.data.version);
 
-    // VERSION_UPDATED: 新版本 SW 激活后主动发送的消息
     if (event.data.type === 'VERSION_UPDATED') {
-        // 关键：更新页面上显示的版本号！
         updateVersionDisplay(event.data.version, event.data.logs);
         localStorage.setItem('lastReceivedVersion', event.data.version);
 
         var updateMode = getUpdateMode();
         if (updateMode === 'auto') {
-            // 自动更新模式：检查之前是否已显示通知
             if (sessionStorage.getItem('swAutoUpdated')) {
-                // 之前已显示过自动更新通知并触发了确认，显示更新完成提示
                 showAutoUpdateComplete();
             } else {
                 showAutoUpdateNotification(event.data.version, event.data.logs);
             }
         } else {
-            // 手动/提醒更新模式：始终显示更新通知
             showUpdateNotification(event.data.version, event.data.logs);
         }
         return;
     }
 
-    // VERSION_RESPONSE: GET_VERSION 的回复
-    // 重要：只更新页面版本号显示，不在此消息处理中触发更新通知
-    // （更新通知由 SW 注册流程中的 updatefound/registration.waiting 检查来触发）
     if (event.data.type === 'VERSION_RESPONSE') {
         updateVersionDisplay(event.data.version, event.data.logs);
         return;
