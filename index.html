@@ -6894,6 +6894,8 @@ function safeExecuteAsync(fn, defaultVal) {
                         <button class="btn btn-outline" onclick="exportJPG(true)">🖼️ 导出JPG</button>
                         <button class="btn btn-outline" onclick="exportXLS()">📊 导出XLS</button>
                         <button class="btn btn-outline" onclick="toggleColumnWidthPanel()">📐 列宽</button>
+                        <button class="btn btn-success" onclick="generateShareLink()">🔗 分享链接</button>
+                        <button class="btn btn-outline" onclick="openVerifySignatureModal()">✅ 验证签署</button>
                     </div>
                     <div id="columnWidthPanel" class="hidden" style="margin-top:1rem;padding:0.5rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;">
                         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
@@ -16266,7 +16268,10 @@ function generateQuotePreview(isManualChange){
     const sip=settings.signaturePosition||{bottom:40,right:20};
     const sh=selSeal?`<div class="quote-seal draggable-element" id="previewSeal" data-type="seal" style="position:absolute;bottom:${sp.bottom}px;right:${sp.right}px;width:120px;height:120px;opacity:0.9;cursor:move;z-index:10;"><img src="${selSeal.image}" alt="${selSeal.name}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;"></div>`:'';
     let sigHtml='';
-    if(appData.signatures && appData.signatures.length > 0){
+    if(appData.currentQuote.customerSignature){
+        const customerSigPos=appData.currentQuote.customerSignaturePosition||sip;
+        sigHtml=`<div class="quote-signature draggable-element" id="previewCustomerSignature" data-type="signature" style="position:absolute;bottom:${customerSigPos.bottom}px;right:${customerSigPos.right}px;width:150px;height:60px;opacity:0.9;cursor:move;z-index:10;"><img src="${appData.currentQuote.customerSignature}" alt="客户签名" style="width:100%;height:100%;object-fit:contain;pointer-events:none;"></div>`;
+    } else if(appData.signatures && appData.signatures.length > 0){
         const lastSig=appData.signatures[appData.signatures.length-1];
         sigHtml=`<div class="quote-signature draggable-element" id="previewSignature" data-type="signature" style="position:absolute;bottom:${sip.bottom}px;right:${sip.right}px;width:150px;height:60px;opacity:0.9;cursor:move;z-index:10;"><img src="${lastSig.image}" alt="签名" style="width:100%;height:100%;object-fit:contain;pointer-events:none;"></div>`;
     }
@@ -17384,7 +17389,8 @@ function initDraggableElements(){
     if(!preview) return;
     const seal=document.getElementById('previewSeal');
     const sig=document.getElementById('previewSignature');
-    [seal,sig].forEach(el=>{
+    const customerSig=document.getElementById('previewCustomerSignature');
+    [seal,sig,customerSig].forEach(el=>{
         if(!el) return;
         el.addEventListener('mousedown',function(e){
             if(e.target.tagName==='INPUT') return;
@@ -17458,6 +17464,10 @@ function endDrag(){
         appData.systemSettings.sealPosition={bottom:bottom,right:right};
     } else if(type==='signature'){
         appData.systemSettings.signaturePosition={bottom:bottom,right:right};
+        if(dragTarget.id==='previewCustomerSignature'){
+            if(!appData.currentQuote) appData.currentQuote={};
+            appData.currentQuote.customerSignaturePosition={bottom:bottom,right:right};
+        }
     }
     dragTarget=null;
 }
@@ -18681,6 +18691,326 @@ async function exportXLS(){
         showToast('XLSX 导出成功！', 'success');
     }
 }
+
+// ===== 生成分享链接功能 =====
+async function generateShareLink(){
+    // 收集当前报价数据
+    if(!appData.currentQuote || !appData.currentQuote.items || !appData.currentQuote.items.length){
+        showToast('请先添加报价项目后再生成分享链接', 'warning');
+        return;
+    }
+    
+    // 确保 LZString 已加载
+    if (typeof LZString === 'undefined') {
+        showToast('正在加载压缩库...', 'info');
+        await loadLZStringLibrary();
+    }
+    
+    // 收集表单数据到 currentQuote
+    appData.currentQuote.clientName = document.getElementById('quoteClientName').value;
+    appData.currentQuote.clientContactPerson = document.getElementById('quoteClientContactPerson').value;
+    appData.currentQuote.clientPhone = document.getElementById('quoteClientPhone').value;
+    appData.currentQuote.clientEmail = document.getElementById('quoteClientEmail').value;
+    appData.currentQuote.clientAddress = document.getElementById('quoteClientAddress').value;
+    appData.currentQuote.title = document.getElementById('quoteTitle').value;
+    appData.currentQuote.quoteNumber = document.getElementById('quoteNumber').value;
+    appData.currentQuote.paymentMethod = getPaymentMethod();
+    
+    // 获取折扣和税率
+    var dr = parseFloat(document.getElementById('discountRate').value || 100);
+    var tr = parseFloat(document.getElementById('taxRate').value || 0);
+    var pm = document.querySelector('input[name="priceMode"]:checked').value;
+    
+    // 构建分享数据
+    var shareData = {
+        v: 1, // 版本号，用于未来兼容性
+        q: appData.currentQuote,
+        s: {
+            companyName: appData.systemSettings.companyName,
+            companyPhone: appData.systemSettings.companyPhone,
+            companyAddress: appData.systemSettings.companyAddress,
+            companyNotes: appData.systemSettings.companyNotes,
+            quoteValidDays: appData.systemSettings.quoteValidDays || 7,
+            printStyle: appData.systemSettings.printStyle || 'classic',
+            quoteStyle: appData.systemSettings.quoteStyle || 'modern'
+        },
+        c: {
+            discountRate: dr,
+            taxRate: tr,
+            priceMode: pm
+        },
+        t: new Date().toISOString() // 生成时间
+    };
+    
+    // 使用 LZString 压缩数据
+    var jsonStr = JSON.stringify(shareData);
+    var compressed = '';
+    
+    if(typeof LZString !== 'undefined'){
+        compressed = LZString.compressToEncodedURIComponent(jsonStr);
+    } else {
+        // 如果 LZString 加载失败，使用纯 URI 编码（链接会较长）
+        compressed = encodeURIComponent(jsonStr);
+    }
+    
+    // 获取当前页面基础路径
+    var basePath = window.location.href.replace(/\/[^\/]*$/, '/');
+    var publicUrl = basePath + 'public-quote.html?data=' + compressed;
+    
+    // 显示分享链接对话框
+    showShareLinkDialog(publicUrl, shareData);
+}
+
+// 动态加载 LZString 库
+function loadLZStringLibrary(){
+    return new Promise(function(resolve, reject){
+        var script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js';
+        script.onload = function(){
+            console.log('LZString loaded successfully');
+            resolve();
+        };
+        script.onerror = function(){
+            console.warn('LZString load failed, using fallback encoding');
+            resolve(); // 即使失败也继续，使用备选方案
+        };
+        document.head.appendChild(script);
+    });
+}
+
+function showShareLinkDialog(url, shareData){
+    var clientName = shareData.q.clientName || '客户';
+    var title = shareData.q.title || '报价单';
+    
+    var html = '<div style="padding:0.5rem;">' +
+        '<p style="margin:0 0 1rem 0;color:var(--gray-600);font-size:0.9rem;">复制以下链接发送给客户，客户可直接查看报价单并确认签署：</p>' +
+        '<div style="display:flex;gap:0.5rem;margin-bottom:1rem;">' +
+            '<input type="text" id="shareLinkInput" value="' + escapeHtml(url) + '" readonly ' +
+            'style="flex:1;padding:0.75rem;border:2px solid var(--gray-200);border-radius:8px;font-size:0.85rem;background:var(--gray-50);">' +
+            '<button class="btn btn-primary" onclick="copyShareLink()" style="padding:0.75rem 1rem;white-space:nowrap;">📋 复制链接</button>' +
+        '</div>' +
+        '<div style="background:var(--gray-50);border-radius:8px;padding:1rem;margin-bottom:1rem;">' +
+            '<div style="font-size:0.8rem;color:var(--gray-600);margin-bottom:0.5rem;">报价信息预览：</div>' +
+            '<div style="font-size:0.9rem;"><strong>' + escapeHtml(title) + '</strong></div>' +
+            '<div style="font-size:0.85rem;color:var(--gray-600);">客户：' + escapeHtml(clientName) + '</div>' +
+            '<div style="font-size:0.85rem;color:var(--gray-600);">项目数：' + (shareData.q.items ? shareData.q.items.length : 0) + ' 个</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' +
+            '<button class="btn btn-outline" onclick="shareViaWhatsApp()" style="background:#25D366;color:white;border:none;">💬 WhatsApp</button>' +
+            '<button class="btn btn-outline" onclick="shareViaWechat()" style="background:#07C160;color:white;border:none;">💚 微信</button>' +
+            '<button class="btn btn-outline" onclick="shareViaEmail()">📧 邮件</button>' +
+        '</div>' +
+    '</div>';
+    
+    var modalId = 'shareLinkModal';
+    var existing = document.getElementById(modalId);
+    if(existing) existing.remove();
+    
+    var modal = createModal('🔗 生成分享链接', html, [], modalId);
+    document.body.appendChild(modal);
+    openModal(modalId);
+    
+    // 保存分享数据到全局变量，供复制等函数使用
+    window.currentShareUrl = url;
+    window.currentShareData = shareData;
+}
+
+function copyShareLink(){
+    var input = document.getElementById('shareLinkInput');
+    if(input){
+        input.select();
+        document.execCommand('copy');
+        showToast('链接已复制到剪贴板！', 'success');
+    }
+}
+
+function shareViaWhatsApp(){
+    var url = encodeURIComponent(window.currentShareUrl || '');
+    var text = encodeURIComponent('您好，这是您的报价单，请查收：');
+    window.open('https://wa.me/?text=' + text + '%20' + url, '_blank');
+}
+
+function shareViaWechat(){
+    // 微信不支持直接跳转，需要引导用户
+    showToast('请复制链接后，在微信中粘贴发送给客户', 'info');
+    var input = document.getElementById('shareLinkInput');
+    if(input){
+        input.select();
+        document.execCommand('copy');
+    }
+}
+
+function shareViaEmail(){
+    var shareData = window.currentShareData || {};
+    var clientName = shareData.q ? (shareData.q.clientName || '客户') : '客户';
+    var title = shareData.q ? (shareData.q.title || '报价单') : '报价单';
+    var subject = encodeURIComponent('【报价单】' + title + ' - ' + clientName);
+    var body = encodeURIComponent('您好，\n\n请查收附件中的报价单。\n\n您也可以点击以下链接在线查看：\n' + (window.currentShareUrl || ''));
+    window.open('mailto:?subject=' + subject + '&body=' + body, '_blank');
+}
+
+// ===== 验证客户签署确认码 =====
+function openVerifySignatureModal(){
+    var html = '<div style="padding:0.5rem;">' +
+        '<p style="margin:0 0 1rem 0;color:var(--gray-600);">方式一：输入客户提供的签署确认码</p>' +
+        '<input type="text" id="verifySignCode" placeholder="输入6位确认码" maxlength="6" ' +
+        'style="width:100%;padding:0.75rem;border:2px solid var(--gray-200);border-radius:8px;font-size:1.2rem;text-transform:uppercase;letter-spacing:4px;text-align:center;" ' +
+        'onkeyup="this.value=this.value.toUpperCase();if(event.key===\"Enter\")verifySignatureCode();">' +
+        '<button class="btn btn-primary" onclick="verifySignatureCode()" style="width:100%;margin-top:1rem;padding:0.75rem;">🔍 验证确认码</button>' +
+        '<div style="margin:1.5rem 0;text-align:center;color:var(--gray-400);">— 或 —</div>' +
+        '<p style="margin:0 0 1rem 0;color:var(--gray-600);">方式二：粘贴客户发送的已签署确认链接（可导入签名到报价单）</p>' +
+        '<textarea id="importSignedLink" placeholder="粘贴已签署确认链接..." rows="3" ' +
+        'style="width:100%;padding:0.75rem;border:2px solid var(--gray-200);border-radius:8px;font-size:0.9rem;"></textarea>' +
+        '<button class="btn btn-success" onclick="importSignedLink()" style="width:100%;margin-top:1rem;padding:0.75rem;">📥 导入签署链接</button>' +
+        '<div id="verifyResult" style="margin-top:1rem;"></div>' +
+    '</div>';
+
+    var modalId = 'verifySignatureModal';
+    var existing = document.getElementById(modalId);
+    if(existing) existing.remove();
+
+    var modal = createModal('✅ 验证签署确认码', html, [], modalId);
+    document.body.appendChild(modal);
+    openModal(modalId);
+
+    setTimeout(function(){
+        var input = document.getElementById('verifySignCode');
+        if(input) input.focus();
+    }, 100);
+}
+
+// ===== 导入签署链接 =====
+function importSignedLink(){
+    var link = document.getElementById('importSignedLink').value.trim();
+    if(!link){
+        showToast('请输入已签署确认链接', 'warning');
+        return;
+    }
+
+    var resultDiv = document.getElementById('verifyResult');
+    
+    try {
+        var url = new URL(link);
+        var signedData = url.searchParams.get('signed');
+        
+        if(!signedData){
+            resultDiv.innerHTML = '<div style="padding:1rem;background:#fef2f2;border-radius:8px;border:2px solid #ef4444;color:#ef4444;text-align:center;">' +
+                '<div style="font-size:1.5rem;margin-bottom:0.5rem;">❌</div>' +
+                '<div>无效的签署链接</div>' +
+                '<div style="font-size:0.85rem;color:#991b1b;margin-top:0.5rem;">链接中未包含签署数据</div>' +
+            '</div>';
+            return;
+        }
+
+        var decodedData;
+        try {
+            if (typeof LZString !== 'undefined') {
+                decodedData = JSON.parse(LZString.decompressFromEncodedURIComponent(signedData));
+            } else {
+                decodedData = JSON.parse(decodeURIComponent(signedData));
+            }
+        } catch(e) {
+            resultDiv.innerHTML = '<div style="padding:1rem;background:#fef2f2;border-radius:8px;border:2px solid #ef4444;color:#ef4444;text-align:center;">' +
+                '<div style="font-size:1.5rem;margin-bottom:0.5rem;">❌</div>' +
+                '<div>数据解析失败</div>' +
+            '</div>';
+            return;
+        }
+
+        if(!decodedData.sig || !decodedData.sig.image){
+            resultDiv.innerHTML = '<div style="padding:1rem;background:#fef2f2;border-radius:8px;border:2px solid #ef4444;color:#ef4444;text-align:center;">' +
+                '<div style="font-size:1.5rem;margin-bottom:0.5rem;">❌</div>' +
+                '<div>链接中未包含签名数据</div>' +
+            '</div>';
+            return;
+        }
+
+        var sigData = decodedData.sig;
+        
+        resultDiv.innerHTML = '<div style="padding:1rem;background:#ecfdf5;border-radius:8px;border:2px solid #10b981;">' +
+            '<div style="font-size:1.5rem;margin-bottom:0.5rem;">✓</div>' +
+            '<div style="font-weight:600;color:#059669;margin-bottom:1rem;">签署数据解析成功！</div>' +
+            '<div style="font-size:0.9rem;color:#374151;border-bottom:1px solid #d1d5db;padding-bottom:0.5rem;margin-bottom:0.5rem;">' +
+                '<strong>报价单号：</strong>' + (sigData.quoteNumber || '未记录') + '<br>' +
+                '<strong>客户名称：</strong>' + (sigData.clientName || '未记录') + '<br>' +
+                '<strong>签署时间：</strong>' + (sigData.time ? new Date(sigData.time).toLocaleString('zh-CN') : '未知') +
+            '</div>' +
+            '<div style="margin-top:1rem;">' +
+                '<strong>客户签名：</strong><br>' +
+                '<img src="' + sigData.image + '" style="max-width:200px;border:1px solid #d1d5db;border-radius:4px;margin-top:0.5rem;" />' +
+            '</div>' +
+            '<button class="btn btn-success" onclick="applySignatureToQuote(\'' + sigData.image.replace(/'/g, "\\'") + '\')" style="width:100%;margin-top:1rem;padding:0.75rem;">' +
+                '📥 将签名应用到当前报价单</button>' +
+        '</div>';
+
+    } catch(e) {
+        resultDiv.innerHTML = '<div style="padding:1rem;background:#fef2f2;border-radius:8px;border:2px solid #ef4444;color:#ef4444;text-align:center;">' +
+            '<div style="font-size:1.5rem;margin-bottom:0.5rem;">❌</div>' +
+            '<div>链接格式错误</div>' +
+            '<div style="font-size:0.85rem;color:#991b1b;margin-top:0.5rem;">' + e.message + '</div>' +
+        '</div>';
+    }
+}
+
+function applySignatureToQuote(signatureImage){
+    if(!appData.currentQuote){
+        showToast('当前没有打开的报价单', 'warning');
+        return;
+    }
+
+    appData.currentQuote.customerSignature = signatureImage;
+    saveData();
+    
+    showToast('客户签名已应用到当前报价单！', 'success');
+    
+    var modal = document.getElementById('verifySignatureModal');
+    if(modal) modal.remove();
+    
+    var overlay = document.querySelector('.modal-overlay');
+    if(overlay) overlay.remove();
+}
+
+function verifySignatureCode(){
+    var code = (document.getElementById('verifySignCode').value || '').toUpperCase().trim();
+    if(!code || code.length !== 6){
+        showToast('请输入6位确认码', 'warning');
+        return;
+    }
+
+    var resultDiv = document.getElementById('verifyResult');
+    var confirmKey = 'confirmIndex_' + code;
+    var sigDataStr = localStorage.getItem(confirmKey);
+
+    if(!sigDataStr){
+        resultDiv.innerHTML = '<div style="padding:1rem;background:#fef2f2;border-radius:8px;border:2px solid #ef4444;text-align:center;color:#ef4444;">' +
+            '<div style="font-size:1.5rem;margin-bottom:0.5rem;">❌</div>' +
+            '<div>确认码不存在或已失效</div>' +
+            '<div style="font-size:0.85rem;color:#991b1b;margin-top:0.5rem;">请确认客户提供的确认码是否正确</div>' +
+        '</div>';
+        return;
+    }
+
+    try {
+        var sigData = JSON.parse(sigDataStr);
+        resultDiv.innerHTML = '<div style="padding:1rem;background:#ecfdf5;border-radius:8px;border:2px solid #10b981;">' +
+            '<div style="font-size:1.5rem;margin-bottom:0.5rem;">✓</div>' +
+            '<div style="font-weight:600;color:#059669;margin-bottom:1rem;">签署确认成功！</div>' +
+            '<div style="font-size:0.9rem;color:#374151;border-bottom:1px solid #d1d5db;padding-bottom:0.5rem;margin-bottom:0.5rem;">' +
+                '<strong>报价单号：</strong>' + (sigData.quoteNumber || '未记录') + '<br>' +
+                '<strong>客户名称：</strong>' + (sigData.clientName || '未记录') + '<br>' +
+                '<strong>签署时间：</strong>' + (sigData.time ? new Date(sigData.time).toLocaleString('zh-CN') : '未知') +
+            '</div>' +
+            '<div style="margin-top:1rem;">' +
+                '<strong>客户签名：</strong><br>' +
+                '<img src="' + sigData.image + '" style="max-width:200px;border:1px solid #d1d5db;border-radius:4px;margin-top:0.5rem;" />' +
+            '</div>' +
+        '</div>';
+    } catch(e) {
+        resultDiv.innerHTML = '<div style="padding:1rem;background:#fef2f2;border-radius:8px;border:2px solid #ef4444;color:#ef4444;text-align:center;">' +
+            '数据解析失败</div>';
+    }
+}
+
 function saveAsTemplate(){
     appData.currentQuote.clientName=document.getElementById('quoteClientName').value;
     appData.currentQuote.clientContactPerson=document.getElementById('quoteClientContactPerson').value;
