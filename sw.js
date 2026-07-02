@@ -1,40 +1,16 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'V3.4.132  更新日期：20260624';
+const CACHE_NAME = 'V3.4.131  更新日期：20260702';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
-    'bug 修复产品库编辑页面链接图片无法清除的问题',
-    'bug 修复错误链接自动替换为当前页面URL的问题',
-    'feat 样式切换后自动更新预览，无需手动点击',
-    'feat 添加预览/关闭预览按钮切换功能',
-    'feat 修复自定义主题色设置不生效的问题',
-    'feat 修改系统设置中颜色设置描述，明确为现代风格颜色设置',
-    'bug 修复首次预览时默认样式不一致的问题',
-    'bug 修复多个 beforeunload/pagehide 监听器重复清理的问题',
-    'opt 优化 ObjectURL 管理，添加数量限制和定期清理机制',
-    'opt 统一调试模式日志输出方式',
-    'bug 修复 manifest.json 版本号与 SW 不一致的问题',
-    'bug 修复 sw.js fetch 事件缓存更新 Promise 未正确返回的问题',
-    'bug 修复 sw.js 离线 fallback 逻辑不一致的问题',
-    'bug 修复 sw.js 未处理非 GET 请求导致 POST 请求失败的问题',
-    'bug 修复 index.html SW 注册路径硬编码导致部署兼容性问题',
-    'bug 修复 index.html 消息监听器未验证消息来源的安全问题',
-    'bug 修复 sw.js 非 GET 请求未使用 event.respondWith 的问题',
-    'bug 修复 sw.js caches.match 返回 Promise 时误用 || 操作符的问题',
-    'bug 修复 index.html 全局消息监听器未验证消息来源的问题',
-    'bug 修复 safeDataOperation 无法捕获异步错误的问题',
-    'bug 修复 IndexedDB save 方法批量保存未等待完成的问题',
-    'feat 添加全局 unhandledrejection 和 error 事件监听',
-    'bug 修复 sw.js basePath 硬编码导致部署兼容性问题',
-    'bug 修复 sw.js skipWaiting 未使用 event.waitUntil 的问题',
-    'bug 修复 IndexedDB 批量保存 transaction 可能提前关闭的问题',
-    'bug 修复全局错误监听器 preventDefault 阻止正常错误上报的问题',
-    'bug 修复云同步 gistUploadFull 中 isSyncing 状态管理问题',
-    'bug 修复云同步增量上传时间比较逻辑错误的问题',
-    'bug 修复云同步团队模式下数据过滤逻辑不一致的问题',
-    'bug 修复云同步 API 请求缺少超时控制的问题',
-    'bug 修复云同步时间比较未处理时区差异的问题',
-    'bug 修复云同步 JSON 序列化使用 WeakSet 无法检测循环引用的问题'
+    'feat 产品编辑页面新增供应商报价参考功能，支持添加多家供应商比价',
+    'feat 报价单添加产品时自动继承产品预设的供应商报价',
+    'feat 报价历史中新增供应商报价管理弹窗，支持查看和管理供应商报价',
+    'feat 供应商报价自动标注最低价格，支持选定合作供应商',
+    'bug 修复产品编辑页面添加供应商报价闪退问题',
+    'bug 修复保存历史记录时供应商报价数据丢失问题',
+    'bug 修复保存报价项目到产品库时显示错误供应商报价问题',
+
 ];
 const basePath = self.location.pathname.replace(/sw\.js$/, '') || '/quote-system/';
 

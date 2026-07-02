@@ -9775,6 +9775,22 @@ function safeExecuteAsync(fn, defaultVal) {
             </div>
             
             <div id="materialAnalysisResult" style="margin-top:0.375rem;display:none;padding:0.375rem;background:#f3f4f6;border-radius:var(--radius);font-size:0.75rem;"></div>
+
+            <!-- 供应商报价参考（预设常用供应商，添加到报价单时自动继承） -->
+            <div class="compact-field" style="margin-top:0.75rem;">
+                <label style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>🏭 供应商报价参考</span>
+                    <span style="font-size:0.7rem;color:var(--gray-400);font-weight:400;">添加到报价单时自动继承</span>
+                </label>
+                <div id="productSupplierQuotesList" style="margin-bottom:0.5rem;"></div>
+                <div style="display:grid;grid-template-columns:1.2fr 0.8fr 1.4fr 1.6fr auto;gap:0.375rem;align-items:end;">
+                    <div><label style="font-size:0.7rem;color:var(--gray-500);">供应商名称</label><input type="text" id="productSqName" placeholder="如：XX广告制作厂" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
+                    <div><label style="font-size:0.7rem;color:var(--gray-500);">参考报价</label><input type="number" id="productSqPrice" placeholder="0.00" step="0.01" min="0" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
+                    <div><label style="font-size:0.7rem;color:var(--gray-500);">联系方式</label><input type="text" id="productSqContact" placeholder="电话/微信" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
+                    <div><label style="font-size:0.7rem;color:var(--gray-500);">备注</label><input type="text" id="productSqNote" placeholder="交期/工艺/付款等" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
+                    <div><button type="button" class="btn btn-primary btn-sm" onclick="addProductSupplierQuote()" style="font-size:0.75rem;">➕ 添加</button></div>
+                </div>
+            </div>
         </form>
     </div>
     <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('productModal')">取消</button><button class="btn btn-primary" onclick="saveProduct()">保存</button></div>
@@ -9996,6 +10012,22 @@ function safeExecuteAsync(fn, defaultVal) {
         <div id="versionCompareContent"></div>
     </div>
     <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('versionCompareModal')">关闭</button></div>
+</div></div>
+
+<!-- 供应商报价管理模态框（仅内部可见，不展示给客户） -->
+<div id="supplierQuoteModal" class="modal"><div class="modal-content" style="max-width:1000px;">
+    <div class="modal-header">
+        <h3 class="modal-title" id="supplierQuoteModalTitle">🏭 供应商报价管理</h3>
+        <button class="modal-close" onclick="closeModal('supplierQuoteModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <input type="hidden" id="supplierQuoteHistoryId">
+        <div style="margin-bottom:0.75rem;padding:0.625rem 0.875rem;background:var(--gray-50);border-radius:var(--radius);font-size:0.8125rem;color:var(--gray-600);display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+            <span>📌 此页面仅内部可见，用于记录外协厂家的报价并比价，不会显示在客户报价单和分享链接中。</span>
+        </div>
+        <div id="supplierQuoteContent"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('supplierQuoteModal')">关闭</button></div>
 </div></div>
 
 <script>
@@ -14716,6 +14748,7 @@ function saveCurrentQuoteToHistory() {
         items: JSON.parse(JSON.stringify(appData.currentQuote.items)),
         mainImages: JSON.parse(JSON.stringify(appData.currentQuote.mainImages || [])),
         showNotes: appData.currentQuote.showNotes !== false,
+        supplierQuotes: JSON.parse(JSON.stringify(appData.currentQuote.supplierQuotes || {})),
         totalCost: tc,
         totalBeforeDiscount: st,
         finalTotal: total,
@@ -14751,6 +14784,7 @@ function saveCurrentQuoteToHistory() {
             existingQuote.items = JSON.parse(JSON.stringify(appData.currentQuote.items));
             existingQuote.mainImages = JSON.parse(JSON.stringify(appData.currentQuote.mainImages || []));
             existingQuote.showNotes = appData.currentQuote.showNotes !== false;
+            existingQuote.supplierQuotes = JSON.parse(JSON.stringify(appData.currentQuote.supplierQuotes || {}));
             existingQuote.totalCost = tc;
             existingQuote.totalBeforeDiscount = st;
             existingQuote.finalTotal = total;
@@ -18968,6 +19002,9 @@ function openAddProductModal(){
         };
     }
 
+    appData.currentEditingProductSupplierQuotes = [];
+    renderProductSupplierQuotes();
+
     openModal('productModal');
 }
 function updateProductCalcFields() {
@@ -19371,7 +19408,87 @@ function openEditProductModal(pid){
     } else {
         loadImage(p.image);
     }
+
+    appData.currentEditingProductSupplierQuotes = p.supplierQuotes ? [...p.supplierQuotes] : [];
+    renderProductSupplierQuotes();
 }
+function addProductSupplierQuote(){
+    const nameEl = document.getElementById('productSqName');
+    const priceEl = document.getElementById('productSqPrice');
+    const contactEl = document.getElementById('productSqContact');
+    const noteEl = document.getElementById('productSqNote');
+    
+    if(!nameEl || !priceEl){
+        showToast('表单元素未找到', 'error');
+        return;
+    }
+    
+    const supplierName = (nameEl.value||'').trim();
+    const price = parseFloat(priceEl.value);
+    
+    if(!supplierName){ 
+        showToast('请填写供应商名称', 'warning'); 
+        nameEl.focus(); 
+        return; 
+    }
+    if(isNaN(price) || price<0){ 
+        showToast('请填写有效的报价金额', 'warning'); 
+        priceEl.focus(); 
+        return; 
+    }
+    
+    if(!appData.currentEditingProductSupplierQuotes){
+        appData.currentEditingProductSupplierQuotes = [];
+    }
+    
+    appData.currentEditingProductSupplierQuotes.push({
+        id: Date.now() + Math.floor(Math.random()*1000),
+        supplierName: supplierName,
+        price: price,
+        contact: contactEl ? (contactEl.value||'').trim() : '',
+        note: noteEl ? (noteEl.value||'').trim() : '',
+        createdAt: new Date().toISOString()
+    });
+    
+    nameEl.value = '';
+    priceEl.value = '';
+    if(contactEl) contactEl.value = '';
+    if(noteEl) noteEl.value = '';
+    
+    renderProductSupplierQuotes();
+    showToast('已添加供应商报价参考', 'success');
+}
+function deleteProductSupplierQuote(sqId){
+    if(!appData.currentEditingProductSupplierQuotes) return;
+    const idx = appData.currentEditingProductSupplierQuotes.findIndex(s=>s.id===sqId);
+    if(idx<0) return;
+    appData.currentEditingProductSupplierQuotes.splice(idx,1);
+    renderProductSupplierQuotes();
+    showToast('已删除该供应商报价', 'info');
+}
+function renderProductSupplierQuotes(){
+    const container = document.getElementById('productSupplierQuotesList');
+    const list = appData.currentEditingProductSupplierQuotes || [];
+    if(!list.length){
+        container.innerHTML = '<div style="padding:0.5rem 0;font-size:0.75rem;color:var(--gray-400);text-align:center;">暂无供应商报价参考，添加后在创建报价单时会自动继承</div>';
+        return;
+    }
+    let html = '<div style="border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;">';
+    html += '<div style="display:grid;grid-template-columns:1.2fr 0.8fr 1.4fr 1.6fr 0.6fr;gap:0.5rem;font-size:0.7rem;color:var(--gray-500);padding:0.4rem 0.6rem;background:var(--gray-50);font-weight:600;">';
+    html += '<div>供应商</div><div style="text-align:right;">报价</div><div>联系方式</div><div>备注</div><div></div></div>';
+    list.forEach(s=>{
+        html += `<div style="display:grid;grid-template-columns:1.2fr 0.8fr 1.4fr 1.6fr 0.6fr;gap:0.5rem;font-size:0.78rem;padding:0.4rem 0.6rem;border-top:1px solid var(--gray-100);align-items:center;">`;
+        html += `<div>${escapeHtml(s.supplierName||'')}</div>`;
+        html += `<div style="text-align:right;font-weight:600;">¥${(parseFloat(s.price)||0).toFixed(2)}</div>`;
+        html += `<div style="color:var(--gray-600);">${escapeHtml(s.contact||'-')}</div>`;
+        html += `<div style="color:var(--gray-600);">${escapeHtml(s.note||'-')}</div>`;
+        html += `<div style="text-align:right;"><button class="btn btn-danger btn-xs" onclick="deleteProductSupplierQuote(${s.id})" style="font-size:0.65rem;padding:0.15rem 0.4rem;">🗑</button></div>`;
+        html += '</div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
 function handleProductImageUpload(input){
     const file=input.files[0];
     if(file){
@@ -19938,6 +20055,7 @@ function saveProduct(){
         tierPricing: enableTierPricing,
         tierPrices: tierPrices,
         tierMode: tierMode,
+        supplierQuotes: appData.currentEditingProductSupplierQuotes || [],
         updatedAt:new Date().toISOString()
     };
     
@@ -20494,14 +20612,27 @@ function addToQuote(pid){
         }
         
         // 普通产品直接添加
+        const itemId = Date.now();
         appData.currentQuote.items.push({
-            id:Date.now(), productId:p.id, image:p.image||null, name:p.name, spec:p.description||'',
+            id:itemId, productId:p.id, image:p.image||null, name:p.name, spec:p.description||'',
             unit:p.unit||'项', note:'', cost:p.costPrice||0, qty:1, price:finalPrice,
             basePrice: p.sellingPrice || p.price || 0,
             tierPricing: tierPricing,
             tierPrices: tierPrices,
             tierMode: tierMode
         });
+
+        // 继承产品级供应商报价参考
+        if(p.supplierQuotes && p.supplierQuotes.length > 0){
+            if(!appData.currentQuote.supplierQuotes) appData.currentQuote.supplierQuotes = {};
+            appData.currentQuote.supplierQuotes[String(itemId)] = p.supplierQuotes.map(sq => ({
+                ...sq,
+                id: Date.now() + Math.floor(Math.random()*1000),
+                selected: sq.selected || false,
+                source: 'product'
+            }));
+        }
+
         renderQuoteItems(); calculateTotals();
         saveDraftQuote();
     }
@@ -34915,22 +35046,25 @@ function renderHistory() {
         const versionCount = h.versions ? h.versions.length : 1;
         const statusLabels = { pending: '⏳ 待跟进', quoted: '📤 已报价', ordered: '✅ 已通过', cancelled: '❌ 已拒绝', expired: '⏰ 已过期' };
         const statusColors = { pending: 'var(--gray-500)', quoted: 'var(--blue-500)', ordered: 'var(--green-500)', cancelled: 'var(--red-500)', expired: 'var(--orange-500)' };
-        
+        const sqSummary = getSupplierQuoteSummary(h);
+
         div.innerHTML = `
             <div class="history-header">
                 <div>
                     <div class="history-title">${escapeHtml(h.title || '未命名报价')}${h.quoteNumber?' <span style="font-size:0.75rem;color:var(--gray-400);font-weight:400;">('+escapeHtml(h.quoteNumber)+')</span>':''}</div>
                     <div style="font-size:0.8125rem;color:var(--gray-500);">客户：${escapeHtml(h.clientName)} · ${date}</div>
-                    <div style="font-size:0.75rem;margin-top:0.25rem;display:flex;gap:1rem;align-items:center;">
+                    <div style="font-size:0.75rem;margin-top:0.25rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
                         <span class="badge" style="background:${statusColors[h.status] || 'var(--gray-500)'}">${statusLabels[h.status] || '待跟进'}</span>
                         ${expiryInfo.html}
                         <span style="color:var(--gray-400);">📦 v${h.version || versionCount}</span>
+                        ${sqSummary.count > 0 ? `<span class="badge" style="background:var(--purple-500, #8b5cf6);">🏭 供应商报价 ${sqSummary.count}/${sqSummary.totalItems}${sqSummary.lowestTotal !== null ? ` · 最低 ¥${sqSummary.lowestTotal.toFixed(2)}` : ''}</span>` : ''}
                     </div>
                 </div>
                 <div class="btn-group history-actions" style="display:flex;flex-wrap:wrap;gap:0.25rem;">
                     <button class="btn btn-primary btn-sm" onclick="loadHistoryQuote(${h.id})" style="min-width:120px;font-size:0.75rem;">✏️ 编辑</button>
                     <button class="btn btn-outline btn-sm" onclick="cloneHistoryQuote(${h.id})" style="min-width:100px;font-size:0.75rem;">📋 副本</button>
                     <button class="btn btn-outline btn-sm" onclick="viewQuoteVersions(${h.id})" style="min-width:100px;font-size:0.75rem;">📜 版本</button>
+                    <button class="btn ${sqSummary.count > 0 ? 'btn-success' : 'btn-outline'} btn-sm" onclick="openSupplierQuoteModal(${h.id})" style="min-width:100px;font-size:0.75rem;">🏭 供应商</button>
                     ${expiryInfo.canRenew ? `<button class="btn btn-warning btn-sm" onclick="renewQuoteExpiry(${h.id})" style="min-width:80px;font-size:0.75rem;">🔄 续期</button>` : ''}
                     <button class="btn btn-danger btn-sm" onclick="deleteHistoryQuote(${h.id})" style="min-width:60px;padding:0.25rem 0.25rem;font-size:0.75rem;">🗑️ 删除</button>
                 </div>
@@ -35370,6 +35504,7 @@ function loadHistoryQuote(hid) {
     appData.currentQuote.items = JSON.parse(JSON.stringify(h.items));
     appData.currentQuote.mainImages = h.mainImages || [];
     appData.currentQuote.showNotes = h.showNotes !== undefined ? h.showNotes : true;
+    appData.currentQuote.supplierQuotes = JSON.parse(JSON.stringify(h.supplierQuotes || {}));
     appData.currentQuote.editingHistoryId = hid; // 记录正在编辑的历史报价ID
     appData.currentQuote.editingHistoryStatus = h.status; // 记录原始状态
     document.getElementById('quoteClientName').value = h.clientName;
@@ -35400,11 +35535,32 @@ function cloneHistoryQuote(hid) {
         delete appData.currentQuote.editingHistoryStatus;
     }
     
-    appData.currentQuote.items = h.items.map(item => {
+    const newItems = h.items.map(item => {
         return {...item, id: generateUniqueId()};
     });
+    appData.currentQuote.items = newItems;
     appData.currentQuote.mainImages = h.mainImages || [];
     appData.currentQuote.showNotes = h.showNotes !== undefined ? h.showNotes : true;
+    
+    // 映射 supplierQuotes 的 itemId
+    if(h.supplierQuotes && typeof h.supplierQuotes === 'object'){
+        const supplierQuotes = {};
+        newItems.forEach(newItem => {
+            const oldItem = h.items.find(i => i.name === newItem.name && i.spec === newItem.spec);
+            if(oldItem){
+                const oldKey = String(oldItem.id);
+                if(h.supplierQuotes[oldKey]){
+                    supplierQuotes[String(newItem.id)] = h.supplierQuotes[oldKey].map(sq => ({
+                        ...sq,
+                        id: Date.now() + Math.floor(Math.random()*1000)
+                    }));
+                }
+            }
+        });
+        appData.currentQuote.supplierQuotes = supplierQuotes;
+    } else {
+        appData.currentQuote.supplierQuotes = {};
+    }
     
     document.getElementById('quoteClientName').value = h.clientName;
     document.getElementById('quoteTitle').value = (h.title || '未命名报价') + ' (副本)';
@@ -35448,6 +35604,186 @@ function clearOldHistory() {
 function exportHistoryJSON() {
     downloadFile(JSON.stringify(appData.quoteHistory, null, 2), `quote-history_${new Date().toISOString().slice(0,10)}.json`,'application/json');
     dialog.alert(`已导出 ${appData.quoteHistory.length} 条历史记录`, '导出成功', '✅');
+}
+
+// ===== 供应商报价管理（外协比价，仅内部可见） =====
+// 数据结构：historyItem.supplierQuotes = { [itemId]: [ {id, supplierName, price, contact, note, selected, createdAt} ] }
+function getSupplierQuotesMap(quote){
+    if(!quote.supplierQuotes || typeof quote.supplierQuotes !== 'object'){
+        quote.supplierQuotes = {};
+    }
+    return quote.supplierQuotes;
+}
+function getSupplierQuoteSummary(quote){
+    const map = quote.supplierQuotes || {};
+    const items = quote.items || [];
+    let count = 0;
+    let lowestTotal = null;
+    items.forEach(it=>{
+        const list = map[String(it.id)];
+        if(list && list.length){
+            count++;
+            const minPrice = Math.min(...list.map(s=>parseFloat(s.price)||0));
+            const sub = minPrice * (it.qty||1);
+            if(lowestTotal === null) lowestTotal = 0;
+            lowestTotal += sub;
+        }
+    });
+    return { count, totalItems: items.length, lowestTotal };
+}
+function openSupplierQuoteModal(quoteId){
+    const quote = appData.quoteHistory.find(h => h.id === quoteId);
+    if(!quote){ showToast('未找到该报价记录', 'error'); return; }
+    document.getElementById('supplierQuoteHistoryId').value = quoteId;
+    document.getElementById('supplierQuoteModalTitle').textContent = `🏭 供应商报价管理 · ${quote.title || '未命名报价'}（${quote.clientName || ''}）`;
+    renderSupplierQuoteContent(quoteId);
+    openModal('supplierQuoteModal');
+}
+function renderSupplierQuoteContent(quoteId){
+    const quote = appData.quoteHistory.find(h => h.id === quoteId);
+    if(!quote) return;
+    const container = document.getElementById('supplierQuoteContent');
+    const map = getSupplierQuotesMap(quote);
+    const items = quote.items || [];
+    if(!items.length){
+        container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray-500);">该报价单暂无项目</div>';
+        return;
+    }
+    let html = '<div style="display:flex;flex-direction:column;gap:0.875rem;">';
+    items.forEach((it, idx)=>{
+        const key = String(it.id);
+        const list = map[key] || [];
+        const sellingSubtotal = (it.price||0) * (it.qty||1);
+        // 计算最低供应商报价
+        let lowestPrice = null;
+        list.forEach(s=>{ const p = parseFloat(s.price)||0; if(lowestPrice===null || p<lowestPrice) lowestPrice = p; });
+
+        html += `<div style="border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;">`;
+        // 项目头部
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;padding:0.625rem 0.875rem;background:var(--gray-50);flex-wrap:wrap;">
+            <div style="font-weight:600;font-size:0.875rem;">${idx+1}. ${escapeHtml(it.name||'未命名项目')}</div>
+            <div style="font-size:0.75rem;color:var(--gray-500);display:flex;gap:0.75rem;flex-wrap:wrap;">
+                <span>数量：<strong>${it.qty||1}</strong> ${escapeHtml(it.unit||'')}</span>
+                <span>售价：<strong>¥${(it.price||0).toFixed(2)}</strong></span>
+                <span>小计：<strong>¥${sellingSubtotal.toFixed(2)}</strong></span>
+                ${list.length ? `<span style="color:var(--green-500);">🏭 ${list.length}家报价 · 最低 ¥${(lowestPrice*(it.qty||1)).toFixed(2)}</span>` : '<span style="color:var(--gray-400);">暂无供应商报价</span>'}
+            </div>
+        </div>`;
+
+        // 供应商报价列表
+        if(list.length){
+            html += `<div style="padding:0.5rem 0.875rem;">`;
+            html += `<div style="display:grid;grid-template-columns:1.4fr 0.8fr 1.4fr 1.6fr 0.9fr 0.6fr;gap:0.5rem;font-size:0.7rem;color:var(--gray-500);padding:0.25rem 0;border-bottom:1px dashed var(--gray-200);">
+                <div>供应商</div><div style="text-align:right;">报价</div><div>联系方式</div><div>备注</div><div style="text-align:center;">选定</div><div></div>
+            </div>`;
+            list.forEach(s=>{
+                const p = parseFloat(s.price)||0;
+                const isLowest = lowestPrice!==null && p===lowestPrice;
+                const isSelected = !!s.selected;
+                const sourceBadge = s.source === 'product' ? '<span class="badge" style="background:var(--purple-500,#8b5cf6);font-size:0.6rem;margin-left:0.25rem;">产品预设</span>' : '';
+                html += `<div style="display:grid;grid-template-columns:1.4fr 0.8fr 1.4fr 1.6fr 0.9fr 0.6fr;gap:0.5rem;font-size:0.78rem;padding:0.4rem 0;border-bottom:1px solid var(--gray-100);align-items:center;">
+                    <div style="font-weight:${isSelected?'600':'400'};">${escapeHtml(s.supplierName||'')} ${isLowest?'<span class="badge" style="background:var(--green-500);font-size:0.6rem;">最低</span>':''}${sourceBadge}</div>
+                    <div style="text-align:right;font-weight:600;${isLowest?'color:var(--green-500);':''}">¥${p.toFixed(2)}<div style="font-size:0.65rem;color:var(--gray-400);font-weight:400;">小计 ¥${(p*(it.qty||1)).toFixed(2)}</div></div>
+                    <div style="color:var(--gray-600);">${escapeHtml(s.contact||'-')}</div>
+                    <div style="color:var(--gray-600);">${escapeHtml(s.note||'-')}</div>
+                    <div style="text-align:center;">
+                        <button class="btn ${isSelected?'btn-success':'btn-outline'} btn-xs" onclick="selectSupplierQuote(${quoteId}, ${it.id}, ${s.id})" style="font-size:0.65rem;padding:0.15rem 0.4rem;">${isSelected?'✓ 已选':'选定'}</button>
+                    </div>
+                    <div style="text-align:right;">
+                        <button class="btn btn-danger btn-xs" onclick="deleteSupplierQuote(${quoteId}, ${it.id}, ${s.id})" style="font-size:0.65rem;padding:0.15rem 0.4rem;">🗑</button>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        // 新增供应商报价表单
+        html += `<div style="padding:0.5rem 0.875rem 0.75rem;border-top:${list.length?'none':'1px solid var(--gray-100)'};">
+            <div style="display:grid;grid-template-columns:1.4fr 0.8fr 1.4fr 1.6fr auto;gap:0.5rem;align-items:end;">
+                <div><label style="font-size:0.7rem;color:var(--gray-500);">供应商名称 *</label><input type="text" id="sqName_${it.id}" placeholder="如：XX广告制作厂" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
+                <div><label style="font-size:0.7rem;color:var(--gray-500);">报价 *</label><input type="number" id="sqPrice_${it.id}" placeholder="0.00" step="0.01" min="0" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
+                <div><label style="font-size:0.7rem;color:var(--gray-500);">联系方式</label><input type="text" id="sqContact_${it.id}" placeholder="电话/微信" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
+                <div><label style="font-size:0.7rem;color:var(--gray-500);">备注</label><input type="text" id="sqNote_${it.id}" placeholder="交期/工艺/付款等" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
+                <div><button class="btn btn-primary btn-sm" onclick="addSupplierQuote(${quoteId}, ${it.id})" style="font-size:0.75rem;">➕ 添加</button></div>
+            </div>
+        </div>`;
+        html += `</div>`;
+    });
+    html += '</div>';
+
+    // 汇总区
+    const summary = getSupplierQuoteSummary(quote);
+    if(summary.count > 0){
+        html += `<div style="margin-top:0.875rem;padding:0.75rem 1rem;background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1px solid var(--green-200, #bbf7d0);border-radius:var(--radius);font-size:0.8125rem;">
+            <strong>📊 外协汇总：</strong>共 ${summary.count}/${summary.totalItems} 项已记录供应商报价${summary.lowestTotal!==null?`，按最低价合计 <strong style="color:var(--green-600, #16a34a);">¥${summary.lowestTotal.toFixed(2)}</strong>`:''}
+        </div>`;
+    }
+    container.innerHTML = html;
+}
+function addSupplierQuote(quoteId, itemId){
+    const quote = appData.quoteHistory.find(h => h.id === quoteId);
+    if(!quote) return;
+    const nameEl = document.getElementById('sqName_'+itemId);
+    const priceEl = document.getElementById('sqPrice_'+itemId);
+    const contactEl = document.getElementById('sqContact_'+itemId);
+    const noteEl = document.getElementById('sqNote_'+itemId);
+    const supplierName = (nameEl.value||'').trim();
+    const price = parseFloat(priceEl.value);
+    if(!supplierName){ showToast('请填写供应商名称', 'warning'); nameEl.focus(); return; }
+    if(isNaN(price) || price<0){ showToast('请填写有效的报价金额', 'warning'); priceEl.focus(); return; }
+    const map = getSupplierQuotesMap(quote);
+    const key = String(itemId);
+    if(!map[key]) map[key] = [];
+    // 第一条默认选定
+    const isFirst = map[key].length === 0;
+    map[key].push({
+        id: Date.now() + Math.floor(Math.random()*1000),
+        supplierName: supplierName,
+        price: price,
+        contact: (contactEl.value||'').trim(),
+        note: (noteEl.value||'').trim(),
+        selected: isFirst,
+        createdAt: new Date().toISOString(),
+        source: 'quote'
+    });
+    saveDataImmediately();
+    renderSupplierQuoteContent(quoteId);
+    renderHistory();
+    showToast('已添加供应商报价', 'success');
+}
+function deleteSupplierQuote(quoteId, itemId, sqId){
+    const quote = appData.quoteHistory.find(h => h.id === quoteId);
+    if(!quote) return;
+    const map = getSupplierQuotesMap(quote);
+    const key = String(itemId);
+    const list = map[key];
+    if(!list) return;
+    const idx = list.findIndex(s=>s.id===sqId);
+    if(idx<0) return;
+    const wasSelected = list[idx].selected;
+    list.splice(idx,1);
+    // 若删除的是已选定项，且还有其他项，则自动选定第一条
+    if(wasSelected && list.length){
+        list[0].selected = true;
+    }
+    if(list.length===0) delete map[key];
+    saveDataImmediately();
+    renderSupplierQuoteContent(quoteId);
+    renderHistory();
+    showToast('已删除该供应商报价', 'info');
+}
+function selectSupplierQuote(quoteId, itemId, sqId){
+    const quote = appData.quoteHistory.find(h => h.id === quoteId);
+    if(!quote) return;
+    const map = getSupplierQuotesMap(quote);
+    const key = String(itemId);
+    const list = map[key];
+    if(!list) return;
+    list.forEach(s=>{ s.selected = (s.id===sqId); });
+    saveDataImmediately();
+    renderSupplierQuoteContent(quoteId);
+    renderHistory();
+    showToast('已选定该供应商', 'success');
 }
 
 // ===== AI智能推荐 =====
@@ -48417,6 +48753,10 @@ function saveQuoteItemToProduct(itemId) {
     
     // 填充分类选项
     populateCategorySelects();
+    
+    // 初始化供应商报价（新保存的报价项目没有预设供应商）
+    appData.currentEditingProductSupplierQuotes = [];
+    renderProductSupplierQuotes();
     
     openModal('productModal');
 }
