@@ -35747,9 +35747,10 @@ function addSupplierQuote(quoteId, itemId){
         source: 'quote'
     });
     saveDataImmediately();
+    syncSupplierQuotesToProduct(quote, itemId, map[key]);
     renderSupplierQuoteContent(quoteId);
     renderHistory();
-    showToast('已添加供应商报价', 'success');
+    showToast('已添加供应商报价（已同步到产品库）', 'success');
 }
 function deleteSupplierQuote(quoteId, itemId, sqId){
     const quote = appData.quoteHistory.find(h => h.id === quoteId);
@@ -35766,11 +35767,13 @@ function deleteSupplierQuote(quoteId, itemId, sqId){
     if(wasSelected && list.length){
         list[0].selected = true;
     }
+    const updatedList = map[key] || [];
     if(list.length===0) delete map[key];
     saveDataImmediately();
+    syncSupplierQuotesToProduct(quote, itemId, updatedList);
     renderSupplierQuoteContent(quoteId);
     renderHistory();
-    showToast('已删除该供应商报价', 'info');
+    showToast('已删除该供应商报价（已同步到产品库）', 'info');
 }
 function selectSupplierQuote(quoteId, itemId, sqId){
     const quote = appData.quoteHistory.find(h => h.id === quoteId);
@@ -35781,9 +35784,51 @@ function selectSupplierQuote(quoteId, itemId, sqId){
     if(!list) return;
     list.forEach(s=>{ s.selected = (s.id===sqId); });
     saveDataImmediately();
+    syncSupplierQuotesToProduct(quote, itemId, list);
     renderSupplierQuoteContent(quoteId);
     renderHistory();
     showToast('已选定该供应商', 'success');
+}
+
+function syncSupplierQuotesToProduct(quote, itemId, supplierQuotes){
+    const item = quote.items.find(i => String(i.id) === String(itemId));
+    if(!item) return;
+    
+    const product = appData.products.find(p => p.name === item.name && p.spec === item.spec);
+    if(!product) return;
+    
+    const existingQuotes = product.supplierQuotes || [];
+    const updatedQuotes = [];
+    
+    supplierQuotes.forEach(sq => {
+        if(sq.source === 'product'){
+            const existing = existingQuotes.find(eq => eq.supplierName === sq.supplierName);
+            if(existing){
+                updatedQuotes.push({...existing, price: sq.price, contact: sq.contact, note: sq.note, selected: sq.selected});
+            } else {
+                updatedQuotes.push({...sq});
+            }
+        } else {
+            const existing = existingQuotes.find(eq => eq.supplierName === sq.supplierName);
+            if(existing){
+                updatedQuotes.push({...existing, price: sq.price, contact: sq.contact, note: sq.note, selected: sq.selected});
+            } else {
+                updatedQuotes.push({
+                    id: Date.now() + Math.floor(Math.random()*1000),
+                    supplierName: sq.supplierName,
+                    price: sq.price,
+                    contact: sq.contact || '',
+                    note: sq.note || '',
+                    selected: sq.selected,
+                    createdAt: new Date().toISOString()
+                });
+            }
+        }
+    });
+    
+    product.supplierQuotes = updatedQuotes;
+    product.updatedAt = new Date().toISOString();
+    saveDataImmediately();
 }
 
 // ===== AI智能推荐 =====
