@@ -151,6 +151,45 @@
             textarea {
                 font-size: 16px !important;
             }
+            /* 供应商报价表单移动端优化 */
+            .supplier-quote-form {
+                grid-template-columns: 1fr !important;
+                gap: 0.375rem !important;
+            }
+            /* 供应商报价管理弹窗移动端适配 */
+            #supplierQuoteModal .modal-content {
+                max-width: 100vw !important;
+                width: 100vw !important;
+                margin: 0 !important;
+                border-radius: 12px 12px 0 0 !important;
+                max-height: 90vh !important;
+                overflow-y: auto !important;
+            }
+            #supplierQuoteModal .modal-body {
+                padding: 0.75rem !important;
+                overflow-x: auto !important;
+            }
+            /* 产品详情弹窗移动端适配 */
+            #productDetailModal .modal-content {
+                max-width: 100vw !important;
+                width: 100vw !important;
+                margin: 0 !important;
+                border-radius: 12px 12px 0 0 !important;
+                max-height: 90vh !important;
+                overflow-y: auto !important;
+            }
+            #productDetailModal .modal-body {
+                padding: 0.75rem !important;
+            }
+            /* 产品编辑弹窗移动端适配 */
+            #productModal .modal-content {
+                max-width: 100vw !important;
+                width: 100vw !important;
+                margin: 0 !important;
+                border-radius: 12px 12px 0 0 !important;
+                max-height: 90vh !important;
+                overflow-y: auto !important;
+            }
         }
         
         /* 文化空间算价 - 手机端优化 */
@@ -9783,7 +9822,7 @@ function safeExecuteAsync(fn, defaultVal) {
                     <span style="font-size:0.7rem;color:var(--gray-400);font-weight:400;">添加到报价单时自动继承</span>
                 </label>
                 <div id="productSupplierQuotesList" style="margin-bottom:0.5rem;"></div>
-                <div style="display:grid;grid-template-columns:1.2fr 0.8fr 1.4fr 1.6fr auto;gap:0.375rem;align-items:end;">
+                <div class="supplier-quote-form" style="display:grid;grid-template-columns:1.2fr 0.8fr 1.4fr 1.6fr auto;gap:0.375rem;align-items:end;">
                     <div><label style="font-size:0.7rem;color:var(--gray-500);">供应商名称</label><input type="text" id="productSqName" placeholder="如：XX广告制作厂" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
                     <div><label style="font-size:0.7rem;color:var(--gray-500);">参考报价</label><input type="number" id="productSqPrice" placeholder="0.00" step="0.01" min="0" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
                     <div><label style="font-size:0.7rem;color:var(--gray-500);">联系方式</label><input type="text" id="productSqContact" placeholder="电话/微信" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
@@ -35764,6 +35803,8 @@ function renderSupplierQuoteContent(quoteId){
     const container = document.getElementById('supplierQuoteContent');
     const map = getSupplierQuotesMap(quote);
     const items = quote.items || [];
+    const isMobile = window.innerWidth <= 640;
+    
     if(!items.length){
         container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray-500);">该报价单暂无项目</div>';
         return;
@@ -35773,12 +35814,10 @@ function renderSupplierQuoteContent(quoteId){
         const key = String(it.id);
         const list = map[key] || [];
         const sellingSubtotal = (it.price||0) * (it.qty||1);
-        // 计算最低供应商报价
         let lowestPrice = null;
         list.forEach(s=>{ const p = parseFloat(s.price)||0; if(lowestPrice===null || p<lowestPrice) lowestPrice = p; });
 
         html += `<div style="border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;">`;
-        // 项目头部
         html += `<div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;padding:0.625rem 0.875rem;background:var(--gray-50);flex-wrap:wrap;">
             <div style="font-weight:600;font-size:0.875rem;">${idx+1}. ${escapeHtml(it.name||'未命名项目')}</div>
             <div style="font-size:0.75rem;color:var(--gray-500);display:flex;gap:0.75rem;flex-wrap:wrap;">
@@ -35789,36 +35828,58 @@ function renderSupplierQuoteContent(quoteId){
             </div>
         </div>`;
 
-        // 供应商报价列表
         if(list.length){
             html += `<div style="padding:0.5rem 0.875rem;">`;
-            html += `<div style="display:grid;grid-template-columns:1.4fr 0.8fr 1.4fr 1.6fr 0.9fr 0.6fr;gap:0.5rem;font-size:0.7rem;color:var(--gray-500);padding:0.25rem 0;border-bottom:1px dashed var(--gray-200);">
-                <div>供应商</div><div style="text-align:right;">报价</div><div>联系方式</div><div>备注</div><div style="text-align:center;">选定</div><div></div>
-            </div>`;
-            list.forEach(s=>{
-                const p = parseFloat(s.price)||0;
-                const isLowest = lowestPrice!==null && p===lowestPrice;
-                const isSelected = !!s.selected;
-                const sourceBadge = s.source === 'product' ? '<span class="badge" style="background:var(--purple-500,#8b5cf6);font-size:0.6rem;margin-left:0.25rem;">产品预设</span>' : '';
-                html += `<div style="display:grid;grid-template-columns:1.4fr 0.8fr 1.4fr 1.6fr 0.9fr 0.6fr;gap:0.5rem;font-size:0.78rem;padding:0.4rem 0;border-bottom:1px solid var(--gray-100);align-items:center;">
-                    <div style="font-weight:${isSelected?'600':'400'};">${escapeHtml(s.supplierName||'')} ${isLowest?'<span class="badge" style="background:var(--green-500);font-size:0.6rem;">最低</span>':''}${sourceBadge}</div>
-                    <div style="text-align:right;font-weight:600;${isLowest?'color:var(--green-500);':''}">¥${p.toFixed(2)}<div style="font-size:0.65rem;color:var(--gray-400);font-weight:400;">小计 ¥${(p*(it.qty||1)).toFixed(2)}</div></div>
-                    <div style="color:var(--gray-600);">${escapeHtml(s.contact||'-')}</div>
-                    <div style="color:var(--gray-600);">${escapeHtml(s.note||'-')}</div>
-                    <div style="text-align:center;">
-                        <button class="btn ${isSelected?'btn-success':'btn-outline'} btn-xs" onclick="selectSupplierQuote(${quoteId}, ${it.id}, ${s.id})" style="font-size:0.65rem;padding:0.15rem 0.4rem;">${isSelected?'✓ 已选':'选定'}</button>
-                    </div>
-                    <div style="text-align:right;">
-                        <button class="btn btn-danger btn-xs" onclick="deleteSupplierQuote(${quoteId}, ${it.id}, ${s.id})" style="font-size:0.65rem;padding:0.15rem 0.4rem;">🗑</button>
-                    </div>
+            if(isMobile){
+                list.forEach(s=>{
+                    const p = parseFloat(s.price)||0;
+                    const isLowest = lowestPrice!==null && p===lowestPrice;
+                    const isSelected = !!s.selected;
+                    const sourceBadge = s.source === 'product' ? '<span class="badge" style="background:var(--purple-500,#8b5cf6);font-size:0.6rem;margin-left:0.25rem;">产品预设</span>' : '';
+                    html += `<div style="padding:0.4rem 0.5rem;border:1px solid var(--gray-100);border-radius:var(--radius);margin-bottom:0.375rem;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem;">
+                            <div style="font-weight:${isSelected?'600':'400'};">${escapeHtml(s.supplierName||'')} ${isLowest?'<span class="badge" style="background:var(--green-500);font-size:0.6rem;">最低</span>':''}${sourceBadge}</div>
+                            <div style="font-weight:600;${isLowest?'color:var(--green-500);':''}">¥${p.toFixed(2)}</div>
+                        </div>
+                        <div style="font-size:0.7rem;color:var(--gray-500);margin-bottom:0.375rem;">
+                            ${s.contact ? `<div>📞 ${escapeHtml(s.contact)}</div>` : ''}
+                            ${s.note ? `<div>📝 ${escapeHtml(s.note)}</div>` : ''}
+                            <div style="font-size:0.65rem;color:var(--gray-400);">小计 ¥${(p*(it.qty||1)).toFixed(2)}</div>
+                        </div>
+                        <div style="display:flex;gap:0.375rem;justify-content:flex-end;">
+                            <button class="btn ${isSelected?'btn-success':'btn-outline'} btn-xs" onclick="selectSupplierQuote(${quoteId}, ${it.id}, ${s.id})" style="font-size:0.65rem;padding:0.15rem 0.4rem;">${isSelected?'✓ 已选':'选定'}</button>
+                            <button class="btn btn-danger btn-xs" onclick="deleteSupplierQuote(${quoteId}, ${it.id}, ${s.id})" style="font-size:0.65rem;padding:0.15rem 0.4rem;">🗑</button>
+                        </div>
+                    </div>`;
+                });
+            } else {
+                html += `<div style="display:grid;grid-template-columns:1.4fr 0.8fr 1.4fr 1.6fr 0.9fr 0.6fr;gap:0.5rem;font-size:0.7rem;color:var(--gray-500);padding:0.25rem 0;border-bottom:1px dashed var(--gray-200);">
+                    <div>供应商</div><div style="text-align:right;">报价</div><div>联系方式</div><div>备注</div><div style="text-align:center;">选定</div><div></div>
                 </div>`;
-            });
+                list.forEach(s=>{
+                    const p = parseFloat(s.price)||0;
+                    const isLowest = lowestPrice!==null && p===lowestPrice;
+                    const isSelected = !!s.selected;
+                    const sourceBadge = s.source === 'product' ? '<span class="badge" style="background:var(--purple-500,#8b5cf6);font-size:0.6rem;margin-left:0.25rem;">产品预设</span>' : '';
+                    html += `<div style="display:grid;grid-template-columns:1.4fr 0.8fr 1.4fr 1.6fr 0.9fr 0.6fr;gap:0.5rem;font-size:0.78rem;padding:0.4rem 0;border-bottom:1px solid var(--gray-100);align-items:center;">
+                        <div style="font-weight:${isSelected?'600':'400'};">${escapeHtml(s.supplierName||'')} ${isLowest?'<span class="badge" style="background:var(--green-500);font-size:0.6rem;">最低</span>':''}${sourceBadge}</div>
+                        <div style="text-align:right;font-weight:600;${isLowest?'color:var(--green-500);':''}">¥${p.toFixed(2)}<div style="font-size:0.65rem;color:var(--gray-400);font-weight:400;">小计 ¥${(p*(it.qty||1)).toFixed(2)}</div></div>
+                        <div style="color:var(--gray-600);">${escapeHtml(s.contact||'-')}</div>
+                        <div style="color:var(--gray-600);">${escapeHtml(s.note||'-')}</div>
+                        <div style="text-align:center;">
+                            <button class="btn ${isSelected?'btn-success':'btn-outline'} btn-xs" onclick="selectSupplierQuote(${quoteId}, ${it.id}, ${s.id})" style="font-size:0.65rem;padding:0.15rem 0.4rem;">${isSelected?'✓ 已选':'选定'}</button>
+                        </div>
+                        <div style="text-align:right;">
+                            <button class="btn btn-danger btn-xs" onclick="deleteSupplierQuote(${quoteId}, ${it.id}, ${s.id})" style="font-size:0.65rem;padding:0.15rem 0.4rem;">🗑</button>
+                        </div>
+                    </div>`;
+                });
+            }
             html += `</div>`;
         }
 
-        // 新增供应商报价表单
         html += `<div style="padding:0.5rem 0.875rem 0.75rem;border-top:${list.length?'none':'1px solid var(--gray-100)'};">
-            <div style="display:grid;grid-template-columns:1.4fr 0.8fr 1.4fr 1.6fr auto;gap:0.5rem;align-items:end;">
+            <div class="supplier-quote-form" style="display:grid;${isMobile?'grid-template-columns:1fr;':'grid-template-columns:1.4fr 0.8fr 1.4fr 1.6fr auto;'}gap:0.5rem;align-items:end;">
                 <div><label style="font-size:0.7rem;color:var(--gray-500);">供应商名称 *</label><input type="text" id="sqName_${it.id}" placeholder="如：XX广告制作厂" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
                 <div><label style="font-size:0.7rem;color:var(--gray-500);">报价 *</label><input type="number" id="sqPrice_${it.id}" placeholder="0.00" step="0.01" min="0" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
                 <div><label style="font-size:0.7rem;color:var(--gray-500);">联系方式</label><input type="text" id="sqContact_${it.id}" placeholder="电话/微信" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
@@ -35830,7 +35891,6 @@ function renderSupplierQuoteContent(quoteId){
     });
     html += '</div>';
 
-    // 汇总区
     const summary = getSupplierQuoteSummary(quote);
     if(summary.count > 0){
         html += `<div style="margin-top:0.875rem;padding:0.75rem 1rem;background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1px solid var(--green-200, #bbf7d0);border-radius:var(--radius);font-size:0.8125rem;">
