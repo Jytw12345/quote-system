@@ -151,45 +151,6 @@
             textarea {
                 font-size: 16px !important;
             }
-            /* 供应商报价表单移动端优化 */
-            .supplier-quote-form {
-                grid-template-columns: 1fr !important;
-                gap: 0.375rem !important;
-            }
-            /* 供应商报价管理弹窗移动端适配 */
-            #supplierQuoteModal .modal-content {
-                max-width: 100vw !important;
-                width: 100vw !important;
-                margin: 0 !important;
-                border-radius: 12px 12px 0 0 !important;
-                max-height: 90vh !important;
-                overflow-y: auto !important;
-            }
-            #supplierQuoteModal .modal-body {
-                padding: 0.75rem !important;
-                overflow-x: auto !important;
-            }
-            /* 产品详情弹窗移动端适配 */
-            #productDetailModal .modal-content {
-                max-width: 100vw !important;
-                width: 100vw !important;
-                margin: 0 !important;
-                border-radius: 12px 12px 0 0 !important;
-                max-height: 90vh !important;
-                overflow-y: auto !important;
-            }
-            #productDetailModal .modal-body {
-                padding: 0.75rem !important;
-            }
-            /* 产品编辑弹窗移动端适配 */
-            #productModal .modal-content {
-                max-width: 100vw !important;
-                width: 100vw !important;
-                margin: 0 !important;
-                border-radius: 12px 12px 0 0 !important;
-                max-height: 90vh !important;
-                overflow-y: auto !important;
-            }
         }
         
         /* 文化空间算价 - 手机端优化 */
@@ -5006,7 +4967,7 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
             >
             <div style="display:flex;align-items:center;justify-content:center;margin:0.5rem 0;gap:0.5rem;">
                 <input type="checkbox" id="loginAutoLogin" style="width:1rem;height:1rem;">
-                <label for="loginAutoLogin" style="font-size:0.8125rem;color:#64748b;cursor:pointer;">3天内自动登录</label>
+                <label for="loginAutoLogin" style="font-size:0.8125rem;color:#64748b;cursor:pointer;">7天内自动登录</label>
             </div>
             <button type="submit" aria-label="登录系统">
                 <span aria-hidden="true">🔑</span> 登录
@@ -9391,6 +9352,7 @@ function safeExecuteAsync(fn, defaultVal) {
                 <h3>🔑 更改登录密码</h3>
                 <div style="background:var(--gray-50);border-radius:var(--radius);padding:0.75rem;">
                     <button class="btn btn-primary" onclick="showChangePasswordModal()">修改登录密码</button>
+                    <button class="btn btn-outline btn-danger" onclick="logout()" style="margin-left:0.5rem;">退出登录</button>
                     <div style="font-size:0.75rem;color:var(--gray-500);margin-top:0.5rem;">更改进入软件时需要输入的密码</div>
                 </div>
             </div>
@@ -9475,7 +9437,7 @@ function safeExecuteAsync(fn, defaultVal) {
                         <span style="padding:0.125rem 0.5rem;background:#d1fae5;border-radius:9999px;font-size:0.6875rem;color:#065f46;">🧮 智能计算</span>
                         <span style="padding:0.125rem 0.5rem;background:#fef3c7;border-radius:9999px;font-size:0.6875rem;color:#92400e;">☁️ 云同步</span>
                     </div>
-                    <div style="font-size:0.8125rem;color:var(--gray-600);">当前版本：<span id="currentSoftwareVersion" style="font-weight:600;color:var(--primary);">V3.4.1</span></div>
+                    <div style="font-size:0.8125rem;color:var(--gray-600);">当前版本：<span id="currentSoftwareVersion" style="font-weight:600;color:var(--primary);">V3.4.135</span></div>
                     <div id="currentVersionLogs" style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed var(--gray-300);display:none;">
                         <div style="font-size:0.7rem;font-weight:500;color:var(--gray-500);margin-bottom:0.25rem;">📝 更新日志</div>
                         <ul id="currentVersionLogsList" style="margin:0;padding-left:1rem;font-size:0.65rem;color:var(--gray-400);"></ul>
@@ -9814,33 +9776,10 @@ function safeExecuteAsync(fn, defaultVal) {
             </div>
             
             <div id="materialAnalysisResult" style="margin-top:0.375rem;display:none;padding:0.375rem;background:#f3f4f6;border-radius:var(--radius);font-size:0.75rem;"></div>
-
-            <!-- 供应商报价参考（预设常用供应商，添加到报价单时自动继承） -->
-            <div class="compact-field" style="margin-top:0.75rem;">
-                <label style="display:flex;justify-content:space-between;align-items:center;">
-                    <span>🏭 供应商报价参考</span>
-                    <span style="font-size:0.7rem;color:var(--gray-400);font-weight:400;">添加到报价单时自动继承</span>
-                </label>
-                <div id="productSupplierQuotesList" style="margin-bottom:0.5rem;"></div>
-                <div class="supplier-quote-form" style="display:grid;grid-template-columns:1.2fr 0.8fr 1.4fr 1.6fr auto;gap:0.375rem;align-items:end;">
-                    <div><label style="font-size:0.7rem;color:var(--gray-500);">供应商名称</label><input type="text" id="productSqName" placeholder="如：XX广告制作厂" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
-                    <div><label style="font-size:0.7rem;color:var(--gray-500);">参考报价</label><input type="number" id="productSqPrice" placeholder="0.00" step="0.01" min="0" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
-                    <div><label style="font-size:0.7rem;color:var(--gray-500);">联系方式</label><input type="text" id="productSqContact" placeholder="电话/微信" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
-                    <div><label style="font-size:0.7rem;color:var(--gray-500);">备注</label><input type="text" id="productSqNote" placeholder="交期/工艺/付款等" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
-                    <div><button type="button" class="btn btn-primary btn-sm" onclick="addProductSupplierQuote()" style="font-size:0.75rem;">➕ 添加</button></div>
-                </div>
-            </div>
         </form>
     </div>
     <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('productModal')">取消</button><button class="btn btn-primary" onclick="saveProduct()">保存</button></div>
 </div></div>
-<!-- 产品详情弹窗 -->
-<div id="productDetailModal" class="modal"><div class="modal-content" style="max-width:600px;">
-    <div class="modal-header"><h3 class="modal-title" id="productDetailTitle">产品详情</h3><button class="modal-close" onclick="closeModal('productDetailModal')">&times;</button></div>
-    <div class="modal-body" id="productDetailBody" style="padding:1rem;"></div>
-    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('productDetailModal')">关闭</button><button class="btn btn-primary" id="productDetailAddBtn">➕ 添加到报价</button><button class="btn btn-edit" id="productDetailEditBtn">✏️ 编辑</button></div>
-</div></div>
-
 <!-- 产品图片URL输入弹窗 -->
 <div id="productImageUrlModal" class="modal"><div class="modal-content">
     <div class="modal-header"><h3 class="modal-title">🔗 设置产品图片URL</h3><button class="modal-close" onclick="closeModal('productImageUrlModal')">&times;</button></div>
@@ -10058,22 +9997,6 @@ function safeExecuteAsync(fn, defaultVal) {
         <div id="versionCompareContent"></div>
     </div>
     <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('versionCompareModal')">关闭</button></div>
-</div></div>
-
-<!-- 供应商报价管理模态框（仅内部可见，不展示给客户） -->
-<div id="supplierQuoteModal" class="modal"><div class="modal-content" style="max-width:1000px;">
-    <div class="modal-header">
-        <h3 class="modal-title" id="supplierQuoteModalTitle">🏭 供应商报价管理</h3>
-        <button class="modal-close" onclick="closeModal('supplierQuoteModal')">&times;</button>
-    </div>
-    <div class="modal-body">
-        <input type="hidden" id="supplierQuoteHistoryId">
-        <div style="margin-bottom:0.75rem;padding:0.625rem 0.875rem;background:var(--gray-50);border-radius:var(--radius);font-size:0.8125rem;color:var(--gray-600);display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-            <span>📌 此页面仅内部可见，用于记录外协厂家的报价并比价，不会显示在客户报价单和分享链接中。</span>
-        </div>
-        <div id="supplierQuoteContent"></div>
-    </div>
-    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('supplierQuoteModal')">关闭</button></div>
 </div></div>
 
 <script>
@@ -12072,7 +11995,17 @@ function getAccessPassword() {
 // 设置新密码（加密存储）
 function setAccessPassword(newPassword) {
     secureStorageSetItem('accessPassword', newPassword);
-    showToast('密码修改成功', 'success');
+    localStorage.removeItem('loggedIn');
+    localStorage.removeItem('loginExpire');
+    showToast('密码修改成功，请重新登录', 'success');
+    setTimeout(() => {
+        const overlay = document.getElementById('login-overlay');
+        if (overlay) {
+            overlay.style.display = 'flex';
+            overlay.style.opacity = '1';
+        }
+        document.getElementById('login-password').value = '';
+    }, 1500);
 }
 
 // 验证密码强度
@@ -12137,14 +12070,10 @@ function handleLogin(event) {
             overlay.style.display = 'none';
         }, 300);
         
-        if (autoLoginChecked) {
-            const expires = new Date();
-            expires.setDate(expires.getDate() + 3);
-            localStorage.setItem('loggedIn', 'true');
-            localStorage.setItem('loginExpire', expires.getTime());
-        } else {
-            localStorage.setItem('loggedIn', 'true');
-        }
+        const expires = new Date();
+        expires.setDate(expires.getDate() + (autoLoginChecked ? 7 : 1));
+        localStorage.setItem('loggedIn', 'true');
+        localStorage.setItem('loginExpire', expires.getTime());
         showToast('登录成功', 'success');
     } else {
         errorDiv.style.display = 'block';
@@ -12156,7 +12085,18 @@ function handleLogin(event) {
     }
 }
 
-// 页面加载时检查登录状态 - 每次都需要输入密码
+function logout() {
+    localStorage.removeItem('loggedIn');
+    localStorage.removeItem('loginExpire');
+    const overlay = document.getElementById('login-overlay');
+    if (overlay) {
+        overlay.style.display = 'flex';
+        overlay.style.opacity = '1';
+    }
+    document.getElementById('login-password').value = '';
+    showToast('已退出登录', 'info');
+}
+
 function checkLoginStatus() {
     const loggedIn = localStorage.getItem('loggedIn');
     const loginExpire = localStorage.getItem('loginExpire');
@@ -14794,7 +14734,6 @@ function saveCurrentQuoteToHistory() {
         items: JSON.parse(JSON.stringify(appData.currentQuote.items)),
         mainImages: JSON.parse(JSON.stringify(appData.currentQuote.mainImages || [])),
         showNotes: appData.currentQuote.showNotes !== false,
-        supplierQuotes: JSON.parse(JSON.stringify(appData.currentQuote.supplierQuotes || {})),
         totalCost: tc,
         totalBeforeDiscount: st,
         finalTotal: total,
@@ -14830,7 +14769,6 @@ function saveCurrentQuoteToHistory() {
             existingQuote.items = JSON.parse(JSON.stringify(appData.currentQuote.items));
             existingQuote.mainImages = JSON.parse(JSON.stringify(appData.currentQuote.mainImages || []));
             existingQuote.showNotes = appData.currentQuote.showNotes !== false;
-            existingQuote.supplierQuotes = JSON.parse(JSON.stringify(appData.currentQuote.supplierQuotes || {}));
             existingQuote.totalCost = tc;
             existingQuote.totalBeforeDiscount = st;
             existingQuote.finalTotal = total;
@@ -19048,9 +18986,6 @@ function openAddProductModal(){
         };
     }
 
-    appData.currentEditingProductSupplierQuotes = [];
-    renderProductSupplierQuotes();
-
     openModal('productModal');
 }
 function updateProductCalcFields() {
@@ -19347,110 +19282,6 @@ function calculateProductPrice() {
     }
 }
 
-function openProductDetailModal(pid){
-    let p=appData.products.find(x=>x.id==pid); 
-    if(!p) p=appData.products.find(x=>String(x.id)===String(pid)); 
-    if(!p) return;
-    
-    const sellingPrice = p.sellingPrice !== undefined ? p.sellingPrice : (p.price || 0);
-    const costPrice = p.costPrice !== undefined ? p.costPrice : (p.cost || 0);
-    const profit = sellingPrice - costPrice;
-    const pp = costPrice ? ((profit / costPrice) * 100).toFixed(0) : 0;
-    const ih = p.image ? renderProductImage(p.image, p.name || '', { className: '', style: 'width:100%;height:200px;object-fit:cover;border-radius:var(--radius-lg);' }) : '<div style="width:100%;height:200px;background:#f3f4f6;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:var(--gray-400);">暂无图片</div>';
-    const catText = p.category || p.category1 || '';
-    
-    let supplierQuotesHtml = '';
-    if(p.supplierQuotes && p.supplierQuotes.length > 0){
-        supplierQuotesHtml = `
-            <div style="margin-top:1rem;">
-                <h4 style="font-size:0.875rem;font-weight:600;margin-bottom:0.5rem;">🏭 供应商报价参考</h4>
-                <div style="display:grid;grid-template-columns:1.2fr 0.8fr 1.4fr auto;gap:0.375rem;font-size:0.75rem;padding:0.375rem;background:#f3f4f6;border-radius:var(--radius);margin-bottom:0.25rem;">
-                    <span style="font-weight:600;">供应商名称</span>
-                    <span style="font-weight:600;">报价</span>
-                    <span style="font-weight:600;">联系方式</span>
-                    <span style="font-weight:600;">状态</span>
-                </div>
-                ${p.supplierQuotes.map(sq => `
-                    <div style="display:grid;grid-template-columns:1.2fr 0.8fr 1.4fr auto;gap:0.375rem;font-size:0.75rem;padding:0.375rem;border-bottom:1px solid #e5e7eb;">
-                        <span>${escapeHtml(sq.supplierName || '')}</span>
-                        <span style="color:#2563eb;font-weight:600;">¥${sq.price}</span>
-                        <span>${escapeHtml(sq.contact || '-')}</span>
-                        <span>${sq.selected ? '✓ 已选' : ''}</span>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    }
-    
-    let tierPricesHtml = '';
-    if(p.tierPricing && p.tierPrices && p.tierPrices.length > 0){
-        tierPricesHtml = `
-            <div style="margin-top:1rem;">
-                <h4 style="font-size:0.875rem;font-weight:600;margin-bottom:0.5rem;">📊 阶梯价格</h4>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.375rem;font-size:0.75rem;padding:0.375rem;background:#fef3c7;border-radius:var(--radius);">
-                    ${p.tierPrices.map(t => `
-                        <div style="display:flex;justify-content:space-between;"><span>${t.qty}件起</span><span style="font-weight:600;">¥${t.price}</span></div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    }
-    
-    document.getElementById('productDetailTitle').textContent = p.name || '产品详情';
-    document.getElementById('productDetailBody').innerHTML = `
-        <div>${ih}</div>
-        <div style="margin-top:1rem;">
-            <h4 style="font-size:1.125rem;font-weight:700;color:var(--gray-900);">${escapeHtml(p.name || '未命名产品')}</h4>
-            ${catText ? `<div style="font-size:0.75rem;color:var(--gray-500);margin-top:0.25rem;">📁 ${escapeHtml(catText)}</div>` : ''}
-        </div>
-        <div style="margin-top:1rem;display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
-            <div style="padding:0.5rem;background:#f3f4f6;border-radius:var(--radius);">
-                <div style="font-size:0.7rem;color:var(--gray-500);">💰 售价</div>
-                <div style="font-size:1.25rem;font-weight:700;color:#2563eb;">¥${sellingPrice}</div>
-            </div>
-            <div style="padding:0.5rem;background:#f3f4f6;border-radius:var(--radius);">
-                <div style="font-size:0.7rem;color:var(--gray-500);">💲 成本</div>
-                <div style="font-size:1.25rem;font-weight:700;color:#16a34a;">¥${costPrice}</div>
-            </div>
-            <div style="padding:0.5rem;background:#f3f4f6;border-radius:var(--radius);">
-                <div style="font-size:0.7rem;color:var(--gray-500);">📊 利润</div>
-                <div style="font-size:1.25rem;font-weight:700;color:${profit >= 0 ? '#16a34a' : '#dc2626'};">¥${profit.toFixed(0)}</div>
-            </div>
-            <div style="padding:0.5rem;background:#f3f4f6;border-radius:var(--radius);">
-                <div style="font-size:0.7rem;color:var(--gray-500);">📈 利润率</div>
-                <div style="font-size:1.25rem;font-weight:700;color:${pp >= 0 ? '#16a34a' : '#dc2626'};">${pp}%</div>
-            </div>
-        </div>
-        <div style="margin-top:1rem;">
-            <h4 style="font-size:0.875rem;font-weight:600;margin-bottom:0.375rem;">📝 描述</h4>
-            <div style="padding:0.5rem;background:#f3f4f6;border-radius:var(--radius);font-size:0.8rem;color:var(--gray-700);">${escapeHtml(p.description || '暂无描述')}</div>
-        </div>
-        <div style="margin-top:1rem;">
-            <h4 style="font-size:0.875rem;font-weight:600;margin-bottom:0.375rem;">⚙️ 属性</h4>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.375rem;font-size:0.75rem;">
-                <div><span style="color:var(--gray-500);">单位:</span> <span style="font-weight:600;">${escapeHtml(p.unit || '项')}</span></div>
-                <div><span style="color:var(--gray-500);">计算方式:</span> <span style="font-weight:600;">${{fixed:'固定',area:'按面积',size:'按尺寸',cubic:'按体积'}[p.calcType] || p.calcType || '固定'}</span></div>
-                ${p.width ? `<div><span style="color:var(--gray-500);">宽:</span> <span style="font-weight:600;">${p.width}</span></div>` : ''}
-                ${p.height ? `<div><span style="color:var(--gray-500);">高:</span> <span style="font-weight:600;">${p.height}</span></div>` : ''}
-            </div>
-        </div>
-        ${tierPricesHtml}
-        ${supplierQuotesHtml}
-    `;
-    
-    document.getElementById('productDetailAddBtn').onclick = () => {
-        closeModal('productDetailModal');
-        addToQuote(p.id);
-    };
-    
-    document.getElementById('productDetailEditBtn').onclick = () => {
-        closeModal('productDetailModal');
-        openEditProductModal(p.id);
-    };
-    
-    openModal('productDetailModal');
-}
-
 function openEditProductModal(pid){
     let p=appData.products.find(x=>x.id==pid); 
     if(!p) p=appData.products.find(x=>String(x.id)===String(pid)); 
@@ -19558,87 +19389,7 @@ function openEditProductModal(pid){
     } else {
         loadImage(p.image);
     }
-
-    appData.currentEditingProductSupplierQuotes = p.supplierQuotes ? [...p.supplierQuotes] : [];
-    renderProductSupplierQuotes();
 }
-function addProductSupplierQuote(){
-    const nameEl = document.getElementById('productSqName');
-    const priceEl = document.getElementById('productSqPrice');
-    const contactEl = document.getElementById('productSqContact');
-    const noteEl = document.getElementById('productSqNote');
-    
-    if(!nameEl || !priceEl){
-        showToast('表单元素未找到', 'error');
-        return;
-    }
-    
-    const supplierName = (nameEl.value||'').trim();
-    const price = parseFloat(priceEl.value);
-    
-    if(!supplierName){ 
-        showToast('请填写供应商名称', 'warning'); 
-        nameEl.focus(); 
-        return; 
-    }
-    if(isNaN(price) || price<0){ 
-        showToast('请填写有效的报价金额', 'warning'); 
-        priceEl.focus(); 
-        return; 
-    }
-    
-    if(!appData.currentEditingProductSupplierQuotes){
-        appData.currentEditingProductSupplierQuotes = [];
-    }
-    
-    appData.currentEditingProductSupplierQuotes.push({
-        id: Date.now() + Math.floor(Math.random()*1000),
-        supplierName: supplierName,
-        price: price,
-        contact: contactEl ? (contactEl.value||'').trim() : '',
-        note: noteEl ? (noteEl.value||'').trim() : '',
-        createdAt: new Date().toISOString()
-    });
-    
-    nameEl.value = '';
-    priceEl.value = '';
-    if(contactEl) contactEl.value = '';
-    if(noteEl) noteEl.value = '';
-    
-    renderProductSupplierQuotes();
-    showToast('已添加供应商报价参考', 'success');
-}
-function deleteProductSupplierQuote(sqId){
-    if(!appData.currentEditingProductSupplierQuotes) return;
-    const idx = appData.currentEditingProductSupplierQuotes.findIndex(s=>s.id===sqId);
-    if(idx<0) return;
-    appData.currentEditingProductSupplierQuotes.splice(idx,1);
-    renderProductSupplierQuotes();
-    showToast('已删除该供应商报价', 'info');
-}
-function renderProductSupplierQuotes(){
-    const container = document.getElementById('productSupplierQuotesList');
-    const list = appData.currentEditingProductSupplierQuotes || [];
-    if(!list.length){
-        container.innerHTML = '<div style="padding:0.5rem 0;font-size:0.75rem;color:var(--gray-400);text-align:center;">暂无供应商报价参考，添加后在创建报价单时会自动继承</div>';
-        return;
-    }
-    let html = '<div style="border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;">';
-    html += '<div style="display:grid;grid-template-columns:1.2fr 0.8fr 1.4fr 1.6fr 0.6fr;gap:0.5rem;font-size:0.7rem;color:var(--gray-500);padding:0.4rem 0.6rem;background:var(--gray-50);font-weight:600;">';
-    html += '<div>供应商</div><div style="text-align:right;">报价</div><div>联系方式</div><div>备注</div><div></div></div>';
-    list.forEach(s=>{
-        html += `<div style="display:grid;grid-template-columns:1.2fr 0.8fr 1.4fr 1.6fr 0.6fr;gap:0.5rem;font-size:0.78rem;padding:0.4rem 0.6rem;border-top:1px solid var(--gray-100);align-items:center;">`;
-        html += `<div>${escapeHtml(s.supplierName||'')}</div>`;
-        html += `<div style="text-align:right;font-weight:600;">¥${(parseFloat(s.price)||0).toFixed(2)}</div>`;
-        html += `<div style="color:var(--gray-600);">${escapeHtml(s.contact||'-')}</div>`;
-        html += `<div style="color:var(--gray-600);">${escapeHtml(s.note||'-')}</div>`;
-        html += `<div style="text-align:right;"><button class="btn btn-danger btn-xs" onclick="deleteProductSupplierQuote(${s.id})" style="font-size:0.65rem;padding:0.15rem 0.4rem;">🗑</button></div>`;
-        html += '</div>';
-    });
-    html += '</div>';
-    container.innerHTML = html;
-}
-
 function handleProductImageUpload(input){
     const file=input.files[0];
     if(file){
@@ -20205,7 +19956,6 @@ function saveProduct(){
         tierPricing: enableTierPricing,
         tierPrices: tierPrices,
         tierMode: tierMode,
-        supplierQuotes: appData.currentEditingProductSupplierQuotes || [],
         updatedAt:new Date().toISOString()
     };
     
@@ -20762,27 +20512,14 @@ function addToQuote(pid){
         }
         
         // 普通产品直接添加
-        const itemId = Date.now();
         appData.currentQuote.items.push({
-            id:itemId, productId:p.id, image:p.image||null, name:p.name, spec:p.description||'',
+            id:Date.now(), productId:p.id, image:p.image||null, name:p.name, spec:p.description||'',
             unit:p.unit||'项', note:'', cost:p.costPrice||0, qty:1, price:finalPrice,
             basePrice: p.sellingPrice || p.price || 0,
             tierPricing: tierPricing,
             tierPrices: tierPrices,
             tierMode: tierMode
         });
-
-        // 继承产品级供应商报价参考
-        if(p.supplierQuotes && p.supplierQuotes.length > 0){
-            if(!appData.currentQuote.supplierQuotes) appData.currentQuote.supplierQuotes = {};
-            appData.currentQuote.supplierQuotes[String(itemId)] = p.supplierQuotes.map(sq => ({
-                ...sq,
-                id: Date.now() + Math.floor(Math.random()*1000),
-                selected: sq.selected || false,
-                source: 'product'
-            }));
-        }
-
         renderQuoteItems(); calculateTotals();
         saveDraftQuote();
     }
@@ -33968,14 +33705,6 @@ function renderProducts(useSmartResults = false){
                     `)}
                 </div>
             </div>`;
-        div.onclick = (e) => {
-            if(e.target.closest('button')) return;
-            if(batchMode){
-                toggleBatchSelect(p.id);
-            } else {
-                openProductDetailModal(p.id);
-            }
-        };
         fragment.appendChild(div);
     });
     c.innerHTML = '';
@@ -35204,25 +34933,22 @@ function renderHistory() {
         const versionCount = h.versions ? h.versions.length : 1;
         const statusLabels = { pending: '⏳ 待跟进', quoted: '📤 已报价', ordered: '✅ 已通过', cancelled: '❌ 已拒绝', expired: '⏰ 已过期' };
         const statusColors = { pending: 'var(--gray-500)', quoted: 'var(--blue-500)', ordered: 'var(--green-500)', cancelled: 'var(--red-500)', expired: 'var(--orange-500)' };
-        const sqSummary = getSupplierQuoteSummary(h);
-
+        
         div.innerHTML = `
             <div class="history-header">
                 <div>
                     <div class="history-title">${escapeHtml(h.title || '未命名报价')}${h.quoteNumber?' <span style="font-size:0.75rem;color:var(--gray-400);font-weight:400;">('+escapeHtml(h.quoteNumber)+')</span>':''}</div>
                     <div style="font-size:0.8125rem;color:var(--gray-500);">客户：${escapeHtml(h.clientName)} · ${date}</div>
-                    <div style="font-size:0.75rem;margin-top:0.25rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
+                    <div style="font-size:0.75rem;margin-top:0.25rem;display:flex;gap:1rem;align-items:center;">
                         <span class="badge" style="background:${statusColors[h.status] || 'var(--gray-500)'}">${statusLabels[h.status] || '待跟进'}</span>
                         ${expiryInfo.html}
                         <span style="color:var(--gray-400);">📦 v${h.version || versionCount}</span>
-                        ${sqSummary.count > 0 ? `<span class="badge" style="background:var(--purple-500, #8b5cf6);">🏭 供应商报价 ${sqSummary.count}/${sqSummary.totalItems}${sqSummary.lowestTotal !== null ? ` · 最低 ¥${sqSummary.lowestTotal.toFixed(2)}` : ''}</span>` : ''}
                     </div>
                 </div>
                 <div class="btn-group history-actions" style="display:flex;flex-wrap:wrap;gap:0.25rem;">
                     <button class="btn btn-primary btn-sm" onclick="loadHistoryQuote(${h.id})" style="min-width:120px;font-size:0.75rem;">✏️ 编辑</button>
                     <button class="btn btn-outline btn-sm" onclick="cloneHistoryQuote(${h.id})" style="min-width:100px;font-size:0.75rem;">📋 副本</button>
                     <button class="btn btn-outline btn-sm" onclick="viewQuoteVersions(${h.id})" style="min-width:100px;font-size:0.75rem;">📜 版本</button>
-                    <button class="btn ${sqSummary.count > 0 ? 'btn-success' : 'btn-outline'} btn-sm" onclick="openSupplierQuoteModal(${h.id})" style="min-width:100px;font-size:0.75rem;">🏭 供应商</button>
                     ${expiryInfo.canRenew ? `<button class="btn btn-warning btn-sm" onclick="renewQuoteExpiry(${h.id})" style="min-width:80px;font-size:0.75rem;">🔄 续期</button>` : ''}
                     <button class="btn btn-danger btn-sm" onclick="deleteHistoryQuote(${h.id})" style="min-width:60px;padding:0.25rem 0.25rem;font-size:0.75rem;">🗑️ 删除</button>
                 </div>
@@ -35662,7 +35388,6 @@ function loadHistoryQuote(hid) {
     appData.currentQuote.items = JSON.parse(JSON.stringify(h.items));
     appData.currentQuote.mainImages = h.mainImages || [];
     appData.currentQuote.showNotes = h.showNotes !== undefined ? h.showNotes : true;
-    appData.currentQuote.supplierQuotes = JSON.parse(JSON.stringify(h.supplierQuotes || {}));
     appData.currentQuote.editingHistoryId = hid; // 记录正在编辑的历史报价ID
     appData.currentQuote.editingHistoryStatus = h.status; // 记录原始状态
     document.getElementById('quoteClientName').value = h.clientName;
@@ -35693,32 +35418,11 @@ function cloneHistoryQuote(hid) {
         delete appData.currentQuote.editingHistoryStatus;
     }
     
-    const newItems = h.items.map(item => {
+    appData.currentQuote.items = h.items.map(item => {
         return {...item, id: generateUniqueId()};
     });
-    appData.currentQuote.items = newItems;
     appData.currentQuote.mainImages = h.mainImages || [];
     appData.currentQuote.showNotes = h.showNotes !== undefined ? h.showNotes : true;
-    
-    // 映射 supplierQuotes 的 itemId
-    if(h.supplierQuotes && typeof h.supplierQuotes === 'object'){
-        const supplierQuotes = {};
-        newItems.forEach(newItem => {
-            const oldItem = h.items.find(i => i.name === newItem.name && i.spec === newItem.spec);
-            if(oldItem){
-                const oldKey = String(oldItem.id);
-                if(h.supplierQuotes[oldKey]){
-                    supplierQuotes[String(newItem.id)] = h.supplierQuotes[oldKey].map(sq => ({
-                        ...sq,
-                        id: Date.now() + Math.floor(Math.random()*1000)
-                    }));
-                }
-            }
-        });
-        appData.currentQuote.supplierQuotes = supplierQuotes;
-    } else {
-        appData.currentQuote.supplierQuotes = {};
-    }
     
     document.getElementById('quoteClientName').value = h.clientName;
     document.getElementById('quoteTitle').value = (h.title || '未命名报价') + ' (副本)';
@@ -35762,250 +35466,6 @@ function clearOldHistory() {
 function exportHistoryJSON() {
     downloadFile(JSON.stringify(appData.quoteHistory, null, 2), `quote-history_${new Date().toISOString().slice(0,10)}.json`,'application/json');
     dialog.alert(`已导出 ${appData.quoteHistory.length} 条历史记录`, '导出成功', '✅');
-}
-
-// ===== 供应商报价管理（外协比价，仅内部可见） =====
-// 数据结构：historyItem.supplierQuotes = { [itemId]: [ {id, supplierName, price, contact, note, selected, createdAt} ] }
-function getSupplierQuotesMap(quote){
-    if(!quote.supplierQuotes || typeof quote.supplierQuotes !== 'object'){
-        quote.supplierQuotes = {};
-    }
-    return quote.supplierQuotes;
-}
-function getSupplierQuoteSummary(quote){
-    const map = quote.supplierQuotes || {};
-    const items = quote.items || [];
-    let count = 0;
-    let lowestTotal = null;
-    items.forEach(it=>{
-        const list = map[String(it.id)];
-        if(list && list.length){
-            count++;
-            const minPrice = Math.min(...list.map(s=>parseFloat(s.price)||0));
-            const sub = minPrice * (it.qty||1);
-            if(lowestTotal === null) lowestTotal = 0;
-            lowestTotal += sub;
-        }
-    });
-    return { count, totalItems: items.length, lowestTotal };
-}
-function openSupplierQuoteModal(quoteId){
-    const quote = appData.quoteHistory.find(h => h.id === quoteId);
-    if(!quote){ showToast('未找到该报价记录', 'error'); return; }
-    document.getElementById('supplierQuoteHistoryId').value = quoteId;
-    document.getElementById('supplierQuoteModalTitle').textContent = `🏭 供应商报价管理 · ${quote.title || '未命名报价'}（${quote.clientName || ''}）`;
-    renderSupplierQuoteContent(quoteId);
-    openModal('supplierQuoteModal');
-}
-function renderSupplierQuoteContent(quoteId){
-    const quote = appData.quoteHistory.find(h => h.id === quoteId);
-    if(!quote) return;
-    const container = document.getElementById('supplierQuoteContent');
-    const map = getSupplierQuotesMap(quote);
-    const items = quote.items || [];
-    const isMobile = window.innerWidth <= 640;
-    
-    if(!items.length){
-        container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray-500);">该报价单暂无项目</div>';
-        return;
-    }
-    let html = '<div style="display:flex;flex-direction:column;gap:0.875rem;">';
-    items.forEach((it, idx)=>{
-        const key = String(it.id);
-        const list = map[key] || [];
-        const sellingSubtotal = (it.price||0) * (it.qty||1);
-        let lowestPrice = null;
-        list.forEach(s=>{ const p = parseFloat(s.price)||0; if(lowestPrice===null || p<lowestPrice) lowestPrice = p; });
-
-        html += `<div style="border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;">`;
-        html += `<div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;padding:0.625rem 0.875rem;background:var(--gray-50);flex-wrap:wrap;">
-            <div style="font-weight:600;font-size:0.875rem;">${idx+1}. ${escapeHtml(it.name||'未命名项目')}</div>
-            <div style="font-size:0.75rem;color:var(--gray-500);display:flex;gap:0.75rem;flex-wrap:wrap;">
-                <span>数量：<strong>${it.qty||1}</strong> ${escapeHtml(it.unit||'')}</span>
-                <span>售价：<strong>¥${(it.price||0).toFixed(2)}</strong></span>
-                <span>小计：<strong>¥${sellingSubtotal.toFixed(2)}</strong></span>
-                ${list.length ? `<span style="color:var(--green-500);">🏭 ${list.length}家报价 · 最低 ¥${(lowestPrice*(it.qty||1)).toFixed(2)}</span>` : '<span style="color:var(--gray-400);">暂无供应商报价</span>'}
-            </div>
-        </div>`;
-
-        if(list.length){
-            html += `<div style="padding:0.5rem 0.875rem;">`;
-            if(isMobile){
-                list.forEach(s=>{
-                    const p = parseFloat(s.price)||0;
-                    const isLowest = lowestPrice!==null && p===lowestPrice;
-                    const isSelected = !!s.selected;
-                    const sourceBadge = s.source === 'product' ? '<span class="badge" style="background:var(--purple-500,#8b5cf6);font-size:0.6rem;margin-left:0.25rem;">产品预设</span>' : '';
-                    html += `<div style="padding:0.4rem 0.5rem;border:1px solid var(--gray-100);border-radius:var(--radius);margin-bottom:0.375rem;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem;">
-                            <div style="font-weight:${isSelected?'600':'400'};">${escapeHtml(s.supplierName||'')} ${isLowest?'<span class="badge" style="background:var(--green-500);font-size:0.6rem;">最低</span>':''}${sourceBadge}</div>
-                            <div style="font-weight:600;${isLowest?'color:var(--green-500);':''}">¥${p.toFixed(2)}</div>
-                        </div>
-                        <div style="font-size:0.7rem;color:var(--gray-500);margin-bottom:0.375rem;">
-                            ${s.contact ? `<div>📞 ${escapeHtml(s.contact)}</div>` : ''}
-                            ${s.note ? `<div>📝 ${escapeHtml(s.note)}</div>` : ''}
-                            <div style="font-size:0.65rem;color:var(--gray-400);">小计 ¥${(p*(it.qty||1)).toFixed(2)}</div>
-                        </div>
-                        <div style="display:flex;gap:0.375rem;justify-content:flex-end;">
-                            <button class="btn ${isSelected?'btn-success':'btn-outline'} btn-xs" onclick="selectSupplierQuote(${quoteId}, ${it.id}, ${s.id})" style="font-size:0.65rem;padding:0.15rem 0.4rem;">${isSelected?'✓ 已选':'选定'}</button>
-                            <button class="btn btn-danger btn-xs" onclick="deleteSupplierQuote(${quoteId}, ${it.id}, ${s.id})" style="font-size:0.65rem;padding:0.15rem 0.4rem;">🗑</button>
-                        </div>
-                    </div>`;
-                });
-            } else {
-                html += `<div style="display:grid;grid-template-columns:1.4fr 0.8fr 1.4fr 1.6fr 0.9fr 0.6fr;gap:0.5rem;font-size:0.7rem;color:var(--gray-500);padding:0.25rem 0;border-bottom:1px dashed var(--gray-200);">
-                    <div>供应商</div><div style="text-align:right;">报价</div><div>联系方式</div><div>备注</div><div style="text-align:center;">选定</div><div></div>
-                </div>`;
-                list.forEach(s=>{
-                    const p = parseFloat(s.price)||0;
-                    const isLowest = lowestPrice!==null && p===lowestPrice;
-                    const isSelected = !!s.selected;
-                    const sourceBadge = s.source === 'product' ? '<span class="badge" style="background:var(--purple-500,#8b5cf6);font-size:0.6rem;margin-left:0.25rem;">产品预设</span>' : '';
-                    html += `<div style="display:grid;grid-template-columns:1.4fr 0.8fr 1.4fr 1.6fr 0.9fr 0.6fr;gap:0.5rem;font-size:0.78rem;padding:0.4rem 0;border-bottom:1px solid var(--gray-100);align-items:center;">
-                        <div style="font-weight:${isSelected?'600':'400'};">${escapeHtml(s.supplierName||'')} ${isLowest?'<span class="badge" style="background:var(--green-500);font-size:0.6rem;">最低</span>':''}${sourceBadge}</div>
-                        <div style="text-align:right;font-weight:600;${isLowest?'color:var(--green-500);':''}">¥${p.toFixed(2)}<div style="font-size:0.65rem;color:var(--gray-400);font-weight:400;">小计 ¥${(p*(it.qty||1)).toFixed(2)}</div></div>
-                        <div style="color:var(--gray-600);">${escapeHtml(s.contact||'-')}</div>
-                        <div style="color:var(--gray-600);">${escapeHtml(s.note||'-')}</div>
-                        <div style="text-align:center;">
-                            <button class="btn ${isSelected?'btn-success':'btn-outline'} btn-xs" onclick="selectSupplierQuote(${quoteId}, ${it.id}, ${s.id})" style="font-size:0.65rem;padding:0.15rem 0.4rem;">${isSelected?'✓ 已选':'选定'}</button>
-                        </div>
-                        <div style="text-align:right;">
-                            <button class="btn btn-danger btn-xs" onclick="deleteSupplierQuote(${quoteId}, ${it.id}, ${s.id})" style="font-size:0.65rem;padding:0.15rem 0.4rem;">🗑</button>
-                        </div>
-                    </div>`;
-                });
-            }
-            html += `</div>`;
-        }
-
-        html += `<div style="padding:0.5rem 0.875rem 0.75rem;border-top:${list.length?'none':'1px solid var(--gray-100)'};">
-            <div class="supplier-quote-form" style="display:grid;${isMobile?'grid-template-columns:1fr;':'grid-template-columns:1.4fr 0.8fr 1.4fr 1.6fr auto;'}gap:0.5rem;align-items:end;">
-                <div><label style="font-size:0.7rem;color:var(--gray-500);">供应商名称 *</label><input type="text" id="sqName_${it.id}" placeholder="如：XX广告制作厂" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
-                <div><label style="font-size:0.7rem;color:var(--gray-500);">报价 *</label><input type="number" id="sqPrice_${it.id}" placeholder="0.00" step="0.01" min="0" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
-                <div><label style="font-size:0.7rem;color:var(--gray-500);">联系方式</label><input type="text" id="sqContact_${it.id}" placeholder="电话/微信" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
-                <div><label style="font-size:0.7rem;color:var(--gray-500);">备注</label><input type="text" id="sqNote_${it.id}" placeholder="交期/工艺/付款等" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.8rem;"></div>
-                <div><button class="btn btn-primary btn-sm" onclick="addSupplierQuote(${quoteId}, ${it.id})" style="font-size:0.75rem;">➕ 添加</button></div>
-            </div>
-        </div>`;
-        html += `</div>`;
-    });
-    html += '</div>';
-
-    const summary = getSupplierQuoteSummary(quote);
-    if(summary.count > 0){
-        html += `<div style="margin-top:0.875rem;padding:0.75rem 1rem;background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1px solid var(--green-200, #bbf7d0);border-radius:var(--radius);font-size:0.8125rem;">
-            <strong>📊 外协汇总：</strong>共 ${summary.count}/${summary.totalItems} 项已记录供应商报价${summary.lowestTotal!==null?`，按最低价合计 <strong style="color:var(--green-600, #16a34a);">¥${summary.lowestTotal.toFixed(2)}</strong>`:''}
-        </div>`;
-    }
-    container.innerHTML = html;
-}
-function addSupplierQuote(quoteId, itemId){
-    const quote = appData.quoteHistory.find(h => h.id === quoteId);
-    if(!quote) return;
-    const nameEl = document.getElementById('sqName_'+itemId);
-    const priceEl = document.getElementById('sqPrice_'+itemId);
-    const contactEl = document.getElementById('sqContact_'+itemId);
-    const noteEl = document.getElementById('sqNote_'+itemId);
-    const supplierName = (nameEl.value||'').trim();
-    const price = parseFloat(priceEl.value);
-    if(!supplierName){ showToast('请填写供应商名称', 'warning'); nameEl.focus(); return; }
-    if(isNaN(price) || price<0){ showToast('请填写有效的报价金额', 'warning'); priceEl.focus(); return; }
-    const map = getSupplierQuotesMap(quote);
-    const key = String(itemId);
-    if(!map[key]) map[key] = [];
-    // 第一条默认选定
-    const isFirst = map[key].length === 0;
-    map[key].push({
-        id: Date.now() + Math.floor(Math.random()*1000),
-        supplierName: supplierName,
-        price: price,
-        contact: (contactEl.value||'').trim(),
-        note: (noteEl.value||'').trim(),
-        selected: isFirst,
-        createdAt: new Date().toISOString(),
-        source: 'quote'
-    });
-    saveDataImmediately();
-    syncSupplierQuotesToProduct(quote, itemId, map[key]);
-    renderSupplierQuoteContent(quoteId);
-    renderHistory();
-    showToast('已添加供应商报价（已同步到产品库）', 'success');
-}
-function deleteSupplierQuote(quoteId, itemId, sqId){
-    const quote = appData.quoteHistory.find(h => h.id === quoteId);
-    if(!quote) return;
-    const map = getSupplierQuotesMap(quote);
-    const key = String(itemId);
-    const list = map[key];
-    if(!list) return;
-    const idx = list.findIndex(s=>s.id===sqId);
-    if(idx<0) return;
-    const wasSelected = list[idx].selected;
-    list.splice(idx,1);
-    // 若删除的是已选定项，且还有其他项，则自动选定第一条
-    if(wasSelected && list.length){
-        list[0].selected = true;
-    }
-    if(list.length===0) delete map[key];
-    saveDataImmediately();
-    renderSupplierQuoteContent(quoteId);
-    renderHistory();
-    showToast('已删除该供应商报价', 'info');
-}
-function selectSupplierQuote(quoteId, itemId, sqId){
-    const quote = appData.quoteHistory.find(h => h.id === quoteId);
-    if(!quote) return;
-    const map = getSupplierQuotesMap(quote);
-    const key = String(itemId);
-    const list = map[key];
-    if(!list) return;
-    list.forEach(s=>{ s.selected = (s.id===sqId); });
-    saveDataImmediately();
-    syncSupplierQuotesToProduct(quote, itemId, list);
-    renderSupplierQuoteContent(quoteId);
-    renderHistory();
-    showToast('已选定该供应商', 'success');
-}
-
-function syncSupplierQuotesToProduct(quote, itemId, supplierQuotes){
-    const item = quote.items.find(i => String(i.id) === String(itemId));
-    if(!item) return;
-    
-    const product = appData.products.find(p => p.name === item.name && p.spec === item.spec);
-    if(!product) return;
-    
-    const existingQuotes = product.supplierQuotes || [];
-    const updatedQuotes = [];
-    
-    supplierQuotes.forEach(sq => {
-        if(sq.source === 'product'){
-            const existing = existingQuotes.find(eq => eq.supplierName === sq.supplierName);
-            if(existing){
-                updatedQuotes.push({...existing, price: sq.price, contact: sq.contact, note: sq.note, selected: sq.selected});
-            } else {
-                updatedQuotes.push({...sq});
-            }
-        } else {
-            const existing = existingQuotes.find(eq => eq.supplierName === sq.supplierName);
-            if(existing){
-                updatedQuotes.push({...existing, price: sq.price, contact: sq.contact, note: sq.note, selected: sq.selected});
-            } else {
-                updatedQuotes.push({
-                    id: Date.now() + Math.floor(Math.random()*1000),
-                    supplierName: sq.supplierName,
-                    price: sq.price,
-                    contact: sq.contact || '',
-                    note: sq.note || '',
-                    selected: sq.selected,
-                    createdAt: new Date().toISOString()
-                });
-            }
-        }
-    });
-    
-    product.supplierQuotes = updatedQuotes;
-    product.updatedAt = new Date().toISOString();
-    saveDataImmediately();
 }
 
 // ===== AI智能推荐 =====
@@ -48975,10 +48435,6 @@ function saveQuoteItemToProduct(itemId) {
     
     // 填充分类选项
     populateCategorySelects();
-    
-    // 初始化供应商报价（新保存的报价项目没有预设供应商）
-    appData.currentEditingProductSupplierQuotes = [];
-    renderProductSupplierQuotes();
     
     openModal('productModal');
 }
