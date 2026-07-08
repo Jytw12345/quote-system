@@ -737,11 +737,8 @@
         }
         
         .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-        .template-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; margin-bottom: 1rem; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
         @media (max-width: 768px) { 
-            .template-list { grid-template-columns: 1fr; }
             .template-grid { grid-template-columns: 1fr; } 
-            #templateViewToggleBtn { display: none !important; }
         }
         
         /* 分页控件样式 */
@@ -7098,10 +7095,7 @@ function safeExecuteAsync(fn, defaultVal) {
                     </div>
                 </div>
                 
-                <!-- 视图切换按钮 - 单独一行显示 -->
-                <div style="display:flex;justify-content:flex-end;flex:1 1 auto;">
-                    <button class="btn btn-outline template-action-btn" id="templateViewToggleBtn" onclick="toggleTemplateView()">📋 切换视图</button>
-                </div>
+
             </div>
             
             <!-- 响应式样式 -->
@@ -8917,6 +8911,7 @@ function safeExecuteAsync(fn, defaultVal) {
                 <div class="ai-config-tabs" style="display:flex;gap:0.25rem;margin-bottom:0.75rem;border-bottom:2px solid #e5e7eb;flex-wrap:wrap;">
                     <button class="ai-tab-btn active" onclick="switchAIServiceTab('ocr')" id="tabBtnOcr" style="padding:0.5rem 1rem;font-size:0.8125rem;border:none;background:transparent;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;">📷 OCR识别</button>
                     <button class="ai-tab-btn" onclick="switchAIServiceTab('baidu')" id="tabBtnBaidu" style="padding:0.5rem 1rem;font-size:0.8125rem;border:none;background:transparent;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;">🖼️ 百度AI</button>
+                    <button class="ai-tab-btn" onclick="switchAIServiceTab('zhipu')" id="tabBtnZhipu" style="padding:0.5rem 1rem;font-size:0.8125rem;border:none;background:transparent;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;">🤖 智谱AI</button>
                     <button class="ai-tab-btn" onclick="switchAIServiceTab('deepseek')" id="tabBtnDeepseek" style="padding:0.5rem 1rem;font-size:0.8125rem;border:none;background:transparent;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;">🤖 AI助手</button>
                 </div>
 
@@ -8953,6 +8948,29 @@ function safeExecuteAsync(fn, defaultVal) {
                     <div style="display:flex;gap:0.5rem;">
                         <button class="btn btn-primary btn-sm" onclick="testBaiduAI()">🔍 测试连接</button>
                         <button class="btn btn-outline btn-sm" onclick="saveBaiduConfig()">💾 保存配置</button>
+                    </div>
+                </div>
+
+                <!-- 智谱AI配置 -->
+                <div id="aiConfigZhipu" class="ai-config-content" style="display:none;">
+                    <div style="font-size:0.75rem;color:var(--gray-600);margin-bottom:1rem;padding:0.5rem;background:#fef3c7;border-radius:var(--radius);">
+                        💡 <strong>智谱AI</strong> - 用于报价单图片/PDF识别功能。<a href="https://open.bigmodel.cn/" target="_blank" style="color:#2563eb;">注册获取API Key</a>
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.5rem;">
+                            <input type="text" id="zhipuApiKey" placeholder="智谱API Key（格式：sk-xxxxxxxxxxxxxxxxxxxxx）" style="flex:1;min-width:280px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
+                            <label for="zhipuModel" style="font-size:0.8125rem;color:var(--gray-700);white-space:nowrap;">模型选择</label>
+                            <select id="zhipuModel" style="min-width:180px;padding:0.375rem 0.5rem;font-size:0.8125rem;border:1px solid var(--gray-200);border-radius:4px;">
+                                <option value="glm-4v-plus">glm-4v-plus（推荐·多模态）</option>
+                                <option value="glm-4v">glm-4v（多模态）</option>
+                            </select>
+                        </div>
+                        <div style="font-size:0.7rem;color:#9ca3af;margin-bottom:0.5rem;">💡 使用glm-4v-plus模型可获得更好的图片识别效果</div>
+                        <div id="zhipuStatus" style="font-size:0.75rem;"></div>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;">
+                        <button class="btn btn-primary btn-sm" onclick="testZhipuAPI()">🔍 测试连接</button>
+                        <button class="btn btn-outline btn-sm" onclick="saveZhipuConfig()">💾 保存配置</button>
                     </div>
                 </div>
 
@@ -9998,6 +10016,83 @@ function safeExecuteAsync(fn, defaultVal) {
                     #supplierQuoteList {
                         border:none !important;
                         border-radius:0 !important;
+                        max-height:45vh !important;
+                    }
+                    #supplierQuoteList > div {
+                        display:flex !important;
+                        flex-direction:column !important;
+                        grid-template-columns:none !important;
+                        gap:0.25rem !important;
+                        padding:0.5rem !important;
+                        border:1px solid #e5e7eb !important;
+                        border-radius:8px !important;
+                        margin-bottom:0.375rem !important;
+                        overflow:hidden !important;
+                        position:relative !important;
+                    }
+                    #supplierQuoteList > div > div {
+                        width:100% !important;
+                        padding:0 !important;
+                        text-align:left !important;
+                        display:flex !important;
+                        flex-direction:row !important;
+                        align-items:center !important;
+                        gap:0.3rem !important;
+                        flex-wrap:wrap !important;
+                    }
+                    #supplierQuoteList > div > div:first-child {
+                        font-weight:600 !important;
+                        font-size:0.85rem !important;
+                        border-bottom:1px dashed #e5e7eb !important;
+                        padding-bottom:0.25rem !important;
+                        margin-bottom:0.1rem !important;
+                    }
+                    #supplierQuoteList > div > div:nth-child(2) {
+                        font-size:0.8rem !important;
+                        color:var(--primary) !important;
+                        font-weight:600 !important;
+                    }
+                    #supplierQuoteList > div > div:nth-child(2)::before {
+                        content:'💰 报价：' !important;
+                        font-weight:400 !important;
+                        color:var(--gray-500) !important;
+                        font-size:0.7rem !important;
+                    }
+                    #supplierQuoteList > div > div:nth-child(3)::before {
+                        content:'📅 日期：' !important;
+                        font-weight:400 !important;
+                        color:var(--gray-500) !important;
+                        font-size:0.7rem !important;
+                    }
+                    #supplierQuoteList > div > div:nth-child(4)::before {
+                        content:'⭐ 首选：' !important;
+                        font-weight:400 !important;
+                        color:var(--gray-500) !important;
+                        font-size:0.7rem !important;
+                    }
+                    #supplierQuoteList > div > div:nth-child(5)::before {
+                        content:'📝 备注：' !important;
+                        font-weight:400 !important;
+                        color:var(--gray-500) !important;
+                        font-size:0.7rem !important;
+                    }
+                    #supplierQuoteList > div > div:last-child {
+                        justify-content:flex-end !important;
+                        padding-top:0.25rem !important;
+                        border-top:1px dashed #e5e7eb !important;
+                        margin-top:0.1rem !important;
+                    }
+                    #supplierQuoteList > div > div:last-child .btn {
+                        padding:0.15rem 0.4rem !important;
+                        font-size:0.65rem !important;
+                        height:24px !important;
+                        min-height:24px !important;
+                    }
+                    #supplierQuoteSummaryBar {
+                        flex-wrap:wrap !important;
+                        gap:0.4rem !important;
+                        font-size:0.65rem !important;
+                        padding:0.4rem !important;
                     }
                 }
             </style>
@@ -12526,7 +12621,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateCloudSyncStatus();
                 hideLoader();
                 initProductViewButton();
-                initTemplateViewButton();
             });
         } else {
             setTimeout(() => {
@@ -12538,7 +12632,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderAnalytics();
                 updateCloudSyncStatus();
                 hideLoader();
-                initTemplateViewButton();
             }, 100);
         }
     });
@@ -13775,6 +13868,7 @@ function switchTab(tabName){
         loadSystemSettings(); // 加载系统设置
         initSoftwareVersion(); // 初始化软件版本显示
         loadUpdateMode(); // 加载更新模式设置
+        loadZhipuConfig(); // 加载智谱AI配置
     }
     // 切换选项卡时关闭手机端计算器面板
     if (typeof closeMobileCalculator === 'function') {
@@ -19012,7 +19106,7 @@ function saveAsTemplate(){
         description:`由报价单生成，包含 ${appData.currentQuote.items.length} 个项目`, 
         caseInfo:'', 
         items:appData.currentQuote.items.map(item=>({ 
-            name:item.name, spec:item.spec, note:item.note||'', unit:item.unit||'项', cost:item.cost||0, qty:item.qty, price:item.price 
+            name:item.name, spec:item.spec, note:item.note||'', unit:item.unit||'项', cost:item.cost||0, qty:item.qty, price:item.price, image:item.image||null 
         })), 
         createdAt:new Date().toISOString(), 
         updatedAt:new Date().toISOString() 
@@ -22432,84 +22526,91 @@ async function handleQuoteRecognitionFile(event) {
             // PDF识别（使用pdf.js转换为图片 + 智谱AI识别）
             document.getElementById('quoteRecognitionProgress').textContent = '正在读取PDF文件...';
             
-            const apiKey = getSecureApiKey('zhipuApiKey', '349f11de3a3740969cb31e85301ad716.CfXnrqzQQ3ttRVSx');
+            const zhipuConfig = getZhipuConfig();
+            const apiKey = zhipuConfig.apiKey;
+            const model = zhipuConfig.model;
             
-            try {
-                // 读取PDF文件
-                const arrayBuffer = await file.arrayBuffer();
-                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                
-                document.getElementById('quoteRecognitionProgress').textContent = '正在转换PDF页面...';
-                
-                // 转换第一页为图片
-                const page = await pdf.getPage(1);
-                const scale = 2.0; // 提高清晰度
-                const viewport = page.getViewport({ scale });
-                
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-                
-                await page.render({ canvasContext: context, viewport }).promise;
-                
-                const imageBase64 = canvas.toDataURL('image/jpeg', 0.9);
-                
-                document.getElementById('quoteRecognitionProgress').textContent = '正在调用AI识别...';
-                
-                // 调用智谱AI识别
-                const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + apiKey
-                    },
-                    body: JSON.stringify({
-                        model: 'glm-4v-plus',
-                        messages: [{
-                            role: 'user',
-                            content: [
-                                { type: 'text', text: '请识别图片中的报价单内容，提取所有报价项目，包括：产品名称、规格、数量、单价。我需要返回一个JSON数组格式，每个项目包含name(名称)、spec(规格)、qty(数量)、price(单价)字段。不要返回其他内容，只返回JSON数组。' },
-                                { type: 'image_url', image_url: { url: imageBase64 } }
-                            ]
-                        }]
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('API请求失败: ' + response.status);
-                }
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error.message);
-                }
-                
-                const content = data.choices[0].message.content;
-                document.getElementById('quoteRecognitionProgress').textContent = '正在解析识别结果...';
-                
-                const jsonMatch = content.match(/\[[\s\S]*\]/);
-                if (jsonMatch) {
-                    items = JSON.parse(jsonMatch[0]);
-                    if (items && items.length > 0) {
-                        showToast('✅ PDF识别成功', 'success');
-                    }
-                }
-                
-            } catch (error) {
-                console.error('PDF识别失败:', error);
-                showToast('ℹ️ PDF识别失败，使用模拟数据', 'info');
-            }
-            
-            // 如果识别失败或没有识别到数据，使用模拟数据
-            if (!items || items.length === 0) {
+            if (!apiKey) {
+                showToast('⚠️ 请先在系统设置中配置智谱AI API Key', 'warning');
                 items = [
                     { name: '宣传海报', spec: 'A3 200g铜版纸', qty: 200, price: 3.5 },
                     { name: '折页设计', spec: '三折页', qty: 500, price: 2.0 },
                     { name: '手提袋', spec: '250g白卡纸', qty: 100, price: 8.0 },
                     { name: '信封', spec: 'B6牛皮纸', qty: 300, price: 1.2 }
                 ];
+            } else {
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    
+                    document.getElementById('quoteRecognitionProgress').textContent = '正在转换PDF页面...';
+                    
+                    const page = await pdf.getPage(1);
+                    const scale = 2.0;
+                    const viewport = page.getViewport({ scale });
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    
+                    await page.render({ canvasContext: context, viewport }).promise;
+                    
+                    const imageBase64 = canvas.toDataURL('image/jpeg', 0.9);
+                    
+                    document.getElementById('quoteRecognitionProgress').textContent = '正在调用AI识别...';
+                    
+                    const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + apiKey
+                        },
+                        body: JSON.stringify({
+                            model: model,
+                            messages: [{
+                                role: 'user',
+                                content: [
+                                    { type: 'text', text: '请识别图片中的报价单内容，提取所有报价项目，包括：产品名称、规格、数量、单价。我需要返回一个JSON数组格式，每个项目包含name(名称)、spec(规格)、qty(数量)、price(单价)字段。不要返回其他内容，只返回JSON数组。' },
+                                    { type: 'image_url', image_url: { url: imageBase64 } }
+                                ]
+                            }]
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('API请求失败: ' + response.status);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.error.message);
+                    }
+                    
+                    const content = data.choices[0].message.content;
+                    document.getElementById('quoteRecognitionProgress').textContent = '正在解析识别结果...';
+                    
+                    const jsonMatch = content.match(/\[[\s\S]*\]/);
+                    if (jsonMatch) {
+                        items = JSON.parse(jsonMatch[0]);
+                        if (items && items.length > 0) {
+                            showToast('✅ PDF识别成功', 'success');
+                        }
+                    }
+                } catch (error) {
+                    console.error('PDF识别失败:', error);
+                    showToast('ℹ️ PDF识别失败，使用模拟数据', 'info');
+                }
+                
+                if (!items || items.length === 0) {
+                    items = [
+                        { name: '宣传海报', spec: 'A3 200g铜版纸', qty: 200, price: 3.5 },
+                        { name: '折页设计', spec: '三折页', qty: 500, price: 2.0 },
+                        { name: '手提袋', spec: '250g白卡纸', qty: 100, price: 8.0 },
+                        { name: '信封', spec: 'B6牛皮纸', qty: 300, price: 1.2 }
+                    ];
+                }
             }
         } else {
             throw new Error('不支持的文件格式');
@@ -22674,10 +22775,8 @@ function parseQuoteDataFromExcel(jsonData) {
     return items;
 }
 
-// 从图片识别报价单（使用智谱AI）
+// 从图片识别报价单（优先使用OCR.Space或本地OCR，失败时回退到智谱AI）
 async function recognizeQuoteFromImage(file) {
-    const apiKey = getSecureApiKey('zhipuApiKey', '349f11de3a3740969cb31e85301ad716.CfXnrqzQQ3ttRVSx');
-    
     // 更新进度提示
     document.getElementById('quoteRecognitionProgress').textContent = '正在上传图片...';
     
@@ -22689,6 +22788,43 @@ async function recognizeQuoteFromImage(file) {
         reader.readAsDataURL(file);
     });
     
+    const ocrSpaceApiKey = getSecureApiKey('ocrSpaceApiKey', '');
+    
+    // 优先使用OCR.Space API（如果配置了API Key）
+    if (ocrSpaceApiKey) {
+        const ocrResult = await callOcrSpace(imageBase64, ocrSpaceApiKey);
+        if (ocrResult && ocrResult.items && ocrResult.items.length > 0) {
+            showToast('✅ OCR.Space识别成功', 'success');
+            return ocrResult.items;
+        }
+    }
+    
+    // 其次使用本地Tesseract.js OCR
+    const localOcrResult = await callAliyunOCR(imageBase64.split(',')[1]);
+    if (localOcrResult && localOcrResult.text && localOcrResult.text.trim().length > 0) {
+        const items = parseQuoteTextToItems(localOcrResult.text);
+        if (items && items.length > 0) {
+            showToast('✅ 本地OCR识别成功', 'success');
+            return items;
+        }
+    }
+    
+    // 最后回退到智谱AI（多模态模型，识别效果更好）
+    const zhipuConfig = getZhipuConfig();
+    const apiKey = zhipuConfig.apiKey;
+    const model = zhipuConfig.model;
+    
+    if (!apiKey) {
+        showToast('⚠️ 未配置智谱AI API Key，无法使用AI识别', 'warning');
+        return [
+            { name: '名片印刷', spec: '90*54mm 铜版纸', qty: 1, price: 50 },
+            { name: '宣传单页', spec: 'A4 157g铜版纸', qty: 500, price: 1.5 },
+            { name: '易拉宝', spec: '80*200cm', qty: 2, price: 180 },
+            { name: '门头招牌', spec: '亚克力发光字', qty: 1, price: 1200 },
+            { name: '画册设计', spec: '16P 铜版纸', qty: 100, price: 8.5 }
+        ];
+    }
+    
     document.getElementById('quoteRecognitionProgress').textContent = '正在调用AI识别...';
     
     try {
@@ -22699,7 +22835,7 @@ async function recognizeQuoteFromImage(file) {
                 'Authorization': 'Bearer ' + apiKey
             },
             body: JSON.stringify({
-                model: 'glm-4v-plus',
+                model: model,
                 messages: [{
                     role: 'user',
                     content: [
@@ -22720,11 +22856,9 @@ async function recognizeQuoteFromImage(file) {
             throw new Error(data.error.message);
         }
         
-        // 解析返回的内容
         const content = data.choices[0].message.content;
         document.getElementById('quoteRecognitionProgress').textContent = '正在解析识别结果...';
         
-        // 尝试提取JSON
         const jsonMatch = content.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
             const items = JSON.parse(jsonMatch[0]);
@@ -22738,7 +22872,7 @@ async function recognizeQuoteFromImage(file) {
         
     } catch (error) {
         console.error('智谱AI识别失败:', error);
-        // 失败时使用模拟数据
+        // 所有识别方式都失败，使用模拟数据
         return [
             { name: '名片印刷', spec: '90*54mm 铜版纸', qty: 1, price: 50 },
             { name: '宣传单页', spec: 'A4 157g铜版纸', qty: 500, price: 1.5 },
@@ -22746,6 +22880,46 @@ async function recognizeQuoteFromImage(file) {
             { name: '门头招牌', spec: '亚克力发光字', qty: 1, price: 1200 },
             { name: '画册设计', spec: '16P 铜版纸', qty: 100, price: 8.5 }
         ];
+    }
+}
+
+// 调用OCR.Space API识别图片
+async function callOcrSpace(imageBase64, apiKey) {
+    document.getElementById('quoteRecognitionProgress').textContent = '正在调用OCR.Space识别...';
+    
+    try {
+        const response = await fetch('https://api.ocr.space/parse/image', {
+            method: 'POST',
+            body: new URLSearchParams({
+                apikey: apiKey,
+                base64image: imageBase64,
+                language: 'chs',
+                filetype: 'PNG',
+                isOverlayRequired: 'false',
+                isTable: 'true'
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('OCR.Space请求失败: ' + response.status);
+        }
+        
+        const data = await response.json();
+        
+        if (data.IsErroredOnProcessing) {
+            throw new Error(data.ErrorMessage || data.ErrorDetails || 'OCR.Space错误');
+        }
+        
+        if (data.ParsedResults && data.ParsedResults.length > 0) {
+            const text = data.ParsedResults[0].ParsedText || '';
+            const items = parseQuoteTextToItems(text);
+            return { text, items };
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('OCR.Space识别失败:', error);
+        return null;
     }
 }
 
@@ -31116,20 +31290,23 @@ function switchPriceConfigTab(tab) {
 
 // 切换AI服务配置标签页
 function switchAIServiceTab(tab) {
-    const tabs = ['ocr', 'baidu', 'deepseek'];
+    const tabs = ['ocr', 'baidu', 'zhipu', 'deepseek'];
     const tabContents = {
         'ocr': 'aiConfigOcr',
         'baidu': 'aiConfigBaidu',
+        'zhipu': 'aiConfigZhipu',
         'deepseek': 'aiConfigDeepseek'
     };
     const tabColors = {
         'ocr': '#64748b',
         'baidu': '#64748b',
+        'zhipu': '#64748b',
         'deepseek': '#64748b'
     };
     const tabActiveColors = {
         'ocr': '#2563eb',
         'baidu': '#059669',
+        'zhipu': '#f59e0b',
         'deepseek': '#7c3aed'
     };
 
@@ -33897,6 +34074,93 @@ function updateOcrSpaceStatus() {
     // 无需状态显示
 }
 
+// ==================== 智谱AI配置函数 ====================
+
+function getZhipuConfig() {
+    const apiKey = getSecureApiKey('zhipuApiKey', '');
+    const model = localStorage.getItem('zhipuModel') || 'glm-4v-plus';
+    return { apiKey, model };
+}
+
+function saveZhipuConfig() {
+    const apiKey = document.getElementById('zhipuApiKey').value.trim();
+    const model = document.getElementById('zhipuModel').value;
+    
+    saveSecureApiKey('zhipuApiKey', apiKey);
+    localStorage.setItem('zhipuModel', model);
+    
+    showToast('配置已保存', 'success');
+    updateZhipuStatus();
+}
+
+function loadZhipuConfig() {
+    const config = getZhipuConfig();
+    const apiKeyInput = document.getElementById('zhipuApiKey');
+    const modelSelect = document.getElementById('zhipuModel');
+    
+    if (apiKeyInput) apiKeyInput.value = config.apiKey;
+    if (modelSelect) modelSelect.value = config.model;
+    
+    updateZhipuStatus();
+}
+
+function updateZhipuStatus() {
+    const statusDiv = document.getElementById('zhipuStatus');
+    const config = getZhipuConfig();
+    
+    if (config.apiKey) {
+        statusDiv.innerHTML = '<span style="color:#16a34a;">✓ 已配置 API Key</span>';
+    } else {
+        statusDiv.innerHTML = '<span style="color:#dc2626;">✗ 未配置API Key（使用默认Key，可能已过期）</span>';
+    }
+}
+
+async function testZhipuAPI() {
+    const config = getZhipuConfig();
+    
+    if (!config.apiKey) {
+        showToast('请先输入API Key', 'warning');
+        return;
+    }
+    
+    const statusDiv = document.getElementById('zhipuStatus');
+    statusDiv.innerHTML = '<span style="color:#2563eb;">🔄 测试中...</span>';
+    
+    try {
+        const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + config.apiKey
+            },
+            body: JSON.stringify({
+                model: config.model,
+                messages: [
+                    { role: 'user', content: [{ type: 'text', text: '你好，请回复"连接成功"即可，不需要其他内容。' }] }
+                ],
+                max_tokens: 50
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.error) {
+                throw new Error(data.error.message);
+            }
+            const reply = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : '响应成功';
+            statusDiv.innerHTML = '<span style="color:#16a34a;">✓ 连接成功！AI回复：' + reply + '</span>';
+            showToast('API连接测试成功', 'success');
+        } else {
+            const errorText = await response.text();
+            statusDiv.innerHTML = '<span style="color:#dc2626;">✗ 连接失败：' + response.status + ' - ' + errorText.substring(0, 150) + '</span>';
+            showToast('API连接失败', 'error');
+        }
+    } catch (error) {
+        statusDiv.innerHTML = '<span style="color:#dc2626;">✗ 连接错误：' + error.message + '</span>';
+        showToast('网络错误', 'error');
+    }
+}
+
 // 调用DeepSeek API
 async function callDeepSeekAPI(messages, maxTokens = 2000) {
     const config = getDeepSeekConfig();
@@ -34706,39 +34970,6 @@ function renderProducts(useSmartResults = false){
 }
 // ===== 模板库 =====
 let currentTemplatePhotos = [];
-let currentTemplateView = window.innerWidth <= 768 ? 'grid' : 'grid';
-
-// 初始化视图切换按钮文字
-function initTemplateViewButton() {
-    const btn = document.getElementById('templateViewToggleBtn');
-    if (btn && window.innerWidth > 768) {
-        btn.innerHTML = currentTemplateView === 'grid' ? '📋 切换到列表视图' : '📐 切换到卡片视图';
-    }
-}
-// 移除批量删除功能，不再需要selectedTemplateIds变量
-
-function toggleTemplateView() {
-    // 移动端强制使用卡片视图
-    if (window.innerWidth <= 768) {
-        return;
-    }
-    
-    currentTemplateView = currentTemplateView === 'grid' ? 'list' : 'grid';
-    const btn = document.getElementById('templateViewToggleBtn');
-    const grid = document.getElementById('templateGrid');
-    
-    if (currentTemplateView === 'grid') {
-        btn.innerHTML = '📋 切换到列表视图';
-        grid.classList.remove('template-list');
-        grid.classList.add('template-grid');
-    } else {
-        btn.innerHTML = '📐 切换到卡片视图';
-        grid.classList.remove('template-grid');
-        grid.classList.add('template-list');
-    }
-    
-    renderTemplates();
-}
 
 // 批量删除功能已移除
 
@@ -35019,6 +35250,7 @@ function viewTemplateDetail(tid) {
             <table style="width:100%;border-collapse:collapse;">
                 <thead>
                     <tr style="background:var(--gray-50);">
+                        <th style="padding:0.5rem;text-align:center;width:60px;">图片</th>
                         <th style="padding:0.5rem;text-align:left;">项目名称</th>
                         <th style="padding:0.5rem;text-align:left;">规格参数</th>
                         <th style="padding:0.5rem;text-align:right;">成本价</th>
@@ -35030,8 +35262,12 @@ function viewTemplateDetail(tid) {
                 <tbody>
                     ${t.items.map(item => {
                         const subtotal = (item.qty * item.price).toFixed(2);
+                        const imageCell = item.image 
+                            ? `<img src="${item.image}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;" onerror="this.style.opacity=0.5;">`
+                            : '<span style="color:var(--gray-400);font-size:0.75rem;">无图</span>';
                         return `
                             <tr style="border-bottom:1px solid var(--gray-200);">
+                                <td style="padding:0.5rem;text-align:center;">${imageCell}</td>
                                 <td style="padding:0.5rem;">${escapeHtml(item.name)}</td>
                                 <td style="padding:0.5rem;">${escapeHtml(item.spec || '-')}</td>
                                 <td style="padding:0.5rem;text-align:right;">¥${(item.cost || 0).toFixed(2)}</td>
@@ -35044,19 +35280,19 @@ function viewTemplateDetail(tid) {
                 </tbody>
                 <tfoot>
                     <tr style="background:var(--gray-50);">
-                        <td colspan="5" style="padding:0.5rem;text-align:right;font-weight:600;">模板总价</td>
+                        <td colspan="6" style="padding:0.5rem;text-align:right;font-weight:600;">模板总价</td>
                         <td style="padding:0.5rem;text-align:right;font-weight:700;font-size:1.25rem;color:var(--primary);">¥${total.toFixed(2)}</td>
                     </tr>
                     <tr style="background:var(--gray-50);">
-                        <td colspan="5" style="padding:0.375rem;text-align:right;">成本合计</td>
+                        <td colspan="6" style="padding:0.375rem;text-align:right;">成本合计</td>
                         <td style="padding:0.375rem;text-align:right;">¥${tc.toFixed(2)}</td>
                     </tr>
                     <tr style="background:var(--gray-50);">
-                        <td colspan="5" style="padding:0.375rem;text-align:right;">预计利润</td>
+                        <td colspan="6" style="padding:0.375rem;text-align:right;">预计利润</td>
                         <td style="padding:0.375rem;text-align:right;color:${profit >= 0 ? 'var(--success)' : 'var(--danger)'};font-weight:600;">¥${profit.toFixed(2)}</td>
                     </tr>
                     <tr style="background:var(--gray-50);">
-                        <td colspan="5" style="padding:0.375rem;text-align:right;">利润率</td>
+                        <td colspan="6" style="padding:0.375rem;text-align:right;">利润率</td>
                         <td style="padding:0.375rem;text-align:right;">${pp}%</td>
                     </tr>
                 </tfoot>
@@ -35229,7 +35465,7 @@ function useTemplate(tid){
             unit:item.unit||'项',
             note:item.note||'',
             cost:item.cost||0,
-            image:null,
+            image:item.image||null,
             qty:item.qty,
             price:item.price
         });
@@ -35281,62 +35517,56 @@ function renderTemplates(){
         const profit=total-tc;
         const pp=total>0?(profit/total*100).toFixed(0):0;
         
-        if (currentTemplateView === 'list') {
-            // 列表视图
-            const div = document.createElement('div');
-            div.className = 'template-list-item' + (t.isFavorite ? ' template-favorite' : '');
-            div.innerHTML = `
-                <div style="display:flex;align-items:center;gap:1rem;padding:0.75rem;border-bottom:1px solid var(--gray-200);">
-                    <div style="flex:1;min-width:0;">
-                        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
-                            <span style="font-weight:600;">${t.isFavorite ? '⭐ ' : ''}${escapeHtml(t.name)}</span>
-                            ${t.category ? '<span class="badge badge-sm">'+escapeHtml(t.category)+'</span>' : ''}
-                        </div>
-                        <div style="display:flex;align-items:center;gap:1rem;font-size:0.8125rem;color:var(--gray-500);">
-                            <span>${t.items.length} 个项目</span>
-                            <span>总价 ¥${total.toFixed(2)}</span>
-                            <span class="badge badge-success badge-sm">利润率 ${pp}%</span>
-                            <span>更新于 ${new Date(t.updatedAt).toLocaleDateString()}</span>
-                        </div>
-                        <div style="margin-top:0.25rem;font-size:0.8125rem;color:var(--gray-600);">${escapeHtml(t.description||'无描述')}</div>
+        // 卡片视图（唯一视图）
+        const div = document.createElement('div');
+        div.className = 'template-card' + (t.isFavorite ? ' template-favorite' : '');
+        
+        let photosHtml = '';
+        if (t.photos && t.photos.length > 0) {
+            if (t.photos.length === 1) {
+                photosHtml = `
+                    <div style="width:100%;aspect-ratio:16/10;margin-bottom:0.5rem;border-radius:var(--radius);overflow:hidden;background:var(--gray-100);">
+                        <img src="${t.photos[0].data}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.opacity=0.5;">
                     </div>
-                    <div style="display:flex;gap:0.25rem;">
-                        <button class="btn btn-outline btn-xs" onclick="viewTemplateDetail(${t.id})">👁️</button>
-                        <button class="btn btn-primary btn-xs" onclick="useTemplate(${t.id})">📥</button>
-                        <button class="btn btn-outline btn-xs" onclick="toggleTemplateFavorite(${t.id})" title="${t.isFavorite?'取消收藏':'添加收藏'}">${t.isFavorite?'⭐':'☆'}</button>
-                        <button class="btn btn-outline btn-xs" onclick="openEditTemplateModal(${t.id})">✏️</button>
-                        ${isAdmin ? `<button class="btn btn-danger btn-xs" onclick="deleteTemplate(${t.id})">🗑️</button>` : ''}
+                `;
+            } else {
+                photosHtml = `
+                    <div style="width:100%;aspect-ratio:16/10;margin-bottom:0.5rem;border-radius:var(--radius);overflow:hidden;background:var(--gray-100);display:flex;">
+                        <img src="${t.photos[0].data}" style="width:65%;height:100%;object-fit:cover;" onerror="this.style.opacity=0.5;">
+                        <div style="flex:1;display:flex;flex-direction:column;">
+                            ${t.photos.slice(1, 3).map(p => `
+                                <img src="${p.data}" style="flex:1;width:100%;object-fit:cover;border-left:2px solid white;" onerror="this.style.opacity=0.5;">
+                            `).join('')}
+                            ${t.photos.length > 3 ? `<div style="flex:1;width:100%;background:var(--gray-200);display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:0.75rem;border-left:2px solid white;">+${t.photos.length - 3}</div>` : ''}
+                        </div>
                     </div>
-                </div>
-            `;
-            fragment.appendChild(div);
-        } else {
-            // 卡片视图
-            const div = document.createElement('div');
-            div.className = 'template-card' + (t.isFavorite ? ' template-favorite' : '');
-            div.innerHTML = `
-                <div class="template-name">${t.isFavorite ? '⭐ ' : ''}${escapeHtml(t.name)}${t.category ? ' <span class="badge">'+escapeHtml(t.category)+'</span>' : ''}</div>
-                <div class="template-desc">${escapeHtml(t.description||'无描述')}</div>
-                <div class="template-meta">
-                    <span>${t.items.length} 个项目</span>
-                    <span>总价 ¥${total.toFixed(2)}</span>
-                    <span class="badge badge-success">利润率 ${pp}%</span>
-                    <span>更新于 ${new Date(t.updatedAt).toLocaleDateString()}</span>
-                </div>
-                ${t.caseInfo?`<div style="margin-top:0.5rem;padding:0.5rem;background:rgba(37,99,235,0.05);border-radius:var(--radius);"><strong>📝 案例：</strong> <span style="font-size:0.75rem;color:var(--gray-600);">${escapeHtml(t.caseInfo.length>60?t.caseInfo.slice(0,60)+'...':t.caseInfo)}</span></div>`:''}
-                <div class="template-total">
-                    <span class="template-total-label">模板总价</span>
-                    <span class="template-total-value">¥${total.toFixed(2)}</span>
-                </div>
-                <div class="btn-group template-card-actions" style="margin-top:0.5rem;gap:0.15rem;">
-                    <button class="btn btn-outline btn-sm" style="flex:1;max-width:80px;" onclick="viewTemplateDetail(${t.id})"><span class="btn-icon">👁️</span><span class="btn-label">详情</span></button>
-                    <button class="btn btn-primary btn-sm" style="flex:1;max-width:80px;" onclick="useTemplate(${t.id})"><span class="btn-icon">📥</span><span class="btn-label">使用</span></button>
-                    <button class="btn btn-outline btn-sm" onclick="toggleTemplateFavorite(${t.id})" title="${t.isFavorite?'取消收藏':'添加收藏'}">${t.isFavorite?'⭐':'☆'}</button>
-                    <button class="btn btn-outline btn-sm" onclick="openEditTemplateModal(${t.id})">✏️</button>
-                    ${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteTemplate(${t.id})">🗑️</button>` : ''}
-                </div>`;
-            fragment.appendChild(div);
+                `;
+            }
         }
+        
+        div.innerHTML = `
+            ${photosHtml}
+            <div class="template-name">${t.isFavorite ? '⭐ ' : ''}${escapeHtml(t.name)}${t.category ? ' <span class="badge">'+escapeHtml(t.category)+'</span>' : ''}</div>
+            <div class="template-desc">${escapeHtml(t.description||'无描述')}</div>
+            <div class="template-meta">
+                <span>${t.items.length} 个项目</span>
+                <span>总价 ¥${total.toFixed(2)}</span>
+                <span class="badge badge-success">利润率 ${pp}%</span>
+                <span>更新于 ${new Date(t.updatedAt).toLocaleDateString()}</span>
+            </div>
+            ${t.caseInfo?`<div style="margin-top:0.5rem;padding:0.5rem;background:rgba(37,99,235,0.05);border-radius:var(--radius);"><strong>📝 案例：</strong> <span style="font-size:0.75rem;color:var(--gray-600);">${escapeHtml(t.caseInfo.length>60?t.caseInfo.slice(0,60)+'...':t.caseInfo)}</span></div>`:''}
+            <div class="template-total">
+                <span class="template-total-label">模板总价</span>
+                <span class="template-total-value">¥${total.toFixed(2)}</span>
+            </div>
+            <div class="btn-group template-card-actions" style="margin-top:0.5rem;gap:0.15rem;">
+                <button class="btn btn-outline btn-sm" style="flex:1;max-width:80px;" onclick="viewTemplateDetail(${t.id})"><span class="btn-icon">👁️</span><span class="btn-label">详情</span></button>
+                <button class="btn btn-primary btn-sm" style="flex:1;max-width:80px;" onclick="useTemplate(${t.id})"><span class="btn-icon">📥</span><span class="btn-label">使用</span></button>
+                <button class="btn btn-outline btn-sm" onclick="toggleTemplateFavorite(${t.id})" title="${t.isFavorite?'取消收藏':'添加收藏'}">${t.isFavorite?'⭐':'☆'}</button>
+                <button class="btn btn-outline btn-sm" onclick="openEditTemplateModal(${t.id})">✏️</button>
+                ${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteTemplate(${t.id})">🗑️</button>` : ''}
+            </div>`;
+        fragment.appendChild(div);
     });
     c.innerHTML = '';
     c.appendChild(fragment);
