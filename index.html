@@ -46983,8 +46983,7 @@ function showImageEditor(imageSrc, callback) {
         draggingText: null,
         dragOffset: { x: 0, y: 0 },
         displayWidth: 0,
-        displayHeight: 0,
-        mosaicSize: 10
+        displayHeight: 0
     };
 
     const modal = document.createElement('div');
@@ -47239,6 +47238,11 @@ function showImageEditor(imageSrc, callback) {
                 item.x = item.y * newWidth / oldHeight;
                 item.y = tempX * newHeight / oldWidth;
             });
+            editor.mosaicItems.forEach(item => {
+                const tempX = item.x;
+                item.x = item.y * newWidth / oldHeight;
+                item.y = tempX * newHeight / oldWidth;
+            });
             if (editor.cropArea) {
                 const tempX = editor.cropArea.x;
                 editor.cropArea.x = editor.cropArea.y * newWidth / oldHeight;
@@ -47265,7 +47269,13 @@ function showImageEditor(imageSrc, callback) {
         if (editor.flipV) ctx.scale(1, -1);
         
         ctx.filter = `brightness(${100 + editor.brightness}%) contrast(${editor.contrast * 100}%)`;
-        ctx.drawImage(editor.originalImg, -editor.canvas.width / 2, -editor.canvas.height / 2, editor.canvas.width, editor.canvas.height);
+        
+        const isRotated90 = (editor.rotation % 180) !== 0;
+        if (isRotated90) {
+            ctx.drawImage(editor.originalImg, -editor.canvas.height / 2, -editor.canvas.width / 2, editor.canvas.height, editor.canvas.width);
+        } else {
+            ctx.drawImage(editor.originalImg, -editor.canvas.width / 2, -editor.canvas.height / 2, editor.canvas.width, editor.canvas.height);
+        }
         
         ctx.restore();
         
@@ -47705,7 +47715,7 @@ function showImageEditor(imageSrc, callback) {
         if (editor.mosaicItems.length > 0) {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
-            const mosaicSize = editor.mosaicSize * (dstW / srcW);
+            const mosaicSize = editor.brushSize * 3 * (dstW / srcW);
             
             editor.mosaicItems.forEach(item => {
                 const mx = (item.x / editor.scale - srcX - srcW / 2) * (dstW / srcW) + canvas.width / 2;
