@@ -18828,13 +18828,25 @@ async function exportJPG(showSaveAs){
         dialog.alert('导出出错: ' + e.message, '导出出错', '❌');
     }
 }
+function base64ToBlob(base64) {
+    var arr = base64.split(',');
+    var mime = arr[0].match(/:(.*?);/)[1];
+    var bstr = atob(arr[1]);
+    var n = bstr.length;
+    var u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+}
+
 async function exportXLS(){
     if(!appData.currentQuote || !appData.currentQuote.items || !appData.currentQuote.items.length){ showToast('请先添加报价项目', 'warning'); return; }
     
-    if (!window.XLSX) {
+    if (!window.ExcelJS) {
         showToast('正在加载Excel处理库，请稍后...', 'info');
         var script = document.createElement('script');
-        script.src = 'https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        script.src = 'https://cdn.bootcdn.net/ajax/libs/exceljs/4.4.0/exceljs.min.js';
         script.onload = function() { exportXLS(); };
         document.head.appendChild(script);
         return;
@@ -18865,49 +18877,137 @@ async function exportXLS(){
     var today=new Date();
     var ds=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
     
-    var wsData = [];
-    var rowIndex = 0;
+    var wb = new ExcelJS.Workbook();
+    var ws = wb.addWorksheet('报价单');
     
-    wsData[rowIndex++] = ['', '', '', '', '', '', '', ''];
-    wsData[rowIndex++] = [(settings.companyName||'公司名称'), '', '', '', '', '', '', ''];
-    if(settings.companyAddress||settings.companyPhone){
-        wsData[rowIndex++] = [(settings.companyAddress||'') + (settings.companyPhone?' | '+settings.companyPhone:''), '', '', '', '', '', '', ''];
+    ws.columns = [
+        { width: 10 },
+        { width: 25 },
+        { width: 18 },
+        { width: 8 },
+        { width: 20 },
+        { width: 8 },
+        { width: 12 },
+        { width: 12 }
+    ];
+    
+    var boldFont = { bold: true, size: 12 };
+    var titleFont = { bold: true, size: 16 };
+    var centerAlign = { horizontal: 'center', vertical: 'middle' };
+    var rightAlign = { horizontal: 'right', vertical: 'middle' };
+    
+    var rowNum = 1;
+    
+    ws.addRow(['']).height = 15;
+    rowNum++;
+    
+    var companyRow = ws.addRow([settings.companyName || '公司名称']);
+    companyRow.height = 20;
+    companyRow.getCell(1).font = boldFont;
+    companyRow.getCell(1).alignment = centerAlign;
+    ws.mergeCells('A' + rowNum + ':H' + rowNum);
+    rowNum++;
+    
+    if(settings.companyAddress || settings.companyPhone){
+        var addrRow = ws.addRow([(settings.companyAddress||'') + (settings.companyPhone?' | '+settings.companyPhone:'')]);
+        addrRow.height = 18;
+        addrRow.getCell(1).alignment = centerAlign;
+        ws.mergeCells('A' + rowNum + ':H' + rowNum);
+        rowNum++;
     }
-    wsData[rowIndex++] = ['', '', '', '', '', '', '', ''];
-    wsData[rowIndex++] = ['报 价 单', '', '', '', '', '', '', ''];
+    
+    ws.addRow(['']).height = 15;
+    rowNum++;
+    
+    var titleRow = ws.addRow(['报 价 单']);
+    titleRow.height = 30;
+    titleRow.getCell(1).font = titleFont;
+    titleRow.getCell(1).alignment = centerAlign;
+    ws.mergeCells('A' + rowNum + ':H' + rowNum);
+    rowNum++;
+    
     if(quote.quoteNumber){
-        wsData[rowIndex++] = ['编号：' + quote.quoteNumber, '', '', '', '', '', '', ''];
+        var numRow = ws.addRow(['编号：' + quote.quoteNumber]);
+        numRow.height = 18;
+        numRow.getCell(1).alignment = centerAlign;
+        ws.mergeCells('A' + rowNum + ':H' + rowNum);
+        rowNum++;
     }
-    wsData[rowIndex++] = ['', '', '', '', '', '', '', ''];
+    
+    ws.addRow(['']).height = 15;
+    rowNum++;
     
     var clientInfo = [];
     if(quote.clientName) clientInfo.push('客户公司：' + quote.clientName);
     if(quote.clientContactPerson) clientInfo.push('联系人：' + quote.clientContactPerson);
     if(quote.clientPhone) clientInfo.push('电话：' + quote.clientPhone);
-    wsData[rowIndex++] = [clientInfo.join('  |  '), '', '', '', '', '', '', ''];
+    var clientRow = ws.addRow([clientInfo.join('  |  ')]);
+    clientRow.height = 18;
+    clientRow.getCell(1).alignment = centerAlign;
+    ws.mergeCells('A' + rowNum + ':H' + rowNum);
+    rowNum++;
     
     if(quote.clientEmail || quote.clientAddress){
         var clientInfo2 = [];
         if(quote.clientEmail) clientInfo2.push('邮箱：' + quote.clientEmail);
         if(quote.clientAddress) clientInfo2.push('地址：' + quote.clientAddress);
-        wsData[rowIndex++] = [clientInfo2.join('  |  '), '', '', '', '', '', '', ''];
+        var clientRow2 = ws.addRow([clientInfo2.join('  |  ')]);
+        clientRow2.height = 18;
+        clientRow2.getCell(1).alignment = centerAlign;
+        ws.mergeCells('A' + rowNum + ':H' + rowNum);
+        rowNum++;
     }
     
-    wsData[rowIndex++] = ['日期：' + ds, '', '', '', '', '', '', ''];
+    var dateRow = ws.addRow(['日期：' + ds]);
+    dateRow.height = 18;
+    dateRow.getCell(1).alignment = centerAlign;
+    ws.mergeCells('A' + rowNum + ':H' + rowNum);
+    rowNum++;
     
     if(quote.paymentMethod){
-        wsData[rowIndex++] = ['付款方式：' + quote.paymentMethod, '', '', '', '', '', '', ''];
+        var payRow = ws.addRow(['付款方式：' + quote.paymentMethod]);
+        payRow.height = 18;
+        payRow.getCell(1).alignment = centerAlign;
+        ws.mergeCells('A' + rowNum + ':H' + rowNum);
+        rowNum++;
     }
-    wsData[rowIndex++] = ['', '', '', '', '', '', '', ''];
     
-    wsData[rowIndex++] = ['序号', '项目名称', '规格', '单位', '备注', '数量', '单价', '小计'];
+    ws.addRow(['']).height = 15;
+    rowNum++;
     
-    quote.items.forEach(function(item, i){
+    var headerRow = ws.addRow(['序号', '项目图片', '项目名称', '规格', '单位', '备注', '数量', '单价', '小计']);
+    headerRow.height = 25;
+    headerRow.eachCell(function(cell, colNumber) {
+        cell.font = boldFont;
+        cell.alignment = centerAlign;
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+    });
+    ws.columns = [
+        { width: 8 },
+        { width: 22 },
+        { width: 22 },
+        { width: 16 },
+        { width: 8 },
+        { width: 18 },
+        { width: 8 },
+        { width: 12 },
+        { width: 12 }
+    ];
+    rowNum++;
+    
+    var headerRowIndex = rowNum - 1;
+    
+    var imagesToAdd = [];
+    
+    for (var i = 0; i < quote.items.length; i++) {
+        var item = quote.items[i];
         var qty = item.qty || 1;
         var price = item.price || 0;
         var subtotal = (qty * price * (dr / 100));
-        wsData[rowIndex++] = [
+        
+        var dataRow = ws.addRow([
             i + 1,
+            '',
             item.name,
             item.spec || '',
             item.unit || '项',
@@ -18915,18 +19015,50 @@ async function exportXLS(){
             qty,
             price,
             subtotal
-        ];
-    });
+        ]);
+        dataRow.height = 70;
+        
+        dataRow.getCell(1).alignment = centerAlign;
+        dataRow.getCell(4).alignment = centerAlign;
+        dataRow.getCell(5).alignment = centerAlign;
+        dataRow.getCell(7).alignment = centerAlign;
+        dataRow.getCell(8).alignment = rightAlign;
+        dataRow.getCell(9).alignment = rightAlign;
+        
+        dataRow.eachCell(function(cell) {
+            cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        });
+        
+        if (item.image && item.image.trim() !== '') {
+            imagesToAdd.push({ row: rowNum, col: 2, imageUrl: item.image });
+        }
+        
+        rowNum++;
+    }
     
-    wsData[rowIndex++] = ['', '', '', '', '', '', '', ''];
-    wsData[rowIndex++] = ['', '', '', '', '', '', '报价：', st];
+    ws.addRow(['']).height = 15;
+    rowNum++;
+    
+    var stRow = ws.addRow(['', '', '', '', '', '', '', '报价：', st]);
+    stRow.getCell(8).font = boldFont;
+    stRow.getCell(9).font = boldFont;
+    stRow.getCell(9).alignment = rightAlign;
+    rowNum++;
     
     if(dr < 100){
-        wsData[rowIndex++] = ['', '', '', '', '', '', '折扣 (' + dr + '%)：', -da];
+        var discRow = ws.addRow(['', '', '', '', '', '', '', '折扣 (' + dr + '%)：', -da]);
+        discRow.getCell(8).font = boldFont;
+        discRow.getCell(9).font = boldFont;
+        discRow.getCell(9).alignment = rightAlign;
+        rowNum++;
     }
     
     if(tr > 0 && pm === 'ex'){
-        wsData[rowIndex++] = ['', '', '', '', '', '', '税额 (' + tr + '%)：', tax];
+        var taxRow = ws.addRow(['', '', '', '', '', '', '', '税额 (' + tr + '%)：', tax]);
+        taxRow.getCell(8).font = boldFont;
+        taxRow.getCell(9).font = boldFont;
+        taxRow.getCell(9).alignment = rightAlign;
+        rowNum++;
     }
     
     var taxLabel = '';
@@ -18934,159 +19066,83 @@ async function exportXLS(){
     else if(tr > 0 && pm === 'ex') taxLabel = '（含税' + tr + '%）';
     else if(pm === 'ex' && tr === 0) taxLabel = '（未税）';
     
-    wsData[rowIndex++] = ['', '', '', '', '', '', '合计' + taxLabel + '：', total];
-    wsData[rowIndex++] = ['大写金额：' + numberToChineseUpper(total), '', '', '', '', '', '', ''];
-    wsData[rowIndex++] = ['', '', '', '', '', '', '', ''];
-    wsData[rowIndex++] = ['1.本报价单有效期为' + vd + '天  2.最终价格以实际制作量为准  3.交付时间双方协商确定', '', '', '', '', '', '', ''];
-    wsData[rowIndex++] = ['', '', '', '', '', '', '', ''];
-    wsData[rowIndex++] = ['报价方：' + (settings.companyName || '______________'), '', '', '', '客户确认：________________', '', '', ''];
-    wsData[rowIndex++] = ['签字：________________', '', '', '', '签字：________________', '', '', ''];
+    var totalRow = ws.addRow(['', '', '', '', '', '', '', '合计' + taxLabel + '：', total]);
+    totalRow.getCell(8).font = boldFont;
+    totalRow.getCell(9).font = { bold: true, size: 14 };
+    totalRow.getCell(9).alignment = rightAlign;
+    rowNum++;
     
-    // 创建工作簿和工作表
-    var wb = XLSX.utils.book_new();
-    var ws = XLSX.utils.aoa_to_sheet(wsData);
+    var upperRow = ws.addRow(['大写金额：' + numberToChineseUpper(total)]);
+    upperRow.getCell(1).font = boldFont;
+    upperRow.getCell(1).alignment = centerAlign;
+    ws.mergeCells('A' + rowNum + ':I' + rowNum);
+    rowNum++;
     
-    // 设置列宽
-    ws['!cols'] = [
-        { wch: 6 },
-        { wch: 30 },
-        { wch: 15 },
-        { wch: 8 },
-        { wch: 15 },
-        { wch: 8 },
-        { wch: 12 },
-        { wch: 12 }
-    ];
+    ws.addRow(['']).height = 15;
+    rowNum++;
     
-    // 添加单元格合并
-    ws['!merges'] = [];
+    var notesRow = ws.addRow(['1.本报价单有效期为' + vd + '天  2.最终价格以实际制作量为准  3.交付时间双方协商确定']);
+    notesRow.getCell(1).alignment = centerAlign;
+    ws.mergeCells('A' + rowNum + ':I' + rowNum);
+    rowNum++;
     
-    // 公司名称合并（第2行）
-    ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 7 } });
+    ws.addRow(['']).height = 15;
+    rowNum++;
     
-    // 公司地址电话合并（第3行，如果存在）
-    if(settings.companyAddress||settings.companyPhone){
-        ws['!merges'].push({ s: { r: 2, c: 0 }, e: { r: 2, c: 7 } });
-    }
+    var signRow1 = ws.addRow(['报价方：' + (settings.companyName || '______________'), '', '', '', '', '', '', '', '客户确认：________________']);
+    signRow1.getCell(1).alignment = centerAlign;
+    signRow1.getCell(9).alignment = centerAlign;
+    ws.mergeCells('A' + rowNum + ':D' + rowNum);
+    ws.mergeCells('E' + rowNum + ':I' + rowNum);
+    rowNum++;
     
-    // 报价单标题合并（第5行）
-    ws['!merges'].push({ s: { r: 4, c: 0 }, e: { r: 4, c: 7 } });
+    var signRow2 = ws.addRow(['签字：________________', '', '', '', '', '', '', '', '签字：________________']);
+    signRow2.getCell(1).alignment = centerAlign;
+    signRow2.getCell(9).alignment = centerAlign;
+    ws.mergeCells('A' + rowNum + ':D' + rowNum);
+    ws.mergeCells('E' + rowNum + ':I' + rowNum);
+    rowNum++;
     
-    // 报价编号合并（第6行，如果存在）
-    if(quote.quoteNumber){
-        ws['!merges'].push({ s: { r: 5, c: 0 }, e: { r: 5, c: 7 } });
-    }
-    
-    // 客户信息合并（第8行）- 实际数据中没有客户信息行，跳过
-    // ws['!merges'].push({ s: { r: 7, c: 0 }, e: { r: 7, c: 7 } });
-    
-    // 客户信息2合并（第9行，如果存在）- 实际数据中没有，跳过
-    // if(quote.clientEmail || quote.clientAddress){
-    //     ws['!merges'].push({ s: { r: 8, c: 0 }, e: { r: 8, c: 7 } });
-    // }
-    
-    // 日期合并（第10行）
-    ws['!merges'].push({ s: { r: 9, c: 0 }, e: { r: 9, c: 7 } });
-    
-    // 付款方式合并（第11行，如果存在）- 实际数据中没有，跳过
-    // if(quote.paymentMethod){
-    //     ws['!merges'].push({ s: { r: 10, c: 0 }, e: { r: 10, c: 7 } });
-    // }
-    
-    // 大写金额合并
-    var totalRowIndex = rowIndex - 4; // 大写金额所在行
-    ws['!merges'].push({ s: { r: totalRowIndex, c: 0 }, e: { r: totalRowIndex, c: 7 } });
-    
-    // 备注信息合并
-    var notesRowIndex = rowIndex - 2; // 备注所在行
-    ws['!merges'].push({ s: { r: notesRowIndex, c: 0 }, e: { r: notesRowIndex, c: 7 } });
-    
-    // 底部签字区域合并
-    var signRow1Index = rowIndex; // 报价方/客户确认行
-    ws['!merges'].push({ s: { r: signRow1Index, c: 0 }, e: { r: signRow1Index, c: 3 } });
-    ws['!merges'].push({ s: { r: signRow1Index, c: 4 }, e: { r: signRow1Index, c: 7 } });
-    
-    var signRow2Index = rowIndex + 1; // 签字行
-    ws['!merges'].push({ s: { r: signRow2Index, c: 0 }, e: { r: signRow2Index, c: 3 } });
-    ws['!merges'].push({ s: { r: signRow2Index, c: 4 }, e: { r: signRow2Index, c: 7 } });
-    
-    // 使用XLSX库的单元格样式属性
-    // 1. 设置行高
-    if(!ws['!rows']) ws['!rows'] = [];
-    ws['!rows'][4] = { hpx: 30 }; // 标题行高
-    
-    // 2. 设置表头行高
-    var headerRowIndex = rowIndex - quote.items.length - 8; // 表头所在行
-    ws['!rows'][headerRowIndex] = { hpx: 25 };
-    
-    // 3. 创建样式对象
-    var boldStyle = { font: { bold: true } };
-    var centerStyle = { alignment: { horizontal: 'center', vertical: 'center' } };
-    var rightStyle = { alignment: { horizontal: 'right', vertical: 'center' } };
-    
-    // 设置标题样式（加粗+居中）
-    if(ws['A5']) {
-        ws['A5'].s = Object.assign({}, boldStyle, centerStyle);
-    }
-    
-    // 设置表头样式（加粗+居中）
-    for(var c = 0; c < 8; c++){
-        var cellAddress = XLSX.utils.encode_cell({ r: headerRowIndex, c: c });
-        if(ws[cellAddress]){
-            ws[cellAddress].s = Object.assign({}, boldStyle, centerStyle);
+    if (imagesToAdd.length > 0) {
+        showToast('正在处理图片，请稍候...', 'info');
+        for (var j = 0; j < imagesToAdd.length; j++) {
+            var imgInfo = imagesToAdd[j];
+            try {
+                var imageData = await loadImageForExcel(imgInfo.imageUrl);
+                var blob = base64ToBlob(imageData.base64);
+                var imageId = wb.addImage({
+                    buffer: await blob.arrayBuffer(),
+                    extension: 'png',
+                });
+                
+                var maxWidth = 160;
+                var maxHeight = 60;
+                var width = maxWidth;
+                var height = maxWidth / imageData.ratio;
+                
+                if (height > maxHeight) {
+                    height = maxHeight;
+                    width = maxHeight * imageData.ratio;
+                }
+                
+                ws.addImage(imageId, {
+                    tl: { col: imgInfo.col - 1, row: imgInfo.row - 1 },
+                    ext: { width: width, height: height },
+                    editAs: 'absolute'
+                });
+            } catch (e) {
+                console.warn('图片加载失败:', e);
+            }
         }
     }
-    
-    // 设置合计行样式（加粗+右对齐）
-    var totalRow = rowIndex - 3; // 合计行
-    var totalCellAddress = XLSX.utils.encode_cell({ r: totalRow, c: 7 });
-    if(ws[totalCellAddress]){
-        ws[totalCellAddress].s = Object.assign({}, boldStyle, rightStyle);
-    }
-    
-    // 设置报价、折扣、税额等样式（加粗+右对齐）
-    var amountRows = [
-        rowIndex - quote.items.length - 3, // 报价行
-        rowIndex - quote.items.length - 2, // 折扣行（如果有）
-        rowIndex - quote.items.length - 1  // 税额行（如果有）
-    ];
-    
-    amountRows.forEach(function(row){
-        var cellAddress = XLSX.utils.encode_cell({ r: row, c: 7 });
-        if(ws[cellAddress]){
-            ws[cellAddress].s = Object.assign({}, boldStyle, rightStyle);
-        }
-    });
-    
-    // 设置公司名称、地址等合并单元格的居中样式
-    var centerRows = [1, 2, 5, 9, totalRowIndex, notesRowIndex];
-    centerRows.forEach(function(row){
-        var cellAddress = XLSX.utils.encode_cell({ r: row, c: 0 });
-        if(ws[cellAddress]){
-            ws[cellAddress].s = centerStyle;
-        }
-    });
-    
-    // 已经提前创建了工作簿
-    XLSX.utils.book_append_sheet(wb, ws, '报价单');
     
     var filename = '报价单_' + (quote.clientName || '客户') + '_' + new Date().toISOString().slice(0, 10) + '.xlsx';
     
-    // 使用带有样式支持的写入选项
-    var writeOptions = { 
-        bookType: 'xlsx', 
-        type: 'array',
-        cellStyles: true, // 启用单元格样式
-        sheetStyles: true  // 启用工作表样式
-    };
+    var buffer = await wb.xlsx.writeBuffer();
+    var blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     
-    // 手机浏览器：showSaveFilePicker可能存在但调用会卡死主线程，直接跳过
-    // 桌面浏览器/PakePlus EXE：正常尝试showSaveFilePicker
     if (typeof window.showSaveFilePicker === 'function' && !isPhoneBrowser() && !showSaveFilePickerFailed) {
         try {
-            var xlsData = XLSX.write(wb, writeOptions);
-            var blob = new Blob([xlsData], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            
             var timeoutPromise = new Promise(function(_, reject) {
                 setTimeout(function() { reject(new Error('showSaveFilePicker timeout')); }, 3000);
             });
@@ -19110,17 +19166,60 @@ async function exportXLS(){
             if (err.name === 'AbortError') {
                 return;
             }
-            // 失败，标记为失败，整个会话不再重试
             console.warn('showSaveFilePicker failed, using fallback:', err);
             showSaveFilePickerFailed = true;
-            XLSX.writeFile(wb, filename, writeOptions);
+            downloadBlob(blob, filename);
             showToast('XLSX 导出成功！', 'success');
         }
     } else {
-        // showSaveFilePicker不可用，使用传统下载
-        XLSX.writeFile(wb, filename, writeOptions);
+        downloadBlob(blob, filename);
         showToast('XLSX 导出成功！', 'success');
     }
+}
+
+function loadImageForExcel(url) {
+    return new Promise(function(resolve, reject) {
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            var maxWidth = 300;
+            var maxHeight = 300;
+            var width = img.width;
+            var height = img.height;
+            var originalRatio = width / height;
+            
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+            }
+            if (height > maxHeight) {
+                width = (width * maxHeight) / height;
+                height = maxHeight;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve({ base64: canvas.toDataURL('image/png'), ratio: originalRatio });
+        };
+        img.onerror = function() {
+            reject(new Error('图片加载失败: ' + url));
+        };
+        img.src = url;
+    });
+}
+
+function downloadBlob(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 function saveAsTemplate(){
     appData.currentQuote.clientName=document.getElementById('quoteClientName').value;
