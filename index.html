@@ -39046,6 +39046,7 @@ function saveOneDriveAppId() {
     var appId = appIdEl.value.trim();
     
     appData.systemSettings.onedriveAppId = appId;
+    localStorage.setItem('onedrive_app_id', appId);
     saveData();
     showToast('应用 ID 已保存', 'success');
 }
@@ -39102,6 +39103,17 @@ function handleOneDriveCallback() {
 function exchangeCodeForToken(code) {
     var appId = appData.systemSettings.onedriveAppId;
     var redirectUri = window.location.origin + window.location.pathname;
+    
+    if (!appId) {
+        var savedAppId = localStorage.getItem('onedrive_app_id');
+        if (savedAppId) {
+            appId = savedAppId;
+            appData.systemSettings.onedriveAppId = appId;
+        } else {
+            showToast('应用 ID 为空，请重新填写', 'error');
+            return;
+        }
+    }
     
     var body = new URLSearchParams();
     body.append('client_id', appId);
