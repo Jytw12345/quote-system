@@ -39422,7 +39422,7 @@ function onedriveUploadFull() {
             };
             
             var jsonStr = JSON.stringify(syncData);
-            var compressedData = LZString.compressToBase64(jsonStr);
+            var compressedData = typeof LZString !== 'undefined' ? LZString.compressToBase64(jsonStr) : jsonStr;
             
             showSyncProgress('正在创建同步文件夹...', 20);
             
@@ -39529,7 +39529,7 @@ function onedriveDownloadFull() {
             showSyncProgress('正在解压数据...', 30);
             
             var compressedData = typeof data === 'string' ? data : JSON.stringify(data);
-            var jsonStr = LZString.decompressFromBase64(compressedData);
+            var jsonStr = typeof LZString !== 'undefined' ? LZString.decompressFromBase64(compressedData) : compressedData;
             
             if (!jsonStr) {
                 throw new Error('数据解压失败');
