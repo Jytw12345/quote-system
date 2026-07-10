@@ -1,8 +1,9 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'V3.4.151  更新日期：20260710';
+const CACHE_NAME = 'V3.4.152  更新日期：20260710';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
+    'feat OneDrive 同步支持图片上传下载，真正实现全量数据同步',
     'feat 新增 OneDrive 云同步功能，支持无文件大小限制的同步方式',
     'feat 云同步支持切换 Gist/OneDrive 两种同步方式',
     'fix 修复云同步Gist大小限制问题：模板图片改为存储在IndexedDB，同步时只传输imageId',

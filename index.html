@@ -39216,6 +39216,60 @@ function onedriveApi(path, options) {
     });
 }
 
+function onedriveApiRaw(path, options) {
+    return getOneDriveAccessToken().then(function(token) {
+        var headers = Object.assign({}, options.headers || {}, {
+            'Authorization': 'Bearer ' + token
+        });
+        
+        var controller = new AbortController();
+        var timeoutId = setTimeout(function() { controller.abort(); }, 120000);
+        
+        var fetchOptions = Object.assign({}, options, { 
+            headers: headers,
+            signal: controller.signal
+        });
+        
+        return fetch('https://graph.microsoft.com/v1.0/me/drive' + path, fetchOptions)
+            .then(function(response) {
+                clearTimeout(timeoutId);
+                if (!response.ok) {
+                    throw new Error('OneDrive API 错误: ' + response.status);
+                }
+                return response;
+            })
+            .catch(function(error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    throw new Error('请求超时，请检查网络连接');
+                }
+                throw error;
+            });
+    });
+}
+
+function getAllImagesForSync() {
+    return new Promise(function(resolve) {
+        if (!idbInitialized || !IDB.isSupported()) {
+            resolve([]);
+            return;
+        }
+        
+        IDB.getAllImages().then(function(images) {
+            var imageList = [];
+            images.forEach(function(img) {
+                imageList.push({
+                    id: img.id,
+                    data: img.data
+                });
+            });
+            resolve(imageList);
+        }).catch(function() {
+            resolve([]);
+        });
+    });
+}
+
 function onedriveCreateFolder(folderName) {
     return onedriveApi('/root/children', {
         method: 'POST',
@@ -39227,8 +39281,20 @@ function onedriveCreateFolder(folderName) {
     });
 }
 
-function onedriveGetFolderId(folderName) {
-    return onedriveApi('/root/children', {
+function onedriveCreateFolderInParent(parentFolderId, folderName) {
+    return onedriveApi('/items/' + parentFolderId + '/children', {
+        method: 'POST',
+        body: JSON.stringify({
+            name: folderName,
+            folder: {},
+            "@microsoft.graph.conflictBehavior": "replace"
+        })
+    });
+}
+
+function onedriveGetFolderId(folderName, parentFolderId) {
+    var path = parentFolderId ? '/items/' + parentFolderId + '/children' : '/root/children';
+    return onedriveApi(path, {
         method: 'GET'
     }).then(function(data) {
         var folder = data.value.find(function(item) {
@@ -39248,12 +39314,32 @@ function onedriveUploadFile(folderId, fileName, content) {
     });
 }
 
+function onedriveUploadBinaryFile(folderId, fileName, blob) {
+    return onedriveApiRaw('/items/' + folderId + '/children/' + encodeURIComponent(fileName) + '/content', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': blob.type
+        },
+        body: blob
+    }).then(function(response) {
+        return response.json();
+    });
+}
+
 function onedriveDownloadFile(folderId, fileName) {
     return onedriveApi('/items/' + folderId + '/children/' + encodeURIComponent(fileName) + '/content', {
         method: 'GET',
         headers: {
             'Content-Type': null
         }
+    });
+}
+
+function onedriveDownloadBinaryFile(folderId, fileName) {
+    return onedriveApiRaw('/items/' + folderId + '/children/' + encodeURIComponent(fileName) + '/content', {
+        method: 'GET'
+    }).then(function(response) {
+        return response.blob();
     });
 }
 
@@ -39268,26 +39354,29 @@ function onedriveUploadFull() {
         
         Promise.all([
             prepareProductsForSync(appData.products),
-            prepareTemplatesForSync(appData.templates)
+            prepareTemplatesForSync(appData.templates),
+            getAllImagesForSync()
         ])
         .then(function(results) {
             var productsWithImages = results[0];
             var templatesWithImages = results[1];
+            var images = results[2];
             
             var syncData = {
                 products: productsWithImages,
                 templates: templatesWithImages,
                 customers: appData.customers,
-                version: 'v1',
+                version: 'v2',
                 deviceId: appData.systemSettings.deviceId || generateUniqueId().toString(),
                 timestamp: Date.now(),
-                lastSyncTime: appData.systemSettings.lastSyncTime
+                lastSyncTime: appData.systemSettings.lastSyncTime,
+                imageCount: images.length
             };
             
             var jsonStr = JSON.stringify(syncData);
             var compressedData = LZString.compressToBase64(jsonStr);
             
-            showSyncProgress('正在上传到 OneDrive...', 50);
+            showSyncProgress('正在创建同步文件夹...', 20);
             
             return onedriveGetFolderId('QuoteSystem').then(function(folderId) {
                 if (!folderId) {
@@ -39297,7 +39386,44 @@ function onedriveUploadFull() {
                 }
                 return folderId;
             }).then(function(folderId) {
-                return onedriveUploadFile(folderId, 'quote_data.json', compressedData);
+                return onedriveGetFolderId('images', folderId).then(function(imagesFolderId) {
+                    if (!imagesFolderId) {
+                        return onedriveCreateFolderInParent(folderId, 'images').then(function(folder) {
+                            return folder.id;
+                        });
+                    }
+                    return imagesFolderId;
+                }).then(function(imagesFolderId) {
+                    return { mainFolderId: folderId, imagesFolderId: imagesFolderId };
+                });
+            }).then(function(folders) {
+                var uploadPromises = [];
+                
+                uploadPromises.push(onedriveUploadFile(folders.mainFolderId, 'quote_data.json', compressedData));
+                
+                showSyncProgress('正在上传图片 (' + images.length + '张)...', 40);
+                
+                images.forEach(function(img, index) {
+                    var progress = 40 + Math.round((index / images.length) * 40);
+                    showSyncProgress('正在上传图片 ' + (index + 1) + '/' + images.length, progress);
+                    
+                    var base64Data = img.data.split(',')[1];
+                    var binaryData = atob(base64Data);
+                    var mimeType = img.data.split(',')[0].split(':')[1].split(';')[0];
+                    var fileExtension = mimeType.split('/')[1] || 'png';
+                    var fileName = img.id + '.' + fileExtension;
+                    
+                    var byteArray = new Uint8Array(binaryData.length);
+                    for (var i = 0; i < binaryData.length; i++) {
+                        byteArray[i] = binaryData.charCodeAt(i);
+                    }
+                    
+                    var blob = new Blob([byteArray], { type: mimeType });
+                    
+                    uploadPromises.push(onedriveUploadBinaryFile(folders.imagesFolderId, fileName, blob));
+                });
+                
+                return Promise.all(uploadPromises);
             });
         })
         .then(function() {
@@ -39329,7 +39455,7 @@ function onedriveDownloadFull() {
             return;
         }
         
-        showSyncProgress('正在从 OneDrive 下载...', 20);
+        showSyncProgress('正在从 OneDrive 下载...', 10);
         
         onedriveGetFolderId('QuoteSystem').then(function(folderId) {
             if (!folderId) {
@@ -39338,16 +39464,21 @@ function onedriveDownloadFull() {
                 return;
             }
             
-            return onedriveDownloadFile(folderId, 'quote_data.json');
+            return onedriveDownloadFile(folderId, 'quote_data.json').then(function(data) {
+                return { folderId: folderId, data: data };
+            });
         })
-        .then(function(data) {
-            if (!data) {
+        .then(function(result) {
+            if (!result || !result.data) {
                 showToast('云端数据为空', 'info');
                 resolve();
                 return;
             }
             
-            showSyncProgress('正在解压数据...', 70);
+            var folderId = result.folderId;
+            var data = result.data;
+            
+            showSyncProgress('正在解压数据...', 30);
             
             var compressedData = typeof data === 'string' ? data : JSON.stringify(data);
             var jsonStr = LZString.decompressFromBase64(compressedData);
@@ -39359,6 +39490,49 @@ function onedriveDownloadFull() {
             var syncData = JSON.parse(jsonStr);
             mergeSyncData(syncData);
             
+            var imageCount = syncData.imageCount || 0;
+            if (imageCount > 0 && idbInitialized && IDB.isSupported()) {
+                showSyncProgress('正在下载图片...', 40);
+                
+                return onedriveGetFolderId('images', folderId).then(function(imagesFolderId) {
+                    if (!imagesFolderId) {
+                        return;
+                    }
+                    
+                    return onedriveApi('/items/' + imagesFolderId + '/children', {
+                        method: 'GET'
+                    }).then(function(imagesData) {
+                        var imageFiles = imagesData.value || [];
+                        var downloadPromises = [];
+                        
+                        imageFiles.forEach(function(file, index) {
+                            var progress = 40 + Math.round((index / imageFiles.length) * 40);
+                            showSyncProgress('正在下载图片 ' + (index + 1) + '/' + imageFiles.length, progress);
+                            
+                            var imageId = file.name.replace(/\.[^/.]+$/, '');
+                            
+                            downloadPromises.push(onedriveDownloadBinaryFile(imagesFolderId, file.name)
+                                .then(function(blob) {
+                                    return new Promise(function(resolve) {
+                                        var reader = new FileReader();
+                                        reader.onloadend = function() {
+                                            IDB.saveImage(imageId, reader.result).then(resolve).catch(resolve);
+                                        };
+                                        reader.readAsDataURL(blob);
+                                    });
+                                })
+                                .catch(function() {
+                                    console.warn('Failed to download image:', file.name);
+                                })
+                            );
+                        });
+                        
+                        return Promise.all(downloadPromises);
+                    });
+                });
+            }
+        })
+        .then(function() {
             appData.systemSettings.lastSyncTime = Date.now();
             appData.systemSettings.retryCount = 0;
             saveData();
