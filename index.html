@@ -9168,6 +9168,81 @@ function safeExecuteAsync(fn, defaultVal) {
                             <input type="text" id="gistIdInput" placeholder="自动生成或输入团队ID" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;">
                         </div>
                     </div>
+                    
+                    <!-- 团队功能设置 -->
+                    <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #bae6fd;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <div style="font-size: 0.8125rem; font-weight: 600; color: #0369a1;">👥 团队功能</div>
+                            <label style="display: inline-flex; align-items: center; gap: 0.375rem; cursor: pointer;">
+                                <span style="font-size: 0.75rem; color: #64748b;">启用团队同步</span>
+                                <input type="checkbox" id="teamEnabled" onchange="toggleTeamSettings()" style="width: 1rem; height: 1rem; flex-shrink: 0; flex-basis: 1rem; appearance: auto; -webkit-appearance: checkbox; min-width: 1rem; min-height: 1rem;">
+                            </label>
+                        </div>
+                        <div id="teamSettingsPanel" style="display: none;">
+                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <button class="btn btn-primary btn-xs" onclick="createTeam()">➕ 创建团队</button>
+                                <button class="btn btn-outline btn-xs" onclick="joinTeam()">🔗 加入已有团队</button>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                    <label for="teamName" style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队名称</label>
+                                    <input type="text" id="teamName" placeholder="团队名称" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem; background: #f8fafc;" readonly>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                    <label for="teamUserName" style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队成员名称</label>
+                                    <input type="text" id="teamUserName" placeholder="例如：张三" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem;" onchange="saveTeamUserName()">
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.5rem;">
+                                <label for="teamGistId" style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队Gist ID</label>
+                                <input type="text" id="teamGistId" placeholder="团队Gist ID" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem;" onchange="saveTeamGistId()">
+                            </div>
+                            <div style="font-size: 0.75rem; font-weight: 500; color: #475569; margin-bottom: 0.375rem;">选择同步数据类型：</div>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.375rem;">
+                                <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
+                                    <input type="checkbox" id="shareProducts" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
+                                    <span>产品库</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
+                                    <input type="checkbox" id="shareTemplates" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
+                                    <span>模板库</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
+                                    <input type="checkbox" id="shareCustomers" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
+                                    <span>客户库</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
+                                    <input type="checkbox" id="shareQuoteHistory" style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
+                                    <span>报价历史</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
+                                    <input type="checkbox" id="shareSeals" style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
+                                    <span>印章</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
+                                    <input type="checkbox" id="shareSignatures" style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
+                                    <span>签名</span>
+                                </label>
+                            </div>
+                            <div style="margin-top: 0.5rem;">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.7rem; cursor: pointer;">
+                                    <input type="checkbox" id="syncChangeTracking" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveSyncChangeTracking()">
+                                    <span>启用变更追踪（记录操作者）</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 团队活动日志 -->
+                    <div id="teamActivityPanel" style="background: var(--gray-50); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <div style="font-size: 0.8125rem; font-weight: 600; color: var(--gray-700);">👥 团队活动</div>
+                            <button class="btn btn-xs btn-outline" onclick="clearTeamActivityLog()" style="flex: none; max-width: 60px; width: auto; min-width: auto; white-space: nowrap;">清空</button>
+                        </div>
+                        <div id="teamActivityLogContainer" style="max-height: 120px; overflow-y: auto; font-size: 0.7rem; color: var(--gray-600);">
+                            <div style="color: var(--gray-400); text-align: center;">暂无团队活动记录</div>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- OneDrive 配置 -->
@@ -9278,92 +9353,6 @@ function safeExecuteAsync(fn, defaultVal) {
                     </div>
                 </div>
                 
-                <!-- 团队功能设置 -->
-                <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #bae6fd;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <div style="font-size: 0.8125rem; font-weight: 600; color: #0369a1;">👥 团队功能</div>
-                        <label style="display: inline-flex; align-items: center; gap: 0.375rem; cursor: pointer;">
-                            <span style="font-size: 0.75rem; color: #64748b;">启用团队同步</span>
-                            <input type="checkbox" id="teamEnabled" onchange="toggleTeamSettings()" style="width: 1rem; height: 1rem; flex-shrink: 0; flex-basis: 1rem; appearance: auto; -webkit-appearance: checkbox; min-width: 1rem; min-height: 1rem;">
-                        </label>
-                    </div>
-                    <div id="teamSettingsPanel" style="display: none;">
-                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                            <button class="btn btn-primary btn-xs" onclick="createTeam()">➕ 创建团队</button>
-                            <button class="btn btn-outline btn-xs" onclick="joinTeam()">🔗 加入已有团队</button>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
-                            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                <label for="teamName" style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队名称</label>
-                                <input type="text" id="teamName" placeholder="团队名称" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem; background: #f8fafc;" readonly>
-                            </div>
-                            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                <label for="teamUserName" style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队成员名称</label>
-                                <input type="text" id="teamUserName" placeholder="例如：张三" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem;" onchange="saveTeamUserName()">
-                            </div>
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.5rem;">
-                            <label for="teamGistId" style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队Gist ID</label>
-                            <input type="text" id="teamGistId" placeholder="团队Gist ID" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem;" onchange="saveTeamGistId()">
-                        </div>
-                        <div style="font-size: 0.75rem; font-weight: 500; color: #475569; margin-bottom: 0.375rem;">选择同步数据类型：</div>
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.375rem;">
-                            <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
-                                <input type="checkbox" id="shareProducts" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
-                                <span>产品库</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
-                                <input type="checkbox" id="shareTemplates" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
-                                <span>模板库</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
-                                <input type="checkbox" id="shareCustomers" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
-                                <span>客户库</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
-                                <input type="checkbox" id="shareQuoteHistory" style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
-                                <span>报价历史</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
-                                <input type="checkbox" id="shareSeals" style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
-                                <span>印章</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
-                                <input type="checkbox" id="shareSignatures" style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
-                                <span>签名</span>
-                            </label>
-                        </div>
-                        <div style="margin-top: 0.5rem;">
-                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.7rem; cursor: pointer;">
-                                <input type="checkbox" id="syncChangeTracking" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveSyncChangeTracking()">
-                                <span>启用变更追踪（记录操作者）</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 团队活动日志 -->
-                <div id="teamActivityPanel" style="background: var(--gray-50); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; display: none;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <div style="font-size: 0.8125rem; font-weight: 600; color: var(--gray-700);">👥 团队活动</div>
-                        <button class="btn btn-xs btn-outline" onclick="clearTeamActivityLog()" style="flex: none; max-width: 60px; width: auto; min-width: auto; white-space: nowrap;">清空</button>
-                    </div>
-                    <div id="teamActivityLogContainer" style="max-height: 120px; overflow-y: auto; font-size: 0.7rem; color: var(--gray-600);">
-                        <div style="color: var(--gray-400); text-align: center;">暂无团队活动记录</div>
-                    </div>
-                </div>
-
-                <!-- 团队成员列表 -->
-                <div id="teamMembersPanel" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #6ee7b7;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <div style="font-size: 0.8125rem; font-weight: 600; color: #047857;">👥 团队成员</div>
-                        <button class="btn btn-xs btn-outline" onclick="refreshTeamMembers()" style="flex: none; max-width: 70px; width: auto; min-width: auto; white-space: nowrap;">🔄 刷新</button>
-                    </div>
-                    <div id="teamMembersList" style="font-size: 0.75rem; color: #065f46;">
-                        <div style="color: #6ee7b7; text-align: center;">点击"刷新"查看团队成员</div>
-                    </div>
-                </div>
-
                 <!-- 数据管理：查重去重功能 -->
                 <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #fcd34d;">
                     <div style="font-size: 0.8125rem; font-weight: 600; color: #92400e; margin-bottom: 0.5rem;">🔍 数据管理</div>
