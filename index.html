@@ -39478,7 +39478,7 @@ function onedriveUploadFull() {
             appData.systemSettings.lastSyncTime = Date.now();
             appData.systemSettings.retryCount = 0;
             saveData();
-            updateSyncStatus('success');
+            updateCloudSyncStatus();
             updateSyncTimeDisplay();
             showSyncProgress('同步完成', 100);
             setTimeout(hideSyncProgress, 1500);
@@ -39488,7 +39488,7 @@ function onedriveUploadFull() {
             console.error('OneDrive 上传失败:', error);
             appData.systemSettings.retryCount = (appData.systemSettings.retryCount || 0) + 1;
             saveData();
-            updateSyncStatus('error');
+            updateCloudSyncStatus();
             showSyncProgress('同步失败', 100);
             hideSyncProgress();
             reject(error);
@@ -39585,7 +39585,7 @@ function onedriveDownloadFull() {
             appData.systemSettings.retryCount = 0;
             saveData();
             
-            updateSyncStatus('success');
+            updateCloudSyncStatus();
             updateSyncTimeDisplay();
             showSyncProgress('同步完成', 100);
             setTimeout(hideSyncProgress, 1500);
@@ -39595,7 +39595,7 @@ function onedriveDownloadFull() {
             console.error('OneDrive 下载失败:', error);
             appData.systemSettings.retryCount = (appData.systemSettings.retryCount || 0) + 1;
             saveData();
-            updateSyncStatus('error');
+            updateCloudSyncStatus();
             showSyncProgress('同步失败', 100);
             hideSyncProgress();
             reject(error);
