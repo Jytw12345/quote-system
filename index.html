@@ -39058,16 +39058,44 @@ function loginOneDrive() {
         return;
     }
     
-    var redirectUri = window.location.origin + window.location.pathname;
-    var authUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?' +
-        'client_id=' + encodeURIComponent(appId) + '&' +
-        'response_type=code&' +
-        'redirect_uri=' + encodeURIComponent(redirectUri) + '&' +
-        'scope=' + encodeURIComponent('Files.ReadWrite.All offline_access') + '&' +
-        'response_mode=query&' +
-        'state=' + encodeURIComponent('quote-system-login');
+    var codeVerifier = generateCodeVerifier();
+    localStorage.setItem('onedrive_code_verifier', codeVerifier);
     
-    window.location.href = authUrl;
+    showSyncProgress('正在准备登录...', 10);
+    
+    generateCodeChallenge(codeVerifier).then(function(codeChallenge) {
+        hideSyncProgress();
+        var redirectUri = window.location.origin + window.location.pathname;
+        var authUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?' +
+            'client_id=' + encodeURIComponent(appId) + '&' +
+            'response_type=code&' +
+            'redirect_uri=' + encodeURIComponent(redirectUri) + '&' +
+            'scope=' + encodeURIComponent('Files.ReadWrite.All offline_access') + '&' +
+            'response_mode=query&' +
+            'state=' + encodeURIComponent('quote-system-login') + '&' +
+            'code_challenge=' + encodeURIComponent(codeChallenge) + '&' +
+            'code_challenge_method=S256';
+        
+        window.location.href = authUrl;
+    }).catch(function(error) {
+        hideSyncProgress();
+        showToast('登录准备失败: ' + error.message, 'error');
+    });
+}
+
+function generateCodeVerifier() {
+    var array = new Uint32Array(32);
+    window.crypto.getRandomValues(array);
+    return Array.from(array, function(x) { return ('0' + x.toString(16)).slice(-2); }).join('');
+}
+
+function generateCodeChallenge(codeVerifier) {
+    var encoder = new TextEncoder();
+    var data = encoder.encode(codeVerifier);
+    return window.crypto.subtle.digest('SHA-256', data).then(function(digest) {
+        var base64string = btoa(String.fromCharCode.apply(null, new Uint8Array(digest)));
+        return base64string.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    });
 }
 
 function logoutOneDrive() {
@@ -39103,6 +39131,7 @@ function handleOneDriveCallback() {
 function exchangeCodeForToken(code) {
     var appId = appData.systemSettings.onedriveAppId;
     var redirectUri = window.location.origin + window.location.pathname;
+    var codeVerifier = localStorage.getItem('onedrive_code_verifier');
     
     if (!appId) {
         var savedAppId = localStorage.getItem('onedrive_app_id');
@@ -39115,11 +39144,17 @@ function exchangeCodeForToken(code) {
         }
     }
     
+    if (!codeVerifier) {
+        showToast('登录状态已过期，请重新登录', 'error');
+        return;
+    }
+    
     var body = new URLSearchParams();
     body.append('client_id', appId);
     body.append('grant_type', 'authorization_code');
     body.append('code', code);
     body.append('redirect_uri', redirectUri);
+    body.append('code_verifier', codeVerifier);
     
     fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
         method: 'POST',
