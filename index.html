@@ -9154,6 +9154,20 @@ function safeExecuteAsync(fn, defaultVal) {
                             <strong>为什么选 GitHub Gist？</strong>无需部署服务器，浏览器直接调用，免费，自带版本历史，国内可访问
                         </div>
                     </details>
+                    
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+                        <div style="display:flex;flex-direction:column;gap:0.25rem;">
+                            <label for="gistToken" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">GitHub Token</label>
+                            <div style="position:relative;">
+                                <input type="password" id="gistToken" placeholder="ghp_xxxxxxxxxxxx" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;" onchange="saveGistToken()">
+                                <button type="button" class="btn btn-xs btn-outline" style="position:absolute;right:4px;top:0;bottom:0;margin:auto;width:1.75rem;min-width:0!important;min-height:0!important;height:1.75rem!important;display:flex;align-items:center;justify-content:center;box-sizing:border-box;" onclick="toggleTokenVisibility()">👁️</button>
+                            </div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:0.25rem;">
+                            <label for="gistIdInput" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">Gist ID（团队共享用）</label>
+                            <input type="text" id="gistIdInput" placeholder="自动生成或输入团队ID" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;">
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- OneDrive 配置 -->
@@ -9211,19 +9225,6 @@ function safeExecuteAsync(fn, defaultVal) {
                     </div>
                 </div>
                 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
-                    <div style="display:flex;flex-direction:column;gap:0.25rem;">
-                        <label for="gistToken" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">GitHub Token</label>
-                        <div style="position:relative;">
-                            <input type="password" id="gistToken" placeholder="ghp_xxxxxxxxxxxx" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;" onchange="saveGistToken()">
-                            <button type="button" class="btn btn-xs btn-outline" style="position:absolute;right:4px;top:0;bottom:0;margin:auto;width:1.75rem;min-width:0!important;min-height:0!important;height:1.75rem!important;display:flex;align-items:center;justify-content:center;box-sizing:border-box;" onclick="toggleTokenVisibility()">👁️</button>
-                        </div>
-                    </div>
-                    <div style="display:flex;flex-direction:column;gap:0.25rem;">
-                        <label for="gistIdInput" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">Gist ID（团队共享用）</label>
-                        <input type="text" id="gistIdInput" placeholder="自动生成或输入团队ID" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;">
-                    </div>
-                </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
                     <div style="display:flex;flex-direction:column;gap:0.25rem;">
                         <label for="cloudSyncInterval" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">自动同步间隔</label>
