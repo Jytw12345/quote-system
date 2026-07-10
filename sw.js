@@ -1,8 +1,9 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'V3.4.149  更新日期：20260710';
+const CACHE_NAME = 'V3.4.150  更新日期：20260710';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
+    'fix 修复云同步Gist大小限制问题：模板图片改为存储在IndexedDB，同步时只传输imageId',
     'fix XLS导出图片居中显示，按原始比例自适应单元格大小',
     'fix 重写XLS导出功能，使用ExcelJS库支持图片嵌入和完整表头',
     'fix 修复图片旋转后变形的问题',

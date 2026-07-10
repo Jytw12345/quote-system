@@ -35224,7 +35224,6 @@ function openAddTemplateModal(){
     }, 50);
 }
 function openEditTemplateModal(tid){
-    // 尝试用数字和字符串两种方式查找模板
     let t=appData.templates.find(x=>x.id==tid);
     if(!t){
         t=appData.templates.find(x=>String(x.id)===String(tid));
@@ -35239,7 +35238,6 @@ function openEditTemplateModal(tid){
     document.getElementById('templateCaseInfo').value=t.caseInfo||'';
     const urlInput = document.getElementById('templatePhotoUrlInput');
     if (urlInput) urlInput.value = '';
-    // 始终显示成本价字段，便于门头算价等场景保存成本信息
     const costField = '<div class="form-group"><label>成本</label><input type="number" class="template-item-cost" step="0.01" min="0" value="${item.cost||0}" placeholder="0"></div>';
     document.getElementById('templateItemsList').innerHTML=t.items.map(item=>`<div class="template-item-row">
         <input type="hidden" class="template-item-image" value="${item.image||''}">
@@ -35253,29 +35251,59 @@ function openEditTemplateModal(tid){
         <button type="button" class="btn btn-danger btn-sm" onclick="removeTemplateItem(this)" style="position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);">删除</button>
     </div>`).join('');
     
-    // 加载照片
-    currentTemplatePhotos = t.photos ? [...t.photos].map((p, i) => ({ ...p, id: p.id || (Date.now() + i) })) : [];
     const photosContainer = document.getElementById('templatePhotosContainer');
-    let photosHtml = t.photos ? t.photos.map((p, i) => {
-        const isUrl = p.isUrl || (p.data && /^https?:\/\//.test(p.data));
-        const errorFallback = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjZTllOWU5Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiIGZvbnQtc2l6ZT0iMTIiPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4=';
-        return `
-        <div class="template-photo-item" style="position:relative;">
-            <img src="${p.data}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" alt="${p.name}" onerror="this.src='${errorFallback}'">
-            ${isUrl ? '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:white;font-size:0.625rem;padding:2px 4px;border-radius:0 0 8px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">🔗 ' + (p.name || 'URL图片') + '</div>' : ''}
-            <button class="btn btn-danger btn-xs" style="position:absolute;top:-4px;right:-4px;" onclick="removeTemplatePhoto(${Date.now() + i})">✕</button>
-        </div>
-    `;
-    }).join('') : '';
-    photosHtml += `
-        <label class="btn btn-outline btn-sm" style="padding:1rem;cursor:pointer;">
-            <input type="file" id="templatePhotoUpload" accept="image/*" multiple hidden onchange="addTemplatePhotos(event)">
-            + 添加照片
-        </label>
-    `;
-    photosContainer.innerHTML = photosHtml;
+    const errorFallback = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjZTllOWU5Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiIGZvbnQtc2l6ZT0iMTIiPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4=';
     
-    openModal('templateModal');
+    if (!t.photos || t.photos.length === 0) {
+        currentTemplatePhotos = [];
+        photosContainer.innerHTML = `
+            <label class="btn btn-outline btn-sm" style="padding:1rem;cursor:pointer;">
+                <input type="file" id="templatePhotoUpload" accept="image/*" multiple hidden onchange="addTemplatePhotos(event)">
+                + 添加照片
+            </label>
+        `;
+        openModal('templateModal');
+        return;
+    }
+    
+    var photoPromises = [];
+    t.photos.forEach(function(p, index) {
+        if (p.isUrl) {
+            photoPromises.push(Promise.resolve({ ...p, data: p.url, id: Date.now() + index }));
+        } else if (p.data && p.data.startsWith('data:image')) {
+            photoPromises.push(Promise.resolve({ ...p, id: Date.now() + index }));
+        } else if (p.imageId && idbInitialized && IDB.isSupported()) {
+            photoPromises.push(IDB.getImage(p.imageId).then(function(url) {
+                return { ...p, data: url || errorFallback, id: Date.now() + index };
+            }).catch(function() {
+                return { ...p, data: errorFallback, id: Date.now() + index };
+            }));
+        } else {
+            photoPromises.push(Promise.resolve({ ...p, data: errorFallback, id: Date.now() + index }));
+        }
+    });
+    
+    Promise.all(photoPromises).then(function(loadedPhotos) {
+        currentTemplatePhotos = loadedPhotos;
+        let photosHtml = loadedPhotos.map(function(p) {
+            const isUrl = p.isUrl || (p.url && /^https?:\/\//.test(p.url));
+            return `
+                <div class="template-photo-item" style="position:relative;">
+                    <img src="${p.data}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" alt="${p.name}" onerror="this.src='${errorFallback}'">
+                    ${isUrl ? '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:white;font-size:0.625rem;padding:2px 4px;border-radius:0 0 8px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">🔗 ' + (p.name || 'URL图片') + '</div>' : ''}
+                    <button class="btn btn-danger btn-xs" style="position:absolute;top:-4px;right:-4px;" onclick="removeTemplatePhoto(${p.id})">✕</button>
+                </div>
+            `;
+        }).join('');
+        photosHtml += `
+            <label class="btn btn-outline btn-sm" style="padding:1rem;cursor:pointer;">
+                <input type="file" id="templatePhotoUpload" accept="image/*" multiple hidden onchange="addTemplatePhotos(event)">
+                + 添加照片
+            </label>
+        `;
+        photosContainer.innerHTML = photosHtml;
+        openModal('templateModal');
+    });
 }
 function addTemplateItemRow(){
     const c=document.getElementById('templateItemsList');
@@ -35299,25 +35327,26 @@ function saveTemplate(){
         unit:row.querySelector('.template-item-unit')?row.querySelector('.template-item-unit').value:'项',
         image:row.querySelector('.template-item-image')?row.querySelector('.template-item-image').value:''
     })).filter(item=>item.name&&item.price>0);
+    
     const t={
         name:document.getElementById('templateName').value,
         category:document.getElementById('templateCategory').value,
         isFavorite:document.getElementById('templateFavorite').checked,
         description:document.getElementById('templateDescription').value,
         caseInfo:document.getElementById('templateCaseInfo').value,
-        photos: currentTemplatePhotos.map(p => ({ data: p.data, name: p.name })),
+        photos: [],
         items:items,
         updatedAt:new Date().toISOString()
     };
+    
     if(!items.length){ showToast('请至少添加一个项目', 'warning'); return; }
     if(id){ 
         t.id=parseInt(id); 
         let idx=appData.templates.findIndex(x=>x.id==parseInt(id)); 
-        // 如果findIndex失败，尝试用字符串比较
         if(idx === -1){
             idx = appData.templates.findIndex(x => String(x.id) === String(id));
             if(idx !== -1){
-                t.id = appData.templates[idx].id; // 保留原ID类型
+                t.id = appData.templates[idx].id;
             }
         }
         if(idx === -1){
@@ -35325,14 +35354,42 @@ function saveTemplate(){
             return;
         }
         t.createdAt=appData.templates[idx].createdAt; 
-        appData.templates[idx]=t; 
     }
-    else { t.id=Date.now(); t.createdAt=new Date().toISOString(); appData.templates.push(t); }
-    // 添加团队活动记录
-    var isNew = !id;
-    addTeamActivity(isNew ? 'create' : 'update', 'template', t.name, isNew ? 'added' : 'modified', t.id);
-    saveDataImmediately(); renderTemplates(); closeModal('templateModal'); populateTemplateForQuoteList();
-    addToHistory('保存模板', '模板: ' + t.name);
+    else { t.id=Date.now(); t.createdAt=new Date().toISOString(); }
+    
+    var savePhotoPromises = [];
+    currentTemplatePhotos.forEach(function(p, index) {
+        if (p.isUrl && p.data) {
+            t.photos.push({ imageId: null, url: p.data, name: p.name, isUrl: true });
+        } else if (p.data && p.data.startsWith('data:image')) {
+            var photoId = 'template_' + t.id + '_' + index;
+            t.photos.push({ imageId: photoId, url: null, name: p.name, isUrl: false });
+            if (idbInitialized && IDB.isSupported()) {
+                savePhotoPromises.push(IDB.saveImage(photoId, p.data));
+            }
+        }
+    });
+    
+    Promise.all(savePhotoPromises).then(function() {
+        if(id){
+            appData.templates[idx]=t; 
+        } else {
+            appData.templates.push(t);
+        }
+        var isNew = !id;
+        addTeamActivity(isNew ? 'create' : 'update', 'template', t.name, isNew ? 'added' : 'modified', t.id);
+        saveDataImmediately(); renderTemplates(); closeModal('templateModal'); populateTemplateForQuoteList();
+        addToHistory('保存模板', '模板: ' + t.name);
+    }).catch(function(e) {
+        console.error('保存模板图片失败:', e);
+        if(id){
+            appData.templates[idx]=t; 
+        } else {
+            appData.templates.push(t);
+        }
+        saveDataImmediately(); renderTemplates(); closeModal('templateModal'); populateTemplateForQuoteList();
+        addToHistory('保存模板', '模板: ' + t.name);
+    });
 }
 let currentViewingTemplateId = null;
 
@@ -35366,20 +35423,24 @@ function viewTemplateDetail(tid) {
         </div>` : ''}
     `;
     
-    // 案例照片
+    const errorFallback = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjZTllOWU5Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiIGZvbnQtc2l6ZT0iMTIiPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4=';
+    
     if (t.photos && t.photos.length > 0) {
         html += `
             <div style="margin-bottom:1rem;">
                 <h4 style="margin-bottom:0.5rem;">📷 案例照片</h4>
-                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
-                    ${t.photos.map((p, i) => `
-                        <div style="position:relative;cursor:pointer;" onclick="openPhotoViewer(${i})">
-                            <img src="${p.data}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;border:2px solid #e5e7eb;" alt="${p.name}">
-                            <div style="position:absolute;bottom:4px;left:4px;right:4px;background:rgba(0,0,0,0.6);color:white;padding:0.25rem 0.5rem;border-radius:4px;font-size:0.75rem;">
-                                ${p.name}
+                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;" id="templateDetailPhotos">
+                    ${t.photos.map((p, i) => {
+                        const src = p.isUrl ? p.url : (p.data || errorFallback);
+                        return `
+                            <div style="position:relative;cursor:pointer;" onclick="openPhotoViewer(${i})">
+                                <img class="template-detail-photo" data-photo-id="${p.imageId || ''}" src="${src}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;border:2px solid #e5e7eb;" alt="${p.name}" onerror="this.src='${errorFallback}'">
+                                <div style="position:absolute;bottom:4px;left:4px;right:4px;background:rgba(0,0,0,0.6);color:white;padding:0.25rem 0.5rem;border-radius:4px;font-size:0.75rem;">
+                                    ${p.name}
+                                </div>
                             </div>
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
                 <p style="font-size:0.8125rem;color:var(--gray-500);margin-top:0.25rem;">点击照片可放大查看</p>
             </div>
@@ -35461,6 +35522,8 @@ function viewTemplateDetail(tid) {
     document.getElementById('templateDetailTitle').textContent = `${t.isFavorite ? '⭐ ' : ''}${t.name}`;
     document.getElementById('templateDetailBody').innerHTML = html;
     openModal('templateDetailModal');
+    
+    loadDetailTemplateImagesFromIndexedDB();
 }
 
 function useTemplateFromDetail() {
@@ -35618,7 +35681,6 @@ function useTemplate(tid){
 }
 function searchTemplates(){ renderTemplates(); }
 function renderTemplates(){
-    // 更新模板总数显示
     const countBadge = document.getElementById('templateCountBadge');
     if (countBadge) {
         countBadge.textContent = `${appData.templates.length} 个模板`;
@@ -35639,7 +35701,6 @@ function renderTemplates(){
         return;
     }
     
-    // 添加数量统计（放在模板列表容器外）
     const container = document.getElementById('templateGrid');
     const existingHeader = container.previousElementSibling;
     if (existingHeader && existingHeader.classList.contains('template-stats-header')) {
@@ -35653,6 +35714,7 @@ function renderTemplates(){
     }
     
     const fragment = document.createDocumentFragment();
+    const errorFallback = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjZTllOWU5Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiIGZvbnQtc2l6ZT0iMTIiPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4=';
     
     f.forEach(t => {
         const total=t.items.reduce((s,i)=>s+(i.qty*i.price),0);
@@ -35660,25 +35722,27 @@ function renderTemplates(){
         const profit=total-tc;
         const pp=total>0?(profit/total*100).toFixed(0):0;
         
-        // 卡片视图（唯一视图）
         const div = document.createElement('div');
         div.className = 'template-card' + (t.isFavorite ? ' template-favorite' : '');
+        div.dataset.templateId = t.id;
         
         let photosHtml = '';
         if (t.photos && t.photos.length > 0) {
             if (t.photos.length === 1) {
+                const photo = t.photos[0];
+                const src = photo.isUrl ? photo.url : (photo.data || errorFallback);
                 photosHtml = `
                     <div style="width:100%;aspect-ratio:16/10;margin-bottom:0.5rem;border-radius:var(--radius);overflow:hidden;background:var(--gray-100);">
-                        <img src="${t.photos[0].data}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.opacity=0.5;">
+                        <img class="template-card-photo" data-photo-id="${photo.imageId || ''}" src="${src}" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='${errorFallback}';this.style.opacity=0.5;">
                     </div>
                 `;
             } else {
                 photosHtml = `
                     <div style="width:100%;aspect-ratio:16/10;margin-bottom:0.5rem;border-radius:var(--radius);overflow:hidden;background:var(--gray-100);display:flex;">
-                        <img src="${t.photos[0].data}" style="width:65%;height:100%;object-fit:cover;" onerror="this.style.opacity=0.5;">
+                        <img class="template-card-photo" data-photo-id="${t.photos[0].imageId || ''}" src="${t.photos[0].isUrl ? t.photos[0].url : (t.photos[0].data || errorFallback)}" style="width:65%;height:100%;object-fit:cover;" onerror="this.src='${errorFallback}';this.style.opacity=0.5;">
                         <div style="flex:1;display:flex;flex-direction:column;">
                             ${t.photos.slice(1, 3).map(p => `
-                                <img src="${p.data}" style="flex:1;width:100%;object-fit:cover;border-left:2px solid white;" onerror="this.style.opacity=0.5;">
+                                <img class="template-card-photo" data-photo-id="${p.imageId || ''}" src="${p.isUrl ? p.url : (p.data || errorFallback)}" style="flex:1;width:100%;object-fit:cover;border-left:2px solid white;" onerror="this.src='${errorFallback}';this.style.opacity=0.5;">
                             `).join('')}
                             ${t.photos.length > 3 ? `<div style="flex:1;width:100%;background:var(--gray-200);display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:0.75rem;border-left:2px solid white;">+${t.photos.length - 3}</div>` : ''}
                         </div>
@@ -35713,6 +35777,44 @@ function renderTemplates(){
     });
     c.innerHTML = '';
     c.appendChild(fragment);
+    
+    loadTemplateImagesFromIndexedDB();
+}
+
+function loadTemplateImagesFromIndexedDB() {
+    if (!idbInitialized || !IDB.isSupported()) return;
+    
+    var photos = document.querySelectorAll('.template-card-photo');
+    photos.forEach(function(img) {
+        var imageId = img.dataset.photoId;
+        if (imageId && !img.src.startsWith('http')) {
+            IDB.getImage(imageId).then(function(url) {
+                if (url) {
+                    img.src = url;
+                }
+            }).catch(function() {
+                console.warn('Failed to load image from IndexedDB:', imageId);
+            });
+        }
+    });
+}
+
+function loadDetailTemplateImagesFromIndexedDB() {
+    if (!idbInitialized || !IDB.isSupported()) return;
+    
+    var photos = document.querySelectorAll('.template-detail-photo');
+    photos.forEach(function(img) {
+        var imageId = img.dataset.photoId;
+        if (imageId && !img.src.startsWith('http')) {
+            IDB.getImage(imageId).then(function(url) {
+                if (url) {
+                    img.src = url;
+                }
+            }).catch(function() {
+                console.warn('Failed to load image from IndexedDB:', imageId);
+            });
+        }
+    });
 }
 // ===== 客户管理 =====
 function openAddCustomerModal(){
@@ -39862,20 +39964,51 @@ function adaptSyncStrategy() {
 // 准备产品数据用于同步 - 只同步 imageId，不同步图片数据以避免数据过大
 function prepareProductsForSync(products) {
     return new Promise(function(resolve) {
-        // 直接复制产品数据，清空 image 字段（只保留 imageId）
-        // 这样可以大大减少同步数据大小，避免超过 Gist 限制
         var result = products.map(function(p) {
             var copy = Object.assign({}, p);
-            // 只保留 imageId，清空 base64 图片数据
-            // 下载时会通过 imageId 从本地 IndexedDB 读取
             if (copy.imageId) {
-                copy.image = null; // 不同步 base64 数据，只同步 ID
+                copy.image = null;
                 copy.imageLocation = 'indexeddb';
             }
             return copy;
         });
         
         console.log('产品同步数据准备完成，共', result.length, '个产品，图片将以 ID 形式同步');
+        resolve(result);
+    });
+}
+
+// 准备模板数据用于同步 - 只同步 imageId，不同步图片数据以避免数据过大
+function prepareTemplatesForSync(templates) {
+    return new Promise(function(resolve) {
+        var result = templates.map(function(t) {
+            var copy = Object.assign({}, t);
+            if (copy.photos && copy.photos.length > 0) {
+                copy.photos = copy.photos.map(function(p) {
+                    var photoCopy = {};
+                    if (p.isUrl) {
+                        photoCopy.isUrl = true;
+                        photoCopy.url = p.url;
+                        photoCopy.name = p.name;
+                        photoCopy.imageId = null;
+                    } else if (p.imageId) {
+                        photoCopy.isUrl = false;
+                        photoCopy.url = null;
+                        photoCopy.name = p.name;
+                        photoCopy.imageId = p.imageId;
+                    } else if (p.data && p.data.startsWith('data:image')) {
+                        photoCopy.isUrl = false;
+                        photoCopy.url = null;
+                        photoCopy.name = p.name;
+                        photoCopy.imageId = null;
+                    }
+                    return photoCopy;
+                });
+            }
+            return copy;
+        });
+        
+        console.log('模板同步数据准备完成，共', result.length, '个模板，图片将以 ID 形式同步');
         resolve(result);
     });
 }
@@ -39948,9 +40081,15 @@ function gistUploadFull() {
         var teamDataSharing = appData.systemSettings.teamDataSharing || { products: true, templates: true, customers: true, quoteHistory: false, seals: false, signatures: false };
         var teamEnabled = appData.systemSettings.teamEnabled;
         
-        // 先准备产品图片数据
-        prepareProductsForSync(appData.products)
-        .then(function(productsWithImages) {
+        // 同时准备产品和模板图片数据
+        Promise.all([
+            prepareProductsForSync(appData.products),
+            prepareTemplatesForSync(appData.templates)
+        ])
+        .then(function(results) {
+            var productsWithImages = results[0];
+            var templatesWithImages = results[1];
+            
             console.log('准备同步的产品数量:', productsWithImages.length);
             console.log('appData.products数量:', appData.products.length);
             console.log('appData.templates数量:', appData.templates.length);
@@ -39958,19 +40097,14 @@ function gistUploadFull() {
             console.log('teamEnabled:', teamEnabled);
             console.log('teamDataSharing:', JSON.stringify(teamDataSharing));
             
-            // 检查数据是否为空，如果为空则警告用户
-            if (productsWithImages.length === 0 && appData.templates.length === 0 && appData.customers.length === 0) {
+            if (productsWithImages.length === 0 && templatesWithImages.length === 0 && appData.customers.length === 0) {
                 console.warn('警告：本地数据为空，上传后将覆盖云端数据！');
                 showToast('⚠️ 本地数据为空，上传将覆盖云端数据！', 'warning');
             }
             
             showSyncProgress('正在打包数据...', 30);
-            // 根据团队共享设置过滤数据
-            // 注意：当数据类型不共享时，使用undefined而不是空数组，
-            // 这样在合并时可以保留云端已有数据
-            // 团队模式下，只有明确设置为false才不共享，undefined或true都共享
             var filteredProducts = teamEnabled && teamDataSharing.products === false ? undefined : productsWithImages;
-            var filteredTemplates = teamEnabled && teamDataSharing.templates === false ? undefined : appData.templates;
+            var filteredTemplates = teamEnabled && teamDataSharing.templates === false ? undefined : templatesWithImages;
             var filteredCustomers = teamEnabled && teamDataSharing.customers === false ? undefined : appData.customers;
             var filteredQuoteHistory = teamEnabled && teamDataSharing.quoteHistory === false ? undefined : appData.quoteHistory;
             var filteredSeals = teamEnabled && teamDataSharing.seals === false ? undefined : (appData.seals || []);
