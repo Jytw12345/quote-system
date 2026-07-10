@@ -39479,7 +39479,6 @@ function onedriveUploadFull() {
             appData.systemSettings.retryCount = 0;
             saveData();
             updateCloudSyncStatus();
-            updateSyncTimeDisplay();
             showSyncProgress('同步完成', 100);
             setTimeout(hideSyncProgress, 1500);
             resolve();
@@ -39586,7 +39585,6 @@ function onedriveDownloadFull() {
             saveData();
             
             updateCloudSyncStatus();
-            updateSyncTimeDisplay();
             showSyncProgress('同步完成', 100);
             setTimeout(hideSyncProgress, 1500);
             resolve();
