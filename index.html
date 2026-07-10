@@ -18984,7 +18984,7 @@ async function exportXLS(){
     });
     ws.columns = [
         { width: 8 },
-        { width: 22 },
+        { width: 12 },
         { width: 22 },
         { width: 16 },
         { width: 8 },
@@ -19018,16 +19018,13 @@ async function exportXLS(){
         ]);
         dataRow.height = 70;
         
-        dataRow.getCell(1).alignment = centerAlign;
-        dataRow.getCell(4).alignment = centerAlign;
-        dataRow.getCell(5).alignment = centerAlign;
-        dataRow.getCell(7).alignment = centerAlign;
-        dataRow.getCell(8).alignment = rightAlign;
-        dataRow.getCell(9).alignment = rightAlign;
-        
         dataRow.eachCell(function(cell) {
+            cell.alignment = centerAlign;
             cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
         });
+        
+        dataRow.getCell(8).alignment = rightAlign;
+        dataRow.getCell(9).alignment = rightAlign;
         
         if (item.image && item.image.trim() !== '') {
             imagesToAdd.push({ row: rowNum, col: 2, imageUrl: item.image });
@@ -19105,6 +19102,7 @@ async function exportXLS(){
     
     if (imagesToAdd.length > 0) {
         showToast('正在处理图片，请稍候...', 'info');
+        
         for (var j = 0; j < imagesToAdd.length; j++) {
             var imgInfo = imagesToAdd[j];
             try {
@@ -19115,20 +19113,30 @@ async function exportXLS(){
                     extension: 'png',
                 });
                 
-                var maxWidth = 160;
-                var maxHeight = 60;
-                var width = maxWidth;
-                var height = maxWidth / imageData.ratio;
+                var colWidthChars = ws.columns[1].width;
+                var colWidthPixels = colWidthChars * 7.2;
+                var rowHeightPixels = 70;
                 
-                if (height > maxHeight) {
-                    height = maxHeight;
-                    width = maxHeight * imageData.ratio;
+                var maxWidth = colWidthPixels - 8;
+                var maxHeight = rowHeightPixels - 8;
+                
+                var displayWidth = maxWidth;
+                var displayHeight = maxWidth / imageData.ratio;
+                
+                if (displayHeight > maxHeight) {
+                    displayHeight = maxHeight;
+                    displayWidth = maxHeight * imageData.ratio;
                 }
+                
+                var xOffsetEmu = ((colWidthPixels - displayWidth) / 2) * 9525;
+                var yOffsetEmu = ((rowHeightPixels - displayHeight) / 2) * 9525;
                 
                 ws.addImage(imageId, {
                     tl: { col: imgInfo.col - 1, row: imgInfo.row - 1 },
-                    ext: { width: width, height: height },
-                    editAs: 'absolute'
+                    br: { col: imgInfo.col, row: imgInfo.row },
+                    ext: { width: displayWidth, height: displayHeight },
+                    editAs: 'absolute',
+                    offset: { x: xOffsetEmu, y: yOffsetEmu }
                 });
             } catch (e) {
                 console.warn('图片加载失败:', e);
