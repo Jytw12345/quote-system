@@ -9169,11 +9169,11 @@ function safeExecuteAsync(fn, defaultVal) {
                             3. 在左侧菜单点击「应用注册」→「新注册」<br>
                             4. 名称填写 <code>佳印报价同步</code><br>
                             5. 支持的账户类型选择 <code>任何组织目录中的账户和个人 Microsoft 账户</code><br>
-                            6. 重定向 URI 选择 <code>Web</code>，填写 <code>https://localhost</code>（开发用）或你的实际域名<br>
+                            6. <strong>关键步骤！</strong>重定向 URI 选择 <code>单页应用(SPA)</code>，填写你的实际域名（如 <code>https://your-domain.com/quote-system/</code>）<br>
                             7. 点击「注册」<br>
                             8. 进入应用，复制「应用程序(客户端) ID」填入下方输入框<br>
-                            9. 在「API 权限」中添加 <code>Files.ReadWrite.All</code> 和 <code>offline_access</code> 权限<br>
-                            10. 在「认证」中确保启用「隐式授权」的 ID 令牌和访问令牌<br><br>
+                            9. 在「API 权限」中添加 <code>Files.ReadWrite.All</code> 和 <code>offline_access</code> 权限<br><br>
+                            <strong>⚠️ 重要提示：</strong>必须选择「单页应用(SPA)」类型，不能选择「Web」类型！否则会出现登录失败。<br><br>
                             <strong>为什么选 OneDrive？</strong>免费5GB存储空间，无文件大小限制，适合存储大量图片数据
                         </div>
                     </details>
@@ -39058,16 +39058,42 @@ function loginOneDrive() {
         return;
     }
     
-    var redirectUri = window.location.origin + window.location.pathname;
-    var authUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?' +
-        'client_id=' + encodeURIComponent(appId) + '&' +
-        'response_type=token&' +
-        'redirect_uri=' + encodeURIComponent(redirectUri) + '&' +
-        'scope=' + encodeURIComponent('Files.ReadWrite.All offline_access') + '&' +
-        'response_mode=fragment&' +
-        'state=' + encodeURIComponent('quote-system-login');
+    var codeVerifier = generateCodeVerifier();
+    localStorage.setItem('onedrive_code_verifier', codeVerifier);
     
-    window.location.href = authUrl;
+    generateCodeChallenge(codeVerifier).then(function(codeChallenge) {
+        var redirectUri = window.location.origin + window.location.pathname;
+        var authUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?' +
+            'client_id=' + encodeURIComponent(appId) + '&' +
+            'response_type=code&' +
+            'redirect_uri=' + encodeURIComponent(redirectUri) + '&' +
+            'scope=' + encodeURIComponent('Files.ReadWrite.All offline_access') + '&' +
+            'response_mode=query&' +
+            'state=' + encodeURIComponent('quote-system-login') + '&' +
+            'code_challenge=' + encodeURIComponent(codeChallenge) + '&' +
+            'code_challenge_method=S256';
+        
+        window.location.href = authUrl;
+    }).catch(function(error) {
+        showToast('登录准备失败: ' + error.message, 'error');
+    });
+}
+
+function generateCodeVerifier() {
+    var array = new Uint32Array(32);
+    window.crypto.getRandomValues(array);
+    return Array.from(array, function(x) { return ('0' + x.toString(16)).slice(-2); }).join('');
+}
+
+function generateCodeChallenge(codeVerifier) {
+    return new Promise(function(resolve) {
+        var encoder = new TextEncoder();
+        var data = encoder.encode(codeVerifier);
+        window.crypto.subtle.digest('SHA-256', data).then(function(digest) {
+            var base64string = btoa(String.fromCharCode.apply(null, new Uint8Array(digest)));
+            resolve(base64string.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_'));
+        });
+    });
 }
 
 function logoutOneDrive() {
@@ -39080,28 +39106,26 @@ function logoutOneDrive() {
 }
 
 function handleOneDriveCallback() {
-    var hashParams = new URLSearchParams(window.location.hash.substring(1));
-    var accessToken = hashParams.get('access_token');
-    var refreshToken = hashParams.get('refresh_token');
-    var expiresIn = hashParams.get('expires_in');
-    var state = hashParams.get('state');
-    var error = hashParams.get('error');
+    var urlParams = new URLSearchParams(window.location.search);
+    var code = urlParams.get('code');
+    var state = urlParams.get('state');
+    var error = urlParams.get('error');
     
     if (error) {
         showToast('OneDrive 登录失败: ' + error, 'error');
-        window.history.replaceState({}, document.title, window.location.pathname);
+        urlParams.delete('error');
+        urlParams.delete('error_description');
+        window.history.replaceState({}, document.title, window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : ''));
         return;
     }
     
-    if (accessToken && state === 'quote-system-login') {
-        appData.systemSettings.onedriveAccessToken = accessToken;
-        appData.systemSettings.onedriveRefreshToken = refreshToken || '';
-        appData.systemSettings.onedriveExpiresAt = Date.now() + (parseInt(expiresIn || 3600) * 1000);
-        saveData();
-        updateOneDriveStatus();
-        showToast('OneDrive 登录成功', 'success');
-        
-        window.history.replaceState({}, document.title, window.location.pathname);
+    if (code && state === 'quote-system-login') {
+        exchangeCodeForToken(code);
+        urlParams.delete('code');
+        urlParams.delete('state');
+        urlParams.delete('error');
+        urlParams.delete('error_description');
+        window.history.replaceState({}, document.title, window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : ''));
     }
 }
 
