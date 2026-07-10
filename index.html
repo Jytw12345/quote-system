@@ -9128,23 +9128,68 @@ function safeExecuteAsync(fn, defaultVal) {
                 <div id="autoBackupList" class="backup-list" style="margin-top:0.5rem;"></div>
             </div>
             <div class="settings-section">
-                <h3>☁️ 云同步（GitHub Gist）</h3>
-                <div style="padding:0.5rem 0.75rem;background:#eff6ff;border-radius:var(--radius);font-size:0.75rem;color:#1e40af;margin-bottom:0.75rem;line-height:1.5;">
-                    <strong>使用步骤：</strong>① 注册 GitHub 账号 → ② 创建 Personal Access Token（勾选 gist 权限）→ ③ 填入 Token → ④ 点「启用同步」
+                <h3>☁️ 云同步</h3>
+                
+                <!-- 同步方式选择 -->
+                <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+                    <button type="button" class="btn btn-sm sync-provider-btn" id="syncProviderGist" onclick="switchSyncProvider('gist')" style="flex:1;background:var(--primary);color:white;">📦 GitHub Gist</button>
+                    <button type="button" class="btn btn-sm sync-provider-btn" id="syncProviderOneDrive" onclick="switchSyncProvider('onedrive')" style="flex:1;">☁️ OneDrive</button>
                 </div>
-                <details style="margin-bottom:0.75rem;">
-                    <summary style="cursor:pointer;font-size:0.8125rem;font-weight:500;color:var(--primary);padding:0.25rem 0;">📖 如何获取 GitHub Token（1分钟）</summary>
-                    <div style="padding:0.75rem;background:var(--gray-50);border-radius:var(--radius);font-size:0.75rem;line-height:1.8;margin-top:0.5rem;">
-                        1. 打开 <a href="https://github.com/signup" target="_blank" style="color:var(--primary);">GitHub</a> 注册账号（免费）<br>
-                        2. 登录后打开 <a href="https://github.com/settings/tokens/new" target="_blank" style="color:var(--primary);">创建 Token 页面</a><br>
-                        3. Note 填写 <code>佳印报价同步</code><br>
-                        4. Expiration 选 <code>No expiration</code>（永不过期）<br>
-                        5. 勾选 <code>gist</code> 权限（只勾选这一个即可）<br>
-                        6. 点「Generate token」→ 复制生成的 Token<br>
-                        7. 粘贴到下方输入框中<br><br>
-                        <strong>为什么选 GitHub Gist？</strong>无需部署服务器，浏览器直接调用，免费，自带版本历史，国内可访问
+                
+                <!-- GitHub Gist 配置 -->
+                <div id="syncConfigGist">
+                    <div style="padding:0.5rem 0.75rem;background:#eff6ff;border-radius:var(--radius);font-size:0.75rem;color:#1e40af;margin-bottom:0.75rem;line-height:1.5;">
+                        <strong>使用步骤：</strong>① 注册 GitHub 账号 → ② 创建 Personal Access Token（勾选 gist 权限）→ ③ 填入 Token → ④ 点「启用同步」
                     </div>
-                </details>
+                    <details style="margin-bottom:0.75rem;">
+                        <summary style="cursor:pointer;font-size:0.8125rem;font-weight:500;color:var(--primary);padding:0.25rem 0;">📖 如何获取 GitHub Token（1分钟）</summary>
+                        <div style="padding:0.75rem;background:var(--gray-50);border-radius:var(--radius);font-size:0.75rem;line-height:1.8;margin-top:0.5rem;">
+                            1. 打开 <a href="https://github.com/signup" target="_blank" style="color:var(--primary);">GitHub</a> 注册账号（免费）<br>
+                            2. 登录后打开 <a href="https://github.com/settings/tokens/new" target="_blank" style="color:var(--primary);">创建 Token 页面</a><br>
+                            3. Note 填写 <code>佳印报价同步</code><br>
+                            4. Expiration 选 <code>No expiration</code>（永不过期）<br>
+                            5. 勾选 <code>gist</code> 权限（只勾选这一个即可）<br>
+                            6. 点「Generate token」→ 复制生成的 Token<br>
+                            7. 粘贴到下方输入框中<br><br>
+                            <strong>为什么选 GitHub Gist？</strong>无需部署服务器，浏览器直接调用，免费，自带版本历史，国内可访问
+                        </div>
+                    </details>
+                </div>
+                
+                <!-- OneDrive 配置 -->
+                <div id="syncConfigOneDrive" style="display:none;">
+                    <div style="padding:0.5rem 0.75rem;background:#eff6ff;border-radius:var(--radius);font-size:0.75rem;color:#1e40af;margin-bottom:0.75rem;line-height:1.5;">
+                        <strong>使用步骤：</strong>① 注册 Microsoft 账号 → ② 创建 Azure AD 应用 → ③ 填入应用 ID → ④ 点「登录 OneDrive」
+                    </div>
+                    <details style="margin-bottom:0.75rem;">
+                        <summary style="cursor:pointer;font-size:0.8125rem;font-weight:500;color:var(--primary);padding:0.25rem 0;">📖 如何创建 Azure AD 应用（5分钟）</summary>
+                        <div style="padding:0.75rem;background:var(--gray-50);border-radius:var(--radius);font-size:0.75rem;line-height:1.8;margin-top:0.5rem;">
+                            1. 打开 <a href="https://portal.azure.com" target="_blank" style="color:var(--primary);">Azure Portal</a>（需登录 Microsoft 账号）<br>
+                            2. 搜索「Azure Active Directory」并进入<br>
+                            3. 在左侧菜单点击「应用注册」→「新注册」<br>
+                            4. 名称填写 <code>佳印报价同步</code><br>
+                            5. 支持的账户类型选择 <code>任何组织目录中的账户和个人 Microsoft 账户</code><br>
+                            6. 重定向 URI 选择 <code>Web</code>，填写 <code>https://localhost</code>（开发用）或你的实际域名<br>
+                            7. 点击「注册」<br>
+                            8. 进入应用，复制「应用程序(客户端) ID」填入下方输入框<br>
+                            9. 在「API 权限」中添加 <code>Files.ReadWrite.All</code> 和 <code>offline_access</code> 权限<br>
+                            10. 在「认证」中确保启用「隐式授权」的 ID 令牌和访问令牌<br><br>
+                            <strong>为什么选 OneDrive？</strong>免费5GB存储空间，无文件大小限制，适合存储大量图片数据
+                        </div>
+                    </details>
+                    
+                    <div style="display:flex;flex-direction:column;gap:0.25rem;margin-bottom:0.75rem;">
+                        <label for="onedriveAppId" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">OneDrive 应用 ID</label>
+                        <input type="text" id="onedriveAppId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;" onchange="saveOneDriveAppId()">
+                    </div>
+                    
+                    <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
+                        <button class="btn btn-primary btn-sm" onclick="loginOneDrive()" id="loginOneDriveBtn">🔐 登录 OneDrive</button>
+                        <button class="btn btn-outline btn-sm" onclick="logoutOneDrive()" id="logoutOneDriveBtn" style="display:none;">🚪 退出登录</button>
+                    </div>
+                    
+                    <div id="onedriveStatus" style="font-size:0.75rem;color:var(--gray-500);padding:0.5rem;background:var(--gray-50);border-radius:var(--radius);display:none;"></div>
+                </div>
                 
                 <!-- 同步状态卡片 -->
                 <div id="syncStatusCard" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;margin-bottom:1rem;">
@@ -9332,13 +9377,24 @@ function safeExecuteAsync(fn, defaultVal) {
 
                 <!-- 同步操作按钮组 -->
                 <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
-                    <button class="btn btn-primary btn-sm" onclick="gistSaveAndToggle()" id="toggleSyncBtn">⚡ 启用同步</button>
+                    <button class="btn btn-primary btn-sm" onclick="saveAndToggleSync()" id="toggleSyncBtn">⚡ 启用同步</button>
                     <button class="btn btn-success btn-sm" onclick="syncNow()" id="syncNowBtn" style="display:none;">🔄 立即同步</button>
-                    <button class="btn btn-outline btn-sm" onclick="gistUpload()">⬆️ 上传完整数据</button>
-                    <button class="btn btn-outline btn-sm" onclick="gistDownload()">⬇️ 下载并合并</button>
-                    <button class="btn btn-outline btn-sm" onclick="gistTest()">🔍 测试连接</button>
-                    <button class="btn btn-outline btn-sm" onclick="gistPullProducts()">📦 更新产品价格</button>
-                    <button class="btn btn-outline btn-sm" onclick="showSyncHistory()">📜 历史版本</button>
+                    
+                    <!-- Gist 专用按钮 -->
+                    <div id="gistSyncButtons">
+                        <button class="btn btn-outline btn-sm" onclick="gistUpload()">⬆️ 上传完整数据</button>
+                        <button class="btn btn-outline btn-sm" onclick="gistDownload()">⬇️ 下载并合并</button>
+                        <button class="btn btn-outline btn-sm" onclick="gistTest()">🔍 测试连接</button>
+                        <button class="btn btn-outline btn-sm" onclick="gistPullProducts()">📦 更新产品价格</button>
+                        <button class="btn btn-outline btn-sm" onclick="showSyncHistory()">📜 历史版本</button>
+                    </div>
+                    
+                    <!-- OneDrive 专用按钮 -->
+                    <div id="onedriveSyncButtons" style="display:none;">
+                        <button class="btn btn-outline btn-sm" onclick="onedriveUploadFull()">⬆️ 上传完整数据</button>
+                        <button class="btn btn-outline btn-sm" onclick="onedriveDownloadFull()">⬇️ 下载并合并</button>
+                    </div>
+                    
                     <button class="btn btn-outline btn-sm" onclick="showSelectiveSync()">📋 选择性同步</button>
                     <button class="btn btn-outline btn-sm" onclick="viewCloudData()">👁️ 查看云端数据</button>
                     <button class="btn btn-outline btn-sm" onclick="fixCloudData()">🔧 修复云端重复</button>
@@ -10755,8 +10811,13 @@ let appData = {
         sealPosition:{bottom:'4rem',right:'4rem'},
         signaturePosition:{bottom:'2rem',right:'1rem'},
         cloudSyncEnabled: false,
+        syncProvider: 'gist',
         gistToken: '',
         gistId: '',
+        onedriveAppId: '',
+        onedriveAccessToken: '',
+        onedriveRefreshToken: '',
+        onedriveExpiresAt: null,
         cloudSyncInterval: 0,
         lastSyncTime: null,
         incrementalSyncEnabled: true,
@@ -12541,6 +12602,9 @@ function checkLoginStatus() {
 document.addEventListener('DOMContentLoaded', () => {
     // 检查登录状态
     checkLoginStatus();
+    
+    // 处理 OneDrive OAuth 回调
+    handleOneDriveCallback();
     
     // 隐藏加载动画
     const loadingOverlay = document.getElementById('loadingOverlay');
@@ -38928,7 +38992,6 @@ function saveGistToken() {
     var token = tokenEl.value.trim();
     
     if (token) {
-        // 验证token格式（应该是40位十六进制字符串或以ghp_开头的格式）
         if (token.length < 10) {
             showToast('Token 长度太短，请检查输入', 'warning');
             return;
@@ -38938,6 +39001,485 @@ function saveGistToken() {
         saveData();
         showToast('Token 已保存', 'success');
     }
+}
+
+// ==================== OneDrive 同步功能 ====================
+
+function switchSyncProvider(provider) {
+    appData.systemSettings.syncProvider = provider;
+    saveData();
+    
+    var gistBtn = document.getElementById('syncProviderGist');
+    var onedriveBtn = document.getElementById('syncProviderOneDrive');
+    var gistConfig = document.getElementById('syncConfigGist');
+    var onedriveConfig = document.getElementById('syncConfigOneDrive');
+    var gistButtons = document.getElementById('gistSyncButtons');
+    var onedriveButtons = document.getElementById('onedriveSyncButtons');
+    
+    if (provider === 'gist') {
+        gistBtn.style.background = 'var(--primary)';
+        gistBtn.style.color = 'white';
+        onedriveBtn.style.background = '';
+        onedriveBtn.style.color = '';
+        gistConfig.style.display = 'block';
+        onedriveConfig.style.display = 'none';
+        gistButtons.style.display = 'inline-flex';
+        gistButtons.style.gap = '0.5rem';
+        onedriveButtons.style.display = 'none';
+    } else {
+        onedriveBtn.style.background = 'var(--primary)';
+        onedriveBtn.style.color = 'white';
+        gistBtn.style.background = '';
+        gistBtn.style.color = '';
+        gistConfig.style.display = 'none';
+        onedriveConfig.style.display = 'block';
+        gistButtons.style.display = 'none';
+        onedriveButtons.style.display = 'inline-flex';
+        onedriveButtons.style.gap = '0.5rem';
+        updateOneDriveStatus();
+    }
+}
+
+function saveOneDriveAppId() {
+    var appIdEl = document.getElementById('onedriveAppId');
+    if (!appIdEl) return;
+    var appId = appIdEl.value.trim();
+    
+    appData.systemSettings.onedriveAppId = appId;
+    saveData();
+    showToast('应用 ID 已保存', 'success');
+}
+
+function loginOneDrive() {
+    var appId = appData.systemSettings.onedriveAppId;
+    if (!appId) {
+        showToast('请先填写 OneDrive 应用 ID', 'warning');
+        return;
+    }
+    
+    var redirectUri = window.location.origin + window.location.pathname;
+    var authUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?' +
+        'client_id=' + encodeURIComponent(appId) + '&' +
+        'response_type=code&' +
+        'redirect_uri=' + encodeURIComponent(redirectUri) + '&' +
+        'scope=' + encodeURIComponent('Files.ReadWrite.All offline_access') + '&' +
+        'response_mode=query&' +
+        'state=' + encodeURIComponent('quote-system-login');
+    
+    window.location.href = authUrl;
+}
+
+function logoutOneDrive() {
+    appData.systemSettings.onedriveAccessToken = '';
+    appData.systemSettings.onedriveRefreshToken = '';
+    appData.systemSettings.onedriveExpiresAt = null;
+    saveData();
+    updateOneDriveStatus();
+    showToast('已退出 OneDrive', 'success');
+}
+
+function handleOneDriveCallback() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var code = urlParams.get('code');
+    var state = urlParams.get('state');
+    var error = urlParams.get('error');
+    
+    if (error) {
+        showToast('OneDrive 登录失败: ' + error, 'error');
+        return;
+    }
+    
+    if (code && state === 'quote-system-login') {
+        exchangeCodeForToken(code);
+        urlParams.delete('code');
+        urlParams.delete('state');
+        urlParams.delete('error');
+        urlParams.delete('error_description');
+        window.history.replaceState({}, document.title, window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : ''));
+    }
+}
+
+function exchangeCodeForToken(code) {
+    var appId = appData.systemSettings.onedriveAppId;
+    var redirectUri = window.location.origin + window.location.pathname;
+    
+    var body = new URLSearchParams();
+    body.append('client_id', appId);
+    body.append('grant_type', 'authorization_code');
+    body.append('code', code);
+    body.append('redirect_uri', redirectUri);
+    
+    fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: body
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.access_token) {
+            appData.systemSettings.onedriveAccessToken = data.access_token;
+            appData.systemSettings.onedriveRefreshToken = data.refresh_token || '';
+            appData.systemSettings.onedriveExpiresAt = Date.now() + (data.expires_in * 1000);
+            saveData();
+            updateOneDriveStatus();
+            showToast('OneDrive 登录成功', 'success');
+        } else {
+            showToast('获取令牌失败: ' + (data.error_description || data.error), 'error');
+        }
+    })
+    .catch(function(error) {
+        showToast('网络请求失败: ' + error.message, 'error');
+    });
+}
+
+function refreshOneDriveToken() {
+    var appId = appData.systemSettings.onedriveAppId;
+    var refreshToken = appData.systemSettings.onedriveRefreshToken;
+    
+    if (!refreshToken) {
+        return Promise.reject(new Error('没有刷新令牌'));
+    }
+    
+    var body = new URLSearchParams();
+    body.append('client_id', appId);
+    body.append('grant_type', 'refresh_token');
+    body.append('refresh_token', refreshToken);
+    body.append('scope', 'Files.ReadWrite.All offline_access');
+    
+    return fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: body
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.access_token) {
+            appData.systemSettings.onedriveAccessToken = data.access_token;
+            appData.systemSettings.onedriveRefreshToken = data.refresh_token || refreshToken;
+            appData.systemSettings.onedriveExpiresAt = Date.now() + (data.expires_in * 1000);
+            saveData();
+            updateOneDriveStatus();
+            return data.access_token;
+        } else {
+            throw new Error(data.error_description || data.error);
+        }
+    });
+}
+
+function getOneDriveAccessToken() {
+    return new Promise(function(resolve, reject) {
+        var expiresAt = appData.systemSettings.onedriveExpiresAt;
+        var accessToken = appData.systemSettings.onedriveAccessToken;
+        
+        if (accessToken && (!expiresAt || Date.now() < expiresAt)) {
+            resolve(accessToken);
+        } else {
+            refreshOneDriveToken().then(resolve).catch(reject);
+        }
+    });
+}
+
+function onedriveApi(path, options) {
+    return getOneDriveAccessToken().then(function(token) {
+        var headers = {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        };
+        
+        var controller = new AbortController();
+        var timeoutId = setTimeout(function() { controller.abort(); }, 60000);
+        
+        var fetchOptions = Object.assign({}, options, { 
+            headers: headers,
+            signal: controller.signal
+        });
+        
+        return fetch('https://graph.microsoft.com/v1.0/me/drive' + path, fetchOptions)
+            .then(function(response) {
+                clearTimeout(timeoutId);
+                if (!response.ok) {
+                    throw new Error('OneDrive API 错误: ' + response.status);
+                }
+                return response.json();
+            })
+            .catch(function(error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    throw new Error('请求超时，请检查网络连接');
+                }
+                throw error;
+            });
+    });
+}
+
+function onedriveCreateFolder(folderName) {
+    return onedriveApi('/root/children', {
+        method: 'POST',
+        body: JSON.stringify({
+            name: folderName,
+            folder: {},
+            "@microsoft.graph.conflictBehavior": "rename"
+        })
+    });
+}
+
+function onedriveGetFolderId(folderName) {
+    return onedriveApi('/root/children', {
+        method: 'GET'
+    }).then(function(data) {
+        var folder = data.value.find(function(item) {
+            return item.name === folderName && item.folder;
+        });
+        return folder ? folder.id : null;
+    });
+}
+
+function onedriveUploadFile(folderId, fileName, content) {
+    return onedriveApi('/items/' + folderId + '/children/' + encodeURIComponent(fileName) + '/content', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: content
+    });
+}
+
+function onedriveDownloadFile(folderId, fileName) {
+    return onedriveApi('/items/' + folderId + '/children/' + encodeURIComponent(fileName) + '/content', {
+        method: 'GET',
+        headers: {
+            'Content-Type': null
+        }
+    });
+}
+
+function onedriveUploadFull() {
+    return new Promise(function(resolve, reject) {
+        if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
+            reject(new Error('请先登录 OneDrive'));
+            return;
+        }
+        
+        showSyncProgress('正在准备数据...', 10);
+        
+        Promise.all([
+            prepareProductsForSync(appData.products),
+            prepareTemplatesForSync(appData.templates)
+        ])
+        .then(function(results) {
+            var productsWithImages = results[0];
+            var templatesWithImages = results[1];
+            
+            var syncData = {
+                products: productsWithImages,
+                templates: templatesWithImages,
+                customers: appData.customers,
+                version: 'v1',
+                deviceId: appData.systemSettings.deviceId || generateUniqueId().toString(),
+                timestamp: Date.now(),
+                lastSyncTime: appData.systemSettings.lastSyncTime
+            };
+            
+            var jsonStr = JSON.stringify(syncData);
+            var compressedData = LZString.compressToBase64(jsonStr);
+            
+            showSyncProgress('正在上传到 OneDrive...', 50);
+            
+            return onedriveGetFolderId('QuoteSystem').then(function(folderId) {
+                if (!folderId) {
+                    return onedriveCreateFolder('QuoteSystem').then(function(folder) {
+                        return folder.id;
+                    });
+                }
+                return folderId;
+            }).then(function(folderId) {
+                return onedriveUploadFile(folderId, 'quote_data.json', compressedData);
+            });
+        })
+        .then(function() {
+            appData.systemSettings.lastSyncTime = Date.now();
+            appData.systemSettings.retryCount = 0;
+            saveData();
+            updateSyncStatus('success');
+            updateSyncTimeDisplay();
+            showSyncProgress('同步完成', 100);
+            setTimeout(hideSyncProgress, 1500);
+            resolve();
+        })
+        .catch(function(error) {
+            console.error('OneDrive 上传失败:', error);
+            appData.systemSettings.retryCount = (appData.systemSettings.retryCount || 0) + 1;
+            saveData();
+            updateSyncStatus('error');
+            showSyncProgress('同步失败', 100);
+            hideSyncProgress();
+            reject(error);
+        });
+    });
+}
+
+function onedriveDownloadFull() {
+    return new Promise(function(resolve, reject) {
+        if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
+            reject(new Error('请先登录 OneDrive'));
+            return;
+        }
+        
+        showSyncProgress('正在从 OneDrive 下载...', 20);
+        
+        onedriveGetFolderId('QuoteSystem').then(function(folderId) {
+            if (!folderId) {
+                showToast('云端尚无数据', 'info');
+                resolve();
+                return;
+            }
+            
+            return onedriveDownloadFile(folderId, 'quote_data.json');
+        })
+        .then(function(data) {
+            if (!data) {
+                showToast('云端数据为空', 'info');
+                resolve();
+                return;
+            }
+            
+            showSyncProgress('正在解压数据...', 70);
+            
+            var compressedData = typeof data === 'string' ? data : JSON.stringify(data);
+            var jsonStr = LZString.decompressFromBase64(compressedData);
+            
+            if (!jsonStr) {
+                throw new Error('数据解压失败');
+            }
+            
+            var syncData = JSON.parse(jsonStr);
+            mergeSyncData(syncData);
+            
+            appData.systemSettings.lastSyncTime = Date.now();
+            appData.systemSettings.retryCount = 0;
+            saveData();
+            
+            updateSyncStatus('success');
+            updateSyncTimeDisplay();
+            showSyncProgress('同步完成', 100);
+            setTimeout(hideSyncProgress, 1500);
+            resolve();
+        })
+        .catch(function(error) {
+            console.error('OneDrive 下载失败:', error);
+            appData.systemSettings.retryCount = (appData.systemSettings.retryCount || 0) + 1;
+            saveData();
+            updateSyncStatus('error');
+            showSyncProgress('同步失败', 100);
+            hideSyncProgress();
+            reject(error);
+        });
+    });
+}
+
+function updateOneDriveStatus() {
+    var statusEl = document.getElementById('onedriveStatus');
+    var loginBtn = document.getElementById('loginOneDriveBtn');
+    var logoutBtn = document.getElementById('logoutOneDriveBtn');
+    var appIdInput = document.getElementById('onedriveAppId');
+    
+    if (appIdInput) {
+        appIdInput.value = appData.systemSettings.onedriveAppId || '';
+    }
+    
+    if (appData.systemSettings.onedriveAccessToken) {
+        var expiresAt = appData.systemSettings.onedriveExpiresAt;
+        var isExpired = expiresAt && Date.now() > expiresAt;
+        
+        if (statusEl) {
+            if (isExpired) {
+                statusEl.innerHTML = '⏳ 令牌已过期，将在下次同步时自动刷新';
+                statusEl.style.color = 'var(--warning)';
+            } else {
+                statusEl.innerHTML = '✅ 已登录 OneDrive';
+                statusEl.style.color = 'var(--success)';
+            }
+            statusEl.style.display = 'block';
+        }
+        
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'inline-block';
+    } else {
+        if (statusEl) {
+            statusEl.style.display = 'none';
+        }
+        if (loginBtn) loginBtn.style.display = 'inline-block';
+        if (logoutBtn) logoutBtn.style.display = 'none';
+    }
+}
+
+function saveAndToggleSync() {
+    var provider = appData.systemSettings.syncProvider || 'gist';
+    
+    if (provider === 'gist') {
+        gistSaveAndToggle();
+    } else if (provider === 'onedrive') {
+        saveAndToggleOneDriveSync();
+    }
+}
+
+function saveAndToggleOneDriveSync() {
+    var interval = parseInt(document.getElementById('cloudSyncInterval').value);
+    var syncMode = document.getElementById('syncMode').value;
+    
+    var incrementalEnabled = document.getElementById('incrementalSyncEnabled').checked;
+    var autoRetry = document.getElementById('autoRetryEnabled').checked;
+    var desktopNotif = document.getElementById('desktopNotificationsEnabled').checked;
+    var compression = document.getElementById('dataCompressionEnabled').checked;
+    var batchSync = document.getElementById('batchSyncEnabled').checked;
+    var bandwidthAdapt = document.getElementById('bandwidthAdaptive').checked;
+    
+    if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
+        dialog.alert('请先登录 OneDrive\n\n登录方法：点击「登录 OneDrive」按钮进行授权', '提示', 'ℹ️');
+        return;
+    }
+    
+    appData.systemSettings.cloudSyncInterval = interval;
+    appData.systemSettings.syncMode = syncMode;
+    
+    appData.systemSettings.incrementalSyncEnabled = incrementalEnabled;
+    appData.systemSettings.autoRetryEnabled = autoRetry;
+    appData.systemSettings.desktopNotificationsEnabled = desktopNotif;
+    appData.systemSettings.dataCompressionEnabled = compression;
+    appData.systemSettings.batchSyncEnabled = batchSync;
+    appData.systemSettings.bandwidthAdaptive = bandwidthAdapt;
+    
+    var wasEnabled = appData.systemSettings.cloudSyncEnabled;
+    appData.systemSettings.cloudSyncEnabled = !wasEnabled;
+    saveDataImmediately();
+    
+    if (appData.systemSettings.cloudSyncEnabled) {
+        startAutoSync();
+        showToast('✅ OneDrive 自动同步已启用！', 'success');
+        
+        if (desktopNotif && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+        
+        var configList = [];
+        if (incrementalEnabled) configList.push('增量');
+        if (compression) configList.push('压缩');
+        if (autoRetry) configList.push('重试');
+        if (batchSync) configList.push('分批');
+        
+        addSyncLog('success', 'OneDrive 自动同步已启用，间隔: ' + (interval > 0 ? (interval / 60000) + '分钟' : '手动') + 
+                   ', 模式: ' + getSyncModeText(syncMode) + (configList.length > 0 ? ' [' + configList.join(', ') + ']' : ''));
+    } else {
+        stopAutoSync();
+        showToast('自动同步已禁用', 'info');
+        addSyncLog('info', '自动同步已禁用');
+    }
+    
+    updateCloudSyncStatus();
 }
 
 function gistApi(path, options) {
@@ -39611,6 +40153,17 @@ function syncNow() {
         showToast('⏳ 正在同步中，请稍候', 'info');
         return;
     }
+    
+    var provider = appData.systemSettings.syncProvider || 'gist';
+    
+    if (provider === 'gist') {
+        syncNowGist();
+    } else if (provider === 'onedrive') {
+        syncNowOneDrive();
+    }
+}
+
+function syncNowGist() {
     const token = appData.systemSettings.gistToken || document.getElementById('gistToken').value.trim();
     if (!token) {
         showToast('请先填写 GitHub Token', 'warning');
@@ -39623,10 +40176,8 @@ function syncNow() {
     showSyncProgress('正在检测变更...', 10);
     addSyncLog('info', '开始同步...');
     
-    // 先下载云端数据进行对比
     const gistId = appData.systemSettings.gistId || '';
     if (!gistId) {
-        // 没有gistId，直接上传完整数据
         showSyncProgress('首次同步，上传完整数据...', 50);
         gistUploadFull().then(() => {
             isSyncing = false;
@@ -39638,7 +40189,6 @@ function syncNow() {
         return;
     }
     
-    // 先下载云端数据
     showSyncProgress('正在下载云端数据...', 20);
     gistApi('/gists/' + gistId)
     .then(function(res) {
@@ -39706,7 +40256,30 @@ function syncNow() {
         addSyncLog('error', '同步失败: ' + err.message);
     })
     .then(function() {
-        // 模拟 finally 块，确保 isSyncing 被重置
+        isSyncing = false;
+        setTimeout(hideSyncProgress, 500);
+    });
+}
+
+function syncNowOneDrive() {
+    isSyncing = true;
+    showSyncProgress('正在检测变更...', 10);
+    addSyncLog('info', '开始 OneDrive 同步...');
+    
+    onedriveDownloadFull()
+    .then(function() {
+        return onedriveUploadFull();
+    })
+    .then(function() {
+        showToast('✅ OneDrive 同步成功', 'success');
+        addSyncLog('success', 'OneDrive 同步完成');
+    })
+    .catch(function(err) {
+        console.error('OneDrive 同步失败:', err);
+        showToast('❌ OneDrive 同步失败: ' + err.message, 'error');
+        addSyncLog('error', 'OneDrive 同步失败: ' + err.message);
+    })
+    .then(function() {
         isSyncing = false;
         setTimeout(hideSyncProgress, 500);
     });
@@ -42352,6 +42925,10 @@ function updateCloudSyncStatus() {
     // 更新团队设置UI
     loadTeamSettings();
     renderTeamActivityLog();
+    
+    // 更新同步方式选择器状态
+    var provider = appData.systemSettings.syncProvider || 'gist';
+    switchSyncProvider(provider);
 }
 
 // 加载团队设置到UI
