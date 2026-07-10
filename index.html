@@ -39058,44 +39058,16 @@ function loginOneDrive() {
         return;
     }
     
-    var codeVerifier = generateCodeVerifier();
-    localStorage.setItem('onedrive_code_verifier', codeVerifier);
+    var redirectUri = window.location.origin + window.location.pathname;
+    var authUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?' +
+        'client_id=' + encodeURIComponent(appId) + '&' +
+        'response_type=token&' +
+        'redirect_uri=' + encodeURIComponent(redirectUri) + '&' +
+        'scope=' + encodeURIComponent('Files.ReadWrite.All offline_access') + '&' +
+        'response_mode=fragment&' +
+        'state=' + encodeURIComponent('quote-system-login');
     
-    showSyncProgress('正在准备登录...', 10);
-    
-    generateCodeChallenge(codeVerifier).then(function(codeChallenge) {
-        hideSyncProgress();
-        var redirectUri = window.location.origin + window.location.pathname;
-        var authUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?' +
-            'client_id=' + encodeURIComponent(appId) + '&' +
-            'response_type=code&' +
-            'redirect_uri=' + encodeURIComponent(redirectUri) + '&' +
-            'scope=' + encodeURIComponent('Files.ReadWrite.All offline_access') + '&' +
-            'response_mode=query&' +
-            'state=' + encodeURIComponent('quote-system-login') + '&' +
-            'code_challenge=' + encodeURIComponent(codeChallenge) + '&' +
-            'code_challenge_method=S256';
-        
-        window.location.href = authUrl;
-    }).catch(function(error) {
-        hideSyncProgress();
-        showToast('登录准备失败: ' + error.message, 'error');
-    });
-}
-
-function generateCodeVerifier() {
-    var array = new Uint32Array(32);
-    window.crypto.getRandomValues(array);
-    return Array.from(array, function(x) { return ('0' + x.toString(16)).slice(-2); }).join('');
-}
-
-function generateCodeChallenge(codeVerifier) {
-    var encoder = new TextEncoder();
-    var data = encoder.encode(codeVerifier);
-    return window.crypto.subtle.digest('SHA-256', data).then(function(digest) {
-        var base64string = btoa(String.fromCharCode.apply(null, new Uint8Array(digest)));
-        return base64string.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-    });
+    window.location.href = authUrl;
 }
 
 function logoutOneDrive() {
@@ -39108,23 +39080,28 @@ function logoutOneDrive() {
 }
 
 function handleOneDriveCallback() {
-    var urlParams = new URLSearchParams(window.location.search);
-    var code = urlParams.get('code');
-    var state = urlParams.get('state');
-    var error = urlParams.get('error');
+    var hashParams = new URLSearchParams(window.location.hash.substring(1));
+    var accessToken = hashParams.get('access_token');
+    var refreshToken = hashParams.get('refresh_token');
+    var expiresIn = hashParams.get('expires_in');
+    var state = hashParams.get('state');
+    var error = hashParams.get('error');
     
     if (error) {
         showToast('OneDrive 登录失败: ' + error, 'error');
+        window.history.replaceState({}, document.title, window.location.pathname);
         return;
     }
     
-    if (code && state === 'quote-system-login') {
-        exchangeCodeForToken(code);
-        urlParams.delete('code');
-        urlParams.delete('state');
-        urlParams.delete('error');
-        urlParams.delete('error_description');
-        window.history.replaceState({}, document.title, window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : ''));
+    if (accessToken && state === 'quote-system-login') {
+        appData.systemSettings.onedriveAccessToken = accessToken;
+        appData.systemSettings.onedriveRefreshToken = refreshToken || '';
+        appData.systemSettings.onedriveExpiresAt = Date.now() + (parseInt(expiresIn || 3600) * 1000);
+        saveData();
+        updateOneDriveStatus();
+        showToast('OneDrive 登录成功', 'success');
+        
+        window.history.replaceState({}, document.title, window.location.pathname);
     }
 }
 
