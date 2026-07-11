@@ -9421,20 +9421,6 @@ function safeExecuteAsync(fn, defaultVal) {
                         <div style="color:var(--gray-400);text-align:center;">暂无同步记录</div>
                     </div>
                 </div>
-                
-                <!-- SW日志 -->
-                <div style="border-top:1px solid var(--gray-200);padding-top:1rem;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
-                        <h4 style="font-size:0.875rem;font-weight:600;color:var(--gray-700);">🛠️ Service Worker 日志</h4>
-                        <div style="display:flex;gap:0.25rem;">
-                            <button class="btn btn-xs btn-outline" onclick="refreshSWLogs()" style="flex: none; white-space: nowrap;">🔄 刷新</button>
-                            <button class="btn btn-xs btn-outline" onclick="clearSWLogs()" style="flex: none; white-space: nowrap;">清空日志</button>
-                        </div>
-                    </div>
-                    <div id="swLogContainer" style="max-height:200px;overflow-y:auto;background:#0f172a;border-radius:var(--radius);padding:0.5rem;font-size:0.7rem;color:#e2e8f0;font-family:monospace;">
-                        <div style="color:#64748b;text-align:center;">点击"刷新"获取SW日志</div>
-                    </div>
-                </div>
             </div>
             <!-- 身份权限管理 -->
             <div class="settings-section">
@@ -40654,12 +40640,7 @@ function getGlobalPriceSyncData() {
 
 function gistUploadFull() {
     return new Promise(function(resolve, reject) {
-        if (isSyncing) {
-            showToast('⚠️ 正在同步中，请稍后再试', 'warning');
-            reject(new Error('正在同步中'));
-            return;
-        }
-        isSyncing = true;
+        // 注意：isSyncing 由调用方（入口函数）管理，这里不再重复检查
         var startTime = Date.now();
         var strategy = adaptSyncStrategy();
         
@@ -41019,12 +41000,7 @@ function gistUploadFull() {
 // Repository全量上传
 function repoUploadFull() {
     return new Promise(function(resolve, reject) {
-        if (isSyncing) {
-            showToast('⚠️ 正在同步中，请稍后再试', 'warning');
-            reject(new Error('正在同步中'));
-            return;
-        }
-        isSyncing = true;
+        // 注意：isSyncing 由调用方（入口函数）管理，这里不再重复检查
         var startTime = Date.now();
         var strategy = adaptSyncStrategy();
         
@@ -41198,13 +41174,7 @@ function repoUploadFull() {
 // Repository增量上传：只上传变化的数据
 function repoUploadIncremental() {
     return new Promise(function(resolve, reject) {
-        if (isSyncing) {
-            showToast('⚠️ 正在同步中，请稍后再试', 'warning');
-            reject(new Error('正在同步中'));
-            return;
-        }
-        isSyncing = true;
-        
+        // 注意：isSyncing 由调用方（入口函数）管理，这里不再重复检查
         var lastSync = appData.systemSettings.lastIncrementalSyncTime;
         if (!lastSync) {
             reject(new Error('没有上次同步时间，无法进行增量上传'));
@@ -41427,12 +41397,7 @@ function repoUploadIncremental() {
 // Repository下载合并
 function repoDownload() {
     return new Promise(function(resolve, reject) {
-        if (isSyncing) {
-            showToast('⚠️ 正在同步中，请稍后再试', 'warning');
-            reject(new Error('正在同步中'));
-            return;
-        }
-        isSyncing = true;
+        // 注意：isSyncing 由调用方（入口函数）管理，这里不再重复检查
         
         var config = getRepoConfig();
         var owner = config.owner;
@@ -41762,13 +41727,7 @@ function proceedWithUpload() {
 // 增量上传：只上传变化的数据
 function gistUploadIncremental() {
     return new Promise(function(resolve, reject) {
-        if (isSyncing) {
-            showToast('⚠️ 正在同步中，请稍后再试', 'warning');
-            reject(new Error('正在同步中'));
-            return;
-        }
-        isSyncing = true;
-        
+        // 注意：isSyncing 由调用方（入口函数）管理，这里不再重复检查
         var lastSync = appData.systemSettings.lastIncrementalSyncTime;
         if (!lastSync) {
             reject(new Error('没有上次同步时间，无法进行增量上传'));
@@ -54506,32 +54465,6 @@ navigator.serviceWorker.addEventListener('message', function(event) {
         updateVersionDisplay(event.data.version, event.data.logs);
         return;
     }
-
-    if (event.data.type === 'SW_LOG') {
-        appendSWLog(event.data.log);
-        return;
-    }
-
-    if (event.data.type === 'SW_LOGS_RESPONSE') {
-        renderSWLogs(event.data.logs || []);
-        if (event.data.error) {
-            showToast('获取SW日志失败: ' + event.data.error, 'error');
-        }
-        return;
-    }
-
-    if (event.data.type === 'SW_LOGS_CLEARED') {
-        var container = document.getElementById('swLogContainer');
-        if (container) {
-            container.innerHTML = '<div style="color:#64748b;text-align:center;">日志已清空</div>';
-        }
-        if (event.data.error) {
-            showToast('清空SW日志失败: ' + event.data.error, 'error');
-        } else {
-            showToast('SW日志已清空', 'success');
-        }
-        return;
-    }
 });
 
 // 更新页面上的版本号显示
@@ -54566,103 +54499,6 @@ function updateVersionDisplay(version, logs) {
             if (el) el.textContent = version;
         }, 500);
     }
-}
-
-// SW日志功能
-function refreshSWLogs() {
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({ type: 'GET_SW_LOGS' });
-    } else {
-        showToast('Service Worker 未激活', 'warning');
-    }
-}
-
-function clearSWLogs() {
-    if (!confirm('确定要清空SW日志吗？')) return;
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_SW_LOGS' });
-    } else {
-        showToast('Service Worker 未激活', 'warning');
-    }
-}
-
-function renderSWLogs(logs) {
-    var container = document.getElementById('swLogContainer');
-    if (!container) return;
-    
-    if (!logs || logs.length === 0) {
-        container.innerHTML = '<div style="color:#64748b;text-align:center;">暂无日志</div>';
-        return;
-    }
-    
-    var html = '';
-    logs.forEach(function(log) {
-        var typeColor = getLogTypeColor(log.type);
-        var timestamp = new Date(log.timestamp).toLocaleString('zh-CN', {
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-        var detailsHtml = '';
-        if (log.details && typeof log.details === 'object') {
-            try {
-                detailsHtml = '<br><span style="color:#64748b;">' + JSON.stringify(log.details, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;') + '</span>';
-            } catch(e) {}
-        }
-        html += '<div style="margin-bottom:2px;padding:2px 4px;border-radius:2px;"><span style="color:#94a3b8;">' + timestamp + '</span> <span style="color:' + typeColor + ';">[' + log.type.toUpperCase() + ']</span> <span>' + escapeHtml(log.message) + '</span>' + detailsHtml + '</div>';
-    });
-    container.innerHTML = html;
-    container.scrollTop = 0;
-}
-
-function appendSWLog(log) {
-    var container = document.getElementById('swLogContainer');
-    if (!container) return;
-    
-    var typeColor = getLogTypeColor(log.type);
-    var timestamp = new Date(log.timestamp).toLocaleString('zh-CN', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    });
-    var detailsHtml = '';
-    if (log.details && typeof log.details === 'object') {
-        try {
-            detailsHtml = '<br><span style="color:#64748b;">' + JSON.stringify(log.details, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;') + '</span>';
-        } catch(e) {}
-    }
-    var logHtml = '<div style="margin-bottom:2px;padding:2px 4px;border-radius:2px;"><span style="color:#94a3b8;">' + timestamp + '</span> <span style="color:' + typeColor + ';">[' + log.type.toUpperCase() + ']</span> <span>' + escapeHtml(log.message) + '</span>' + detailsHtml + '</div>';
-    
-    var currentContent = container.innerHTML;
-    if (currentContent.indexOf('暂无同步记录') !== -1 || currentContent.indexOf('点击"刷新"获取SW日志') !== -1 || currentContent.indexOf('暂无日志') !== -1 || currentContent.indexOf('日志已清空') !== -1) {
-        container.innerHTML = logHtml;
-    } else {
-        container.innerHTML = logHtml + currentContent;
-    }
-    container.scrollTop = 0;
-}
-
-function getLogTypeColor(type) {
-    switch(type) {
-        case 'error': return '#ef4444';
-        case 'warning': return '#f59e0b';
-        case 'success': return '#22c55e';
-        case 'debug': return '#8b5cf6';
-        case 'info': default: return '#3b82f6';
-    }
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g, '&amp;')
-              .replace(/</g, '&lt;')
-              .replace(/>/g, '&gt;')
-              .replace(/"/g, '&quot;')
-              .replace(/'/g, '&#039;');
 }
 
 // 自动更新模式：显示桌面通知提示
