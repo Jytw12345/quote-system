@@ -9128,157 +9128,23 @@ function safeExecuteAsync(fn, defaultVal) {
                 <div id="autoBackupList" class="backup-list" style="margin-top:0.5rem;"></div>
             </div>
             <div class="settings-section">
-                <h3>☁️ 云同步</h3>
-                
-                <!-- 同步方式选择 -->
-                <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
-                    <button type="button" class="btn btn-sm sync-provider-btn" id="syncProviderGist" onclick="switchSyncProvider('gist')" style="flex:1;background:var(--primary);color:white;">📦 GitHub Gist</button>
-                    <button type="button" class="btn btn-sm sync-provider-btn" id="syncProviderOneDrive" onclick="switchSyncProvider('onedrive')" style="flex:1;">☁️ OneDrive</button>
+                <h3>☁️ 云同步（GitHub Gist）</h3>
+                <div style="padding:0.5rem 0.75rem;background:#eff6ff;border-radius:var(--radius);font-size:0.75rem;color:#1e40af;margin-bottom:0.75rem;line-height:1.5;">
+                    <strong>使用步骤：</strong>① 注册 GitHub 账号 → ② 创建 Personal Access Token（勾选 gist 权限）→ ③ 填入 Token → ④ 点「启用同步」
                 </div>
-                
-                <!-- GitHub Gist 配置 -->
-                <div id="syncConfigGist">
-                    <div style="padding:0.5rem 0.75rem;background:#eff6ff;border-radius:var(--radius);font-size:0.75rem;color:#1e40af;margin-bottom:0.75rem;line-height:1.5;">
-                        <strong>使用步骤：</strong>① 注册 GitHub 账号 → ② 创建 Personal Access Token（勾选 gist 权限）→ ③ 填入 Token → ④ 点「启用同步」
+                <details style="margin-bottom:0.75rem;">
+                    <summary style="cursor:pointer;font-size:0.8125rem;font-weight:500;color:var(--primary);padding:0.25rem 0;">📖 如何获取 GitHub Token（1分钟）</summary>
+                    <div style="padding:0.75rem;background:var(--gray-50);border-radius:var(--radius);font-size:0.75rem;line-height:1.8;margin-top:0.5rem;">
+                        1. 打开 <a href="https://github.com/signup" target="_blank" style="color:var(--primary);">GitHub</a> 注册账号（免费）<br>
+                        2. 登录后打开 <a href="https://github.com/settings/tokens/new" target="_blank" style="color:var(--primary);">创建 Token 页面</a><br>
+                        3. Note 填写 <code>佳印报价同步</code><br>
+                        4. Expiration 选 <code>No expiration</code>（永不过期）<br>
+                        5. 勾选 <code>gist</code> 权限（只勾选这一个即可）<br>
+                        6. 点「Generate token」→ 复制生成的 Token<br>
+                        7. 粘贴到下方输入框中<br><br>
+                        <strong>为什么选 GitHub Gist？</strong>无需部署服务器，浏览器直接调用，免费，自带版本历史，国内可访问
                     </div>
-                    <details style="margin-bottom:0.75rem;">
-                        <summary style="cursor:pointer;font-size:0.8125rem;font-weight:500;color:var(--primary);padding:0.25rem 0;">📖 如何获取 GitHub Token（1分钟）</summary>
-                        <div style="padding:0.75rem;background:var(--gray-50);border-radius:var(--radius);font-size:0.75rem;line-height:1.8;margin-top:0.5rem;">
-                            1. 打开 <a href="https://github.com/signup" target="_blank" style="color:var(--primary);">GitHub</a> 注册账号（免费）<br>
-                            2. 登录后打开 <a href="https://github.com/settings/tokens/new" target="_blank" style="color:var(--primary);">创建 Token 页面</a><br>
-                            3. Note 填写 <code>佳印报价同步</code><br>
-                            4. Expiration 选 <code>No expiration</code>（永不过期）<br>
-                            5. 勾选 <code>gist</code> 权限（只勾选这一个即可）<br>
-                            6. 点「Generate token」→ 复制生成的 Token<br>
-                            7. 粘贴到下方输入框中<br><br>
-                            <strong>为什么选 GitHub Gist？</strong>无需部署服务器，浏览器直接调用，免费，自带版本历史，国内可访问
-                        </div>
-                    </details>
-                    
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
-                        <div style="display:flex;flex-direction:column;gap:0.25rem;">
-                            <label for="gistToken" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">GitHub Token</label>
-                            <div style="position:relative;">
-                                <input type="password" id="gistToken" placeholder="ghp_xxxxxxxxxxxx" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;" onchange="saveGistToken()">
-                                <button type="button" class="btn btn-xs btn-outline" style="position:absolute;right:4px;top:0;bottom:0;margin:auto;width:1.75rem;min-width:0!important;min-height:0!important;height:1.75rem!important;display:flex;align-items:center;justify-content:center;box-sizing:border-box;" onclick="toggleTokenVisibility()">👁️</button>
-                            </div>
-                        </div>
-                        <div style="display:flex;flex-direction:column;gap:0.25rem;">
-                            <label for="gistIdInput" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">Gist ID（团队共享用）</label>
-                            <input type="text" id="gistIdInput" placeholder="自动生成或输入团队ID" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;">
-                        </div>
-                    </div>
-                    
-                    <!-- 团队功能设置 -->
-                    <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #bae6fd;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <div style="font-size: 0.8125rem; font-weight: 600; color: #0369a1;">👥 团队功能</div>
-                            <label style="display: inline-flex; align-items: center; gap: 0.375rem; cursor: pointer;">
-                                <span style="font-size: 0.75rem; color: #64748b;">启用团队同步</span>
-                                <input type="checkbox" id="teamEnabled" onchange="toggleTeamSettings()" style="width: 1rem; height: 1rem; flex-shrink: 0; flex-basis: 1rem; appearance: auto; -webkit-appearance: checkbox; min-width: 1rem; min-height: 1rem;">
-                            </label>
-                        </div>
-                        <div id="teamSettingsPanel" style="display: none;">
-                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <button class="btn btn-primary btn-xs" onclick="createTeam()">➕ 创建团队</button>
-                                <button class="btn btn-outline btn-xs" onclick="joinTeam()">🔗 加入已有团队</button>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                    <label for="teamName" style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队名称</label>
-                                    <input type="text" id="teamName" placeholder="团队名称" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem; background: #f8fafc;" readonly>
-                                </div>
-                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                    <label for="teamUserName" style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队成员名称</label>
-                                    <input type="text" id="teamUserName" placeholder="例如：张三" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem;" onchange="saveTeamUserName()">
-                                </div>
-                            </div>
-                            <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.5rem;">
-                                <label for="teamGistId" style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队Gist ID</label>
-                                <input type="text" id="teamGistId" placeholder="团队Gist ID" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem;" onchange="saveTeamGistId()">
-                            </div>
-                            <div style="font-size: 0.75rem; font-weight: 500; color: #475569; margin-bottom: 0.375rem;">选择同步数据类型：</div>
-                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.375rem;">
-                                <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
-                                    <input type="checkbox" id="shareProducts" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
-                                    <span>产品库</span>
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
-                                    <input type="checkbox" id="shareTemplates" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
-                                    <span>模板库</span>
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
-                                    <input type="checkbox" id="shareCustomers" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
-                                    <span>客户库</span>
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
-                                    <input type="checkbox" id="shareQuoteHistory" style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
-                                    <span>报价历史</span>
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
-                                    <input type="checkbox" id="shareSeals" style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
-                                    <span>印章</span>
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
-                                    <input type="checkbox" id="shareSignatures" style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
-                                    <span>签名</span>
-                                </label>
-                            </div>
-                            <div style="margin-top: 0.5rem;">
-                                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.7rem; cursor: pointer;">
-                                    <input type="checkbox" id="syncChangeTracking" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveSyncChangeTracking()">
-                                    <span>启用变更追踪（记录操作者）</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 团队活动日志 -->
-                    <div id="teamActivityPanel" style="background: var(--gray-50); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; display: none;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <div style="font-size: 0.8125rem; font-weight: 600; color: var(--gray-700);">👥 团队活动</div>
-                            <button class="btn btn-xs btn-outline" onclick="clearTeamActivityLog()" style="flex: none; max-width: 60px; width: auto; min-width: auto; white-space: nowrap;">清空</button>
-                        </div>
-                        <div id="teamActivityLogContainer" style="max-height: 120px; overflow-y: auto; font-size: 0.7rem; color: var(--gray-600);">
-                            <div style="color: var(--gray-400); text-align: center;">暂无团队活动记录</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- OneDrive 配置 -->
-                <div id="syncConfigOneDrive" style="display:none;">
-                    <div style="padding:0.5rem 0.75rem;background:#eff6ff;border-radius:var(--radius);font-size:0.75rem;color:#1e40af;margin-bottom:0.75rem;line-height:1.5;">
-                        <strong>使用步骤：</strong>① 注册 Microsoft 账号 → ② 创建 Azure AD 应用 → ③ 填入应用 ID → ④ 点「登录 OneDrive」
-                    </div>
-                    <details style="margin-bottom:0.75rem;">
-                        <summary style="cursor:pointer;font-size:0.8125rem;font-weight:500;color:var(--primary);padding:0.25rem 0;">📖 如何创建 Azure AD 应用（5分钟）</summary>
-                        <div style="padding:0.75rem;background:var(--gray-50);border-radius:var(--radius);font-size:0.75rem;line-height:1.8;margin-top:0.5rem;">
-                            1. 打开 <a href="https://portal.azure.com" target="_blank" style="color:var(--primary);">Azure Portal</a>（需登录 Microsoft 账号）<br>
-                            2. 搜索「Azure Active Directory」并进入<br>
-                            3. 在左侧菜单点击「应用注册」→「新注册」<br>
-                            4. 名称填写 <code>佳印报价同步</code><br>
-                            5. 支持的账户类型选择 <code>任何组织目录中的账户和个人 Microsoft 账户</code><br>
-                            6. <strong>关键步骤！</strong>重定向 URI 选择 <code>单页应用(SPA)</code>，填写你的实际域名（如 <code>https://your-domain.com/quote-system/</code>）<br>
-                            7. 点击「注册」<br>
-                            8. 进入应用，复制「应用程序(客户端) ID」填入下方输入框<br>
-                            9. 在「API 权限」中添加 <code>Files.ReadWrite.All</code> 和 <code>offline_access</code> 权限<br><br>
-                            <strong>⚠️ 重要提示：</strong>必须选择「单页应用(SPA)」类型，不能选择「Web」类型！否则会出现登录失败。<br><br>
-                            <strong>为什么选 OneDrive？</strong>免费5GB存储空间，无文件大小限制，适合存储大量图片数据
-                        </div>
-                    </details>
-                    
-                    <div style="display:flex;flex-direction:column;gap:0.25rem;margin-bottom:0.75rem;">
-                        <label for="onedriveAppId" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">OneDrive 应用 ID</label>
-                        <input type="text" id="onedriveAppId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;" onchange="saveOneDriveAppId()">
-                    </div>
-                    
-                    <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
-                        <button class="btn btn-primary btn-sm" onclick="loginOneDrive()" id="loginOneDriveBtn">🔐 登录 OneDrive</button>
-                        <button class="btn btn-outline btn-sm" onclick="logoutOneDrive()" id="logoutOneDriveBtn" style="display:none;">🚪 退出登录</button>
-                    </div>
-                    
-                    <div id="onedriveStatus" style="font-size:0.75rem;color:var(--gray-500);padding:0.5rem;background:var(--gray-50);border-radius:var(--radius);display:none;"></div>
-                </div>
+                </details>
                 
                 <!-- 同步状态卡片 -->
                 <div id="syncStatusCard" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;margin-bottom:1rem;">
@@ -9302,6 +9168,20 @@ function safeExecuteAsync(fn, defaultVal) {
                 
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
                     <div style="display:flex;flex-direction:column;gap:0.25rem;">
+                        <label for="gistToken" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">GitHub Token</label>
+                        <div style="position:relative;">
+                            <input type="password" id="gistToken" placeholder="ghp_xxxxxxxxxxxx" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;" onchange="saveGistToken()">
+                            <button type="button" class="btn btn-xs btn-outline" style="position:absolute;right:4px;top:0;bottom:0;margin:auto;width:1.75rem;min-width:0!important;min-height:0!important;height:1.75rem!important;display:flex;align-items:center;justify-content:center;box-sizing:border-box;" onclick="toggleTokenVisibility()">👁️</button>
+                        </div>
+                    </div>
+                    <!-- Gist配置区域 -->
+                    <div id="gistConfigPanel" style="display:flex;flex-direction:column;gap:0.25rem;">
+                        <label for="gistIdInput" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">Gist ID（团队共享用）</label>
+                        <input type="text" id="gistIdInput" placeholder="自动生成或输入团队ID" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;">
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+                    <div style="display:flex;flex-direction:column;gap:0.25rem;">
                         <label for="cloudSyncInterval" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">自动同步间隔</label>
                         <select id="cloudSyncInterval" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;">
                             <option value="0">手动同步</option>
@@ -9319,6 +9199,49 @@ function safeExecuteAsync(fn, defaultVal) {
                             <option value="incremental">增量同步</option>
                             <option value="full">完整同步</option>
                         </select>
+                    </div>
+                </div>
+                
+                <!-- 同步目标选择器 -->
+                <div style="display:flex;flex-direction:column;gap:0.25rem;margin-bottom:0.75rem;">
+                    <label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">同步目标</label>
+                    <div style="display:flex;gap:0.25rem;">
+                        <label style="flex:1;display:flex;align-items:center;padding:0.5rem;background:var(--gray-50);border-radius:var(--radius);cursor:pointer;border:2px solid var(--primary);">
+                            <input type="radio" name="syncTarget" id="syncTargetGist" value="gist" checked onchange="switchSyncTarget()" style="margin-right:0.5rem;">
+                            <span>📝 GitHub Gist（推荐）</span>
+                        </label>
+                        <label style="flex:1;display:flex;align-items:center;padding:0.5rem;background:var(--gray-50);border-radius:var(--radius);cursor:pointer;border:2px solid transparent;">
+                            <input type="radio" name="syncTarget" id="syncTargetRepo" value="repo" onchange="switchSyncTarget()" style="margin-right:0.5rem;">
+                            <span>📦 GitHub Repository</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Repository配置区域 -->
+                <div id="repoConfigPanel" style="display:none;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:var(--radius-lg);padding:1rem;margin-bottom:0.75rem;border:1px solid #bae6fd;">
+                    <div style="font-size:0.875rem;font-weight:600;color:#0369a1;margin-bottom:0.75rem;">📦 Repository配置</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+                        <div style="display:flex;flex-direction:column;gap:0.25rem;">
+                            <label for="repoOwner" style="font-size:0.75rem;font-weight:500;color:#475569;">仓库所有者</label>
+                            <input type="text" id="repoOwner" placeholder="GitHub用户名/组织名" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;border:1px solid #cbd5e1;border-radius:var(--radius);">
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:0.25rem;">
+                            <label for="repoName" style="font-size:0.75rem;font-weight:500;color:#475569;">仓库名称</label>
+                            <input type="text" id="repoName" placeholder="仓库名" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;border:1px solid #cbd5e1;border-radius:var(--radius);">
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                        <div style="display:flex;flex-direction:column;gap:0.25rem;">
+                            <label for="repoBranch" style="font-size:0.75rem;font-weight:500;color:#475569;">分支名称</label>
+                            <input type="text" id="repoBranch" placeholder="默认main或master" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;border:1px solid #cbd5e1;border-radius:var(--radius);">
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:0.25rem;">
+                            <label for="repoFilePath" style="font-size:0.75rem;font-weight:500;color:#475569;">文件路径</label>
+                            <input type="text" id="repoFilePath" placeholder="quote-data.json" value="quote-data.json" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;border:1px solid #cbd5e1;border-radius:var(--radius);">
+                        </div>
+                    </div>
+                    <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px dashed #93c5fd;font-size:0.7rem;color:#0369a1;">
+                        💡 提示：使用Repository同步需要GitHub Token具有<code>repo</code>权限。建议创建一个私有仓库用于数据同步。
                     </div>
                 </div>
                 
@@ -9353,6 +9276,92 @@ function safeExecuteAsync(fn, defaultVal) {
                     </div>
                 </div>
                 
+                <!-- 团队功能设置 -->
+                <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #bae6fd;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <div style="font-size: 0.8125rem; font-weight: 600; color: #0369a1;">👥 团队功能</div>
+                        <label style="display: inline-flex; align-items: center; gap: 0.375rem; cursor: pointer;">
+                            <span style="font-size: 0.75rem; color: #64748b;">启用团队同步</span>
+                            <input type="checkbox" id="teamEnabled" onchange="toggleTeamSettings()" style="width: 1rem; height: 1rem; flex-shrink: 0; flex-basis: 1rem; appearance: auto; -webkit-appearance: checkbox; min-width: 1rem; min-height: 1rem;">
+                        </label>
+                    </div>
+                    <div id="teamSettingsPanel" style="display: none;">
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <button class="btn btn-primary btn-xs" onclick="createTeam()">➕ 创建团队</button>
+                            <button class="btn btn-outline btn-xs" onclick="joinTeam()">🔗 加入已有团队</button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                <label for="teamName" style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队名称</label>
+                                <input type="text" id="teamName" placeholder="团队名称" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem; background: #f8fafc;" readonly>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                <label for="teamUserName" style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队成员名称</label>
+                                <input type="text" id="teamUserName" placeholder="例如：张三" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem;" onchange="saveTeamUserName()">
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.5rem;">
+                            <label for="teamGistId" style="font-size: 0.75rem; font-weight: 500; color: #475569;">团队Gist ID</label>
+                            <input type="text" id="teamGistId" placeholder="团队Gist ID" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.25rem;" onchange="saveTeamGistId()">
+                        </div>
+                        <div style="font-size: 0.75rem; font-weight: 500; color: #475569; margin-bottom: 0.375rem;">选择同步数据类型：</div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.375rem;">
+                            <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
+                                <input type="checkbox" id="shareProducts" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
+                                <span>产品库</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
+                                <input type="checkbox" id="shareTemplates" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
+                                <span>模板库</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
+                                <input type="checkbox" id="shareCustomers" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
+                                <span>客户库</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
+                                <input type="checkbox" id="shareQuoteHistory" style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
+                                <span>报价历史</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
+                                <input type="checkbox" id="shareSeals" style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
+                                <span>印章</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.7rem; cursor: pointer; padding: 0.25rem 0.375rem; background: white; border-radius: 0.25rem;">
+                                <input type="checkbox" id="shareSignatures" style="width: 0.875rem; height: 0.875rem;" onchange="saveTeamDataSharing()">
+                                <span>签名</span>
+                            </label>
+                        </div>
+                        <div style="margin-top: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.7rem; cursor: pointer;">
+                                <input type="checkbox" id="syncChangeTracking" checked style="width: 0.875rem; height: 0.875rem;" onchange="saveSyncChangeTracking()">
+                                <span>启用变更追踪（记录操作者）</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 团队活动日志 -->
+                <div id="teamActivityPanel" style="background: var(--gray-50); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <div style="font-size: 0.8125rem; font-weight: 600; color: var(--gray-700);">👥 团队活动</div>
+                        <button class="btn btn-xs btn-outline" onclick="clearTeamActivityLog()" style="flex: none; max-width: 60px; width: auto; min-width: auto; white-space: nowrap;">清空</button>
+                    </div>
+                    <div id="teamActivityLogContainer" style="max-height: 120px; overflow-y: auto; font-size: 0.7rem; color: var(--gray-600);">
+                        <div style="color: var(--gray-400); text-align: center;">暂无团队活动记录</div>
+                    </div>
+                </div>
+
+                <!-- 团队成员列表 -->
+                <div id="teamMembersPanel" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #6ee7b7;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <div style="font-size: 0.8125rem; font-weight: 600; color: #047857;">👥 团队成员</div>
+                        <button class="btn btn-xs btn-outline" onclick="refreshTeamMembers()" style="flex: none; max-width: 70px; width: auto; min-width: auto; white-space: nowrap;">🔄 刷新</button>
+                    </div>
+                    <div id="teamMembersList" style="font-size: 0.75rem; color: #065f46;">
+                        <div style="color: #6ee7b7; text-align: center;">点击"刷新"查看团队成员</div>
+                    </div>
+                </div>
+
                 <!-- 数据管理：查重去重功能 -->
                 <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #fcd34d;">
                     <div style="font-size: 0.8125rem; font-weight: 600; color: #92400e; margin-bottom: 0.5rem;">🔍 数据管理</div>
@@ -9367,28 +9376,24 @@ function safeExecuteAsync(fn, defaultVal) {
 
                 <!-- 同步操作按钮组 -->
                 <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
-                    <button class="btn btn-primary btn-sm" onclick="saveAndToggleSync()" id="toggleSyncBtn">⚡ 启用同步</button>
+                    <button class="btn btn-primary btn-sm" onclick="gistSaveAndToggle()" id="toggleSyncBtn">⚡ 启用同步</button>
                     <button class="btn btn-success btn-sm" onclick="syncNow()" id="syncNowBtn" style="display:none;">🔄 立即同步</button>
-                    
-                    <!-- Gist 专用按钮 -->
-                    <div id="gistSyncButtons">
-                        <button class="btn btn-outline btn-sm" onclick="gistUpload()">⬆️ 上传完整数据</button>
-                        <button class="btn btn-outline btn-sm" onclick="gistDownload()">⬇️ 下载并合并</button>
-                        <button class="btn btn-outline btn-sm" onclick="gistTest()">🔍 测试连接</button>
-                        <button class="btn btn-outline btn-sm" onclick="gistPullProducts()">📦 更新产品价格</button>
-                        <button class="btn btn-outline btn-sm" onclick="showSyncHistory()">📜 历史版本</button>
-                    </div>
-                    
-                    <!-- OneDrive 专用按钮 -->
-                    <div id="onedriveSyncButtons" style="display:none;">
-                        <button class="btn btn-outline btn-sm" onclick="onedriveUploadFull()">⬆️ 上传完整数据</button>
-                        <button class="btn btn-outline btn-sm" onclick="onedriveDownloadFull()">⬇️ 下载并合并</button>
-                    </div>
-                    
+                    <button class="btn btn-outline btn-sm" onclick="gistUpload()">⬆️ 上传完整数据</button>
+                    <button class="btn btn-outline btn-sm" onclick="gistDownload()">⬇️ 下载并合并</button>
+                    <button class="btn btn-outline btn-sm" onclick="gistTest()">🔍 测试连接</button>
                     <button class="btn btn-outline btn-sm" onclick="showSelectiveSync()">📋 选择性同步</button>
-                    <button class="btn btn-outline btn-sm" onclick="viewCloudData()">👁️ 查看云端数据</button>
-                    <button class="btn btn-outline btn-sm" onclick="fixCloudData()">🔧 修复云端重复</button>
-                    <button class="btn btn-danger btn-sm" onclick="clearCloudData()">🗑️ 清空云端数据</button>
+                    
+                    <!-- Gist专属功能 -->
+                    <button class="btn btn-outline btn-sm gist-only" onclick="gistPullProducts()">📦 更新产品价格</button>
+                    <button class="btn btn-outline btn-sm gist-only" onclick="showSyncHistory()">📜 历史版本</button>
+                    <button class="btn btn-outline btn-sm gist-only" onclick="viewCloudData()">👁️ 查看云端数据</button>
+                    <button class="btn btn-outline btn-sm gist-only" onclick="fixCloudData()">🔧 修复云端重复</button>
+                    <button class="btn btn-danger btn-sm gist-only" onclick="clearCloudData()">🗑️ 清空云端数据</button>
+                    
+                    <!-- Repository专属功能 -->
+                    <button class="btn btn-outline btn-sm repo-only" style="display:none;" onclick="viewRepoData()">👁️ 查看云端数据</button>
+                    <button class="btn btn-outline btn-sm repo-only" style="display:none;" onclick="fixRepoData()">🔧 修复云端重复</button>
+                    <button class="btn btn-outline btn-sm repo-only" style="display:none;" onclick="repoRestoreFromHistory()">📜 历史版本恢复</button>
                 </div>
                 
                 <!-- 同步进度条 -->
@@ -10801,13 +10806,8 @@ let appData = {
         sealPosition:{bottom:'4rem',right:'4rem'},
         signaturePosition:{bottom:'2rem',right:'1rem'},
         cloudSyncEnabled: false,
-        syncProvider: 'gist',
         gistToken: '',
         gistId: '',
-        onedriveAppId: '',
-        onedriveAccessToken: '',
-        onedriveRefreshToken: '',
-        onedriveExpiresAt: null,
         cloudSyncInterval: 0,
         lastSyncTime: null,
         incrementalSyncEnabled: true,
@@ -12593,9 +12593,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 检查登录状态
     checkLoginStatus();
     
-    // 处理 OneDrive OAuth 回调
-    handleOneDriveCallback();
-    
     // 隐藏加载动画
     const loadingOverlay = document.getElementById('loadingOverlay');
     if (loadingOverlay) {
@@ -13047,6 +13044,12 @@ function fixAppDataCompat() {
         incrementalSyncEnabled: true, lastIncrementalSyncTime: null,
         autoRetryEnabled: true, desktopNotificationsEnabled: false, dataCompressionEnabled: true,
         batchSyncEnabled: false, bandwidthAdaptive: true, retryCount: 0, maxRetries: 3,
+        // 同步目标设置
+        syncTarget: 'gist',
+        repoOwner: '',
+        repoName: '',
+        repoBranch: 'main',
+        repoFilePath: 'quote-data.json',
         // 团队功能相关设置
         teamEnabled: false,
         teamName: '',
@@ -38858,9 +38861,10 @@ function restoreBackup(key) {
     }
 }
 
-// ===== 云同步功能（GitHub Gist）=====
+// ===== 云同步功能（GitHub Gist / Repository）=====
 let syncTimer = null;
 var isSyncing = false;
+var currentSyncTarget = 'gist'; // 'gist' or 'repo'
 
 // 构建团队活动日志（用于上传）
 function buildSyncActivityLog() {
@@ -38968,6 +38972,147 @@ function hideSyncProgress() {
     if (container) container.style.display = 'none';
 }
 
+// 切换同步目标
+function switchSyncTarget() {
+    var gistRadio = document.getElementById('syncTargetGist');
+    var repoRadio = document.getElementById('syncTargetRepo');
+    var gistPanel = document.getElementById('gistConfigPanel');
+    var repoPanel = document.getElementById('repoConfigPanel');
+    
+    var isGistMode = gistRadio.checked;
+    currentSyncTarget = isGistMode ? 'gist' : 'repo';
+    
+    if (isGistMode) {
+        if (repoPanel) repoPanel.style.display = 'none';
+        if (gistPanel) gistPanel.style.display = 'flex';
+    } else {
+        if (gistPanel) gistPanel.style.display = 'none';
+        if (repoPanel) repoPanel.style.display = 'block';
+    }
+    
+    // 显示/隐藏Gist专属功能按钮
+    var gistOnlyButtons = document.querySelectorAll('.gist-only');
+    gistOnlyButtons.forEach(function(btn) {
+        btn.style.display = isGistMode ? 'inline-flex' : 'none';
+    });
+    
+    // 显示/隐藏Repository专属功能按钮
+    var repoOnlyButtons = document.querySelectorAll('.repo-only');
+    repoOnlyButtons.forEach(function(btn) {
+        btn.style.display = isGistMode ? 'none' : 'inline-flex';
+    });
+    
+    appData.systemSettings.syncTarget = currentSyncTarget;
+    saveData();
+    updateCloudSyncStatus();
+}
+
+// 获取当前同步目标
+function getSyncTarget() {
+    var stored = appData.systemSettings.syncTarget;
+    if (stored) return stored;
+    var radio = document.querySelector('input[name="syncTarget"]:checked');
+    if (radio) return radio.value;
+    return currentSyncTarget || 'gist';
+}
+
+// 获取Repository配置
+function getRepoConfig(saveToSettings) {
+    var owner = appData.systemSettings.repoOwner || document.getElementById('repoOwner')?.value.trim() || '';
+    var repo = appData.systemSettings.repoName || document.getElementById('repoName')?.value.trim() || '';
+    var branch = appData.systemSettings.repoBranch || document.getElementById('repoBranch')?.value.trim() || 'main';
+    var filePath = appData.systemSettings.repoFilePath || document.getElementById('repoFilePath')?.value.trim() || 'quote-data.json';
+    
+    if (saveToSettings !== false) {
+        appData.systemSettings.repoOwner = owner;
+        appData.systemSettings.repoName = repo;
+        appData.systemSettings.repoBranch = branch;
+        appData.systemSettings.repoFilePath = filePath;
+        saveData();
+    }
+    
+    return { owner, repo, branch, filePath };
+}
+
+// Repository API调用
+function repoApi(path, options) {
+    var token = appData.systemSettings.gistToken || '';
+    var headers = {
+        'Authorization': 'Bearer ' + token,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+    };
+    
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function() { controller.abort(); }, 30000);
+    
+    var fetchOptions = Object.assign({}, options, { 
+        headers: headers,
+        signal: controller.signal
+    });
+    
+    return fetch('https://api.github.com' + path, fetchOptions)
+        .then(function(response) {
+            clearTimeout(timeoutId);
+            return response;
+        })
+        .catch(function(error) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                throw new Error('请求超时，请检查网络连接');
+            }
+            throw error;
+        });
+}
+
+// 获取Repository文件内容
+function getRepoFile(owner, repo, path, branch) {
+    return repoApi('/repos/' + owner + '/' + repo + '/contents/' + path + '?ref=' + (branch || 'main'))
+        .then(function(res) {
+            if (res.status === 404) {
+                return null;
+            }
+            if (!res.ok) throw new Error('获取文件失败: HTTP ' + res.status);
+            return res.json();
+        });
+}
+
+// 创建或更新Repository文件
+function putRepoFile(owner, repo, path, content, message, branch, sha) {
+    var body = {
+        message: message || 'Update quote data',
+        content: btoa(unescape(encodeURIComponent(content))),
+        branch: branch || 'main'
+    };
+    
+    if (sha) {
+        body.sha = sha;
+    }
+    
+    return repoApi('/repos/' + owner + '/' + repo + '/contents/' + path, {
+        method: 'PUT',
+        body: JSON.stringify(body)
+    }).then(function(res) {
+        if (!res.ok) {
+            return res.json().then(function(err) {
+                throw new Error(err.message || '操作失败: HTTP ' + res.status);
+            }).catch(function() {
+                throw new Error('操作失败: HTTP ' + res.status);
+            });
+        }
+        return res.json();
+    });
+}
+
+// 获取分支信息
+function getBranch(owner, repo, branch) {
+    return repoApi('/repos/' + owner + '/' + repo + '/branches/' + (branch || 'main'))
+        .then(function(res) {
+            if (!res.ok) throw new Error('获取分支失败: HTTP ' + res.status);
+            return res.json();
+        });
+}
+
 // 切换Token可见性
 function toggleTokenVisibility() {
     var input = document.getElementById('gistToken');
@@ -38982,6 +39127,7 @@ function saveGistToken() {
     var token = tokenEl.value.trim();
     
     if (token) {
+        // 验证token格式（应该是40位十六进制字符串或以ghp_开头的格式）
         if (token.length < 10) {
             showToast('Token 长度太短，请检查输入', 'warning');
             return;
@@ -38991,745 +39137,6 @@ function saveGistToken() {
         saveData();
         showToast('Token 已保存', 'success');
     }
-}
-
-// ==================== OneDrive 同步功能 ====================
-
-function switchSyncProvider(provider) {
-    appData.systemSettings.syncProvider = provider;
-    saveData();
-    
-    var gistBtn = document.getElementById('syncProviderGist');
-    var onedriveBtn = document.getElementById('syncProviderOneDrive');
-    var gistConfig = document.getElementById('syncConfigGist');
-    var onedriveConfig = document.getElementById('syncConfigOneDrive');
-    var gistButtons = document.getElementById('gistSyncButtons');
-    var onedriveButtons = document.getElementById('onedriveSyncButtons');
-    var teamSettingsPanel = document.getElementById('teamSettingsPanel');
-    var teamActivityPanel = document.getElementById('teamActivityPanel');
-    var teamMembersPanel = document.getElementById('teamMembersPanel');
-    var teamEnabled = document.getElementById('teamEnabled');
-    
-    if (provider === 'gist') {
-        gistBtn.style.background = 'var(--primary)';
-        gistBtn.style.color = 'white';
-        onedriveBtn.style.background = '';
-        onedriveBtn.style.color = '';
-        gistConfig.style.display = 'block';
-        onedriveConfig.style.display = 'none';
-        gistButtons.style.display = 'inline-flex';
-        gistButtons.style.gap = '0.5rem';
-        onedriveButtons.style.display = 'none';
-        if (teamEnabled && teamEnabled.checked) {
-            if (teamSettingsPanel) teamSettingsPanel.style.display = 'block';
-            if (teamActivityPanel) teamActivityPanel.style.display = 'block';
-            if (teamMembersPanel) teamMembersPanel.style.display = 'block';
-        }
-    } else {
-        onedriveBtn.style.background = 'var(--primary)';
-        onedriveBtn.style.color = 'white';
-        gistBtn.style.background = '';
-        gistBtn.style.color = '';
-        gistConfig.style.display = 'none';
-        onedriveConfig.style.display = 'block';
-        gistButtons.style.display = 'none';
-        onedriveButtons.style.display = 'inline-flex';
-        onedriveButtons.style.gap = '0.5rem';
-        if (teamSettingsPanel) teamSettingsPanel.style.display = 'none';
-        if (teamActivityPanel) teamActivityPanel.style.display = 'none';
-        if (teamMembersPanel) teamMembersPanel.style.display = 'none';
-        if (teamEnabled) teamEnabled.checked = false;
-        appData.systemSettings.teamEnabled = false;
-        updateOneDriveStatus();
-    }
-}
-
-function saveOneDriveAppId() {
-    var appIdEl = document.getElementById('onedriveAppId');
-    if (!appIdEl) return;
-    var appId = appIdEl.value.trim();
-    
-    appData.systemSettings.onedriveAppId = appId;
-    localStorage.setItem('onedrive_app_id', appId);
-    saveData();
-    showToast('应用 ID 已保存', 'success');
-}
-
-function loginOneDrive() {
-    var appId = appData.systemSettings.onedriveAppId;
-    if (!appId) {
-        showToast('请先填写 OneDrive 应用 ID', 'warning');
-        return;
-    }
-    
-    var codeVerifier = generateCodeVerifier();
-    localStorage.setItem('onedrive_code_verifier', codeVerifier);
-    
-    generateCodeChallenge(codeVerifier).then(function(codeChallenge) {
-        var redirectUri = window.location.origin + window.location.pathname;
-        var authUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?' +
-            'client_id=' + encodeURIComponent(appId) + '&' +
-            'response_type=code&' +
-            'redirect_uri=' + encodeURIComponent(redirectUri) + '&' +
-            'scope=' + encodeURIComponent('Files.ReadWrite.All offline_access') + '&' +
-            'response_mode=query&' +
-            'state=' + encodeURIComponent('quote-system-login') + '&' +
-            'code_challenge=' + encodeURIComponent(codeChallenge) + '&' +
-            'code_challenge_method=S256';
-        
-        window.location.href = authUrl;
-    }).catch(function(error) {
-        showToast('登录准备失败: ' + error.message, 'error');
-    });
-}
-
-function generateCodeVerifier() {
-    var array = new Uint32Array(32);
-    window.crypto.getRandomValues(array);
-    return Array.from(array, function(x) { return ('0' + x.toString(16)).slice(-2); }).join('');
-}
-
-function generateCodeChallenge(codeVerifier) {
-    return new Promise(function(resolve) {
-        var encoder = new TextEncoder();
-        var data = encoder.encode(codeVerifier);
-        window.crypto.subtle.digest('SHA-256', data).then(function(digest) {
-            var base64string = btoa(String.fromCharCode.apply(null, new Uint8Array(digest)));
-            resolve(base64string.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_'));
-        });
-    });
-}
-
-function logoutOneDrive() {
-    appData.systemSettings.onedriveAccessToken = '';
-    appData.systemSettings.onedriveRefreshToken = '';
-    appData.systemSettings.onedriveExpiresAt = null;
-    saveData();
-    updateOneDriveStatus();
-    showToast('已退出 OneDrive', 'success');
-}
-
-function handleOneDriveCallback() {
-    var urlParams = new URLSearchParams(window.location.search);
-    var code = urlParams.get('code');
-    var state = urlParams.get('state');
-    var error = urlParams.get('error');
-    
-    if (error) {
-        showToast('OneDrive 登录失败: ' + error, 'error');
-        urlParams.delete('error');
-        urlParams.delete('error_description');
-        window.history.replaceState({}, document.title, window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : ''));
-        return;
-    }
-    
-    if (code && state === 'quote-system-login') {
-        exchangeCodeForToken(code);
-        urlParams.delete('code');
-        urlParams.delete('state');
-        urlParams.delete('error');
-        urlParams.delete('error_description');
-        window.history.replaceState({}, document.title, window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : ''));
-    }
-}
-
-function exchangeCodeForToken(code) {
-    var appId = appData.systemSettings.onedriveAppId;
-    var redirectUri = window.location.origin + window.location.pathname;
-    var codeVerifier = localStorage.getItem('onedrive_code_verifier');
-    
-    if (!appId) {
-        var savedAppId = localStorage.getItem('onedrive_app_id');
-        if (savedAppId) {
-            appId = savedAppId;
-            appData.systemSettings.onedriveAppId = appId;
-        } else {
-            showToast('应用 ID 为空，请重新填写', 'error');
-            return;
-        }
-    }
-    
-    if (!codeVerifier) {
-        showToast('登录状态已过期，请重新登录', 'error');
-        return;
-    }
-    
-    var body = new URLSearchParams();
-    body.append('client_id', appId);
-    body.append('grant_type', 'authorization_code');
-    body.append('code', code);
-    body.append('redirect_uri', redirectUri);
-    body.append('code_verifier', codeVerifier);
-    
-    fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: body
-    })
-    .then(function(response) { return response.json(); })
-    .then(function(data) {
-        if (data.access_token) {
-            appData.systemSettings.onedriveAccessToken = data.access_token;
-            appData.systemSettings.onedriveRefreshToken = data.refresh_token || '';
-            appData.systemSettings.onedriveExpiresAt = Date.now() + (data.expires_in * 1000);
-            saveData();
-            updateOneDriveStatus();
-            showToast('OneDrive 登录成功', 'success');
-        } else {
-            showToast('获取令牌失败: ' + (data.error_description || data.error), 'error');
-        }
-    })
-    .catch(function(error) {
-        showToast('网络请求失败: ' + error.message, 'error');
-    });
-}
-
-function refreshOneDriveToken() {
-    var appId = appData.systemSettings.onedriveAppId;
-    var refreshToken = appData.systemSettings.onedriveRefreshToken;
-    
-    if (!refreshToken) {
-        return Promise.reject(new Error('没有刷新令牌'));
-    }
-    
-    var body = new URLSearchParams();
-    body.append('client_id', appId);
-    body.append('grant_type', 'refresh_token');
-    body.append('refresh_token', refreshToken);
-    body.append('scope', 'Files.ReadWrite.All offline_access');
-    
-    return fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: body
-    })
-    .then(function(response) { return response.json(); })
-    .then(function(data) {
-        if (data.access_token) {
-            appData.systemSettings.onedriveAccessToken = data.access_token;
-            appData.systemSettings.onedriveRefreshToken = data.refresh_token || refreshToken;
-            appData.systemSettings.onedriveExpiresAt = Date.now() + (data.expires_in * 1000);
-            saveData();
-            updateOneDriveStatus();
-            return data.access_token;
-        } else {
-            throw new Error(data.error_description || data.error);
-        }
-    });
-}
-
-function getOneDriveAccessToken() {
-    return new Promise(function(resolve, reject) {
-        var expiresAt = appData.systemSettings.onedriveExpiresAt;
-        var accessToken = appData.systemSettings.onedriveAccessToken;
-        var now = Date.now();
-        
-        if (accessToken && expiresAt && now < expiresAt - 60000) {
-            resolve(accessToken);
-        } else {
-            refreshOneDriveToken().then(resolve).catch(function(err) {
-                if (err.message && err.message.includes('没有刷新令牌')) {
-                    reject(new Error('登录已过期，请重新登录 OneDrive'));
-                } else {
-                    reject(err);
-                }
-            });
-        }
-    });
-}
-
-function onedriveApi(path, options, retryCount) {
-    retryCount = retryCount || 0;
-    return getOneDriveAccessToken().then(function(token) {
-        var headers = {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
-        };
-        
-        var controller = new AbortController();
-        var timeoutId = setTimeout(function() { controller.abort(); }, 60000);
-        
-        var fetchOptions = Object.assign({}, options, { 
-            headers: headers,
-            signal: controller.signal
-        });
-        
-        return fetch('https://graph.microsoft.com/v1.0/me/drive' + path, fetchOptions)
-            .then(function(response) {
-                clearTimeout(timeoutId);
-                if (!response.ok) {
-                    if (response.status === 401 && retryCount < 1) {
-                        appData.systemSettings.onedriveAccessToken = '';
-                        return onedriveApi(path, options, retryCount + 1);
-                    }
-                    throw new Error('OneDrive API 错误: ' + response.status);
-                }
-                return response.json();
-            })
-            .catch(function(error) {
-                clearTimeout(timeoutId);
-                if (error.name === 'AbortError') {
-                    throw new Error('请求超时，请检查网络连接');
-                }
-                throw error;
-            });
-    });
-}
-
-function onedriveApiRaw(path, options, retryCount) {
-    retryCount = retryCount || 0;
-    return getOneDriveAccessToken().then(function(token) {
-        var headers = Object.assign({}, options.headers || {}, {
-            'Authorization': 'Bearer ' + token
-        });
-        
-        var controller = new AbortController();
-        var timeoutId = setTimeout(function() { controller.abort(); }, 120000);
-        
-        var fetchOptions = Object.assign({}, options, { 
-            headers: headers,
-            signal: controller.signal
-        });
-        
-        return fetch('https://graph.microsoft.com/v1.0/me/drive' + path, fetchOptions)
-            .then(function(response) {
-                clearTimeout(timeoutId);
-                if (!response.ok) {
-                    if (response.status === 401 && retryCount < 1) {
-                        appData.systemSettings.onedriveAccessToken = '';
-                        return onedriveApiRaw(path, options, retryCount + 1);
-                    }
-                    throw new Error('OneDrive API 错误: ' + response.status);
-                }
-                return response;
-            })
-            .catch(function(error) {
-                clearTimeout(timeoutId);
-                if (error.name === 'AbortError') {
-                    throw new Error('请求超时，请检查网络连接');
-                }
-                throw error;
-            });
-    });
-}
-
-function getAllImagesForSync() {
-    return new Promise(function(resolve) {
-        if (!idbInitialized || !IDB.isSupported()) {
-            resolve([]);
-            return;
-        }
-        
-        IDB.getAllImages().then(function(images) {
-            var imageList = [];
-            images.forEach(function(img) {
-                imageList.push({
-                    id: img.id,
-                    data: img.data
-                });
-            });
-            resolve(imageList);
-        }).catch(function() {
-            resolve([]);
-        });
-    });
-}
-
-function onedriveCreateFolder(folderName) {
-    return onedriveApi('/root/children', {
-        method: 'POST',
-        body: JSON.stringify({
-            name: folderName,
-            folder: {},
-            "@microsoft.graph.conflictBehavior": "rename"
-        })
-    });
-}
-
-function onedriveDeleteFolder(folderId) {
-    return onedriveApi('/items/' + folderId, {
-        method: 'DELETE'
-    });
-}
-
-function onedriveCreateFolderInParent(parentFolderId, folderName) {
-    return onedriveApi('/items/' + parentFolderId + '/children', {
-        method: 'POST',
-        body: JSON.stringify({
-            name: folderName,
-            folder: {},
-            "@microsoft.graph.conflictBehavior": "replace"
-        })
-    });
-}
-
-function onedriveGetFolderId(folderName, parentFolderId) {
-    var path = parentFolderId ? '/items/' + parentFolderId + '/children' : '/root/children';
-    return onedriveApi(path, {
-        method: 'GET'
-    }).then(function(data) {
-        var folder = data.value.find(function(item) {
-            return item.name === folderName && item.folder;
-        });
-        return folder ? folder.id : null;
-    });
-}
-
-function onedriveUploadFile(folderId, fileName, content) {
-    return onedriveApi('/items/' + folderId + '/children/' + encodeURIComponent(fileName) + '/content', {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: content
-    });
-}
-
-function onedriveUploadBinaryFile(folderId, fileName, blob) {
-    return onedriveApiRaw('/items/' + folderId + '/children/' + encodeURIComponent(fileName) + '/content', {
-        method: 'PUT',
-        headers: {
-            'Content-Type': blob.type
-        },
-        body: blob
-    }).then(function(response) {
-        return response.json();
-    });
-}
-
-function onedriveDownloadFile(folderId, fileName) {
-    return onedriveApi('/items/' + folderId + '/children/' + encodeURIComponent(fileName) + '/content', {
-        method: 'GET',
-        headers: {
-            'Content-Type': null
-        }
-    });
-}
-
-function onedriveDownloadBinaryFile(folderId, fileName) {
-    return onedriveApiRaw('/items/' + folderId + '/children/' + encodeURIComponent(fileName) + '/content', {
-        method: 'GET'
-    }).then(function(response) {
-        return response.blob();
-    });
-}
-
-function onedriveUploadFull() {
-    return new Promise(function(resolve, reject) {
-        if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
-            reject(new Error('请先登录 OneDrive'));
-            return;
-        }
-        
-        showSyncProgress('正在准备数据...', 10);
-        
-        Promise.all([
-            prepareProductsForSync(appData.products),
-            prepareTemplatesForSync(appData.templates),
-            getAllImagesForSync()
-        ])
-        .then(function(results) {
-            var productsWithImages = results[0];
-            var templatesWithImages = results[1];
-            var images = results[2];
-            
-            var syncData = {
-                products: productsWithImages,
-                templates: templatesWithImages,
-                customers: appData.customers,
-                version: 'v2',
-                deviceId: appData.systemSettings.deviceId || generateUniqueId().toString(),
-                timestamp: Date.now(),
-                lastSyncTime: appData.systemSettings.lastSyncTime,
-                imageCount: images.length
-            };
-            
-            var jsonStr = JSON.stringify(syncData);
-            var compressedData = typeof LZString !== 'undefined' ? LZString.compressToBase64(jsonStr) : jsonStr;
-            
-            showSyncProgress('正在创建同步文件夹...', 20);
-            
-            return onedriveGetFolderId('QuoteSystem').then(function(folderId) {
-                if (!folderId) {
-                    return onedriveCreateFolder('QuoteSystem').then(function(folder) {
-                        return folder.id;
-                    });
-                }
-                return folderId;
-            }).then(function(folderId) {
-                return onedriveGetFolderId('images', folderId).then(function(imagesFolderId) {
-                    if (!imagesFolderId) {
-                        return onedriveCreateFolderInParent(folderId, 'images').then(function(folder) {
-                            return folder.id;
-                        });
-                    }
-                    return imagesFolderId;
-                }).then(function(imagesFolderId) {
-                    return { mainFolderId: folderId, imagesFolderId: imagesFolderId };
-                });
-            }).then(function(folders) {
-                var uploadPromises = [];
-                
-                uploadPromises.push(onedriveUploadFile(folders.mainFolderId, 'quote_data.json', compressedData));
-                
-                showSyncProgress('正在上传图片 (' + images.length + '张)...', 40);
-                
-                images.forEach(function(img, index) {
-                    var progress = 40 + Math.round((index / images.length) * 40);
-                    showSyncProgress('正在上传图片 ' + (index + 1) + '/' + images.length, progress);
-                    
-                    var base64Data = img.data.split(',')[1];
-                    var binaryData = atob(base64Data);
-                    var mimeType = img.data.split(',')[0].split(':')[1].split(';')[0];
-                    var fileExtension = mimeType.split('/')[1] || 'png';
-                    var fileName = img.id + '.' + fileExtension;
-                    
-                    var byteArray = new Uint8Array(binaryData.length);
-                    for (var i = 0; i < binaryData.length; i++) {
-                        byteArray[i] = binaryData.charCodeAt(i);
-                    }
-                    
-                    var blob = new Blob([byteArray], { type: mimeType });
-                    
-                    uploadPromises.push(onedriveUploadBinaryFile(folders.imagesFolderId, fileName, blob));
-                });
-                
-                return Promise.all(uploadPromises);
-            });
-        })
-        .then(function() {
-            appData.systemSettings.lastSyncTime = Date.now();
-            appData.systemSettings.retryCount = 0;
-            saveData();
-            updateCloudSyncStatus();
-            showSyncProgress('同步完成', 100);
-            setTimeout(hideSyncProgress, 1500);
-            resolve();
-        })
-        .catch(function(error) {
-            console.error('OneDrive 上传失败:', error);
-            appData.systemSettings.retryCount = (appData.systemSettings.retryCount || 0) + 1;
-            saveData();
-            updateCloudSyncStatus();
-            showSyncProgress('同步失败', 100);
-            hideSyncProgress();
-            reject(error);
-        });
-    });
-}
-
-function onedriveDownloadFull() {
-    return new Promise(function(resolve, reject) {
-        if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
-            reject(new Error('请先登录 OneDrive'));
-            return;
-        }
-        
-        showSyncProgress('正在从 OneDrive 下载...', 10);
-        
-        onedriveGetFolderId('QuoteSystem').then(function(folderId) {
-            if (!folderId) {
-                showToast('云端尚无数据', 'info');
-                resolve();
-                return;
-            }
-            
-            return onedriveDownloadFile(folderId, 'quote_data.json').then(function(data) {
-                return { folderId: folderId, data: data };
-            });
-        })
-        .then(function(result) {
-            if (!result || !result.data) {
-                showToast('云端数据为空', 'info');
-                resolve();
-                return;
-            }
-            
-            var folderId = result.folderId;
-            var data = result.data;
-            
-            showSyncProgress('正在解压数据...', 30);
-            
-            var compressedData = typeof data === 'string' ? data : JSON.stringify(data);
-            var jsonStr = typeof LZString !== 'undefined' ? LZString.decompressFromBase64(compressedData) : compressedData;
-            
-            if (!jsonStr) {
-                throw new Error('数据解压失败');
-            }
-            
-            var syncData = JSON.parse(jsonStr);
-            mergeSyncData(syncData);
-            
-            var imageCount = syncData.imageCount || 0;
-            if (imageCount > 0 && idbInitialized && IDB.isSupported()) {
-                showSyncProgress('正在下载图片...', 40);
-                
-                return onedriveGetFolderId('images', folderId).then(function(imagesFolderId) {
-                    if (!imagesFolderId) {
-                        return;
-                    }
-                    
-                    return onedriveApi('/items/' + imagesFolderId + '/children', {
-                        method: 'GET'
-                    }).then(function(imagesData) {
-                        var imageFiles = imagesData.value || [];
-                        var downloadPromises = [];
-                        
-                        imageFiles.forEach(function(file, index) {
-                            var progress = 40 + Math.round((index / imageFiles.length) * 40);
-                            showSyncProgress('正在下载图片 ' + (index + 1) + '/' + imageFiles.length, progress);
-                            
-                            var imageId = file.name.replace(/\.[^/.]+$/, '');
-                            
-                            downloadPromises.push(onedriveDownloadBinaryFile(imagesFolderId, file.name)
-                                .then(function(blob) {
-                                    return new Promise(function(resolve) {
-                                        var reader = new FileReader();
-                                        reader.onloadend = function() {
-                                            IDB.saveImage(imageId, reader.result).then(resolve).catch(resolve);
-                                        };
-                                        reader.readAsDataURL(blob);
-                                    });
-                                })
-                                .catch(function() {
-                                    console.warn('Failed to download image:', file.name);
-                                })
-                            );
-                        });
-                        
-                        return Promise.all(downloadPromises);
-                    });
-                });
-            }
-        })
-        .then(function() {
-            appData.systemSettings.lastSyncTime = Date.now();
-            appData.systemSettings.retryCount = 0;
-            saveData();
-            
-            updateCloudSyncStatus();
-            showSyncProgress('同步完成', 100);
-            setTimeout(hideSyncProgress, 1500);
-            resolve();
-        })
-        .catch(function(error) {
-            console.error('OneDrive 下载失败:', error);
-            appData.systemSettings.retryCount = (appData.systemSettings.retryCount || 0) + 1;
-            saveData();
-            updateCloudSyncStatus();
-            showSyncProgress('同步失败', 100);
-            hideSyncProgress();
-            reject(error);
-        });
-    });
-}
-
-function updateOneDriveStatus() {
-    var statusEl = document.getElementById('onedriveStatus');
-    var loginBtn = document.getElementById('loginOneDriveBtn');
-    var logoutBtn = document.getElementById('logoutOneDriveBtn');
-    var appIdInput = document.getElementById('onedriveAppId');
-    
-    if (appIdInput) {
-        appIdInput.value = appData.systemSettings.onedriveAppId || '';
-    }
-    
-    if (appData.systemSettings.onedriveAccessToken) {
-        var expiresAt = appData.systemSettings.onedriveExpiresAt;
-        var isExpired = expiresAt && Date.now() > expiresAt;
-        
-        if (statusEl) {
-            if (isExpired) {
-                statusEl.innerHTML = '⏳ 令牌已过期，将在下次同步时自动刷新';
-                statusEl.style.color = 'var(--warning)';
-            } else {
-                statusEl.innerHTML = '✅ 已登录 OneDrive';
-                statusEl.style.color = 'var(--success)';
-            }
-            statusEl.style.display = 'block';
-        }
-        
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (logoutBtn) logoutBtn.style.display = 'inline-block';
-    } else {
-        if (statusEl) {
-            statusEl.style.display = 'none';
-        }
-        if (loginBtn) loginBtn.style.display = 'inline-block';
-        if (logoutBtn) logoutBtn.style.display = 'none';
-    }
-}
-
-function saveAndToggleSync() {
-    var provider = appData.systemSettings.syncProvider || 'gist';
-    
-    if (provider === 'gist') {
-        gistSaveAndToggle();
-    } else if (provider === 'onedrive') {
-        saveAndToggleOneDriveSync();
-    }
-}
-
-function saveAndToggleOneDriveSync() {
-    var interval = parseInt(document.getElementById('cloudSyncInterval').value);
-    var syncMode = document.getElementById('syncMode').value;
-    
-    var incrementalEnabled = document.getElementById('incrementalSyncEnabled').checked;
-    var autoRetry = document.getElementById('autoRetryEnabled').checked;
-    var desktopNotif = document.getElementById('desktopNotificationsEnabled').checked;
-    var compression = document.getElementById('dataCompressionEnabled').checked;
-    var batchSync = document.getElementById('batchSyncEnabled').checked;
-    var bandwidthAdapt = document.getElementById('bandwidthAdaptive').checked;
-    
-    var wasEnabled = appData.systemSettings.cloudSyncEnabled;
-    
-    if (!wasEnabled) {
-        if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
-            dialog.alert('请先登录 OneDrive\n\n登录方法：点击「登录 OneDrive」按钮进行授权', '提示', 'ℹ️');
-            return;
-        }
-    }
-    
-    appData.systemSettings.cloudSyncInterval = interval;
-    appData.systemSettings.syncMode = syncMode;
-    
-    appData.systemSettings.incrementalSyncEnabled = incrementalEnabled;
-    appData.systemSettings.autoRetryEnabled = autoRetry;
-    appData.systemSettings.desktopNotificationsEnabled = desktopNotif;
-    appData.systemSettings.dataCompressionEnabled = compression;
-    appData.systemSettings.batchSyncEnabled = batchSync;
-    appData.systemSettings.bandwidthAdaptive = bandwidthAdapt;
-    
-    appData.systemSettings.cloudSyncEnabled = !wasEnabled;
-    saveDataImmediately();
-    
-    if (appData.systemSettings.cloudSyncEnabled) {
-        startAutoSync();
-        showToast('✅ OneDrive 自动同步已启用！', 'success');
-        
-        if (desktopNotif && Notification.permission === 'default') {
-            Notification.requestPermission();
-        }
-        
-        var configList = [];
-        if (incrementalEnabled) configList.push('增量');
-        if (compression) configList.push('压缩');
-        if (autoRetry) configList.push('重试');
-        if (batchSync) configList.push('分批');
-        
-        addSyncLog('success', 'OneDrive 自动同步已启用，间隔: ' + (interval > 0 ? (interval / 60000) + '分钟' : '手动') + 
-                   ', 模式: ' + getSyncModeText(syncMode) + (configList.length > 0 ? ' [' + configList.join(', ') + ']' : ''));
-    } else {
-        stopAutoSync();
-        showToast('自动同步已禁用', 'info');
-        addSyncLog('info', '自动同步已禁用');
-    }
-    
-    updateCloudSyncStatus();
 }
 
 function gistApi(path, options) {
@@ -39814,6 +39221,30 @@ function gistTest() {
     .then(function(user) {
         showToast('✅ 连接成功！账号: ' + (user.login || user.name || '未知'), 'success');
         addSyncLog('success', '连接测试成功，账号: ' + (user.login || '未知'));
+        
+        // 如果是Repository模式，额外测试仓库访问权限
+        var syncTarget = getSyncTarget();
+        if (syncTarget === 'repo') {
+            var config = getRepoConfig(false);
+            var owner = config.owner;
+            var repo = config.repo;
+            var branch = config.branch;
+            
+            if (owner && repo) {
+                showToast('🔍 正在验证Repository访问权限...', 'info');
+                getBranch(owner, repo, branch)
+                .then(function(branchInfo) {
+                    showToast('✅ Repository访问验证成功！分支: ' + branch, 'success');
+                    addSyncLog('success', 'Repository访问验证成功: ' + owner + '/' + repo + '@' + branch);
+                })
+                .catch(function(err) {
+                    showToast('⚠️ Repository验证失败: ' + err.message + '，请检查Token权限或仓库配置', 'warning');
+                    addSyncLog('warning', 'Repository验证失败: ' + err.message);
+                });
+            } else {
+                showToast('⚠️ 请配置Repository信息（仓库所有者和仓库名称）', 'warning');
+            }
+        }
     })
     .catch(function(err) {
         showToast('❌ ' + err.message, 'error');
@@ -40397,23 +39828,96 @@ function clearProductCache() {
     productCache.clearSearchCache();
 }
 
+// Repository即时同步
+function syncRepoNow() {
+    var config = getRepoConfig();
+    var owner = config.owner;
+    var repo = config.repo;
+    var branch = config.branch;
+    var filePath = config.filePath;
+    
+    if (!owner || !repo) {
+        isSyncing = false;
+        showToast('请先配置Repository信息', 'warning');
+        hideSyncProgress();
+        return;
+    }
+    
+    showSyncProgress('正在下载Repository数据...', 20);
+    
+    getRepoFile(owner, repo, filePath, branch)
+    .then(function(fileData) {
+        if (!fileData) {
+            // 文件不存在，上传完整数据
+            showSyncProgress('Repository文件不存在，上传完整数据...', 50);
+            return repoUploadFull();
+        }
+        
+        var content;
+        try {
+            content = decodeURIComponent(escape(atob(fileData.content)));
+        } catch (e) {
+            content = fileData.content;
+        }
+        
+        var cloudData = JSON.parse(content);
+        var serverTime = new Date(cloudData.uploadTime || 0);
+        var localTime = new Date(appData.systemSettings.lastSyncTime || 0);
+        var serverTimeUTC = serverTime.getTime();
+        var localTimeUTC = localTime.getTime();
+        
+        if (serverTimeUTC <= localTimeUTC && !buildIncrementalSyncPayload().hasChanges) {
+            showToast('✅ 数据已是最新，无需同步', 'success');
+            addSyncLog('info', 'Repository数据已是最新');
+            return { skipped: true };
+        }
+        
+        if (serverTimeUTC > localTimeUTC) {
+            showSyncProgress('合并Repository更新...', 60);
+            addSyncLog('info', '发现Repository更新，正在合并...');
+            mergeSyncData(cloudData.data || {});
+        }
+        
+        showSyncProgress('上传本地变更...', 80);
+        
+        // 根据设置选择增量同步或全量上传
+        var incrementalEnabled = appData.systemSettings.incrementalSyncEnabled !== false;
+        var lastSyncTime = appData.systemSettings.lastIncrementalSyncTime;
+        
+        if (incrementalEnabled && lastSyncTime) {
+            return repoUploadIncremental().catch(function(err) {
+                addSyncLog('warning', '增量同步失败，回退到全量上传: ' + err.message);
+                return repoUploadFull();
+            });
+        } else {
+            return repoUploadFull();
+        }
+    })
+    .then(function(result) {
+        if (!result || !result.skipped) {
+            showSyncProgress('同步完成', 100);
+            showToast('✅ Repository同步成功！', 'success');
+            addSyncLog('success', 'Repository同步完成');
+            updateCloudSyncStatus();
+        }
+    })
+    .catch(function(err) {
+        console.error('Repository同步失败:', err);
+        showToast('❌ Repository同步失败: ' + err.message, 'error');
+        addSyncLog('error', 'Repository同步失败: ' + err.message);
+    })
+    .then(function() {
+        isSyncing = false;
+        setTimeout(hideSyncProgress, 500);
+    });
+}
+
 // 立即同步（增量同步）
 function syncNow() {
     if (isSyncing) {
         showToast('⏳ 正在同步中，请稍候', 'info');
         return;
     }
-    
-    var provider = appData.systemSettings.syncProvider || 'gist';
-    
-    if (provider === 'gist') {
-        syncNowGist();
-    } else if (provider === 'onedrive') {
-        syncNowOneDrive();
-    }
-}
-
-function syncNowGist() {
     const token = appData.systemSettings.gistToken || document.getElementById('gistToken').value.trim();
     if (!token) {
         showToast('请先填写 GitHub Token', 'warning');
@@ -40424,10 +39928,20 @@ function syncNowGist() {
     
     isSyncing = true;
     showSyncProgress('正在检测变更...', 10);
-    addSyncLog('info', '开始同步...');
     
+    const syncTarget = getSyncTarget();
+    addSyncLog('info', '开始同步，目标: ' + (syncTarget === 'gist' ? 'Gist' : 'Repository') + '...');
+    
+    if (syncTarget === 'repo') {
+        syncRepoNow();
+        return;
+    }
+    
+    // Gist同步（原有逻辑）
+    // 先下载云端数据进行对比
     const gistId = appData.systemSettings.gistId || '';
     if (!gistId) {
+        // 没有gistId，直接上传完整数据
         showSyncProgress('首次同步，上传完整数据...', 50);
         gistUploadFull().then(() => {
             isSyncing = false;
@@ -40439,6 +39953,7 @@ function syncNowGist() {
         return;
     }
     
+    // 先下载云端数据
     showSyncProgress('正在下载云端数据...', 20);
     gistApi('/gists/' + gistId)
     .then(function(res) {
@@ -40506,40 +40021,7 @@ function syncNowGist() {
         addSyncLog('error', '同步失败: ' + err.message);
     })
     .then(function() {
-        isSyncing = false;
-        setTimeout(hideSyncProgress, 500);
-    });
-}
-
-function syncNowOneDrive() {
-    if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
-        showToast('请先登录 OneDrive', 'warning');
-        return;
-    }
-    
-    isSyncing = true;
-    showSyncProgress('正在检测变更...', 10);
-    addSyncLog('info', '开始 OneDrive 同步...');
-    
-    onedriveDownloadFull()
-    .then(function() {
-        return onedriveUploadFull();
-    })
-    .then(function() {
-        showToast('✅ OneDrive 同步成功', 'success');
-        addSyncLog('success', 'OneDrive 同步完成');
-    })
-    .catch(function(err) {
-        console.error('OneDrive 同步失败:', err);
-        var errorMsg = err.message || '未知错误';
-        if (errorMsg.includes('401')) {
-            errorMsg = '令牌失效，请重新登录 OneDrive';
-            logoutOneDrive();
-        }
-        showToast('❌ OneDrive 同步失败: ' + errorMsg, 'error');
-        addSyncLog('error', 'OneDrive 同步失败: ' + errorMsg);
-    })
-    .then(function() {
+        // 模拟 finally 块，确保 isSyncing 被重置
         isSyncing = false;
         setTimeout(hideSyncProgress, 500);
     });
@@ -40843,6 +40325,74 @@ function prepareTemplatesForSync(templates) {
         
         console.log('模板同步数据准备完成，共', result.length, '个模板，图片将以 ID 形式同步');
         resolve(result);
+    });
+}
+
+// 收集所有需要同步的图片数据（从IndexedDB读取）
+function collectImagesForSync(products, templates) {
+    return new Promise(function(resolve) {
+        var imageIds = new Set();
+        
+        products.forEach(function(p) {
+            if (p.imageId) {
+                imageIds.add(p.imageId);
+            }
+        });
+        
+        templates.forEach(function(t) {
+            if (t.photos) {
+                t.photos.forEach(function(p) {
+                    if (p.imageId) {
+                        imageIds.add(p.imageId);
+                    }
+                });
+            }
+        });
+        
+        var imageList = Array.from(imageIds);
+        if (imageList.length === 0) {
+            resolve({ images: {}, total: 0 });
+            return;
+        }
+        
+        showSyncProgress('正在读取图片数据...', 15);
+        addSyncLog('info', '准备同步 ' + imageList.length + ' 张图片');
+        
+        var images = {};
+        var completed = 0;
+        
+        imageList.forEach(function(imageId) {
+            IDB.getImage(imageId).then(function(url) {
+                if (url) {
+                    fetch(url).then(function(res) {
+                        return res.blob();
+                    }).then(function(blob) {
+                        var reader = new FileReader();
+                        reader.onloadend = function() {
+                            images[imageId] = reader.result;
+                            completed++;
+                            checkComplete();
+                        };
+                        reader.readAsDataURL(blob);
+                    }).catch(function() {
+                        completed++;
+                        checkComplete();
+                    });
+                } else {
+                    completed++;
+                    checkComplete();
+                }
+            }).catch(function() {
+                completed++;
+                checkComplete();
+            });
+        });
+        
+        function checkComplete() {
+            if (completed >= imageList.length) {
+                resolve({ images: images, total: imageList.length, synced: Object.keys(images).length });
+            }
+        }
     });
 }
 
@@ -41191,12 +40741,469 @@ function gistUploadFull() {
     });
 }
 
+// Repository全量上传
+function repoUploadFull() {
+    return new Promise(function(resolve, reject) {
+        isSyncing = true;
+        var startTime = Date.now();
+        var strategy = adaptSyncStrategy();
+        
+        showSyncProgress('正在准备上传数据...', 10);
+        addSyncLog('info', '开始Repository全量上传（压缩: ' + (strategy.compression ? '是' : '否') + ', 批次大小: ' + strategy.batchSize + '）');
+        
+        var config = getRepoConfig();
+        var owner = config.owner;
+        var repo = config.repo;
+        var branch = config.branch;
+        var filePath = config.filePath;
+        
+        if (!owner || !repo) {
+            isSyncing = false;
+            reject(new Error('请配置Repository信息（仓库所有者和仓库名称）'));
+            return;
+        }
+        
+        Promise.all([
+            prepareProductsForSync(appData.products),
+            prepareTemplatesForSync(appData.templates),
+            collectImagesForSync(appData.products, appData.templates)
+        ])
+        .then(function(results) {
+            var productsWithImages = results[0];
+            var templatesWithImages = results[1];
+            var imageData = results[2];
+            
+            var teamDataSharing = appData.systemSettings.teamDataSharing || { products: true, templates: true, customers: true, quoteHistory: false, seals: false, signatures: false };
+            var teamEnabled = appData.systemSettings.teamEnabled;
+            
+            var filteredProducts = teamEnabled && teamDataSharing.products === false ? undefined : productsWithImages;
+            var filteredTemplates = teamEnabled && teamDataSharing.templates === false ? undefined : templatesWithImages;
+            var filteredCustomers = teamEnabled && teamDataSharing.customers === false ? undefined : appData.customers;
+            var filteredQuoteHistory = teamEnabled && teamDataSharing.quoteHistory === false ? undefined : appData.quoteHistory;
+            var filteredSeals = teamEnabled && teamDataSharing.seals === false ? undefined : (appData.seals || []);
+            var filteredSignatures = teamEnabled && teamDataSharing.signatures === false ? undefined : (appData.signatures || []);
+            
+            var syncPayload = {
+                version: '3.4',
+                uploadTime: new Date().toISOString(),
+                deviceId: getDeviceId(),
+                schemaVersion: 4,
+                team: teamEnabled ? {
+                    enabled: true,
+                    userId: appData.systemSettings.teamUserId || getDeviceId(),
+                    userName: appData.systemSettings.teamUserName || '未命名用户',
+                    syncChangeTracking: appData.systemSettings.syncChangeTracking !== false
+                } : { enabled: false },
+                data: {
+                    products: filteredProducts,
+                    templates: filteredTemplates,
+                    customers: filteredCustomers,
+                    quoteHistory: filteredQuoteHistory,
+                    seals: filteredSeals,
+                    signatures: filteredSignatures,
+                    favoriteIds: appData.favoriteIds || [],
+                    categories: appData.categories || [],
+                    charPricingConfig: appData.charPricingConfig || {},
+                    cultureWallConfig: getCultureWallSyncData(),
+                    customPrices: getGlobalCustomPrices()
+                },
+                activityLog: buildSyncActivityLog(),
+                images: imageData.images
+            };
+            
+            var syncPayloadString;
+            try {
+                var visited = new Set();
+                syncPayloadString = JSON.stringify(syncPayload, function(key, value) {
+                    if (typeof value === 'string') {
+                        return value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+                    }
+                    if (typeof value === 'object' && value !== null) {
+                        var id = value._cid || (value._cid = Math.random().toString(36).substr(2, 9));
+                        if (visited.has(id)) {
+                            return undefined;
+                        }
+                        visited.add(id);
+                    }
+                    return value;
+                }, 2);
+            } catch (e) {
+                syncPayloadString = JSON.stringify({
+                    version: '3.4',
+                    uploadTime: new Date().toISOString(),
+                    deviceId: getDeviceId(),
+                    data: {
+                        products: [],
+                        templates: [],
+                        customers: []
+                    }
+                }, null, 2);
+            }
+            
+            // 应用数据压缩
+            var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+            var finalContent = syncPayloadString;
+            
+            if (compressionEnabled) {
+                try {
+                    var compressed = compressData(syncPayload);
+                    if (compressed && compressed !== syncPayload) {
+                        finalContent = compressed;
+                        addSyncLog('info', '数据压缩完成，原始大小: ' + syncPayloadString.length + '，压缩后: ' + finalContent.length);
+                    } else {
+                        addSyncLog('warning', '数据压缩失败或无效，使用原始数据');
+                    }
+                } catch (e) {
+                    addSyncLog('warning', '数据压缩异常，使用原始数据: ' + e.message);
+                }
+            }
+            
+            showSyncProgress('正在获取文件SHA...', 30);
+            return getRepoFile(owner, repo, filePath, branch)
+                .then(function(fileData) {
+                    var sha = fileData ? fileData.sha : null;
+                    showSyncProgress('正在上传到Repository...', 60);
+                    return putRepoFile(owner, repo, filePath, finalContent, 'Update quote data', branch, sha);
+                });
+        })
+        .then(function(result) {
+            showSyncProgress('正在保存同步状态...', 90);
+            appData.systemSettings.lastSyncTime = new Date().toISOString();
+            appData.systemSettings.lastIncrementalSyncTime = appData.systemSettings.lastSyncTime;
+            saveDataImmediately();
+            isSyncing = false;
+            showSyncProgress('上传完成', 100);
+            addSyncLog('success', 'Repository上传成功: ' + owner + '/' + repo + '/' + filePath);
+            resolve();
+        })
+        .catch(function(err) {
+            isSyncing = false;
+            reject(err);
+        });
+    });
+}
+
+// Repository增量上传：只上传变化的数据
+function repoUploadIncremental() {
+    return new Promise(function(resolve, reject) {
+        var lastSync = appData.systemSettings.lastIncrementalSyncTime;
+        if (!lastSync) {
+            reject(new Error('没有上次同步时间，无法进行增量上传'));
+            return;
+        }
+        
+        var config = getRepoConfig();
+        var owner = config.owner;
+        var repo = config.repo;
+        var branch = config.branch;
+        var filePath = config.filePath;
+        
+        if (!owner || !repo) {
+            reject(new Error('请先配置Repository信息'));
+            return;
+        }
+        
+        var lastSyncDate = new Date(lastSync);
+        
+        var changes = {
+            added: {
+                products: appData.products.filter(function(p) {
+                    var createdAt = new Date(p.createdAt || p.updatedAt || 0);
+                    return createdAt > lastSyncDate;
+                }),
+                customers: appData.customers.filter(function(c) {
+                    var createdAt = new Date(c.createdAt || c.updatedAt || 0);
+                    return createdAt > lastSyncDate;
+                }),
+                templates: appData.templates.filter(function(t) {
+                    var createdAt = new Date(t.createdAt || t.updatedAt || 0);
+                    return createdAt > lastSyncDate;
+                })
+            },
+            updated: {
+                products: appData.products.filter(function(p) {
+                    var updatedAt = new Date(p.updatedAt || 0);
+                    var createdAt = new Date(p.createdAt || 0);
+                    return updatedAt > lastSyncDate && (createdAt <= lastSyncDate || updatedAt > createdAt);
+                }),
+                customers: appData.customers.filter(function(c) {
+                    var updatedAt = new Date(c.updatedAt || 0);
+                    var createdAt = new Date(c.createdAt || 0);
+                    return updatedAt > lastSyncDate && (createdAt <= lastSyncDate || updatedAt > createdAt);
+                }),
+                templates: appData.templates.filter(function(t) {
+                    var updatedAt = new Date(t.updatedAt || 0);
+                    var createdAt = new Date(t.createdAt || 0);
+                    return updatedAt > lastSyncDate && (createdAt <= lastSyncDate || updatedAt > createdAt);
+                })
+            },
+            deleted: {
+                productIds: [],
+                customerIds: [],
+                templateIds: []
+            }
+        };
+        
+        var addedProductIds = new Set(changes.added.products.map(function(p) { return p.id; }));
+        var addedCustomerIds = new Set(changes.added.customers.map(function(c) { return c.id; }));
+        var addedTemplateIds = new Set(changes.added.templates.map(function(t) { return t.id; }));
+        
+        changes.updated.products = changes.updated.products.filter(function(p) { return !addedProductIds.has(p.id); });
+        changes.updated.customers = changes.updated.customers.filter(function(c) { return !addedCustomerIds.has(c.id); });
+        changes.updated.templates = changes.updated.templates.filter(function(t) { return !addedTemplateIds.has(t.id); });
+        
+        var hasChanges = changes.added.products.length > 0 || 
+                         changes.added.customers.length > 0 || 
+                         changes.added.templates.length > 0 ||
+                         changes.updated.products.length > 0 || 
+                         changes.updated.customers.length > 0 || 
+                         changes.updated.templates.length > 0;
+        
+        if (!hasChanges) {
+            showToast('📋 没有数据变化，无需同步', 'info');
+            resolve({ added: 0, updated: 0 });
+            return;
+        }
+        
+        showSyncProgress('正在准备增量上传...', 10);
+        addSyncLog('info', '开始Repository增量上传');
+        
+        getRepoFile(owner, repo, filePath, branch)
+        .then(function(fileData) {
+            var existingContent = '{}';
+            if (fileData) {
+                try {
+                    existingContent = decodeURIComponent(escape(atob(fileData.content)));
+                } catch (e) {
+                    existingContent = fileData.content;
+                }
+            }
+            
+            var existingData;
+            try {
+                existingData = decompressData(existingContent);
+            } catch (e) {
+                try {
+                    existingData = JSON.parse(existingContent);
+                } catch (parseError) {
+                    throw new Error('数据解析失败: ' + parseError.message);
+                }
+            }
+            
+            if (!existingData.data) existingData.data = {};
+            if (!existingData.data.products) existingData.data.products = [];
+            if (!existingData.data.customers) existingData.data.customers = [];
+            if (!existingData.data.templates) existingData.data.templates = [];
+            
+            changes.added.products.forEach(function(p) { existingData.data.products.push(p); });
+            changes.added.customers.forEach(function(c) { existingData.data.customers.push(c); });
+            changes.added.templates.forEach(function(t) { existingData.data.templates.push(t); });
+            
+            changes.updated.products.forEach(function(p) {
+                var idx = existingData.data.products.findIndex(function(item) { return item.id === p.id; });
+                if (idx >= 0) existingData.data.products[idx] = p;
+            });
+            changes.updated.customers.forEach(function(c) {
+                var idx = existingData.data.customers.findIndex(function(item) { return item.id === c.id; });
+                if (idx >= 0) existingData.data.customers[idx] = c;
+            });
+            changes.updated.templates.forEach(function(t) {
+                var idx = existingData.data.templates.findIndex(function(item) { return item.id === t.id; });
+                if (idx >= 0) existingData.data.templates[idx] = t;
+            });
+            
+            existingData.uploadTime = new Date().toISOString();
+            existingData.deviceId = getDeviceId();
+            
+            var syncPayloadString = JSON.stringify(existingData, null, 2);
+            var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+            var finalContent = syncPayloadString;
+            
+            if (compressionEnabled) {
+                try {
+                    var compressed = compressData(existingData);
+                    if (compressed && compressed !== existingData) {
+                        finalContent = compressed;
+                    }
+                } catch (e) {
+                    addSyncLog('warning', '增量同步数据压缩异常，使用原始数据');
+                }
+            }
+            
+            showSyncProgress('正在上传增量更新...', 60);
+            return putRepoFile(owner, repo, filePath, finalContent, 'Incremental sync update', branch, fileData ? fileData.sha : null);
+        })
+        .then(function() {
+            appData.systemSettings.lastIncrementalSyncTime = new Date().toISOString();
+            appData.systemSettings.lastSyncTime = appData.systemSettings.lastIncrementalSyncTime;
+            saveData();
+            
+            var addedCount = changes.added.products.length + changes.added.customers.length + changes.added.templates.length;
+            var updatedCount = changes.updated.products.length + changes.updated.customers.length + changes.updated.templates.length;
+            
+            showSyncProgress('增量同步完成', 100);
+            showToast('✅ 增量同步成功！新增: ' + addedCount + '，更新: ' + updatedCount, 'success');
+            addSyncLog('success', 'Repository增量同步完成: 新增 ' + addedCount + '，更新 ' + updatedCount);
+            
+            resolve({ added: addedCount, updated: updatedCount });
+        })
+        .catch(function(err) {
+            reject(err);
+        });
+    });
+}
+
+// Repository下载合并
+function repoDownload() {
+    return new Promise(function(resolve, reject) {
+        isSyncing = true;
+        
+        var config = getRepoConfig();
+        var owner = config.owner;
+        var repo = config.repo;
+        var branch = config.branch;
+        var filePath = config.filePath;
+        
+        if (!owner || !repo) {
+            isSyncing = false;
+            reject(new Error('请配置Repository信息（仓库所有者和仓库名称）'));
+            return;
+        }
+        
+        showSyncProgress('正在下载Repository数据...', 20);
+        addSyncLog('info', '开始从Repository下载数据: ' + owner + '/' + repo);
+        
+        getRepoFile(owner, repo, filePath, branch)
+        .then(function(fileData) {
+            if (!fileData) {
+                isSyncing = false;
+                showToast('ℹ️ Repository中暂无数据', 'info');
+                addSyncLog('info', 'Repository中暂无数据');
+                resolve();
+                return;
+            }
+            
+            var content;
+            try {
+                content = decodeURIComponent(escape(atob(fileData.content)));
+            } catch (e) {
+                content = fileData.content;
+            }
+            
+            // 尝试解压数据
+            var data;
+            try {
+                data = decompressData(content);
+            } catch (e) {
+                // 如果解压失败，尝试直接解析JSON（可能未压缩）
+                try {
+                    data = JSON.parse(content);
+                } catch (parseError) {
+                    throw new Error('数据解析失败: ' + parseError.message);
+                }
+            }
+            
+            var serverData;
+            if (data.data && typeof data.data === 'object') {
+                serverData = data;
+            } else if (data.products || data.templates || data.customers) {
+                serverData = {
+                    data: {
+                        products: data.products || [],
+                        templates: data.templates || [],
+                        customers: data.customers || [],
+                        quoteHistory: data.quoteHistory || [],
+                        seals: data.seals || [],
+                        signatures: data.signatures || [],
+                        favoriteIds: data.favoriteIds || [],
+                        categories: data.categories || []
+                    },
+                    uploadTime: data.uploadTime || data.updateTime,
+                    deviceId: data.deviceId || '未知设备',
+                    version: data.version || '3.0',
+                    team: data.team || { enabled: false }
+                };
+            } else {
+                throw new Error('无法识别的数据结构');
+            }
+            
+            var serverTime = new Date(serverData.uploadTime || 0);
+            var localTime = new Date(appData.systemSettings.lastSyncTime || 0);
+            var serverTimeUTC = serverTime.getTime();
+            var localTimeUTC = localTime.getTime();
+            
+            var serverHasData = (serverData.data.products && serverData.data.products.length > 0) ||
+                               (serverData.data.templates && serverData.data.templates.length > 0) ||
+                               (serverData.data.customers && serverData.data.customers.length > 0);
+            
+            var localHasData = appData.products.length > 0 || 
+                              appData.templates.length > 0 || 
+                              appData.customers.length > 0;
+            
+            if (!serverHasData && localHasData) {
+                isSyncing = false;
+                showToast('ℹ️ Repository数据为空，保留本地数据', 'info');
+                addSyncLog('info', 'Repository数据为空，保留本地数据');
+                resolve();
+                return;
+            }
+            
+            var conflicts = detectConflicts(serverData.data, localTime);
+            if (conflicts.length > 0) {
+                showConflictResolution(conflicts, serverData);
+                isSyncing = false;
+                return;
+            }
+            
+            mergeSyncData(serverData);
+            appData.systemSettings.lastSyncTime = new Date().toISOString();
+            saveDataImmediately();
+            isSyncing = false;
+            showToast('✅ Repository数据下载合并成功！', 'success');
+            addSyncLog('success', 'Repository数据下载合并成功');
+            resolve();
+        })
+        .catch(function(err) {
+            isSyncing = false;
+            reject(err);
+        });
+    });
+}
+
 function gistUpload() {
     if (isSyncing) {
         showToast('⏳ 正在同步中，请稍候', 'info');
         return;
     }
     
+    const syncTarget = getSyncTarget();
+    
+    if (syncTarget === 'repo') {
+        // Repository上传
+        isSyncing = true;
+        showSyncProgress('正在上传数据...', 50);
+        
+        repoUploadFull()
+        .then(function() {
+            showSyncProgress('上传完成', 100);
+            showToast('✅ Repository上传成功！', 'success');
+            addSyncLog('success', 'Repository上传成功');
+            updateCloudSyncStatus();
+            sendSyncNotification('✅ Repository同步成功', '数据已成功上传到GitHub仓库');
+            isSyncing = false;
+            setTimeout(hideSyncProgress, 500);
+        })
+        .catch(function(err) {
+            console.error('Repository上传失败:', err);
+            showToast('❌ Repository上传失败: ' + err.message, 'error');
+            addSyncLog('error', 'Repository上传失败: ' + err.message);
+            isSyncing = false;
+            setTimeout(hideSyncProgress, 500);
+        });
+        return;
+    }
+    
+    // Gist上传（原有逻辑）
     // 检查本地数据是否为空
     var hasLocalData = appData.products.length > 0 || 
                        appData.customers.length > 0 || 
@@ -41511,6 +41518,33 @@ function gistDownload() {
         showToast('⏳ 正在同步中，请稍候', 'info');
         return;
     }
+    
+    const syncTarget = getSyncTarget();
+    
+    if (syncTarget === 'repo') {
+        // Repository下载
+        isSyncing = true;
+        showToast('📥 正在从Repository下载数据...', 'info');
+        addSyncLog('info', '开始下载Repository数据...');
+        
+        repoDownload()
+        .then(function() {
+            showToast('✅ Repository数据下载成功！', 'success');
+            addSyncLog('success', 'Repository数据下载成功');
+            updateCloudSyncStatus();
+        })
+        .catch(function(err) {
+            console.error('Repository下载失败:', err);
+            showToast('❌ Repository下载失败: ' + err.message, 'error');
+            addSyncLog('error', 'Repository下载失败: ' + err.message);
+        })
+        .then(function() {
+            isSyncing = false;
+        });
+        return;
+    }
+    
+    // Gist下载（原有逻辑）
     isSyncing = true;
     
     var token = appData.systemSettings.gistToken || document.getElementById('gistToken').value.trim();
@@ -41803,6 +41837,15 @@ function gistSaveAndToggle() {
     var interval = parseInt(document.getElementById('cloudSyncInterval').value);
     var syncMode = document.getElementById('syncMode').value;
     
+    // 获取同步目标
+    var syncTarget = document.querySelector('input[name="syncTarget"]:checked').value;
+    
+    // 获取Repository配置
+    var repoOwner = document.getElementById('repoOwner')?.value.trim() || '';
+    var repoName = document.getElementById('repoName')?.value.trim() || '';
+    var repoBranch = document.getElementById('repoBranch')?.value.trim() || 'main';
+    var repoFilePath = document.getElementById('repoFilePath')?.value.trim() || 'quote-data.json';
+    
     // 获取高级配置
     var incrementalEnabled = document.getElementById('incrementalSyncEnabled').checked;
     var autoRetry = document.getElementById('autoRetryEnabled').checked;
@@ -41822,6 +41865,13 @@ function gistSaveAndToggle() {
     }
     appData.systemSettings.cloudSyncInterval = interval;
     appData.systemSettings.syncMode = syncMode;
+    appData.systemSettings.syncTarget = syncTarget;
+    
+    // 保存Repository配置
+    appData.systemSettings.repoOwner = repoOwner;
+    appData.systemSettings.repoName = repoName;
+    appData.systemSettings.repoBranch = repoBranch;
+    appData.systemSettings.repoFilePath = repoFilePath;
     
     // 保存高级配置
     appData.systemSettings.incrementalSyncEnabled = incrementalEnabled;
@@ -41851,7 +41901,8 @@ function gistSaveAndToggle() {
         if (autoRetry) configList.push('重试');
         if (batchSync) configList.push('分批');
         
-        addSyncLog('success', '自动同步已启用，间隔: ' + (interval > 0 ? (interval / 60000) + '分钟' : '手动') + 
+        var targetText = syncTarget === 'gist' ? 'Gist' : 'Repository';
+        addSyncLog('success', '自动同步已启用，目标: ' + targetText + ', 间隔: ' + (interval > 0 ? (interval / 60000) + '分钟' : '手动') + 
                    ', 模式: ' + getSyncModeText(syncMode) + (configList.length > 0 ? ' [' + configList.join(', ') + ']' : ''));
     } else {
         stopAutoSync();
@@ -42503,21 +42554,11 @@ function importData() {
 
 // 查看云端数据统计
 function viewCloudData() {
-    var provider = appData.systemSettings.syncProvider || 'gist';
-    
-    if (provider === 'gist') {
-        viewCloudDataGist();
-    } else if (provider === 'onedrive') {
-        viewCloudDataOneDrive();
-    }
-}
-
-function viewCloudDataGist() {
     var token = appData.systemSettings.gistToken;
     var gistId = appData.systemSettings.gistId;
     
     if (!token || !gistId) {
-        showToast('请先配置 Gist 同步', 'warning');
+        showToast('请先配置云同步', 'warning');
         return;
     }
     
@@ -42539,7 +42580,87 @@ function viewCloudDataGist() {
         }
         
         var data = JSON.parse(file.content);
-        renderCloudDataStats(data);
+        // 兼容多种数据结构
+        var cloudData;
+        if (data.data && typeof data.data === 'object') {
+            cloudData = data.data;
+        } else if (data.products || data.templates || data.customers) {
+            cloudData = {
+                products: data.products || [],
+                templates: data.templates || [],
+                customers: data.customers || []
+            };
+        } else {
+            cloudData = {};
+        }
+        
+        var stats = {
+            products: cloudData.products ? cloudData.products.length : 0,
+            customers: cloudData.customers ? cloudData.customers.length : 0,
+            templates: cloudData.templates ? cloudData.templates.length : 0,
+            uploadTime: data.uploadTime ? new Date(data.uploadTime).toLocaleString() : '未知',
+            deviceId: data.deviceId || '未知设备'
+        };
+        
+        // 检测重复数据
+        var duplicateInfo = detectCloudDuplicates(cloudData);
+        
+        var htmlContent = `
+            <div style="padding: 0.5rem;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <div style="background: #eff6ff; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                        <div style="font-size: 1.25rem; font-weight: 600; color: #1e40af;">${stats.products}</div>
+                        <div style="font-size: 0.7rem; color: #64748b;">产品数量</div>
+                    </div>
+                    <div style="background: #f0fdf4; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                        <div style="font-size: 1.25rem; font-weight: 600; color: #16a34a;">${stats.customers}</div>
+                        <div style="font-size: 0.7rem; color: #64748b;">客户数量</div>
+                    </div>
+                    <div style="background: #fef3c7; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                        <div style="font-size: 1.25rem; font-weight: 600; color: #d97706;">${stats.templates}</div>
+                        <div style="font-size: 0.7rem; color: #64748b;">模板数量</div>
+                    </div>
+                </div>
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
+                    <div style="margin-bottom: 0.25rem;">📅 最后上传时间: ${stats.uploadTime}</div>
+                    <div>🖥️ 上传设备: ${stats.deviceId}</div>
+                </div>`;
+        
+        if (duplicateInfo.hasDuplicates) {
+            htmlContent += `
+                <div style="border-top: 1px solid #e2e8f0; margin-top: 0.5rem; padding-top: 0.5rem;">
+                    <div style="font-size: 0.8125rem; font-weight: 500; color: #dc2626; margin-bottom: 0.375rem;">⚠️ 检测到重复数据</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">`;
+            if (duplicateInfo.duplicateProducts > 0) {
+                htmlContent += `<div>• 重复产品: ${duplicateInfo.duplicateProducts} 个</div>`;
+            }
+            if (duplicateInfo.duplicateCustomers > 0) {
+                htmlContent += `<div>• 重复客户: ${duplicateInfo.duplicateCustomers} 个</div>`;
+            }
+            if (duplicateInfo.duplicateTemplates > 0) {
+                htmlContent += `<div>• 重复模板: ${duplicateInfo.duplicateTemplates} 个</div>`;
+            }
+            htmlContent += `</div>
+                <div style="font-size: 0.7rem; color: #f59e0b; margin-top: 0.375rem;">建议使用「修复云端重复数据」功能清理</div>
+                </div>`;
+        } else {
+            htmlContent += `
+                <div style="border-top: 1px solid #e2e8f0; margin-top: 0.5rem; padding-top: 0.5rem;">
+                    <div style="font-size: 0.8125rem; font-weight: 500; color: #16a34a;">✅ 未检测到重复数据</div>
+                </div>`;
+        }
+        
+        htmlContent += '</div>';
+        
+        showModal({
+            title: '☁️ 云端数据统计',
+            message: htmlContent,
+            icon: '📊',
+            type: 'info',
+            confirmText: '关闭',
+            showCancel: false,
+            allowHtml: true
+        });
     })
     .catch(function(err) {
         console.error('查看云端数据失败:', err);
@@ -42547,134 +42668,148 @@ function viewCloudDataGist() {
     });
 }
 
-function viewCloudDataOneDrive() {
-    if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
-        showToast('请先登录 OneDrive', 'warning');
+// Repository查看云端数据
+function viewRepoData() {
+    var config = getRepoConfig();
+    var owner = config.owner;
+    var repo = config.repo;
+    var filePath = config.filePath;
+    
+    if (!owner || !repo) {
+        showToast('请先配置Repository信息', 'warning');
         return;
     }
     
     showToast('📡 正在获取云端数据...', 'loading', 10000);
     
-    onedriveGetFolderId('QuoteSystem').then(function(folderId) {
-        if (!folderId) {
-            showToast('云端尚无数据', 'info');
-            return;
-        }
-        
-        return onedriveDownloadFile(folderId, 'quote_data.json').then(function(data) {
-            return { folderId: folderId, data: data };
-        });
-    })
-    .then(function(result) {
-        if (!result || !result.data) {
+    getRepoFile(owner, repo, filePath)
+    .then(function(fileData) {
+        if (!fileData) {
             showToast('云端数据为空', 'info');
             return;
         }
         
-        var compressedData = typeof result.data === 'string' ? result.data : JSON.stringify(result.data);
-        var jsonStr = typeof LZString !== 'undefined' ? LZString.decompressFromBase64(compressedData) : compressedData;
-        
-        if (!jsonStr) {
-            throw new Error('数据解压失败');
+        var content;
+        try {
+            content = decodeURIComponent(escape(atob(fileData.content)));
+        } catch (e) {
+            content = fileData.content;
         }
         
-        var data = JSON.parse(jsonStr);
-        renderCloudDataStats(data);
+        var data;
+        try {
+            data = decompressData(content);
+        } catch (e) {
+            data = null;
+        }
+        
+        // 如果decompressData返回的是字符串（未压缩的数据），需要手动解析
+        if (typeof data === 'string') {
+            try {
+                data = JSON.parse(data);
+            } catch (e) {
+                data = null;
+            }
+        }
+        
+        // 如果仍然没有解析成功，尝试直接解析原始内容
+        if (!data || typeof data !== 'object') {
+            try {
+                data = JSON.parse(content);
+            } catch (e) {
+                showToast('❌ 数据解析失败', 'error');
+                return;
+            }
+        }
+        
+        var cloudData;
+        if (data.data && typeof data.data === 'object') {
+            cloudData = data.data;
+        } else if (data.products || data.templates || data.customers) {
+            cloudData = {
+                products: data.products || [],
+                templates: data.templates || [],
+                customers: data.customers || []
+            };
+        } else {
+            cloudData = {};
+        }
+        
+        var stats = {
+            products: cloudData.products ? cloudData.products.length : 0,
+            customers: cloudData.customers ? cloudData.customers.length : 0,
+            templates: cloudData.templates ? cloudData.templates.length : 0,
+            images: data.images ? Object.keys(data.images).length : 0,
+            uploadTime: data.uploadTime ? new Date(data.uploadTime).toLocaleString() : '未知',
+            deviceId: data.deviceId || '未知设备'
+        };
+        
+        var duplicateInfo = detectCloudDuplicates(cloudData);
+        
+        var htmlContent = `
+            <div style="padding: 0.5rem;">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <div style="background: #eff6ff; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                        <div style="font-size: 1.25rem; font-weight: 600; color: #1e40af;">${stats.products}</div>
+                        <div style="font-size: 0.7rem; color: #64748b;">产品数量</div>
+                    </div>
+                    <div style="background: #f0fdf4; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                        <div style="font-size: 1.25rem; font-weight: 600; color: #16a34a;">${stats.customers}</div>
+                        <div style="font-size: 0.7rem; color: #64748b;">客户数量</div>
+                    </div>
+                    <div style="background: #fef3c7; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                        <div style="font-size: 1.25rem; font-weight: 600; color: #d97706;">${stats.templates}</div>
+                        <div style="font-size: 0.7rem; color: #64748b;">模板数量</div>
+                    </div>
+                    <div style="background: #fdf4ff; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                        <div style="font-size: 1.25rem; font-weight: 600; color: #9333ea;">${stats.images}</div>
+                        <div style="font-size: 0.7rem; color: #64748b;">图片数量</div>
+                    </div>
+                </div>
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
+                    <div style="margin-bottom: 0.25rem;">📅 最后上传时间: ${stats.uploadTime}</div>
+                    <div>🖥️ 上传设备: ${stats.deviceId}</div>
+                </div>`;
+        
+        if (duplicateInfo.hasDuplicates) {
+            htmlContent += `
+                <div style="border-top: 1px solid #e2e8f0; margin-top: 0.5rem; padding-top: 0.5rem;">
+                    <div style="font-size: 0.8125rem; font-weight: 500; color: #dc2626; margin-bottom: 0.375rem;">⚠️ 检测到重复数据</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">`;
+            if (duplicateInfo.duplicateProducts > 0) {
+                htmlContent += `<div>• 重复产品: ${duplicateInfo.duplicateProducts} 个</div>`;
+            }
+            if (duplicateInfo.duplicateCustomers > 0) {
+                htmlContent += `<div>• 重复客户: ${duplicateInfo.duplicateCustomers} 个</div>`;
+            }
+            if (duplicateInfo.duplicateTemplates > 0) {
+                htmlContent += `<div>• 重复模板: ${duplicateInfo.duplicateTemplates} 个</div>`;
+            }
+            htmlContent += `</div>
+                <div style="font-size: 0.7rem; color: #f59e0b; margin-top: 0.375rem;">建议使用「修复云端重复数据」功能清理</div>
+                </div>`;
+        } else {
+            htmlContent += `
+                <div style="border-top: 1px solid #e2e8f0; margin-top: 0.5rem; padding-top: 0.5rem;">
+                    <div style="font-size: 0.8125rem; font-weight: 500; color: #16a34a;">✅ 未检测到重复数据</div>
+                </div>`;
+        }
+        
+        htmlContent += '</div>';
+        
+        showModal({
+            title: '☁️ Repository云端数据统计',
+            message: htmlContent,
+            icon: '📊',
+            type: 'info',
+            confirmText: '关闭',
+            showCancel: false,
+            allowHtml: true
+        });
     })
     .catch(function(err) {
-        console.error('查看 OneDrive 云端数据失败:', err);
-        var errorMsg = err.message || '未知错误';
-        if (errorMsg.includes('401')) {
-            errorMsg = '登录已过期，请重新登录 OneDrive';
-            logoutOneDrive();
-        }
-        showToast('❌ 获取失败: ' + errorMsg, 'error');
-    });
-}
-
-function renderCloudDataStats(data) {
-    // 兼容多种数据结构
-    var cloudData;
-    if (data.data && typeof data.data === 'object') {
-        cloudData = data.data;
-    } else if (data.products || data.templates || data.customers) {
-        cloudData = {
-            products: data.products || [],
-            templates: data.templates || [],
-            customers: data.customers || []
-        };
-    } else {
-        cloudData = {};
-    }
-    
-    var stats = {
-        products: cloudData.products ? cloudData.products.length : 0,
-        customers: cloudData.customers ? cloudData.customers.length : 0,
-        templates: cloudData.templates ? cloudData.templates.length : 0,
-        uploadTime: data.uploadTime || data.timestamp ? new Date(data.uploadTime || data.timestamp).toLocaleString() : '未知',
-        deviceId: data.deviceId || '未知设备',
-        imageCount: data.imageCount || 0
-    };
-    
-    // 检测重复数据
-    var duplicateInfo = detectCloudDuplicates(cloudData);
-    
-    var htmlContent = `
-        <div style="padding: 0.5rem;">
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.75rem;">
-                <div style="background: #eff6ff; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
-                    <div style="font-size: 1.25rem; font-weight: 600; color: #1e40af;">${stats.products}</div>
-                    <div style="font-size: 0.7rem; color: #64748b;">产品数量</div>
-                </div>
-                <div style="background: #f0fdf4; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
-                    <div style="font-size: 1.25rem; font-weight: 600; color: #16a34a;">${stats.customers}</div>
-                    <div style="font-size: 0.7rem; color: #64748b;">客户数量</div>
-                </div>
-                <div style="background: #fef3c7; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
-                    <div style="font-size: 1.25rem; font-weight: 600; color: #d97706;">${stats.templates}</div>
-                    <div style="font-size: 0.7rem; color: #64748b;">模板数量</div>
-                </div>
-            </div>
-            <div style="border-top: 1px solid #e2e8f0; padding-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
-                <div style="margin-bottom: 0.25rem;">📅 最后上传时间: ${stats.uploadTime}</div>
-                <div style="margin-bottom: 0.25rem;">🖥️ 上传设备: ${stats.deviceId}</div>
-                <div>🖼️ 图片数量: ${stats.imageCount}</div>
-            </div>`;
-    
-    if (duplicateInfo.hasDuplicates) {
-        htmlContent += `
-            <div style="border-top: 1px solid #e2e8f0; margin-top: 0.5rem; padding-top: 0.5rem;">
-                <div style="font-size: 0.8125rem; font-weight: 500; color: #dc2626; margin-bottom: 0.375rem;">⚠️ 检测到重复数据</div>
-                <div style="font-size: 0.75rem; color: #64748b;">`;
-        if (duplicateInfo.duplicateProducts > 0) {
-            htmlContent += `<div>• 重复产品: ${duplicateInfo.duplicateProducts} 个</div>`;
-        }
-        if (duplicateInfo.duplicateCustomers > 0) {
-            htmlContent += `<div>• 重复客户: ${duplicateInfo.duplicateCustomers} 个</div>`;
-        }
-        if (duplicateInfo.duplicateTemplates > 0) {
-            htmlContent += `<div>• 重复模板: ${duplicateInfo.duplicateTemplates} 个</div>`;
-        }
-        htmlContent += `</div>
-            <div style="font-size: 0.7rem; color: #f59e0b; margin-top: 0.375rem;">建议使用「修复云端重复数据」功能清理</div>
-            </div>`;
-    } else {
-        htmlContent += `
-            <div style="border-top: 1px solid #e2e8f0; margin-top: 0.5rem; padding-top: 0.5rem;">
-                <div style="font-size: 0.8125rem; font-weight: 500; color: #16a34a;">✅ 未检测到重复数据</div>
-            </div>`;
-    }
-    
-    htmlContent += '</div>';
-    
-    showModal({
-        title: '☁️ 云端数据统计',
-        message: htmlContent,
-        icon: '📊',
-        type: 'info',
-        confirmText: '关闭',
-        showCancel: false,
-        allowHtml: true
+        console.error('查看Repository数据失败:', err);
+        showToast('❌ 获取失败: ' + err.message, 'error');
     });
 }
 
@@ -42730,27 +42865,241 @@ function detectCloudDuplicates(cloudData) {
     return result;
 }
 
-// 修复云端重复数据
-function fixCloudData() {
-    var provider = appData.systemSettings.syncProvider || 'gist';
+// Repository修复云端重复数据
+function fixRepoData() {
+    var config = getRepoConfig();
+    var owner = config.owner;
+    var repo = config.repo;
+    var filePath = config.filePath;
+    
+    if (!owner || !repo) {
+        showToast('请先配置Repository信息', 'warning');
+        return;
+    }
     
     if (!confirm('⚠️ 确认修复云端重复数据？\n\n此操作将删除云端数据中的重复项，保留首次出现的数据。\n建议先导出数据备份！')) {
         return;
     }
     
-    if (provider === 'gist') {
-        fixCloudDataGist();
-    } else if (provider === 'onedrive') {
-        fixCloudDataOneDrive();
-    }
+    showToast('🔧 正在修复云端数据...', 'loading', 15000);
+    
+    getRepoFile(owner, repo, filePath)
+    .then(function(fileData) {
+        if (!fileData) {
+            showToast('云端数据为空，无需修复', 'info');
+            return;
+        }
+        
+        var content;
+        try {
+            content = decodeURIComponent(escape(atob(fileData.content)));
+        } catch (e) {
+            content = fileData.content;
+        }
+        
+        var data;
+        try {
+            data = decompressData(content);
+        } catch (e) {
+            data = JSON.parse(content);
+        }
+        
+        if (!data.data) data.data = {};
+        
+        var fixedProducts = [];
+        var fixedCustomers = [];
+        var fixedTemplates = [];
+        var productIds = new Set();
+        var customerIds = new Set();
+        var templateIds = new Set();
+        
+        (data.data.products || []).forEach(function(p) {
+            var idStr = String(p.id);
+            if (!productIds.has(idStr)) {
+                productIds.add(idStr);
+                fixedProducts.push(p);
+            }
+        });
+        
+        (data.data.customers || []).forEach(function(c) {
+            var idStr = String(c.id);
+            if (!customerIds.has(idStr)) {
+                customerIds.add(idStr);
+                fixedCustomers.push(c);
+            }
+        });
+        
+        (data.data.templates || []).forEach(function(t) {
+            var idStr = String(t.id);
+            if (!templateIds.has(idStr)) {
+                templateIds.add(idStr);
+                fixedTemplates.push(t);
+            }
+        });
+        
+        data.data.products = fixedProducts;
+        data.data.customers = fixedCustomers;
+        data.data.templates = fixedTemplates;
+        data.uploadTime = new Date().toISOString();
+        
+        var syncPayloadString = JSON.stringify(data, null, 2);
+        var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+        var finalContent = syncPayloadString;
+        
+        if (compressionEnabled) {
+            try {
+                var compressed = compressData(data);
+                if (compressed && compressed !== data) {
+                    finalContent = compressed;
+                }
+            } catch (e) {
+            }
+        }
+        
+        return putRepoFile(owner, repo, filePath, finalContent, 'Fix duplicate data', null, fileData.sha);
+    })
+    .then(function() {
+        showToast('✅ 云端重复数据修复完成！', 'success');
+        addSyncLog('success', 'Repository数据修复完成');
+    })
+    .catch(function(err) {
+        console.error('修复Repository数据失败:', err);
+        showToast('❌ 修复失败: ' + err.message, 'error');
+    });
 }
 
-function fixCloudDataGist() {
+// Repository从历史版本恢复数据
+function repoRestoreFromHistory() {
+    var config = getRepoConfig();
+    var owner = config.owner;
+    var repo = config.repo;
+    var filePath = config.filePath;
+    
+    if (!owner || !repo) {
+        showToast('请先配置Repository信息', 'warning');
+        return;
+    }
+    
+    showToast('📜 正在获取历史版本...', 'loading', 10000);
+    
+    repoApi('/repos/' + owner + '/' + repo + '/commits?path=' + filePath + '&per_page=20')
+    .then(function(res) {
+        if (!res.ok) throw new Error('获取历史版本失败: HTTP ' + res.status);
+        return res.json();
+    })
+    .then(function(commits) {
+        if (!commits || commits.length === 0) {
+            showToast('暂无历史版本记录', 'info');
+            return;
+        }
+        
+        var optionsHtml = '<select id="historyCommitSelect" style="width:100%;padding:0.5rem;font-size:0.875rem;">';
+        commits.forEach(function(commit, index) {
+            var date = new Date(commit.commit.committer.date);
+            var message = commit.commit.message || '无描述';
+            optionsHtml += '<option value="' + commit.sha + '">' + 
+                (index === 0 ? '最新' : '版本 ' + (commits.length - index)) + 
+                ' - ' + date.toLocaleString() + ' - ' + message.substring(0, 30) + '</option>';
+        });
+        optionsHtml += '</select>';
+        
+        showModal({
+            title: '🔄 从历史版本恢复',
+            message: '<div style="padding:0.5rem;">' +
+                '<div style="font-size:0.8125rem;color:#64748b;margin-bottom:0.5rem;">选择要恢复的版本:</div>' +
+                optionsHtml +
+                '<div style="font-size:0.7rem;color:#f59e0b;margin-top:0.5rem;">⚠️ 恢复后将覆盖当前云端数据</div>' +
+                '</div>',
+            icon: '📜',
+            type: 'confirm',
+            confirmText: '恢复',
+            cancelText: '取消',
+            allowHtml: true,
+            onConfirm: function() {
+                var select = document.getElementById('historyCommitSelect');
+                if (!select || !select.value) {
+                    showToast('请选择一个版本', 'warning');
+                    return;
+                }
+                
+                restoreFromCommit(owner, repo, filePath, select.value);
+            }
+        });
+    })
+    .catch(function(err) {
+        console.error('获取Repository历史版本失败:', err);
+        showToast('❌ 获取失败: ' + err.message, 'error');
+    });
+}
+
+function restoreFromCommit(owner, repo, filePath, commitSha) {
+    showToast('🔄 正在恢复历史版本...', 'loading', 15000);
+    
+    repoApi('/repos/' + owner + '/' + repo + '/contents/' + filePath + '?ref=' + commitSha)
+    .then(function(res) {
+        if (!res.ok) throw new Error('获取历史版本数据失败: HTTP ' + res.status);
+        return res.json();
+    })
+    .then(function(fileData) {
+        var content;
+        try {
+            content = decodeURIComponent(escape(atob(fileData.content)));
+        } catch (e) {
+            content = fileData.content;
+        }
+        
+        var currentSha;
+        return getRepoFile(owner, repo, filePath).then(function(currentFile) {
+            currentSha = currentFile ? currentFile.sha : null;
+            
+            var data;
+            try {
+                data = decompressData(content);
+            } catch (e) {
+                data = JSON.parse(content);
+            }
+            
+            data.uploadTime = new Date().toISOString();
+            data.deviceId = getDeviceId();
+            
+            var syncPayloadString = JSON.stringify(data, null, 2);
+            var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+            var finalContent = syncPayloadString;
+            
+            if (compressionEnabled) {
+                try {
+                    var compressed = compressData(data);
+                    if (compressed && compressed !== data) {
+                        finalContent = compressed;
+                    }
+                } catch (e) {
+                }
+            }
+            
+            return putRepoFile(owner, repo, filePath, finalContent, 'Restore from history: ' + commitSha.substring(0, 7), null, currentSha);
+        });
+    })
+    .then(function() {
+        showToast('✅ 历史版本恢复完成！', 'success');
+        addSyncLog('success', 'Repository从历史版本恢复完成');
+    })
+    .catch(function(err) {
+        console.error('恢复Repository历史版本失败:', err);
+        showToast('❌ 恢复失败: ' + err.message, 'error');
+    });
+}
+
+// 修复云端重复数据
+function fixCloudData() {
     var token = appData.systemSettings.gistToken;
     var gistId = appData.systemSettings.gistId;
     
     if (!token || !gistId) {
-        showToast('请先配置 Gist 同步', 'warning');
+        showToast('请先配置云同步', 'warning');
+        return;
+    }
+    
+    if (!confirm('⚠️ 确认修复云端重复数据？\n\n此操作将删除云端数据中的重复项，保留首次出现的数据。\n建议先导出数据备份！')) {
         return;
     }
     
@@ -42774,8 +43123,62 @@ function fixCloudDataGist() {
         var data = JSON.parse(file.content);
         var cloudData = data.data || data;
         
-        var result = removeCloudDuplicates(cloudData, data);
+        // 去重前的数量
+        var beforeCounts = {
+            products: cloudData.products ? cloudData.products.length : 0,
+            customers: cloudData.customers ? cloudData.customers.length : 0,
+            templates: cloudData.templates ? cloudData.templates.length : 0
+        };
         
+        // 去重处理
+        if (cloudData.products) {
+            var productIdSet = new Set();
+            cloudData.products = cloudData.products.filter(p => {
+                var idStr = String(p.id);
+                if (productIdSet.has(idStr)) return false;
+                productIdSet.add(idStr);
+                return true;
+            });
+        }
+        
+        if (cloudData.customers) {
+            var customerIdSet = new Set();
+            cloudData.customers = cloudData.customers.filter(c => {
+                var idStr = String(c.id);
+                if (customerIdSet.has(idStr)) return false;
+                customerIdSet.add(idStr);
+                return true;
+            });
+        }
+        
+        if (cloudData.templates) {
+            var templateIdSet = new Set();
+            cloudData.templates = cloudData.templates.filter(t => {
+                var idStr = String(t.id);
+                if (templateIdSet.has(idStr)) return false;
+                templateIdSet.add(idStr);
+                return true;
+            });
+        }
+        
+        // 更新时间戳
+        data.uploadTime = new Date().toISOString();
+        
+        // 去重后的数量
+        var afterCounts = {
+            products: cloudData.products ? cloudData.products.length : 0,
+            customers: cloudData.customers ? cloudData.customers.length : 0,
+            templates: cloudData.templates ? cloudData.templates.length : 0
+        };
+        
+        // 计算删除的重复项数量
+        var removedCounts = {
+            products: beforeCounts.products - afterCounts.products,
+            customers: beforeCounts.customers - afterCounts.customers,
+            templates: beforeCounts.templates - afterCounts.templates
+        };
+        
+        // 上传修复后的数据
         return gistApi('/gists/' + gistId, {
             method: 'PATCH',
             body: JSON.stringify({
@@ -42786,12 +43189,55 @@ function fixCloudDataGist() {
         })
         .then(function(res) {
             if (!res.ok) throw new Error('上传修复数据失败: HTTP ' + res.status);
-            return result;
+            return { removedCounts, afterCounts };
         });
     })
     .then(function(result) {
         if (result) {
-            showFixCloudDataResult(result);
+            var htmlContent = `
+                <div style="padding: 0.5rem;">
+                    <div style="font-size: 0.8125rem; font-weight: 500; color: #16a34a; margin-bottom: 0.5rem;">✅ 云端数据修复完成</div>
+                    
+                    <div style="margin-bottom: 0.5rem;">
+                        <div style="font-size: 0.75rem; font-weight: 500; color: #dc2626; margin-bottom: 0.25rem;">删除的重复项:</div>
+                        <div style="font-size: 0.75rem; color: #64748b; padding-left: 0.5rem;">`;
+            
+            if (result.removedCounts.products > 0) {
+                htmlContent += `<div>• 产品: ${result.removedCounts.products} 个</div>`;
+            }
+            if (result.removedCounts.customers > 0) {
+                htmlContent += `<div>• 客户: ${result.removedCounts.customers} 个</div>`;
+            }
+            if (result.removedCounts.templates > 0) {
+                htmlContent += `<div>• 模板: ${result.removedCounts.templates} 个</div>`;
+            }
+            if (result.removedCounts.products === 0 && result.removedCounts.customers === 0 && result.removedCounts.templates === 0) {
+                htmlContent += `<div>• 无重复数据需要删除</div>`;
+            }
+            
+            htmlContent += `</div>
+                    </div>
+                    
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 0.5rem;">
+                        <div style="font-size: 0.75rem; font-weight: 500; color: #1e40af; margin-bottom: 0.25rem;">修复后剩余:</div>
+                        <div style="font-size: 0.75rem; color: #64748b; padding-left: 0.5rem;">
+                            <div>• 产品: ${result.afterCounts.products} 个</div>
+                            <div>• 客户: ${result.afterCounts.customers} 个</div>
+                            <div>• 模板: ${result.afterCounts.templates} 个</div>
+                        </div>
+                    </div>
+                </div>`;
+            
+            showModal({
+                title: '🔧 修复结果',
+                message: htmlContent,
+                icon: '✅',
+                type: 'success',
+                confirmText: '关闭',
+                showCancel: false,
+                allowHtml: true
+            });
+            addSyncLog('success', '修复云端重复数据完成');
         }
     })
     .catch(function(err) {
@@ -42800,170 +43246,21 @@ function fixCloudDataGist() {
     });
 }
 
-function fixCloudDataOneDrive() {
-    if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
-        showToast('请先登录 OneDrive', 'warning');
+// 清空云端数据
+function clearCloudData() {
+    var token = appData.systemSettings.gistToken;
+    var gistId = appData.systemSettings.gistId;
+    
+    if (!token || !gistId) {
+        showToast('请先配置云同步', 'warning');
         return;
     }
     
-    showToast('🔧 正在修复云端数据...', 'loading', 15000);
-    
-    onedriveGetFolderId('QuoteSystem').then(function(folderId) {
-        if (!folderId) {
-            showToast('云端尚无数据，无需修复', 'info');
-            return;
-        }
-        
-        return onedriveDownloadFile(folderId, 'quote_data.json').then(function(data) {
-            return { folderId: folderId, data: data };
-        });
-    })
-    .then(function(result) {
-        if (!result || !result.data) {
-            showToast('云端数据为空，无需修复', 'info');
-            return;
-        }
-        
-        var compressedData = typeof result.data === 'string' ? result.data : JSON.stringify(result.data);
-        var jsonStr = typeof LZString !== 'undefined' ? LZString.decompressFromBase64(compressedData) : compressedData;
-        
-        if (!jsonStr) {
-            throw new Error('数据解压失败');
-        }
-        
-        var data = JSON.parse(jsonStr);
-        var cloudData = data.data || data;
-        
-        var fixResult = removeCloudDuplicates(cloudData, data);
-        
-        return onedriveUploadFile(result.folderId, 'quote_data.json', JSON.stringify(data)).then(function() {
-            return fixResult;
-        });
-    })
-    .then(function(result) {
-        if (result) {
-            showFixCloudDataResult(result);
-        }
-    })
-    .catch(function(err) {
-        console.error('修复 OneDrive 云端数据失败:', err);
-        var errorMsg = err.message || '未知错误';
-        if (errorMsg.includes('401')) {
-            errorMsg = '登录已过期，请重新登录 OneDrive';
-            logoutOneDrive();
-        }
-        showToast('❌ 修复失败: ' + errorMsg, 'error');
-    });
-}
-
-function removeCloudDuplicates(cloudData, data) {
-    var beforeCounts = {
-        products: cloudData.products ? cloudData.products.length : 0,
-        customers: cloudData.customers ? cloudData.customers.length : 0,
-        templates: cloudData.templates ? cloudData.templates.length : 0
-    };
-    
-    if (cloudData.products) {
-        var productIdSet = new Set();
-        cloudData.products = cloudData.products.filter(p => {
-            var idStr = String(p.id);
-            if (productIdSet.has(idStr)) return false;
-            productIdSet.add(idStr);
-            return true;
-        });
-    }
-    
-    if (cloudData.customers) {
-        var customerIdSet = new Set();
-        cloudData.customers = cloudData.customers.filter(c => {
-            var idStr = String(c.id);
-            if (customerIdSet.has(idStr)) return false;
-            customerIdSet.add(idStr);
-            return true;
-        });
-    }
-    
-    if (cloudData.templates) {
-        var templateIdSet = new Set();
-        cloudData.templates = cloudData.templates.filter(t => {
-            var idStr = String(t.id);
-            if (templateIdSet.has(idStr)) return false;
-            templateIdSet.add(idStr);
-            return true;
-        });
-    }
-    
-    data.uploadTime = new Date().toISOString();
-    
-    var afterCounts = {
-        products: cloudData.products ? cloudData.products.length : 0,
-        customers: cloudData.customers ? cloudData.customers.length : 0,
-        templates: cloudData.templates ? cloudData.templates.length : 0
-    };
-    
-    return {
-        removedCounts: {
-            products: beforeCounts.products - afterCounts.products,
-            customers: beforeCounts.customers - afterCounts.customers,
-            templates: beforeCounts.templates - afterCounts.templates
-        },
-        afterCounts: afterCounts
-    };
-}
-
-function showFixCloudDataResult(result) {
-    var htmlContent = `
-        <div style="padding: 0.5rem;">
-            <div style="font-size: 0.8125rem; font-weight: 500; color: #16a34a; margin-bottom: 0.5rem;">✅ 云端数据修复完成</div>
-            
-            <div style="margin-bottom: 0.5rem;">
-                <div style="font-size: 0.75rem; font-weight: 500; color: #dc2626; margin-bottom: 0.25rem;">删除的重复项:</div>
-                <div style="font-size: 0.75rem; color: #64748b; padding-left: 0.5rem;">`;
-    
-    if (result.removedCounts.products > 0) {
-        htmlContent += `<div>• 产品: ${result.removedCounts.products} 个</div>`;
-    }
-    if (result.removedCounts.customers > 0) {
-        htmlContent += `<div>• 客户: ${result.removedCounts.customers} 个</div>`;
-    }
-    if (result.removedCounts.templates > 0) {
-        htmlContent += `<div>• 模板: ${result.removedCounts.templates} 个</div>`;
-    }
-    if (result.removedCounts.products === 0 && result.removedCounts.customers === 0 && result.removedCounts.templates === 0) {
-        htmlContent += `<div>• 无重复数据需要删除</div>`;
-    }
-    
-    htmlContent += `</div>
-            </div>
-            
-            <div style="border-top: 1px solid #e2e8f0; padding-top: 0.5rem;">
-                <div style="font-size: 0.75rem; font-weight: 500; color: #1e40af; margin-bottom: 0.25rem;">修复后剩余:</div>
-                <div style="font-size: 0.75rem; color: #64748b; padding-left: 0.5rem;">
-                    <div>• 产品: ${result.afterCounts.products} 个</div>
-                    <div>• 客户: ${result.afterCounts.customers} 个</div>
-                    <div>• 模板: ${result.afterCounts.templates} 个</div>
-                </div>
-            </div>
-        </div>`;
-    
-    showModal({
-        title: '🔧 修复结果',
-        message: htmlContent,
-        icon: '✅',
-        type: 'success',
-        confirmText: '关闭',
-        showCancel: false,
-        allowHtml: true
-    });
-    addSyncLog('success', '修复云端重复数据完成');
-}
-
-// 清空云端数据
-function clearCloudData() {
     if (!confirm('⚠️ 危险操作！\n\n此操作将清空云端所有数据，且无法恢复！\n\n建议先导出数据备份！\n\n确定继续吗？')) {
         return;
     }
     
+    // 必须验证管理员密码
     var inputPassword = prompt('请输入管理员密码以确认清空云端数据：');
     if (!inputPassword) {
         showToast('操作已取消', 'info');
@@ -42975,26 +43272,9 @@ function clearCloudData() {
         return;
     }
     
-    var provider = appData.systemSettings.syncProvider || 'gist';
-    
-    if (provider === 'gist') {
-        clearCloudDataGist();
-    } else if (provider === 'onedrive') {
-        clearCloudDataOneDrive();
-    }
-}
-
-function clearCloudDataGist() {
-    var token = appData.systemSettings.gistToken;
-    var gistId = appData.systemSettings.gistId;
-    
-    if (!token || !gistId) {
-        showToast('请先配置 Gist 同步', 'warning');
-        return;
-    }
-    
     showToast('🗑️ 正在清空云端数据...', 'loading', 10000);
     
+    // 清空所有相关文件
     var filesToClear = {
         'quote-data.json': { content: JSON.stringify({ 
             version: '3.4',
@@ -43024,6 +43304,7 @@ function clearCloudDataGist() {
         showToast('✅ 云端数据已清空', 'success');
         addSyncLog('success', '手动清空云端数据');
         
+        // 重置本地同步状态
         appData.systemSettings.lastSyncTime = null;
         appData.systemSettings.lastIncrementalSyncTime = null;
         saveDataImmediately();
@@ -43031,63 +43312,6 @@ function clearCloudDataGist() {
     .catch(function(err) {
         console.error('清空云端数据失败:', err);
         showToast('❌ 清空失败: ' + err.message, 'error');
-    });
-}
-
-function clearCloudDataOneDrive() {
-    if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
-        showToast('请先登录 OneDrive', 'warning');
-        return;
-    }
-    
-    showToast('🗑️ 正在清空云端数据...', 'loading', 15000);
-    
-    onedriveGetFolderId('QuoteSystem').then(function(folderId) {
-        if (!folderId) {
-            showToast('云端尚无数据', 'info');
-            return;
-        }
-        
-        return onedriveDeleteFolder(folderId).then(function() {
-            return onedriveCreateFolder('QuoteSystem');
-        });
-    })
-    .then(function(folderId) {
-        if (!folderId) {
-            return;
-        }
-        
-        var emptyData = JSON.stringify({
-            version: '3.4',
-            uploadTime: new Date().toISOString(),
-            deviceId: getDeviceId(),
-            data: {
-                products: [],
-                customers: [],
-                templates: [],
-                quoteHistory: []
-            },
-            imageCount: 0
-        });
-        
-        return onedriveUploadFile(folderId, 'quote_data.json', emptyData);
-    })
-    .then(function() {
-        showToast('✅ 云端数据已清空', 'success');
-        addSyncLog('success', '手动清空 OneDrive 云端数据');
-        
-        appData.systemSettings.lastSyncTime = null;
-        appData.systemSettings.lastIncrementalSyncTime = null;
-        saveDataImmediately();
-    })
-    .catch(function(err) {
-        console.error('清空 OneDrive 云端数据失败:', err);
-        var errorMsg = err.message || '未知错误';
-        if (errorMsg.includes('401')) {
-            errorMsg = '登录已过期，请重新登录 OneDrive';
-            logoutOneDrive();
-        }
-        showToast('❌ 清空失败: ' + errorMsg, 'error');
     });
 }
 
@@ -43359,6 +43583,49 @@ function updateCloudSyncStatus() {
     if (cloudIntervalEl) cloudIntervalEl.value = String(appData.systemSettings.cloudSyncInterval || 0);
     if (syncModeEl) syncModeEl.value = syncMode;
     
+    // 初始化Repository配置字段
+    var repoOwnerEl = document.getElementById('repoOwner');
+    var repoNameEl = document.getElementById('repoName');
+    var repoBranchEl = document.getElementById('repoBranch');
+    var repoFilePathEl = document.getElementById('repoFilePath');
+    if (repoOwnerEl) repoOwnerEl.value = appData.systemSettings.repoOwner || '';
+    if (repoNameEl) repoNameEl.value = appData.systemSettings.repoName || '';
+    if (repoBranchEl) repoBranchEl.value = appData.systemSettings.repoBranch || 'main';
+    if (repoFilePathEl) repoFilePathEl.value = appData.systemSettings.repoFilePath || 'quote-data.json';
+    
+    // 设置同步目标选中状态和面板显示
+    var syncTargetRadios = document.querySelectorAll('input[name="syncTarget"]');
+    var targetValue = appData.systemSettings.syncTarget || 'gist';
+    syncTargetRadios.forEach(function(radio) {
+        radio.checked = radio.value === targetValue;
+    });
+    
+    // 直接切换面板显示，不调用switchSyncTarget()避免递归
+    var gistPanel = document.getElementById('gistConfigPanel');
+    var repoPanel = document.getElementById('repoConfigPanel');
+    var isGistMode = targetValue === 'gist';
+    
+    if (isGistMode) {
+        if (repoPanel) repoPanel.style.display = 'none';
+        if (gistPanel) gistPanel.style.display = 'flex';
+    } else {
+        if (gistPanel) gistPanel.style.display = 'none';
+        if (repoPanel) repoPanel.style.display = 'block';
+    }
+    currentSyncTarget = targetValue;
+    
+    // 显示/隐藏Gist专属功能按钮
+    var gistOnlyButtons = document.querySelectorAll('.gist-only');
+    gistOnlyButtons.forEach(function(btn) {
+        btn.style.display = isGistMode ? 'inline-flex' : 'none';
+    });
+    
+    // 显示/隐藏Repository专属功能按钮
+    var repoOnlyButtons = document.querySelectorAll('.repo-only');
+    repoOnlyButtons.forEach(function(btn) {
+        btn.style.display = isGistMode ? 'none' : 'inline-flex';
+    });
+    
     // 更新高级配置UI
     if (incrementalEl) incrementalEl.checked = appData.systemSettings.incrementalSyncEnabled !== false;
     if (autoRetryEl) autoRetryEl.checked = appData.systemSettings.autoRetryEnabled !== false;
@@ -43381,10 +43648,6 @@ function updateCloudSyncStatus() {
     // 更新团队设置UI
     loadTeamSettings();
     renderTeamActivityLog();
-    
-    // 更新同步方式选择器状态
-    var provider = appData.systemSettings.syncProvider || 'gist';
-    switchSyncProvider(provider);
 }
 
 // 加载团队设置到UI
@@ -44803,6 +45066,25 @@ function mergeSyncData(serverData) {
         if (ss.defaultPriceMode) appData.systemSettings.defaultPriceMode = ss.defaultPriceMode;
         if (ss.defaultDiscountRate !== undefined) appData.systemSettings.defaultDiscountRate = ss.defaultDiscountRate;
         if (ss.quoteValidDays !== undefined) appData.systemSettings.quoteValidDays = ss.quoteValidDays;
+    }
+    
+    // 保存云端图片到本地IndexedDB（仅Repository模式支持）
+    if (serverData.images && typeof serverData.images === 'object') {
+        var imageIds = Object.keys(serverData.images);
+        if (imageIds.length > 0) {
+            addSyncLog('info', '开始保存 ' + imageIds.length + ' 张同步图片到本地...');
+            
+            imageIds.forEach(function(imageId) {
+                var imageData = serverData.images[imageId];
+                if (imageData && imageData.startsWith('data:image')) {
+                    IDB.saveImage(imageId, imageData).catch(function(e) {
+                        console.error('保存图片失败:', imageId, e);
+                    });
+                }
+            });
+            
+            addSyncLog('success', '图片保存完成');
+        }
     }
     
     appData.systemSettings.lastSyncTime = new Date().toISOString();
