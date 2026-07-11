@@ -39005,6 +39005,10 @@ function switchSyncProvider(provider) {
     var onedriveConfig = document.getElementById('syncConfigOneDrive');
     var gistButtons = document.getElementById('gistSyncButtons');
     var onedriveButtons = document.getElementById('onedriveSyncButtons');
+    var teamSettingsPanel = document.getElementById('teamSettingsPanel');
+    var teamActivityPanel = document.getElementById('teamActivityPanel');
+    var teamMembersPanel = document.getElementById('teamMembersPanel');
+    var teamEnabled = document.getElementById('teamEnabled');
     
     if (provider === 'gist') {
         gistBtn.style.background = 'var(--primary)';
@@ -39016,6 +39020,11 @@ function switchSyncProvider(provider) {
         gistButtons.style.display = 'inline-flex';
         gistButtons.style.gap = '0.5rem';
         onedriveButtons.style.display = 'none';
+        if (teamEnabled && teamEnabled.checked) {
+            if (teamSettingsPanel) teamSettingsPanel.style.display = 'block';
+            if (teamActivityPanel) teamActivityPanel.style.display = 'block';
+            if (teamMembersPanel) teamMembersPanel.style.display = 'block';
+        }
     } else {
         onedriveBtn.style.background = 'var(--primary)';
         onedriveBtn.style.color = 'white';
@@ -39026,6 +39035,11 @@ function switchSyncProvider(provider) {
         gistButtons.style.display = 'none';
         onedriveButtons.style.display = 'inline-flex';
         onedriveButtons.style.gap = '0.5rem';
+        if (teamSettingsPanel) teamSettingsPanel.style.display = 'none';
+        if (teamActivityPanel) teamActivityPanel.style.display = 'none';
+        if (teamMembersPanel) teamMembersPanel.style.display = 'none';
+        if (teamEnabled) teamEnabled.checked = false;
+        appData.systemSettings.teamEnabled = false;
         updateOneDriveStatus();
     }
 }
@@ -39212,16 +39226,24 @@ function getOneDriveAccessToken() {
     return new Promise(function(resolve, reject) {
         var expiresAt = appData.systemSettings.onedriveExpiresAt;
         var accessToken = appData.systemSettings.onedriveAccessToken;
+        var now = Date.now();
         
-        if (accessToken && (!expiresAt || Date.now() < expiresAt)) {
+        if (accessToken && expiresAt && now < expiresAt - 60000) {
             resolve(accessToken);
         } else {
-            refreshOneDriveToken().then(resolve).catch(reject);
+            refreshOneDriveToken().then(resolve).catch(function(err) {
+                if (err.message && err.message.includes('没有刷新令牌')) {
+                    reject(new Error('登录已过期，请重新登录 OneDrive'));
+                } else {
+                    reject(err);
+                }
+            });
         }
     });
 }
 
-function onedriveApi(path, options) {
+function onedriveApi(path, options, retryCount) {
+    retryCount = retryCount || 0;
     return getOneDriveAccessToken().then(function(token) {
         var headers = {
             'Authorization': 'Bearer ' + token,
@@ -39240,6 +39262,10 @@ function onedriveApi(path, options) {
             .then(function(response) {
                 clearTimeout(timeoutId);
                 if (!response.ok) {
+                    if (response.status === 401 && retryCount < 1) {
+                        appData.systemSettings.onedriveAccessToken = '';
+                        return onedriveApi(path, options, retryCount + 1);
+                    }
                     throw new Error('OneDrive API 错误: ' + response.status);
                 }
                 return response.json();
@@ -39254,7 +39280,8 @@ function onedriveApi(path, options) {
     });
 }
 
-function onedriveApiRaw(path, options) {
+function onedriveApiRaw(path, options, retryCount) {
+    retryCount = retryCount || 0;
     return getOneDriveAccessToken().then(function(token) {
         var headers = Object.assign({}, options.headers || {}, {
             'Authorization': 'Bearer ' + token
@@ -39272,6 +39299,10 @@ function onedriveApiRaw(path, options) {
             .then(function(response) {
                 clearTimeout(timeoutId);
                 if (!response.ok) {
+                    if (response.status === 401 && retryCount < 1) {
+                        appData.systemSettings.onedriveAccessToken = '';
+                        return onedriveApiRaw(path, options, retryCount + 1);
+                    }
                     throw new Error('OneDrive API 错误: ' + response.status);
                 }
                 return response;
@@ -39316,6 +39347,12 @@ function onedriveCreateFolder(folderName) {
             folder: {},
             "@microsoft.graph.conflictBehavior": "rename"
         })
+    });
+}
+
+function onedriveDeleteFolder(folderId) {
+    return onedriveApi('/items/' + folderId, {
+        method: 'DELETE'
     });
 }
 
@@ -39648,9 +39685,13 @@ function saveAndToggleOneDriveSync() {
     var batchSync = document.getElementById('batchSyncEnabled').checked;
     var bandwidthAdapt = document.getElementById('bandwidthAdaptive').checked;
     
-    if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
-        dialog.alert('请先登录 OneDrive\n\n登录方法：点击「登录 OneDrive」按钮进行授权', '提示', 'ℹ️');
-        return;
+    var wasEnabled = appData.systemSettings.cloudSyncEnabled;
+    
+    if (!wasEnabled) {
+        if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
+            dialog.alert('请先登录 OneDrive\n\n登录方法：点击「登录 OneDrive」按钮进行授权', '提示', 'ℹ️');
+            return;
+        }
     }
     
     appData.systemSettings.cloudSyncInterval = interval;
@@ -39663,7 +39704,6 @@ function saveAndToggleOneDriveSync() {
     appData.systemSettings.batchSyncEnabled = batchSync;
     appData.systemSettings.bandwidthAdaptive = bandwidthAdapt;
     
-    var wasEnabled = appData.systemSettings.cloudSyncEnabled;
     appData.systemSettings.cloudSyncEnabled = !wasEnabled;
     saveDataImmediately();
     
@@ -40472,6 +40512,11 @@ function syncNowGist() {
 }
 
 function syncNowOneDrive() {
+    if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
+        showToast('请先登录 OneDrive', 'warning');
+        return;
+    }
+    
     isSyncing = true;
     showSyncProgress('正在检测变更...', 10);
     addSyncLog('info', '开始 OneDrive 同步...');
@@ -40486,8 +40531,13 @@ function syncNowOneDrive() {
     })
     .catch(function(err) {
         console.error('OneDrive 同步失败:', err);
-        showToast('❌ OneDrive 同步失败: ' + err.message, 'error');
-        addSyncLog('error', 'OneDrive 同步失败: ' + err.message);
+        var errorMsg = err.message || '未知错误';
+        if (errorMsg.includes('401')) {
+            errorMsg = '令牌失效，请重新登录 OneDrive';
+            logoutOneDrive();
+        }
+        showToast('❌ OneDrive 同步失败: ' + errorMsg, 'error');
+        addSyncLog('error', 'OneDrive 同步失败: ' + errorMsg);
     })
     .then(function() {
         isSyncing = false;
@@ -42453,11 +42503,21 @@ function importData() {
 
 // 查看云端数据统计
 function viewCloudData() {
+    var provider = appData.systemSettings.syncProvider || 'gist';
+    
+    if (provider === 'gist') {
+        viewCloudDataGist();
+    } else if (provider === 'onedrive') {
+        viewCloudDataOneDrive();
+    }
+}
+
+function viewCloudDataGist() {
     var token = appData.systemSettings.gistToken;
     var gistId = appData.systemSettings.gistId;
     
     if (!token || !gistId) {
-        showToast('请先配置云同步', 'warning');
+        showToast('请先配置 Gist 同步', 'warning');
         return;
     }
     
@@ -42479,91 +42539,142 @@ function viewCloudData() {
         }
         
         var data = JSON.parse(file.content);
-        // 兼容多种数据结构
-        var cloudData;
-        if (data.data && typeof data.data === 'object') {
-            cloudData = data.data;
-        } else if (data.products || data.templates || data.customers) {
-            cloudData = {
-                products: data.products || [],
-                templates: data.templates || [],
-                customers: data.customers || []
-            };
-        } else {
-            cloudData = {};
-        }
-        
-        var stats = {
-            products: cloudData.products ? cloudData.products.length : 0,
-            customers: cloudData.customers ? cloudData.customers.length : 0,
-            templates: cloudData.templates ? cloudData.templates.length : 0,
-            uploadTime: data.uploadTime ? new Date(data.uploadTime).toLocaleString() : '未知',
-            deviceId: data.deviceId || '未知设备'
-        };
-        
-        // 检测重复数据
-        var duplicateInfo = detectCloudDuplicates(cloudData);
-        
-        var htmlContent = `
-            <div style="padding: 0.5rem;">
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.75rem;">
-                    <div style="background: #eff6ff; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
-                        <div style="font-size: 1.25rem; font-weight: 600; color: #1e40af;">${stats.products}</div>
-                        <div style="font-size: 0.7rem; color: #64748b;">产品数量</div>
-                    </div>
-                    <div style="background: #f0fdf4; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
-                        <div style="font-size: 1.25rem; font-weight: 600; color: #16a34a;">${stats.customers}</div>
-                        <div style="font-size: 0.7rem; color: #64748b;">客户数量</div>
-                    </div>
-                    <div style="background: #fef3c7; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
-                        <div style="font-size: 1.25rem; font-weight: 600; color: #d97706;">${stats.templates}</div>
-                        <div style="font-size: 0.7rem; color: #64748b;">模板数量</div>
-                    </div>
-                </div>
-                <div style="border-top: 1px solid #e2e8f0; padding-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
-                    <div style="margin-bottom: 0.25rem;">📅 最后上传时间: ${stats.uploadTime}</div>
-                    <div>🖥️ 上传设备: ${stats.deviceId}</div>
-                </div>`;
-        
-        if (duplicateInfo.hasDuplicates) {
-            htmlContent += `
-                <div style="border-top: 1px solid #e2e8f0; margin-top: 0.5rem; padding-top: 0.5rem;">
-                    <div style="font-size: 0.8125rem; font-weight: 500; color: #dc2626; margin-bottom: 0.375rem;">⚠️ 检测到重复数据</div>
-                    <div style="font-size: 0.75rem; color: #64748b;">`;
-            if (duplicateInfo.duplicateProducts > 0) {
-                htmlContent += `<div>• 重复产品: ${duplicateInfo.duplicateProducts} 个</div>`;
-            }
-            if (duplicateInfo.duplicateCustomers > 0) {
-                htmlContent += `<div>• 重复客户: ${duplicateInfo.duplicateCustomers} 个</div>`;
-            }
-            if (duplicateInfo.duplicateTemplates > 0) {
-                htmlContent += `<div>• 重复模板: ${duplicateInfo.duplicateTemplates} 个</div>`;
-            }
-            htmlContent += `</div>
-                <div style="font-size: 0.7rem; color: #f59e0b; margin-top: 0.375rem;">建议使用「修复云端重复数据」功能清理</div>
-                </div>`;
-        } else {
-            htmlContent += `
-                <div style="border-top: 1px solid #e2e8f0; margin-top: 0.5rem; padding-top: 0.5rem;">
-                    <div style="font-size: 0.8125rem; font-weight: 500; color: #16a34a;">✅ 未检测到重复数据</div>
-                </div>`;
-        }
-        
-        htmlContent += '</div>';
-        
-        showModal({
-            title: '☁️ 云端数据统计',
-            message: htmlContent,
-            icon: '📊',
-            type: 'info',
-            confirmText: '关闭',
-            showCancel: false,
-            allowHtml: true
-        });
+        renderCloudDataStats(data);
     })
     .catch(function(err) {
         console.error('查看云端数据失败:', err);
         showToast('❌ 获取失败: ' + err.message, 'error');
+    });
+}
+
+function viewCloudDataOneDrive() {
+    if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
+        showToast('请先登录 OneDrive', 'warning');
+        return;
+    }
+    
+    showToast('📡 正在获取云端数据...', 'loading', 10000);
+    
+    onedriveGetFolderId('QuoteSystem').then(function(folderId) {
+        if (!folderId) {
+            showToast('云端尚无数据', 'info');
+            return;
+        }
+        
+        return onedriveDownloadFile(folderId, 'quote_data.json').then(function(data) {
+            return { folderId: folderId, data: data };
+        });
+    })
+    .then(function(result) {
+        if (!result || !result.data) {
+            showToast('云端数据为空', 'info');
+            return;
+        }
+        
+        var compressedData = typeof result.data === 'string' ? result.data : JSON.stringify(result.data);
+        var jsonStr = typeof LZString !== 'undefined' ? LZString.decompressFromBase64(compressedData) : compressedData;
+        
+        if (!jsonStr) {
+            throw new Error('数据解压失败');
+        }
+        
+        var data = JSON.parse(jsonStr);
+        renderCloudDataStats(data);
+    })
+    .catch(function(err) {
+        console.error('查看 OneDrive 云端数据失败:', err);
+        var errorMsg = err.message || '未知错误';
+        if (errorMsg.includes('401')) {
+            errorMsg = '登录已过期，请重新登录 OneDrive';
+            logoutOneDrive();
+        }
+        showToast('❌ 获取失败: ' + errorMsg, 'error');
+    });
+}
+
+function renderCloudDataStats(data) {
+    // 兼容多种数据结构
+    var cloudData;
+    if (data.data && typeof data.data === 'object') {
+        cloudData = data.data;
+    } else if (data.products || data.templates || data.customers) {
+        cloudData = {
+            products: data.products || [],
+            templates: data.templates || [],
+            customers: data.customers || []
+        };
+    } else {
+        cloudData = {};
+    }
+    
+    var stats = {
+        products: cloudData.products ? cloudData.products.length : 0,
+        customers: cloudData.customers ? cloudData.customers.length : 0,
+        templates: cloudData.templates ? cloudData.templates.length : 0,
+        uploadTime: data.uploadTime || data.timestamp ? new Date(data.uploadTime || data.timestamp).toLocaleString() : '未知',
+        deviceId: data.deviceId || '未知设备',
+        imageCount: data.imageCount || 0
+    };
+    
+    // 检测重复数据
+    var duplicateInfo = detectCloudDuplicates(cloudData);
+    
+    var htmlContent = `
+        <div style="padding: 0.5rem;">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.75rem;">
+                <div style="background: #eff6ff; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 600; color: #1e40af;">${stats.products}</div>
+                    <div style="font-size: 0.7rem; color: #64748b;">产品数量</div>
+                </div>
+                <div style="background: #f0fdf4; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 600; color: #16a34a;">${stats.customers}</div>
+                    <div style="font-size: 0.7rem; color: #64748b;">客户数量</div>
+                </div>
+                <div style="background: #fef3c7; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 600; color: #d97706;">${stats.templates}</div>
+                    <div style="font-size: 0.7rem; color: #64748b;">模板数量</div>
+                </div>
+            </div>
+            <div style="border-top: 1px solid #e2e8f0; padding-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
+                <div style="margin-bottom: 0.25rem;">📅 最后上传时间: ${stats.uploadTime}</div>
+                <div style="margin-bottom: 0.25rem;">🖥️ 上传设备: ${stats.deviceId}</div>
+                <div>🖼️ 图片数量: ${stats.imageCount}</div>
+            </div>`;
+    
+    if (duplicateInfo.hasDuplicates) {
+        htmlContent += `
+            <div style="border-top: 1px solid #e2e8f0; margin-top: 0.5rem; padding-top: 0.5rem;">
+                <div style="font-size: 0.8125rem; font-weight: 500; color: #dc2626; margin-bottom: 0.375rem;">⚠️ 检测到重复数据</div>
+                <div style="font-size: 0.75rem; color: #64748b;">`;
+        if (duplicateInfo.duplicateProducts > 0) {
+            htmlContent += `<div>• 重复产品: ${duplicateInfo.duplicateProducts} 个</div>`;
+        }
+        if (duplicateInfo.duplicateCustomers > 0) {
+            htmlContent += `<div>• 重复客户: ${duplicateInfo.duplicateCustomers} 个</div>`;
+        }
+        if (duplicateInfo.duplicateTemplates > 0) {
+            htmlContent += `<div>• 重复模板: ${duplicateInfo.duplicateTemplates} 个</div>`;
+        }
+        htmlContent += `</div>
+            <div style="font-size: 0.7rem; color: #f59e0b; margin-top: 0.375rem;">建议使用「修复云端重复数据」功能清理</div>
+            </div>`;
+    } else {
+        htmlContent += `
+            <div style="border-top: 1px solid #e2e8f0; margin-top: 0.5rem; padding-top: 0.5rem;">
+                <div style="font-size: 0.8125rem; font-weight: 500; color: #16a34a;">✅ 未检测到重复数据</div>
+            </div>`;
+    }
+    
+    htmlContent += '</div>';
+    
+    showModal({
+        title: '☁️ 云端数据统计',
+        message: htmlContent,
+        icon: '📊',
+        type: 'info',
+        confirmText: '关闭',
+        showCancel: false,
+        allowHtml: true
     });
 }
 
@@ -42621,15 +42732,25 @@ function detectCloudDuplicates(cloudData) {
 
 // 修复云端重复数据
 function fixCloudData() {
+    var provider = appData.systemSettings.syncProvider || 'gist';
+    
+    if (!confirm('⚠️ 确认修复云端重复数据？\n\n此操作将删除云端数据中的重复项，保留首次出现的数据。\n建议先导出数据备份！')) {
+        return;
+    }
+    
+    if (provider === 'gist') {
+        fixCloudDataGist();
+    } else if (provider === 'onedrive') {
+        fixCloudDataOneDrive();
+    }
+}
+
+function fixCloudDataGist() {
     var token = appData.systemSettings.gistToken;
     var gistId = appData.systemSettings.gistId;
     
     if (!token || !gistId) {
-        showToast('请先配置云同步', 'warning');
-        return;
-    }
-    
-    if (!confirm('⚠️ 确认修复云端重复数据？\n\n此操作将删除云端数据中的重复项，保留首次出现的数据。\n建议先导出数据备份！')) {
+        showToast('请先配置 Gist 同步', 'warning');
         return;
     }
     
@@ -42653,62 +42774,8 @@ function fixCloudData() {
         var data = JSON.parse(file.content);
         var cloudData = data.data || data;
         
-        // 去重前的数量
-        var beforeCounts = {
-            products: cloudData.products ? cloudData.products.length : 0,
-            customers: cloudData.customers ? cloudData.customers.length : 0,
-            templates: cloudData.templates ? cloudData.templates.length : 0
-        };
+        var result = removeCloudDuplicates(cloudData, data);
         
-        // 去重处理
-        if (cloudData.products) {
-            var productIdSet = new Set();
-            cloudData.products = cloudData.products.filter(p => {
-                var idStr = String(p.id);
-                if (productIdSet.has(idStr)) return false;
-                productIdSet.add(idStr);
-                return true;
-            });
-        }
-        
-        if (cloudData.customers) {
-            var customerIdSet = new Set();
-            cloudData.customers = cloudData.customers.filter(c => {
-                var idStr = String(c.id);
-                if (customerIdSet.has(idStr)) return false;
-                customerIdSet.add(idStr);
-                return true;
-            });
-        }
-        
-        if (cloudData.templates) {
-            var templateIdSet = new Set();
-            cloudData.templates = cloudData.templates.filter(t => {
-                var idStr = String(t.id);
-                if (templateIdSet.has(idStr)) return false;
-                templateIdSet.add(idStr);
-                return true;
-            });
-        }
-        
-        // 更新时间戳
-        data.uploadTime = new Date().toISOString();
-        
-        // 去重后的数量
-        var afterCounts = {
-            products: cloudData.products ? cloudData.products.length : 0,
-            customers: cloudData.customers ? cloudData.customers.length : 0,
-            templates: cloudData.templates ? cloudData.templates.length : 0
-        };
-        
-        // 计算删除的重复项数量
-        var removedCounts = {
-            products: beforeCounts.products - afterCounts.products,
-            customers: beforeCounts.customers - afterCounts.customers,
-            templates: beforeCounts.templates - afterCounts.templates
-        };
-        
-        // 上传修复后的数据
         return gistApi('/gists/' + gistId, {
             method: 'PATCH',
             body: JSON.stringify({
@@ -42719,55 +42786,12 @@ function fixCloudData() {
         })
         .then(function(res) {
             if (!res.ok) throw new Error('上传修复数据失败: HTTP ' + res.status);
-            return { removedCounts, afterCounts };
+            return result;
         });
     })
     .then(function(result) {
         if (result) {
-            var htmlContent = `
-                <div style="padding: 0.5rem;">
-                    <div style="font-size: 0.8125rem; font-weight: 500; color: #16a34a; margin-bottom: 0.5rem;">✅ 云端数据修复完成</div>
-                    
-                    <div style="margin-bottom: 0.5rem;">
-                        <div style="font-size: 0.75rem; font-weight: 500; color: #dc2626; margin-bottom: 0.25rem;">删除的重复项:</div>
-                        <div style="font-size: 0.75rem; color: #64748b; padding-left: 0.5rem;">`;
-            
-            if (result.removedCounts.products > 0) {
-                htmlContent += `<div>• 产品: ${result.removedCounts.products} 个</div>`;
-            }
-            if (result.removedCounts.customers > 0) {
-                htmlContent += `<div>• 客户: ${result.removedCounts.customers} 个</div>`;
-            }
-            if (result.removedCounts.templates > 0) {
-                htmlContent += `<div>• 模板: ${result.removedCounts.templates} 个</div>`;
-            }
-            if (result.removedCounts.products === 0 && result.removedCounts.customers === 0 && result.removedCounts.templates === 0) {
-                htmlContent += `<div>• 无重复数据需要删除</div>`;
-            }
-            
-            htmlContent += `</div>
-                    </div>
-                    
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 0.5rem;">
-                        <div style="font-size: 0.75rem; font-weight: 500; color: #1e40af; margin-bottom: 0.25rem;">修复后剩余:</div>
-                        <div style="font-size: 0.75rem; color: #64748b; padding-left: 0.5rem;">
-                            <div>• 产品: ${result.afterCounts.products} 个</div>
-                            <div>• 客户: ${result.afterCounts.customers} 个</div>
-                            <div>• 模板: ${result.afterCounts.templates} 个</div>
-                        </div>
-                    </div>
-                </div>`;
-            
-            showModal({
-                title: '🔧 修复结果',
-                message: htmlContent,
-                icon: '✅',
-                type: 'success',
-                confirmText: '关闭',
-                showCancel: false,
-                allowHtml: true
-            });
-            addSyncLog('success', '修复云端重复数据完成');
+            showFixCloudDataResult(result);
         }
     })
     .catch(function(err) {
@@ -42776,21 +42800,170 @@ function fixCloudData() {
     });
 }
 
-// 清空云端数据
-function clearCloudData() {
-    var token = appData.systemSettings.gistToken;
-    var gistId = appData.systemSettings.gistId;
-    
-    if (!token || !gistId) {
-        showToast('请先配置云同步', 'warning');
+function fixCloudDataOneDrive() {
+    if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
+        showToast('请先登录 OneDrive', 'warning');
         return;
     }
     
+    showToast('🔧 正在修复云端数据...', 'loading', 15000);
+    
+    onedriveGetFolderId('QuoteSystem').then(function(folderId) {
+        if (!folderId) {
+            showToast('云端尚无数据，无需修复', 'info');
+            return;
+        }
+        
+        return onedriveDownloadFile(folderId, 'quote_data.json').then(function(data) {
+            return { folderId: folderId, data: data };
+        });
+    })
+    .then(function(result) {
+        if (!result || !result.data) {
+            showToast('云端数据为空，无需修复', 'info');
+            return;
+        }
+        
+        var compressedData = typeof result.data === 'string' ? result.data : JSON.stringify(result.data);
+        var jsonStr = typeof LZString !== 'undefined' ? LZString.decompressFromBase64(compressedData) : compressedData;
+        
+        if (!jsonStr) {
+            throw new Error('数据解压失败');
+        }
+        
+        var data = JSON.parse(jsonStr);
+        var cloudData = data.data || data;
+        
+        var fixResult = removeCloudDuplicates(cloudData, data);
+        
+        return onedriveUploadFile(result.folderId, 'quote_data.json', JSON.stringify(data)).then(function() {
+            return fixResult;
+        });
+    })
+    .then(function(result) {
+        if (result) {
+            showFixCloudDataResult(result);
+        }
+    })
+    .catch(function(err) {
+        console.error('修复 OneDrive 云端数据失败:', err);
+        var errorMsg = err.message || '未知错误';
+        if (errorMsg.includes('401')) {
+            errorMsg = '登录已过期，请重新登录 OneDrive';
+            logoutOneDrive();
+        }
+        showToast('❌ 修复失败: ' + errorMsg, 'error');
+    });
+}
+
+function removeCloudDuplicates(cloudData, data) {
+    var beforeCounts = {
+        products: cloudData.products ? cloudData.products.length : 0,
+        customers: cloudData.customers ? cloudData.customers.length : 0,
+        templates: cloudData.templates ? cloudData.templates.length : 0
+    };
+    
+    if (cloudData.products) {
+        var productIdSet = new Set();
+        cloudData.products = cloudData.products.filter(p => {
+            var idStr = String(p.id);
+            if (productIdSet.has(idStr)) return false;
+            productIdSet.add(idStr);
+            return true;
+        });
+    }
+    
+    if (cloudData.customers) {
+        var customerIdSet = new Set();
+        cloudData.customers = cloudData.customers.filter(c => {
+            var idStr = String(c.id);
+            if (customerIdSet.has(idStr)) return false;
+            customerIdSet.add(idStr);
+            return true;
+        });
+    }
+    
+    if (cloudData.templates) {
+        var templateIdSet = new Set();
+        cloudData.templates = cloudData.templates.filter(t => {
+            var idStr = String(t.id);
+            if (templateIdSet.has(idStr)) return false;
+            templateIdSet.add(idStr);
+            return true;
+        });
+    }
+    
+    data.uploadTime = new Date().toISOString();
+    
+    var afterCounts = {
+        products: cloudData.products ? cloudData.products.length : 0,
+        customers: cloudData.customers ? cloudData.customers.length : 0,
+        templates: cloudData.templates ? cloudData.templates.length : 0
+    };
+    
+    return {
+        removedCounts: {
+            products: beforeCounts.products - afterCounts.products,
+            customers: beforeCounts.customers - afterCounts.customers,
+            templates: beforeCounts.templates - afterCounts.templates
+        },
+        afterCounts: afterCounts
+    };
+}
+
+function showFixCloudDataResult(result) {
+    var htmlContent = `
+        <div style="padding: 0.5rem;">
+            <div style="font-size: 0.8125rem; font-weight: 500; color: #16a34a; margin-bottom: 0.5rem;">✅ 云端数据修复完成</div>
+            
+            <div style="margin-bottom: 0.5rem;">
+                <div style="font-size: 0.75rem; font-weight: 500; color: #dc2626; margin-bottom: 0.25rem;">删除的重复项:</div>
+                <div style="font-size: 0.75rem; color: #64748b; padding-left: 0.5rem;">`;
+    
+    if (result.removedCounts.products > 0) {
+        htmlContent += `<div>• 产品: ${result.removedCounts.products} 个</div>`;
+    }
+    if (result.removedCounts.customers > 0) {
+        htmlContent += `<div>• 客户: ${result.removedCounts.customers} 个</div>`;
+    }
+    if (result.removedCounts.templates > 0) {
+        htmlContent += `<div>• 模板: ${result.removedCounts.templates} 个</div>`;
+    }
+    if (result.removedCounts.products === 0 && result.removedCounts.customers === 0 && result.removedCounts.templates === 0) {
+        htmlContent += `<div>• 无重复数据需要删除</div>`;
+    }
+    
+    htmlContent += `</div>
+            </div>
+            
+            <div style="border-top: 1px solid #e2e8f0; padding-top: 0.5rem;">
+                <div style="font-size: 0.75rem; font-weight: 500; color: #1e40af; margin-bottom: 0.25rem;">修复后剩余:</div>
+                <div style="font-size: 0.75rem; color: #64748b; padding-left: 0.5rem;">
+                    <div>• 产品: ${result.afterCounts.products} 个</div>
+                    <div>• 客户: ${result.afterCounts.customers} 个</div>
+                    <div>• 模板: ${result.afterCounts.templates} 个</div>
+                </div>
+            </div>
+        </div>`;
+    
+    showModal({
+        title: '🔧 修复结果',
+        message: htmlContent,
+        icon: '✅',
+        type: 'success',
+        confirmText: '关闭',
+        showCancel: false,
+        allowHtml: true
+    });
+    addSyncLog('success', '修复云端重复数据完成');
+}
+
+// 清空云端数据
+function clearCloudData() {
     if (!confirm('⚠️ 危险操作！\n\n此操作将清空云端所有数据，且无法恢复！\n\n建议先导出数据备份！\n\n确定继续吗？')) {
         return;
     }
     
-    // 必须验证管理员密码
     var inputPassword = prompt('请输入管理员密码以确认清空云端数据：');
     if (!inputPassword) {
         showToast('操作已取消', 'info');
@@ -42802,9 +42975,26 @@ function clearCloudData() {
         return;
     }
     
+    var provider = appData.systemSettings.syncProvider || 'gist';
+    
+    if (provider === 'gist') {
+        clearCloudDataGist();
+    } else if (provider === 'onedrive') {
+        clearCloudDataOneDrive();
+    }
+}
+
+function clearCloudDataGist() {
+    var token = appData.systemSettings.gistToken;
+    var gistId = appData.systemSettings.gistId;
+    
+    if (!token || !gistId) {
+        showToast('请先配置 Gist 同步', 'warning');
+        return;
+    }
+    
     showToast('🗑️ 正在清空云端数据...', 'loading', 10000);
     
-    // 清空所有相关文件
     var filesToClear = {
         'quote-data.json': { content: JSON.stringify({ 
             version: '3.4',
@@ -42834,7 +43024,6 @@ function clearCloudData() {
         showToast('✅ 云端数据已清空', 'success');
         addSyncLog('success', '手动清空云端数据');
         
-        // 重置本地同步状态
         appData.systemSettings.lastSyncTime = null;
         appData.systemSettings.lastIncrementalSyncTime = null;
         saveDataImmediately();
@@ -42842,6 +43031,63 @@ function clearCloudData() {
     .catch(function(err) {
         console.error('清空云端数据失败:', err);
         showToast('❌ 清空失败: ' + err.message, 'error');
+    });
+}
+
+function clearCloudDataOneDrive() {
+    if (!appData.systemSettings.onedriveAccessToken && !appData.systemSettings.onedriveRefreshToken) {
+        showToast('请先登录 OneDrive', 'warning');
+        return;
+    }
+    
+    showToast('🗑️ 正在清空云端数据...', 'loading', 15000);
+    
+    onedriveGetFolderId('QuoteSystem').then(function(folderId) {
+        if (!folderId) {
+            showToast('云端尚无数据', 'info');
+            return;
+        }
+        
+        return onedriveDeleteFolder(folderId).then(function() {
+            return onedriveCreateFolder('QuoteSystem');
+        });
+    })
+    .then(function(folderId) {
+        if (!folderId) {
+            return;
+        }
+        
+        var emptyData = JSON.stringify({
+            version: '3.4',
+            uploadTime: new Date().toISOString(),
+            deviceId: getDeviceId(),
+            data: {
+                products: [],
+                customers: [],
+                templates: [],
+                quoteHistory: []
+            },
+            imageCount: 0
+        });
+        
+        return onedriveUploadFile(folderId, 'quote_data.json', emptyData);
+    })
+    .then(function() {
+        showToast('✅ 云端数据已清空', 'success');
+        addSyncLog('success', '手动清空 OneDrive 云端数据');
+        
+        appData.systemSettings.lastSyncTime = null;
+        appData.systemSettings.lastIncrementalSyncTime = null;
+        saveDataImmediately();
+    })
+    .catch(function(err) {
+        console.error('清空 OneDrive 云端数据失败:', err);
+        var errorMsg = err.message || '未知错误';
+        if (errorMsg.includes('401')) {
+            errorMsg = '登录已过期，请重新登录 OneDrive';
+            logoutOneDrive();
+        }
+        showToast('❌ 清空失败: ' + errorMsg, 'error');
     });
 }
 
