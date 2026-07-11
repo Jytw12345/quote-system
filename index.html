@@ -9175,7 +9175,7 @@ function safeExecuteAsync(fn, defaultVal) {
                         </div>
                     </div>
                     <!-- Gist配置区域 -->
-                    <div id="gistConfigPanel" style="display:flex;flex-direction:column;gap:0.25rem;">
+                    <div id="gistConfigPanel" style="display:none;flex-direction:column;gap:0.25rem;">
                         <label for="gistIdInput" style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">Gist ID（团队共享用）</label>
                         <input type="text" id="gistIdInput" placeholder="自动生成或输入团队ID" style="padding:0.375rem 0.5rem;font-size:0.8125rem;width:100%;">
                     </div>
@@ -9206,19 +9206,19 @@ function safeExecuteAsync(fn, defaultVal) {
                 <div style="display:flex;flex-direction:column;gap:0.25rem;margin-bottom:0.75rem;">
                     <label style="font-size:0.8125rem;font-weight:500;color:var(--gray-700);">同步目标</label>
                     <div style="display:flex;gap:0.25rem;">
-                        <label style="flex:1;display:flex;align-items:center;padding:0.5rem;background:var(--gray-50);border-radius:var(--radius);cursor:pointer;border:2px solid var(--primary);">
-                            <input type="radio" name="syncTarget" id="syncTargetGist" value="gist" checked onchange="switchSyncTarget()" style="margin-right:0.5rem;">
-                            <span>📝 GitHub Gist（推荐）</span>
-                        </label>
                         <label style="flex:1;display:flex;align-items:center;padding:0.5rem;background:var(--gray-50);border-radius:var(--radius);cursor:pointer;border:2px solid transparent;">
-                            <input type="radio" name="syncTarget" id="syncTargetRepo" value="repo" onchange="switchSyncTarget()" style="margin-right:0.5rem;">
-                            <span>📦 GitHub Repository</span>
+                            <input type="radio" name="syncTarget" id="syncTargetGist" value="gist" onchange="switchSyncTarget()" style="margin-right:0.5rem;">
+                            <span>📝 GitHub Gist</span>
+                        </label>
+                        <label style="flex:1;display:flex;align-items:center;padding:0.5rem;background:var(--gray-50);border-radius:var(--radius);cursor:pointer;border:2px solid var(--primary);">
+                            <input type="radio" name="syncTarget" id="syncTargetRepo" value="repo" checked onchange="switchSyncTarget()" style="margin-right:0.5rem;">
+                            <span>📦 GitHub Repository（推荐）</span>
                         </label>
                     </div>
                 </div>
                 
                 <!-- Repository配置区域 -->
-                <div id="repoConfigPanel" style="display:none;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:var(--radius-lg);padding:1rem;margin-bottom:0.75rem;border:1px solid #bae6fd;">
+                <div id="repoConfigPanel" style="display:block;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:var(--radius-lg);padding:1rem;margin-bottom:0.75rem;border:1px solid #bae6fd;">
                     <div style="font-size:0.875rem;font-weight:600;color:#0369a1;margin-bottom:0.75rem;">📦 Repository配置</div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
                         <div style="display:flex;flex-direction:column;gap:0.25rem;">
@@ -9277,7 +9277,7 @@ function safeExecuteAsync(fn, defaultVal) {
                 </div>
                 
                 <!-- 团队功能设置 -->
-                <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #bae6fd;">
+                <div id="teamSettingsArea" class="gist-only" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #bae6fd;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <div style="font-size: 0.8125rem; font-weight: 600; color: #0369a1;">👥 团队功能</div>
                         <label style="display: inline-flex; align-items: center; gap: 0.375rem; cursor: pointer;">
@@ -9392,8 +9392,12 @@ function safeExecuteAsync(fn, defaultVal) {
                     
                     <!-- Repository专属功能 -->
                     <button class="btn btn-outline btn-sm repo-only" style="display:none;" onclick="viewRepoData()">👁️ 查看云端数据</button>
+                    <button class="btn btn-outline btn-sm repo-only" style="display:none;" onclick="viewRepoInfo()">📊 仓库信息</button>
+                    <button class="btn btn-outline btn-sm repo-only" style="display:none;" onclick="viewRepoBranches()">🌿 分支管理</button>
+                    <button class="btn btn-outline btn-sm repo-only" style="display:none;" onclick="viewRepoCommits()">📜 提交历史</button>
                     <button class="btn btn-outline btn-sm repo-only" style="display:none;" onclick="fixRepoData()">🔧 修复云端重复</button>
-                    <button class="btn btn-outline btn-sm repo-only" style="display:none;" onclick="repoRestoreFromHistory()">📜 历史版本恢复</button>
+                    <button class="btn btn-outline btn-sm repo-only" style="display:none;" onclick="repoRestoreFromHistory()">⏪ 历史版本恢复</button>
+                    <button class="btn btn-danger btn-sm repo-only" style="display:none;" onclick="clearRepoData()">🗑️ 清空云端数据</button>
                 </div>
                 
                 <!-- 同步进度条 -->
@@ -9415,6 +9419,20 @@ function safeExecuteAsync(fn, defaultVal) {
                     </div>
                     <div id="syncLogContainer" style="max-height:150px;overflow-y:auto;background:var(--gray-50);border-radius:var(--radius);padding:0.5rem;font-size:0.75rem;color:var(--gray-600);">
                         <div style="color:var(--gray-400);text-align:center;">暂无同步记录</div>
+                    </div>
+                </div>
+                
+                <!-- SW日志 -->
+                <div style="border-top:1px solid var(--gray-200);padding-top:1rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                        <h4 style="font-size:0.875rem;font-weight:600;color:var(--gray-700);">🛠️ Service Worker 日志</h4>
+                        <div style="display:flex;gap:0.25rem;">
+                            <button class="btn btn-xs btn-outline" onclick="refreshSWLogs()" style="flex: none; white-space: nowrap;">🔄 刷新</button>
+                            <button class="btn btn-xs btn-outline" onclick="clearSWLogs()" style="flex: none; white-space: nowrap;">清空日志</button>
+                        </div>
+                    </div>
+                    <div id="swLogContainer" style="max-height:200px;overflow-y:auto;background:#0f172a;border-radius:var(--radius);padding:0.5rem;font-size:0.7rem;color:#e2e8f0;font-family:monospace;">
+                        <div style="color:#64748b;text-align:center;">点击"刷新"获取SW日志</div>
                     </div>
                 </div>
             </div>
@@ -11280,6 +11298,53 @@ function simpleDecrypt(encoded) {
     }
 }
 
+// ===== 云端同步加密工具 =====
+const SYNC_ENCRYPTION_KEY = 'QwE3RtY5UiO7OpI9LkJ1HjK2GfD3SaF4'; // 同步专用密钥
+function encryptSyncData(data) {
+    try {
+        let inputStr;
+        if (typeof data === 'string') {
+            inputStr = data;
+        } else {
+            inputStr = JSON.stringify(data);
+        }
+        let result = '';
+        for (let i = 0; i < inputStr.length; i++) {
+            result += String.fromCharCode(inputStr.charCodeAt(i) ^ SYNC_ENCRYPTION_KEY.charCodeAt(i % SYNC_ENCRYPTION_KEY.length));
+        }
+        return btoa(result);
+    } catch(e) {
+        console.error('同步数据加密失败:', e);
+        return null;
+    }
+}
+
+function decryptSyncData(encoded) {
+    try {
+        let decoded = atob(encoded);
+        let result = '';
+        for (let i = 0; i < decoded.length; i++) {
+            result += String.fromCharCode(decoded.charCodeAt(i) ^ SYNC_ENCRYPTION_KEY.charCodeAt(i % SYNC_ENCRYPTION_KEY.length));
+        }
+        try {
+            return JSON.parse(result);
+        } catch (parseError) {
+            return result;
+        }
+    } catch(e) {
+        console.error('同步数据解密失败:', e);
+        return null;
+    }
+}
+
+function removeCid(obj) {
+    if (!obj || typeof obj !== 'object') return;
+    delete obj._cid;
+    for (var key in obj) {
+        removeCid(obj[key]);
+    }
+}
+
 // 加密存储的密码（混淆后存储）
 const ENCRYPTED_PASSWORD = simpleEncrypt('jiayin123');
 const ENCRYPTED_ADMIN_PASSWORD = simpleEncrypt('jytw888');
@@ -13045,7 +13110,7 @@ function fixAppDataCompat() {
         autoRetryEnabled: true, desktopNotificationsEnabled: false, dataCompressionEnabled: true,
         batchSyncEnabled: false, bandwidthAdaptive: true, retryCount: 0, maxRetries: 3,
         // 同步目标设置
-        syncTarget: 'gist',
+        syncTarget: 'repo',
         repoOwner: '',
         repoName: '',
         repoBranch: 'main',
@@ -39002,6 +39067,12 @@ function switchSyncTarget() {
         btn.style.display = isGistMode ? 'none' : 'inline-flex';
     });
     
+    // Repository模式下隐藏团队功能（团队功能依赖Gist）
+    var teamSettingsArea = document.getElementById('teamSettingsArea');
+    if (teamSettingsArea) {
+        teamSettingsArea.style.display = isGistMode ? 'block' : 'none';
+    }
+    
     appData.systemSettings.syncTarget = currentSyncTarget;
     saveData();
     updateCloudSyncStatus();
@@ -39013,7 +39084,7 @@ function getSyncTarget() {
     if (stored) return stored;
     var radio = document.querySelector('input[name="syncTarget"]:checked');
     if (radio) return radio.value;
-    return currentSyncTarget || 'gist';
+    return currentSyncTarget || 'repo';
 }
 
 // 获取Repository配置
@@ -39032,6 +39103,34 @@ function getRepoConfig(saveToSettings) {
     }
     
     return { owner, repo, branch, filePath };
+}
+
+// 网络请求重试包装器
+function withRetry(apiCall, maxRetries, delay) {
+    maxRetries = maxRetries || 2;
+    delay = delay || 1000;
+    
+    return function() {
+        var args = arguments;
+        var attempt = function(retryNum) {
+            return apiCall.apply(this, args).catch(function(err) {
+                if (retryNum > 0) {
+                    var status = err.status || (err.response && err.response.status);
+                    if (status === 429 || status === 500 || status === 502 || status === 503 || status === 504 || 
+                        err.name === 'AbortError' || err.message.includes('network') || err.message.includes('Failed to fetch')) {
+                        addSyncLog('info', '网络请求失败，第 ' + (3 - retryNum) + ' 次重试: ' + err.message);
+                        return new Promise(function(resolve) {
+                            setTimeout(function() {
+                                resolve(attempt(retryNum - 1));
+                            }, delay * Math.pow(2, 3 - retryNum));
+                        });
+                    }
+                }
+                throw err;
+            });
+        };
+        return attempt(maxRetries);
+    };
 }
 
 // Repository API调用
@@ -39054,6 +39153,16 @@ function repoApi(path, options) {
     return fetch('https://api.github.com' + path, fetchOptions)
         .then(function(response) {
             clearTimeout(timeoutId);
+            
+            var remaining = parseInt(response.headers.get('X-RateLimit-Remaining') || '0');
+            var limit = parseInt(response.headers.get('X-RateLimit-Limit') || '0');
+            var resetTime = parseInt(response.headers.get('X-RateLimit-Reset') || '0');
+            
+            if (remaining > 0 && remaining < 100) {
+                var resetDate = new Date(resetTime * 1000);
+                addSyncLog('warning', 'GitHub API速率限制警告：剩余 ' + remaining + '/' + limit + ' 次请求，将在 ' + resetDate.toLocaleTimeString() + ' 重置');
+            }
+            
             return response;
         })
         .catch(function(error) {
@@ -39065,9 +39174,12 @@ function repoApi(path, options) {
         });
 }
 
+// 带重试的Repository API调用
+var repoApiWithRetry = withRetry(repoApi, 2, 1000);
+
 // 获取Repository文件内容
 function getRepoFile(owner, repo, path, branch) {
-    return repoApi('/repos/' + owner + '/' + repo + '/contents/' + path + '?ref=' + (branch || 'main'))
+    return repoApiWithRetry('/repos/' + owner + '/' + repo + '/contents/' + path + '?ref=' + (branch || 'main'))
         .then(function(res) {
             if (res.status === 404) {
                 return null;
@@ -39089,7 +39201,7 @@ function putRepoFile(owner, repo, path, content, message, branch, sha) {
         body.sha = sha;
     }
     
-    return repoApi('/repos/' + owner + '/' + repo + '/contents/' + path, {
+    return repoApiWithRetry('/repos/' + owner + '/' + repo + '/contents/' + path, {
         method: 'PUT',
         body: JSON.stringify(body)
     }).then(function(res) {
@@ -39159,6 +39271,16 @@ function gistApi(path, options) {
     return fetch('https://api.github.com' + path, fetchOptions)
         .then(function(response) {
             clearTimeout(timeoutId);
+            
+            var remaining = parseInt(response.headers.get('X-RateLimit-Remaining') || '0');
+            var limit = parseInt(response.headers.get('X-RateLimit-Limit') || '0');
+            var resetTime = parseInt(response.headers.get('X-RateLimit-Reset') || '0');
+            
+            if (remaining > 0 && remaining < 100) {
+                var resetDate = new Date(resetTime * 1000);
+                addSyncLog('warning', 'GitHub API速率限制警告：剩余 ' + remaining + '/' + limit + ' 次请求，将在 ' + resetDate.toLocaleTimeString() + ' 重置');
+            }
+            
             return response;
         })
         .catch(function(error) {
@@ -39169,6 +39291,9 @@ function gistApi(path, options) {
             throw error;
         });
 }
+
+// 带重试的Gist API调用
+var gistApiWithRetry = withRetry(gistApi, 2, 1000);
 
 function gistTest() {
     var tokenEl = document.getElementById('gistToken');
@@ -39875,7 +40000,7 @@ function syncRepoNow() {
         if (serverTimeUTC > localTimeUTC) {
             showSyncProgress('合并Repository更新...', 60);
             addSyncLog('info', '发现Repository更新，正在合并...');
-            mergeSyncData(cloudData.data || {});
+            mergeSyncData(cloudData);
         }
         
         showSyncProgress('上传本地变更...', 80);
@@ -40000,7 +40125,7 @@ function syncNow() {
         if (serverTimeUTC > localTimeUTC) {
             showSyncProgress('合并云端更新...', 60);
             addSyncLog('info', '发现云端更新，正在合并...');
-            mergeSyncData(cloudData.data || {});
+            mergeSyncData(cloudData);
         }
         
         // 然后上传本地变更
@@ -40133,8 +40258,6 @@ function isRetryableError(error) {
 
 // 数据压缩（使用 LZ-string 算法）
 function compressData(data) {
-    if (!appData.systemSettings.dataCompressionEnabled) return data;
-    
     try {
         if (typeof LZString !== 'undefined') {
             return LZString.compressToUTF16(JSON.stringify(data));
@@ -40148,12 +40271,12 @@ function compressData(data) {
 
 // 数据解压缩
 function decompressData(data) {
-    if (!appData.systemSettings.dataCompressionEnabled) return data;
-    
     try {
-        if (typeof LZString !== 'undefined') {
+        if (typeof LZString !== 'undefined' && typeof data === 'string') {
             var decompressed = LZString.decompressFromUTF16(data);
-            return decompressed ? JSON.parse(decompressed) : data;
+            if (decompressed) {
+                return JSON.parse(decompressed);
+            }
         }
         return data;
     } catch (e) {
@@ -40176,6 +40299,36 @@ function calculateDataHash(data) {
     } catch (e) {
         return '0';
     }
+}
+
+// 验证同步数据完整性
+function validateSyncData(data) {
+    if (!data || typeof data !== 'object') {
+        return { valid: false, error: '数据为空或不是对象' };
+    }
+    
+    var hasRequiredFields = false;
+    if (data.data && typeof data.data === 'object') {
+        hasRequiredFields = true;
+    } else if (data.products || data.templates || data.customers) {
+        hasRequiredFields = true;
+    }
+    
+    if (!hasRequiredFields) {
+        return { 
+            valid: false, 
+            error: '数据结构无效：缺少必需字段（data、products、templates或customers）',
+            detectedKeys: Object.keys(data)
+        };
+    }
+    
+    if (data.data) {
+        if (!Array.isArray(data.data.products)) data.data.products = [];
+        if (!Array.isArray(data.data.templates)) data.data.templates = [];
+        if (!Array.isArray(data.data.customers)) data.data.customers = [];
+    }
+    
+    return { valid: true };
 }
 
 // 分批处理大数据
@@ -40285,10 +40438,16 @@ function prepareProductsForSync(products) {
                 copy.image = null;
                 copy.imageLocation = 'indexeddb';
             }
+            if (copy.supplierQuotes && !Array.isArray(copy.supplierQuotes)) {
+                copy.supplierQuotes = [];
+            }
             return copy;
         });
         
-        console.log('产品同步数据准备完成，共', result.length, '个产品，图片将以 ID 形式同步');
+        var supplierQuoteCount = result.reduce(function(sum, p) {
+            return sum + (p.supplierQuotes ? p.supplierQuotes.length : 0);
+        }, 0);
+        console.log('产品同步数据准备完成，共', result.length, '个产品，包含', supplierQuoteCount, '条供应商报价');
         resolve(result);
     });
 }
@@ -40360,8 +40519,10 @@ function collectImagesForSync(products, templates) {
         
         var images = {};
         var completed = 0;
+        var failedCount = 0;
         
-        imageList.forEach(function(imageId) {
+        function loadImageWithRetry(imageId, retryCount) {
+            retryCount = retryCount || 0;
             IDB.getImage(imageId).then(function(url) {
                 if (url) {
                     fetch(url).then(function(res) {
@@ -40374,18 +40535,40 @@ function collectImagesForSync(products, templates) {
                             checkComplete();
                         };
                         reader.readAsDataURL(blob);
-                    }).catch(function() {
-                        completed++;
-                        checkComplete();
+                    }).catch(function(err) {
+                        if (retryCount < 2) {
+                            addSyncLog('info', '图片 ' + imageId + ' 读取失败，第 ' + (retryCount + 1) + ' 次重试');
+                            setTimeout(function() {
+                                loadImageWithRetry(imageId, retryCount + 1);
+                            }, 1000 * (retryCount + 1));
+                        } else {
+                            failedCount++;
+                            addSyncLog('warning', '图片 ' + imageId + ' 读取失败，已重试 ' + retryCount + ' 次');
+                            completed++;
+                            checkComplete();
+                        }
                     });
                 } else {
                     completed++;
                     checkComplete();
                 }
-            }).catch(function() {
-                completed++;
-                checkComplete();
+            }).catch(function(err) {
+                if (retryCount < 2) {
+                    addSyncLog('info', '图片 ' + imageId + ' 数据库读取失败，第 ' + (retryCount + 1) + ' 次重试');
+                    setTimeout(function() {
+                        loadImageWithRetry(imageId, retryCount + 1);
+                    }, 1000 * (retryCount + 1));
+                } else {
+                    failedCount++;
+                    addSyncLog('warning', '图片 ' + imageId + ' 数据库读取失败');
+                    completed++;
+                    checkComplete();
+                }
             });
+        }
+        
+        imageList.forEach(function(imageId) {
+            loadImageWithRetry(imageId, 0);
         });
         
         function checkComplete() {
@@ -40448,8 +40631,34 @@ function getGlobalCustomPrices() {
     }
 }
 
+// 获取全局价格配置中心数据（同步用）
+function getGlobalPriceSyncData() {
+    try {
+        const globalPriceData = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('globalPrice_')) {
+                const value = localStorage.getItem(key);
+                if (value !== null) {
+                    const priceKey = key.replace('globalPrice_', '');
+                    globalPriceData[priceKey] = parseFloat(value);
+                }
+            }
+        }
+        return globalPriceData;
+    } catch (e) {
+        console.error('获取全局价格配置失败:', e);
+        return {};
+    }
+}
+
 function gistUploadFull() {
     return new Promise(function(resolve, reject) {
+        if (isSyncing) {
+            showToast('⚠️ 正在同步中，请稍后再试', 'warning');
+            reject(new Error('正在同步中'));
+            return;
+        }
         isSyncing = true;
         var startTime = Date.now();
         var strategy = adaptSyncStrategy();
@@ -40486,12 +40695,16 @@ function gistUploadFull() {
             }
             
             showSyncProgress('正在打包数据...', 30);
-            var filteredProducts = teamEnabled && teamDataSharing.products === false ? undefined : productsWithImages;
-            var filteredTemplates = teamEnabled && teamDataSharing.templates === false ? undefined : templatesWithImages;
-            var filteredCustomers = teamEnabled && teamDataSharing.customers === false ? undefined : appData.customers;
-            var filteredQuoteHistory = teamEnabled && teamDataSharing.quoteHistory === false ? undefined : appData.quoteHistory;
-            var filteredSeals = teamEnabled && teamDataSharing.seals === false ? undefined : (appData.seals || []);
-            var filteredSignatures = teamEnabled && teamDataSharing.signatures === false ? undefined : (appData.signatures || []);
+            
+            var syncConfig = appData.systemSettings.selectiveSync || selectiveSyncConfig;
+            
+            var filteredProducts = (teamEnabled && teamDataSharing.products === false) || !syncConfig.products ? undefined : productsWithImages;
+            var filteredTemplates = (teamEnabled && teamDataSharing.templates === false) || !syncConfig.templates ? undefined : templatesWithImages;
+            var filteredCustomers = (teamEnabled && teamDataSharing.customers === false) || !syncConfig.customers ? undefined : appData.customers;
+            var filteredQuoteHistory = (teamEnabled && teamDataSharing.quoteHistory === false) || !syncConfig.quoteHistory ? undefined : appData.quoteHistory;
+            var filteredSeals = (teamEnabled && teamDataSharing.seals === false) || !syncConfig.seals ? undefined : (appData.seals || []);
+            var filteredSignatures = (teamEnabled && teamDataSharing.signatures === false) || !syncConfig.signatures ? undefined : (appData.signatures || []);
+            var filteredGlobalPriceConfig = !syncConfig.globalPriceConfig ? undefined : getGlobalPriceSyncData();
             
             // 检查过滤后的数据
             console.log('过滤后的数据:', JSON.stringify({
@@ -40525,7 +40738,9 @@ function gistUploadFull() {
                     // 文化空间配置
                     cultureWallConfig: getCultureWallSyncData(),
                     // 全局自定义价格
-                    customPrices: getGlobalCustomPrices()
+                    customPrices: getGlobalCustomPrices(),
+                    // 全局价格配置中心数据
+                    globalPriceConfig: filteredGlobalPriceConfig
                 },
                 // 团队活动日志（最近20条）
                 activityLog: buildSyncActivityLog()
@@ -40550,17 +40765,18 @@ function gistUploadFull() {
                         return value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
                     }
                     // 正确检查循环引用：使用 Set 跟踪已访问的对象
-                    // 使用对象 ID 或对象本身作为 key
                     if (typeof value === 'object' && value !== null) {
                         var id = value._cid || (value._cid = Math.random().toString(36).substr(2, 9));
                         if (visited.has(id)) {
-                            // 跳过循环引用，返回 undefined 会被 JSON.stringify 忽略
                             return undefined;
                         }
                         visited.add(id);
                     }
                     return value;
                 }, 2);
+                
+                removeCid(syncPayload);
+                
                 // 检查序列化后的数据
                 console.log('序列化后的数据大小:', syncPayloadString.length, '字符');
                 try {
@@ -40680,15 +40896,74 @@ function gistUploadFull() {
             }
             
             var gistId = appData.systemSettings.gistId || '';
+            var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+            var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+            
+            var encryptedSyncPayloadString = syncPayloadString;
+            var encryptedPriceDataString = priceDataString;
+            
+            if (compressionEnabled) {
+                try {
+                    var compressed = compressData(JSON.parse(syncPayloadString));
+                    if (typeof compressed === 'string') {
+                        encryptedSyncPayloadString = compressed;
+                        addSyncLog('info', 'Gist数据压缩完成');
+                    }
+                } catch (e) {
+                    addSyncLog('warning', 'Gist数据压缩异常，使用原始数据');
+                }
+                try {
+                    var priceCompressed = compressData(JSON.parse(priceDataString));
+                    if (typeof priceCompressed === 'string') {
+                        encryptedPriceDataString = priceCompressed;
+                    }
+                } catch (e) {
+                    addSyncLog('warning', 'Gist价格数据压缩异常，使用原始数据');
+                }
+            }
+            
+            if (encryptionEnabled) {
+                try {
+                    var encrypted = encryptSyncData(encryptedSyncPayloadString);
+                    if (encrypted) {
+                        encryptedSyncPayloadString = encrypted;
+                        addSyncLog('info', 'Gist数据加密完成');
+                    }
+                } catch (e) {
+                    addSyncLog('warning', 'Gist数据加密异常，使用原始数据');
+                }
+                try {
+                    var priceEncrypted = encryptSyncData(encryptedPriceDataString);
+                    if (priceEncrypted) {
+                        encryptedPriceDataString = priceEncrypted;
+                    }
+                } catch (e) {
+                    addSyncLog('warning', 'Gist价格数据加密异常，使用原始数据');
+                }
+            }
+            
             var gistData = {
                 description: '图文广告快速报价 - 数据同步',
                 public: false,
                 files: {
-                    'quote-data.json': { content: syncPayloadString },
-                    'products-price.json': { content: priceDataString },
+                    'quote-data.json': { content: encryptedSyncPayloadString },
+                    'products-price.json': { content: encryptedPriceDataString },
                     'version-history.json': { content: versionHistoryString }
                 }
             };
+            
+            var totalSize = encryptedSyncPayloadString.length + encryptedPriceDataString.length + versionHistoryString.length;
+            var maxSize = 900 * 1024;
+            if (totalSize > maxSize) {
+                var sizeMB = (totalSize / 1024 / 1024).toFixed(2);
+                var maxMB = (maxSize / 1024 / 1024).toFixed(2);
+                showToast('⚠️ 数据过大（' + sizeMB + 'MB），超过Gist限制（' + maxMB + 'MB）！建议减少同步图片数量或启用数据压缩', 'warning');
+                addSyncLog('warning', '数据大小超过Gist限制: ' + sizeMB + 'MB');
+                isSyncing = false;
+                reject(new Error('数据过大，超过Gist限制'));
+                return;
+            }
+            
             var promise;
             if (gistId) {
                 showSyncProgress('正在上传到云端...', 60);
@@ -40744,6 +41019,11 @@ function gistUploadFull() {
 // Repository全量上传
 function repoUploadFull() {
     return new Promise(function(resolve, reject) {
+        if (isSyncing) {
+            showToast('⚠️ 正在同步中，请稍后再试', 'warning');
+            reject(new Error('正在同步中'));
+            return;
+        }
         isSyncing = true;
         var startTime = Date.now();
         var strategy = adaptSyncStrategy();
@@ -40775,13 +41055,15 @@ function repoUploadFull() {
             
             var teamDataSharing = appData.systemSettings.teamDataSharing || { products: true, templates: true, customers: true, quoteHistory: false, seals: false, signatures: false };
             var teamEnabled = appData.systemSettings.teamEnabled;
+            var syncConfig = appData.systemSettings.selectiveSync || selectiveSyncConfig;
             
-            var filteredProducts = teamEnabled && teamDataSharing.products === false ? undefined : productsWithImages;
-            var filteredTemplates = teamEnabled && teamDataSharing.templates === false ? undefined : templatesWithImages;
-            var filteredCustomers = teamEnabled && teamDataSharing.customers === false ? undefined : appData.customers;
-            var filteredQuoteHistory = teamEnabled && teamDataSharing.quoteHistory === false ? undefined : appData.quoteHistory;
-            var filteredSeals = teamEnabled && teamDataSharing.seals === false ? undefined : (appData.seals || []);
-            var filteredSignatures = teamEnabled && teamDataSharing.signatures === false ? undefined : (appData.signatures || []);
+            var filteredProducts = (teamEnabled && teamDataSharing.products === false) || !syncConfig.products ? undefined : productsWithImages;
+            var filteredTemplates = (teamEnabled && teamDataSharing.templates === false) || !syncConfig.templates ? undefined : templatesWithImages;
+            var filteredCustomers = (teamEnabled && teamDataSharing.customers === false) || !syncConfig.customers ? undefined : appData.customers;
+            var filteredQuoteHistory = (teamEnabled && teamDataSharing.quoteHistory === false) || !syncConfig.quoteHistory ? undefined : appData.quoteHistory;
+            var filteredSeals = (teamEnabled && teamDataSharing.seals === false) || !syncConfig.seals ? undefined : (appData.seals || []);
+            var filteredSignatures = (teamEnabled && teamDataSharing.signatures === false) || !syncConfig.signatures ? undefined : (appData.signatures || []);
+            var filteredGlobalPriceConfig = !syncConfig.globalPriceConfig ? undefined : getGlobalPriceSyncData();
             
             var syncPayload = {
                 version: '3.4',
@@ -40805,7 +41087,8 @@ function repoUploadFull() {
                     categories: appData.categories || [],
                     charPricingConfig: appData.charPricingConfig || {},
                     cultureWallConfig: getCultureWallSyncData(),
-                    customPrices: getGlobalCustomPrices()
+                    customPrices: getGlobalCustomPrices(),
+                    globalPriceConfig: filteredGlobalPriceConfig
                 },
                 activityLog: buildSyncActivityLog(),
                 images: imageData.images
@@ -40827,6 +41110,8 @@ function repoUploadFull() {
                     }
                     return value;
                 }, 2);
+                
+                removeCid(syncPayload);
             } catch (e) {
                 syncPayloadString = JSON.stringify({
                     version: '3.4',
@@ -40842,6 +41127,7 @@ function repoUploadFull() {
             
             // 应用数据压缩
             var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+            var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
             var finalContent = syncPayloadString;
             
             if (compressionEnabled) {
@@ -40856,6 +41142,32 @@ function repoUploadFull() {
                 } catch (e) {
                     addSyncLog('warning', '数据压缩异常，使用原始数据: ' + e.message);
                 }
+            }
+            
+            if (encryptionEnabled) {
+                try {
+                    var encrypted = encryptSyncData(finalContent);
+                    if (encrypted) {
+                        finalContent = encrypted;
+                        addSyncLog('info', '数据加密完成');
+                    } else {
+                        addSyncLog('warning', '数据加密失败，使用原始数据');
+                    }
+                } catch (e) {
+                    addSyncLog('warning', '数据加密异常，使用原始数据: ' + e.message);
+                }
+            }
+            
+            var totalSize = finalContent.length;
+            var maxSize = 50 * 1024 * 1024;
+            if (totalSize > maxSize) {
+                var sizeMB = (totalSize / 1024 / 1024).toFixed(2);
+                var maxMB = (maxSize / 1024 / 1024).toFixed(0);
+                showToast('⚠️ 数据过大（' + sizeMB + 'MB），超过Repository限制（' + maxMB + 'MB）！建议启用数据压缩或减少同步的数据量', 'warning');
+                addSyncLog('warning', '数据大小超过Repository限制: ' + sizeMB + 'MB');
+                isSyncing = false;
+                reject(new Error('数据过大，超过Repository限制'));
+                return;
             }
             
             showSyncProgress('正在获取文件SHA...', 30);
@@ -40886,6 +41198,13 @@ function repoUploadFull() {
 // Repository增量上传：只上传变化的数据
 function repoUploadIncremental() {
     return new Promise(function(resolve, reject) {
+        if (isSyncing) {
+            showToast('⚠️ 正在同步中，请稍后再试', 'warning');
+            reject(new Error('正在同步中'));
+            return;
+        }
+        isSyncing = true;
+        
         var lastSync = appData.systemSettings.lastIncrementalSyncTime;
         if (!lastSync) {
             reject(new Error('没有上次同步时间，无法进行增量上传'));
@@ -40979,12 +41298,31 @@ function repoUploadIncremental() {
                 }
             }
             
+            // 尝试解密数据
+            var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+            var decryptedContent = existingContent;
+            
+            if (encryptionEnabled) {
+                try {
+                    var decrypted = decryptSyncData(existingContent);
+                    if (decrypted) {
+                        if (typeof decrypted === 'object') {
+                            decryptedContent = JSON.stringify(decrypted);
+                        } else if (typeof decrypted === 'string') {
+                            decryptedContent = decrypted;
+                        }
+                    }
+                } catch (e) {
+                    addSyncLog('info', '增量同步数据解密失败，尝试直接解析');
+                }
+            }
+            
             var existingData;
             try {
-                existingData = decompressData(existingContent);
+                existingData = decompressData(decryptedContent);
             } catch (e) {
                 try {
-                    existingData = JSON.parse(existingContent);
+                    existingData = JSON.parse(decryptedContent);
                 } catch (parseError) {
                     throw new Error('数据解析失败: ' + parseError.message);
                 }
@@ -40995,20 +41333,39 @@ function repoUploadIncremental() {
             if (!existingData.data.customers) existingData.data.customers = [];
             if (!existingData.data.templates) existingData.data.templates = [];
             
-            changes.added.products.forEach(function(p) { existingData.data.products.push(p); });
-            changes.added.customers.forEach(function(c) { existingData.data.customers.push(c); });
-            changes.added.templates.forEach(function(t) { existingData.data.templates.push(t); });
+            var existingProductIds = new Set(existingData.data.products.map(function(item) { return String(item.id); }));
+            var existingCustomerIds = new Set(existingData.data.customers.map(function(item) { return String(item.id); }));
+            var existingTemplateIds = new Set(existingData.data.templates.map(function(item) { return String(item.id); }));
+            
+            changes.added.products.forEach(function(p) {
+                if (!existingProductIds.has(String(p.id))) {
+                    existingData.data.products.push(p);
+                    existingProductIds.add(String(p.id));
+                }
+            });
+            changes.added.customers.forEach(function(c) {
+                if (!existingCustomerIds.has(String(c.id))) {
+                    existingData.data.customers.push(c);
+                    existingCustomerIds.add(String(c.id));
+                }
+            });
+            changes.added.templates.forEach(function(t) {
+                if (!existingTemplateIds.has(String(t.id))) {
+                    existingData.data.templates.push(t);
+                    existingTemplateIds.add(String(t.id));
+                }
+            });
             
             changes.updated.products.forEach(function(p) {
-                var idx = existingData.data.products.findIndex(function(item) { return item.id === p.id; });
+                var idx = existingData.data.products.findIndex(function(item) { return String(item.id) === String(p.id); });
                 if (idx >= 0) existingData.data.products[idx] = p;
             });
             changes.updated.customers.forEach(function(c) {
-                var idx = existingData.data.customers.findIndex(function(item) { return item.id === c.id; });
+                var idx = existingData.data.customers.findIndex(function(item) { return String(item.id) === String(c.id); });
                 if (idx >= 0) existingData.data.customers[idx] = c;
             });
             changes.updated.templates.forEach(function(t) {
-                var idx = existingData.data.templates.findIndex(function(item) { return item.id === t.id; });
+                var idx = existingData.data.templates.findIndex(function(item) { return String(item.id) === String(t.id); });
                 if (idx >= 0) existingData.data.templates[idx] = t;
             });
             
@@ -41017,16 +41374,28 @@ function repoUploadIncremental() {
             
             var syncPayloadString = JSON.stringify(existingData, null, 2);
             var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+            var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
             var finalContent = syncPayloadString;
             
             if (compressionEnabled) {
                 try {
                     var compressed = compressData(existingData);
-                    if (compressed && compressed !== existingData) {
+                    if (typeof compressed === 'string') {
                         finalContent = compressed;
                     }
                 } catch (e) {
                     addSyncLog('warning', '增量同步数据压缩异常，使用原始数据');
+                }
+            }
+            
+            if (encryptionEnabled) {
+                try {
+                    var encrypted = encryptSyncData(finalContent);
+                    if (encrypted) {
+                        finalContent = encrypted;
+                    }
+                } catch (e) {
+                    addSyncLog('warning', '增量同步数据加密异常，使用原始数据');
                 }
             }
             
@@ -41045,9 +41414,11 @@ function repoUploadIncremental() {
             showToast('✅ 增量同步成功！新增: ' + addedCount + '，更新: ' + updatedCount, 'success');
             addSyncLog('success', 'Repository增量同步完成: 新增 ' + addedCount + '，更新 ' + updatedCount);
             
+            isSyncing = false;
             resolve({ added: addedCount, updated: updatedCount });
         })
         .catch(function(err) {
+            isSyncing = false;
             reject(err);
         });
     });
@@ -41056,6 +41427,11 @@ function repoUploadIncremental() {
 // Repository下载合并
 function repoDownload() {
     return new Promise(function(resolve, reject) {
+        if (isSyncing) {
+            showToast('⚠️ 正在同步中，请稍后再试', 'warning');
+            reject(new Error('正在同步中'));
+            return;
+        }
         isSyncing = true;
         
         var config = getRepoConfig();
@@ -41090,17 +41466,44 @@ function repoDownload() {
                 content = fileData.content;
             }
             
-            // 尝试解压数据
-            var data;
-            try {
-                data = decompressData(content);
-            } catch (e) {
-                // 如果解压失败，尝试直接解析JSON（可能未压缩）
+            // 尝试解密数据
+            var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+            var decryptedContent = content;
+            
+            if (encryptionEnabled) {
                 try {
-                    data = JSON.parse(content);
+                    var decrypted = decryptSyncData(content);
+                    if (decrypted) {
+                        if (typeof decrypted === 'object') {
+                            decryptedContent = JSON.stringify(decrypted);
+                        } else if (typeof decrypted === 'string') {
+                            decryptedContent = decrypted;
+                        }
+                        addSyncLog('info', '数据解密成功');
+                    }
+                } catch (e) {
+                    addSyncLog('info', '数据解密失败，尝试直接解析');
+                }
+            }
+            
+            // 尝试解压数据
+            var data = decompressData(decryptedContent);
+            if (typeof data === 'string') {
+                try {
+                    data = JSON.parse(data);
                 } catch (parseError) {
                     throw new Error('数据解析失败: ' + parseError.message);
                 }
+            }
+            
+            if (!data || typeof data !== 'object') {
+                throw new Error('无法识别的数据结构：数据为空或不是对象');
+            }
+            
+            var validation = validateSyncData(data);
+            if (!validation.valid) {
+                throw new Error('数据完整性校验失败: ' + validation.error + 
+                    (validation.detectedKeys ? ' 检测到的键: ' + validation.detectedKeys.join(', ') : ''));
             }
             
             var serverData;
@@ -41127,14 +41530,20 @@ function repoDownload() {
                 throw new Error('无法识别的数据结构');
             }
             
+            if (!serverData.data) {
+                serverData.data = {};
+            }
+            
             var serverTime = new Date(serverData.uploadTime || 0);
             var localTime = new Date(appData.systemSettings.lastSyncTime || 0);
             var serverTimeUTC = serverTime.getTime();
             var localTimeUTC = localTime.getTime();
             
-            var serverHasData = (serverData.data.products && serverData.data.products.length > 0) ||
-                               (serverData.data.templates && serverData.data.templates.length > 0) ||
-                               (serverData.data.customers && serverData.data.customers.length > 0);
+            var serverProducts = serverData.data.products || [];
+            var serverTemplates = serverData.data.templates || [];
+            var serverCustomers = serverData.data.customers || [];
+            
+            var serverHasData = serverProducts.length > 0 || serverTemplates.length > 0 || serverCustomers.length > 0;
             
             var localHasData = appData.products.length > 0 || 
                               appData.templates.length > 0 || 
@@ -41148,7 +41557,7 @@ function repoDownload() {
                 return;
             }
             
-            var conflicts = detectConflicts(serverData.data, localTime);
+            var conflicts = detectConflicts(serverData.data || {}, localTime);
             if (conflicts.length > 0) {
                 showConflictResolution(conflicts, serverData);
                 isSyncing = false;
@@ -41353,6 +41762,13 @@ function proceedWithUpload() {
 // 增量上传：只上传变化的数据
 function gistUploadIncremental() {
     return new Promise(function(resolve, reject) {
+        if (isSyncing) {
+            showToast('⚠️ 正在同步中，请稍后再试', 'warning');
+            reject(new Error('正在同步中'));
+            return;
+        }
+        isSyncing = true;
+        
         var lastSync = appData.systemSettings.lastIncrementalSyncTime;
         if (!lastSync) {
             reject(new Error('没有上次同步时间，无法进行增量上传'));
@@ -41454,6 +41870,23 @@ function gistUploadIncremental() {
                 quoteDataFile = existingGist.files && existingGist.files['products-price.json'];
             }
             var existingContent = (quoteDataFile && quoteDataFile.content) || '{}';
+            
+            var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+            if (encryptionEnabled) {
+                try {
+                    var decrypted = decryptSyncData(existingContent);
+                    if (decrypted) {
+                        if (typeof decrypted === 'object') {
+                            existingContent = JSON.stringify(decrypted);
+                        } else if (typeof decrypted === 'string') {
+                            existingContent = decrypted;
+                        }
+                    }
+                } catch (e) {
+                    addSyncLog('info', '增量上传数据解密失败，尝试直接解析');
+                }
+            }
+            
             var existingData = JSON.parse(existingContent);
             
             // 合并增量变化到现有数据
@@ -41485,12 +41918,40 @@ function gistUploadIncremental() {
             existingData.uploadTime = new Date().toISOString();
             existingData.deviceId = getDeviceId();
             
+            // 序列化并应用加密和压缩
+            var syncPayloadString = JSON.stringify(existingData, null, 2);
+            var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+            var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+            var finalContent = syncPayloadString;
+            
+            if (compressionEnabled) {
+                try {
+                    var compressed = compressData(existingData);
+                    if (typeof compressed === 'string') {
+                        finalContent = compressed;
+                    }
+                } catch (e) {
+                    addSyncLog('warning', '数据压缩失败');
+                }
+            }
+            
+            if (encryptionEnabled) {
+                try {
+                    var encrypted = encryptSyncData(finalContent);
+                    if (encrypted) {
+                        finalContent = encrypted;
+                    }
+                } catch (e) {
+                    addSyncLog('warning', '数据加密失败');
+                }
+            }
+            
             // 上传合并后的数据
             return gistApi('/gists/' + gistId, {
                 method: 'PATCH',
                 body: JSON.stringify({
                     files: {
-                        'quote-data.json': { content: JSON.stringify(existingData, null, 2) }
+                        'quote-data.json': { content: finalContent }
                     }
                 })
             });
@@ -41507,9 +41968,13 @@ function gistUploadIncremental() {
             var addedCount = changes.added.products.length + changes.added.customers.length + changes.added.templates.length;
             var updatedCount = changes.updated.products.length + changes.updated.customers.length + changes.updated.templates.length;
             
+            isSyncing = false;
             resolve({ added: addedCount, updated: updatedCount });
         })
-        .catch(reject);
+        .catch(function(err) {
+            isSyncing = false;
+            reject(err);
+        });
     });
 }
 
@@ -41577,13 +42042,44 @@ function gistDownload() {
                 throw new Error('云端数据格式不正确: 缺少quote-data.json或products-price.json文件');
             }
         }
-        var data;
-        try {
-            data = JSON.parse(file.content);
-        } catch (e) {
-            throw new Error('云端数据JSON解析失败: ' + e.message);
+        
+        // 尝试解密数据
+        var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+        var content = file.content;
+        
+        if (encryptionEnabled) {
+            try {
+                var decrypted = decryptSyncData(file.content);
+                if (decrypted) {
+                    if (typeof decrypted === 'object') {
+                        content = JSON.stringify(decrypted);
+                    } else if (typeof decrypted === 'string') {
+                        content = decrypted;
+                    }
+                    addSyncLog('info', 'Gist数据解密成功');
+                }
+            } catch (e) {
+                addSyncLog('info', 'Gist数据解密失败，尝试直接解析');
+            }
+        }
+        
+        // 尝试解压数据
+        var data = decompressData(content);
+        if (typeof data === 'string') {
+            try {
+                data = JSON.parse(data);
+            } catch (parseError) {
+                throw new Error('云端数据解析失败: ' + parseError.message);
+            }
         }
         if (!data) throw new Error('云端数据为空');
+        
+        var validation = validateSyncData(data);
+        if (!validation.valid) {
+            throw new Error('数据完整性校验失败: ' + validation.error + 
+                (validation.detectedKeys ? ' 检测到的键: ' + validation.detectedKeys.join(', ') : ''));
+        }
+        
         // 打印云端数据的实际结构用于调试
         console.log('云端原始数据结构:', JSON.stringify({
             keys: Object.keys(data),
@@ -41661,6 +42157,10 @@ function gistDownload() {
                 };
             }
         }
+        if (!serverData.data) {
+            serverData.data = {};
+        }
+        
         console.log('云端数据结构:', JSON.stringify({
             hasData: !!serverData.data,
             productsCount: serverData.data.products ? serverData.data.products.length : 0,
@@ -41677,9 +42177,10 @@ function gistDownload() {
         var localTimeUTC = localTime.getTime();
         
         // 检查云端数据是否有效（非空）
-        var serverHasData = (serverData.data.products && serverData.data.products.length > 0) ||
-                           (serverData.data.templates && serverData.data.templates.length > 0) ||
-                           (serverData.data.customers && serverData.data.customers.length > 0);
+        var serverProducts = serverData.data.products || [];
+        var serverTemplates = serverData.data.templates || [];
+        var serverCustomers = serverData.data.customers || [];
+        var serverHasData = serverProducts.length > 0 || serverTemplates.length > 0 || serverCustomers.length > 0;
         
         // 智能判断是否需要同步
         if (serverDevice === localDevice && serverTimeUTC <= localTimeUTC) {
@@ -41702,7 +42203,7 @@ function gistDownload() {
         }
         
         // 检测编辑冲突（传递serverData.data给detectConflicts，因为它期望扁平化的数据结构）
-        var conflicts = detectConflicts(serverData.data, localTime);
+        var conflicts = detectConflicts(serverData.data || {}, localTime);
         
         if (conflicts.length > 0) {
             // 有冲突，显示冲突解决对话框（冲突解决后会继续同步）
@@ -41762,8 +42263,28 @@ function gistPullProducts() {
     .then(function(gist) {
         // 优先从quote-data.json获取完整产品数据
         var productData = null;
+        var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+        
         if (gist.files['quote-data.json']) {
-            var syncData = JSON.parse(gist.files['quote-data.json'].content);
+            var content = gist.files['quote-data.json'].content;
+            if (encryptionEnabled) {
+                try {
+                    var decrypted = decryptSyncData(content);
+                    if (decrypted) {
+                        if (typeof decrypted === 'object') {
+                            content = JSON.stringify(decrypted);
+                        } else if (typeof decrypted === 'string') {
+                            content = decrypted;
+                        }
+                    }
+                } catch (e) {
+                    addSyncLog('info', '数据解密失败，尝试直接解析');
+                }
+            }
+            var syncData = decompressData(content);
+            if (typeof syncData === 'string') {
+                syncData = JSON.parse(syncData);
+            }
             // 兼容多种数据结构
             if (syncData && syncData.data && syncData.data.products) {
                 productData = syncData.data.products;
@@ -41773,7 +42294,23 @@ function gistPullProducts() {
         } 
         // 如果没有完整数据，再尝试从products-price.json获取
         if (!productData && gist.files['products-price.json']) {
-            var priceFile = JSON.parse(gist.files['products-price.json'].content);
+            var priceContent = gist.files['products-price.json'].content;
+            if (encryptionEnabled) {
+                try {
+                    var priceDecrypted = decryptSyncData(priceContent);
+                    if (priceDecrypted) {
+                        if (typeof priceDecrypted === 'object') {
+                            priceContent = JSON.stringify(priceDecrypted);
+                        } else if (typeof priceDecrypted === 'string') {
+                            priceContent = priceDecrypted;
+                        }
+                    }
+                } catch (e) {}
+            }
+            var priceFile = decompressData(priceContent);
+            if (typeof priceFile === 'string') {
+                priceFile = JSON.parse(priceFile);
+            }
             if (priceFile && priceFile.products) {
                 productData = priceFile.products;
             }
@@ -42012,6 +42549,11 @@ async function showSyncHistory() {
 
 // 从历史版本恢复
 async function restoreFromHistory(versionId) {
+    if (isSyncing) {
+        showToast('⏳ 正在同步中，请稍候', 'info');
+        return;
+    }
+    
     var token = appData.systemSettings.gistToken;
     var gistId = appData.systemSettings.gistId;
     
@@ -42019,6 +42561,7 @@ async function restoreFromHistory(versionId) {
         return;
     }
     
+    isSyncing = true;
     showToast('⏳ 正在恢复历史版本...', 'info');
     
     try {
@@ -42036,13 +42579,34 @@ async function restoreFromHistory(versionId) {
             }
         }
         
-        var data = JSON.parse(file.content);
-        // 兼容旧版格式
-        if (data.data) {
-            mergeSyncData(data.data);
-        } else {
-            mergeSyncData(data);
+        var content = file.content;
+        var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+        
+        if (encryptionEnabled) {
+            try {
+                var decrypted = decryptSyncData(content);
+                if (decrypted) {
+                    if (typeof decrypted === 'object') {
+                        content = JSON.stringify(decrypted);
+                    } else if (typeof decrypted === 'string') {
+                        content = decrypted;
+                    }
+                    addSyncLog('info', '历史版本数据解密成功');
+                }
+            } catch (e) {
+                addSyncLog('info', '历史版本数据解密失败，尝试直接解析');
+            }
         }
+        
+        var data = decompressData(content);
+        if (typeof data === 'string') {
+            try {
+                data = JSON.parse(data);
+            } catch (parseError) {
+                throw new Error('历史版本数据解析失败: ' + parseError.message);
+            }
+        }
+        mergeSyncData(data);
         appData.systemSettings.lastSyncTime = new Date().toISOString();
         saveData();
         
@@ -42056,19 +42620,54 @@ async function restoreFromHistory(versionId) {
     } catch (err) {
         console.error('恢复历史版本失败:', err);
         showToast('❌ 恢复失败: ' + err.message, 'error');
+    } finally {
+        isSyncing = false;
     }
 }
 
-// 选择性同步配置
-let selectiveSyncConfig = {
-    products: true,
-    customers: true,
-    templates: true,
-    quoteHistory: false,
-    seals: true,
-    signatures: true,
-    categories: true
-};
+// 选择性同步配置（从localStorage或系统设置加载，确保刷新页面后不丢失）
+let selectiveSyncConfig = loadSelectiveSyncConfig();
+
+function loadSelectiveSyncConfig() {
+    var saved = appData.systemSettings.selectiveSync;
+    if (saved && typeof saved === 'object') {
+        return Object.assign({
+            products: true,
+            customers: true,
+            templates: true,
+            quoteHistory: false,
+            seals: false,
+            signatures: false,
+            categories: true,
+            globalPriceConfig: true
+        }, saved);
+    }
+    var localStorageSaved = localStorage.getItem('selectiveSyncConfig');
+    if (localStorageSaved) {
+        try {
+            return Object.assign({
+                products: true,
+                customers: true,
+                templates: true,
+                quoteHistory: false,
+                seals: false,
+                signatures: false,
+                categories: true,
+                globalPriceConfig: true
+            }, JSON.parse(localStorageSaved));
+        } catch (e) {}
+    }
+    return {
+        products: true,
+        customers: true,
+        templates: true,
+        quoteHistory: false,
+        seals: false,
+        signatures: false,
+        categories: true,
+        globalPriceConfig: true
+    };
+}
 
 // 显示选择性同步界面
 function showSelectiveSync() {
@@ -42088,7 +42687,8 @@ function showSelectiveSync() {
         { key: 'quoteHistory', label: '📝 报价历史', desc: '历史报价记录' },
         { key: 'seals', label: '🔏 印章数据', desc: '电子印章配置' },
         { key: 'signatures', label: '✍️ 签名数据', desc: '手写签名' },
-        { key: 'categories', label: '📁 分类数据', desc: '产品分类' }
+        { key: 'categories', label: '📁 分类数据', desc: '产品分类' },
+        { key: 'globalPriceConfig', label: '💰 全局价格配置', desc: '全局价格配置中心数据' }
     ];
     
     syncOptions.forEach(opt => {
@@ -42144,6 +42744,7 @@ function unselectAllSync() {
 function saveSelectiveSyncConfig() {
     appData.systemSettings.selectiveSync = selectiveSyncConfig;
     saveData();
+    localStorage.setItem('selectiveSyncConfig', JSON.stringify(selectiveSyncConfig));
     closeModal();
     showToast('✅ 选择性同步配置已保存', 'success');
     addSyncLog('info', '更新选择性同步配置');
@@ -42158,6 +42759,10 @@ window.saveSelectiveSyncConfig = saveSelectiveSyncConfig;
 // 数据冲突检测 - 接受已获取的云端数据和本地同步时间
 function detectConflicts(serverData, localSyncTime) {
     const conflicts = [];
+    
+    if (!serverData || typeof serverData !== 'object') {
+        return conflicts;
+    }
     
     // 检测产品冲突
     (serverData.products || []).forEach(cloudProduct => {
@@ -42274,13 +42879,14 @@ function showConflictResolution(conflicts, serverData) {
         <div style="padding:0.5rem;font-size:0.875rem;">
             <div style="font-weight:600;margin-bottom:0.75rem;color:#dc2626;">⚠️ 检测到 ${conflicts.length} 个数据冲突</div>
             <div style="font-size:0.75rem;color:var(--gray-500);margin-bottom:0.75rem;">
-                请选择保留云端数据还是本地数据
+                请选择保留云端数据还是本地数据，或查看详细差异
             </div>
-            <div style="max-height:300px;overflow-y:auto;">
+            <div style="max-height:400px;overflow-y:auto;">
     `;
     
     conflicts.forEach((conflict, index) => {
         const typeInfo = getConflictTypeInfo(conflict.type);
+        const diffInfo = getConflictDiff(conflict);
         
         html += `
             <div style="border-bottom:1px solid var(--gray-100);padding:0.75rem 0;">
@@ -42295,9 +42901,18 @@ function showConflictResolution(conflicts, serverData) {
                         <div style="color:var(--gray-600);">更新时间: ${conflict.localTime.toLocaleString()}</div>
                     </div>
                 </div>
+                ${diffInfo ? `
+                <div style="margin-top:0.5rem;padding:0.5rem;background:#f3f4f6;border-radius:4px;font-size:0.7rem;">
+                    <div style="font-weight:500;color:var(--gray-700);margin-bottom:0.25rem;">📊 差异对比</div>
+                    ${diffInfo}
+                </div>
+                ` : ''}
                 <div style="margin-top:0.5rem;display:flex;gap:0.375rem;">
                     <button class="btn btn-xs btn-outline" onclick="resolveConflict(${index}, 'cloud')">保留云端</button>
                     <button class="btn btn-xs btn-outline" onclick="resolveConflict(${index}, 'local')">保留本地</button>
+                    ${conflict.cloudValue && conflict.localValue ? `
+                    <button class="btn btn-xs btn-outline" onclick="viewConflictDetail(${index})">查看详情</button>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -42305,9 +42920,10 @@ function showConflictResolution(conflicts, serverData) {
     
     html += `
             </div>
-            <div style="margin-top:1rem;display:flex;gap:0.5rem;">
+            <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
                 <button class="btn btn-primary btn-sm" onclick="resolveAllConflicts('cloud')">全部保留云端</button>
                 <button class="btn btn-warning btn-sm" onclick="resolveAllConflicts('local')">全部保留本地</button>
+                <button class="btn btn-outline btn-sm" onclick="cancelConflictResolution()">取消</button>
             </div>
         </div>
     `;
@@ -42321,6 +42937,78 @@ function showConflictResolution(conflicts, serverData) {
         type: 'alert',
         showCancel: false
     });
+}
+
+function getConflictDiff(conflict) {
+    if (!conflict.cloudValue || !conflict.localValue) return null;
+    
+    const cloud = conflict.cloudValue;
+    const local = conflict.localValue;
+    let diffs = [];
+    
+    const compareFields = {
+        product: ['name', 'cost', 'price', 'unit', 'category1', 'category2'],
+        template: ['name', 'description'],
+        customer: ['name', 'phone', 'address']
+    };
+    
+    const fields = compareFields[conflict.type] || [];
+    
+    fields.forEach(field => {
+        const cloudVal = cloud[field];
+        const localVal = local[field];
+        if (String(cloudVal) !== String(localVal)) {
+            diffs.push(`<div><span style="color:#1d4ed8;">${field}: ${cloudVal || '-'}</span> <span style="color:var(--gray-400);">→</span> <span style="color:#d97706;">${localVal || '-'}</span></div>`);
+        }
+    });
+    
+    if (diffs.length === 0) {
+        return '<div style="color:var(--gray-500);">字段值相同，但更新时间不同</div>';
+    }
+    
+    return diffs.join('');
+}
+
+function viewConflictDetail(index) {
+    const conflict = window.currentConflicts[index];
+    if (!conflict) return;
+    
+    const typeInfo = getConflictTypeInfo(conflict.type);
+    
+    let html = `
+        <div style="font-size:0.875rem;">
+            <div style="font-weight:600;margin-bottom:0.75rem;">${typeInfo.icon} ${typeInfo.name}: ${conflict.name}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <div style="padding:0.75rem;background:#dbeafe;border-radius:6px;">
+                    <div style="font-weight:600;color:#1d4ed8;margin-bottom:0.5rem;">☁️ 云端数据</div>
+                    <pre style="font-size:0.7rem;white-space:pre-wrap;word-break:break-all;">${JSON.stringify(conflict.cloudValue, null, 2)}</pre>
+                </div>
+                <div style="padding:0.75rem;background:#fef3c7;border-radius:6px;">
+                    <div style="font-weight:600;color:#d97706;margin-bottom:0.5rem;">📱 本地数据</div>
+                    <pre style="font-size:0.7rem;white-space:pre-wrap;word-break:break-all;">${JSON.stringify(conflict.localValue, null, 2)}</pre>
+                </div>
+            </div>
+            <div style="margin-top:1rem;display:flex;gap:0.5rem;">
+                <button class="btn btn-primary btn-sm" onclick="resolveConflict(${index}, 'cloud');closeModal();">保留云端</button>
+                <button class="btn btn-warning btn-sm" onclick="resolveConflict(${index}, 'local');closeModal();">保留本地</button>
+                <button class="btn btn-outline btn-sm" onclick="closeModal()">关闭</button>
+            </div>
+        </div>
+    `;
+    
+    showModal({
+        title: '📋 冲突详情对比',
+        message: html,
+        type: 'alert',
+        showCancel: false
+    });
+}
+
+function cancelConflictResolution() {
+    closeModal();
+    window.currentConflicts = [];
+    window.conflictServerData = null;
+    isSyncing = false;
 }
 
 function getConflictTypeInfo(type) {
@@ -42579,7 +43267,33 @@ function viewCloudData() {
             }
         }
         
-        var data = JSON.parse(file.content);
+        var content = file.content;
+        var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+        
+        if (encryptionEnabled) {
+            try {
+                var decrypted = decryptSyncData(content);
+                if (decrypted) {
+                    if (typeof decrypted === 'object') {
+                        content = JSON.stringify(decrypted);
+                    } else if (typeof decrypted === 'string') {
+                        content = decrypted;
+                    }
+                    addSyncLog('info', 'Gist数据解密成功');
+                }
+            } catch (e) {
+                addSyncLog('info', '数据解密失败，尝试直接解析');
+            }
+        }
+        
+        var data = decompressData(content);
+        if (typeof data === 'string') {
+            try {
+                data = JSON.parse(data);
+            } catch (parseError) {
+                throw new Error('云端数据解析失败: ' + parseError.message);
+            }
+        }
         // 兼容多种数据结构
         var cloudData;
         if (data.data && typeof data.data === 'object') {
@@ -42696,12 +43410,24 @@ function viewRepoData() {
             content = fileData.content;
         }
         
-        var data;
-        try {
-            data = decompressData(content);
-        } catch (e) {
-            data = null;
+        var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+        if (encryptionEnabled) {
+            try {
+                var decrypted = decryptSyncData(content);
+                if (decrypted) {
+                    if (typeof decrypted === 'object') {
+                        content = JSON.stringify(decrypted);
+                    } else if (typeof decrypted === 'string') {
+                        content = decrypted;
+                    }
+                    addSyncLog('info', 'Repository数据解密成功');
+                }
+            } catch (e) {
+                addSyncLog('info', '数据解密失败，尝试直接解析');
+            }
         }
+        
+        var data = decompressData(content);
         
         // 如果decompressData返回的是字符串（未压缩的数据），需要手动解析
         if (typeof data === 'string') {
@@ -42867,6 +43593,11 @@ function detectCloudDuplicates(cloudData) {
 
 // Repository修复云端重复数据
 function fixRepoData() {
+    if (isSyncing) {
+        showToast('⏳ 正在同步中，请稍候', 'info');
+        return;
+    }
+    
     var config = getRepoConfig();
     var owner = config.owner;
     var repo = config.repo;
@@ -42881,6 +43612,7 @@ function fixRepoData() {
         return;
     }
     
+    isSyncing = true;
     showToast('🔧 正在修复云端数据...', 'loading', 15000);
     
     getRepoFile(owner, repo, filePath)
@@ -42897,11 +43629,35 @@ function fixRepoData() {
             content = fileData.content;
         }
         
-        var data;
-        try {
-            data = decompressData(content);
-        } catch (e) {
-            data = JSON.parse(content);
+        var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+        if (encryptionEnabled) {
+            try {
+                var decrypted = decryptSyncData(content);
+                if (decrypted) {
+                    if (typeof decrypted === 'object') {
+                        content = JSON.stringify(decrypted);
+                    } else if (typeof decrypted === 'string') {
+                        content = decrypted;
+                    }
+                    addSyncLog('info', 'Repository数据解密成功');
+                }
+            } catch (e) {
+                addSyncLog('info', '数据解密失败，尝试直接解析');
+            }
+        }
+        
+        var data = decompressData(content);
+        
+        if (typeof data === 'string') {
+            try {
+                data = JSON.parse(data);
+            } catch (parseError) {
+                throw new Error('数据解析失败: ' + parseError.message);
+            }
+        }
+        
+        if (!data || typeof data !== 'object') {
+            throw new Error('无法识别的数据结构');
         }
         
         if (!data.data) data.data = {};
@@ -42949,10 +43705,22 @@ function fixRepoData() {
         if (compressionEnabled) {
             try {
                 var compressed = compressData(data);
-                if (compressed && compressed !== data) {
+                if (typeof compressed === 'string') {
                     finalContent = compressed;
                 }
             } catch (e) {
+                addSyncLog('warning', '数据压缩失败');
+            }
+        }
+        
+        if (encryptionEnabled) {
+            try {
+                var encrypted = encryptSyncData(finalContent);
+                if (encrypted) {
+                    finalContent = encrypted;
+                }
+            } catch (e) {
+                addSyncLog('warning', '数据加密失败');
             }
         }
         
@@ -42965,6 +43733,591 @@ function fixRepoData() {
     .catch(function(err) {
         console.error('修复Repository数据失败:', err);
         showToast('❌ 修复失败: ' + err.message, 'error');
+    })
+    .then(function() {
+        isSyncing = false;
+    });
+}
+
+// Repository清空云端数据
+function clearRepoData() {
+    if (isSyncing) {
+        showToast('⏳ 正在同步中，请稍候', 'info');
+        return;
+    }
+    
+    var config = getRepoConfig();
+    var owner = config.owner;
+    var repo = config.repo;
+    var filePath = config.filePath;
+    
+    if (!owner || !repo) {
+        showToast('请先配置Repository信息', 'warning');
+        return;
+    }
+    
+    if (!confirm('⚠️ 危险操作！\n\n此操作将清空云端仓库中的数据文件，且无法恢复！\n\n建议先导出数据备份！\n\n确定继续吗？')) {
+        return;
+    }
+    
+    var inputPassword = prompt('请输入管理员密码以确认清空云端数据：');
+    if (!inputPassword) {
+        showToast('操作已取消', 'info');
+        return;
+    }
+    
+    if (inputPassword !== adminPassword) {
+        showToast('❌ 密码错误，操作已取消', 'error');
+        return;
+    }
+    
+    isSyncing = true;
+    showToast('🗑️ 正在清空云端数据...', 'loading', 10000);
+    
+    getRepoFile(owner, repo, filePath)
+    .then(function(fileData) {
+        if (!fileData) {
+            showToast('✅ 云端数据已为空', 'success');
+            addSyncLog('success', 'Repository清空完成（文件不存在）');
+            return;
+        }
+        
+        var emptyData = { 
+            version: '3.4',
+            data: { products: [], customers: [], templates: [], quoteHistory: [], seals: [], signatures: [] },
+            uploadTime: new Date().toISOString(),
+            deviceId: getDeviceId()
+        };
+        
+        var syncPayloadString = JSON.stringify(emptyData, null, 2);
+        var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+        var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+        var finalContent = syncPayloadString;
+        
+        if (compressionEnabled) {
+            try {
+                var compressed = compressData(emptyData);
+                if (typeof compressed === 'string') {
+                    finalContent = compressed;
+                }
+            } catch (e) {}
+        }
+        
+        if (encryptionEnabled) {
+            try {
+                var encrypted = encryptSyncData(finalContent);
+                if (encrypted) {
+                    finalContent = encrypted;
+                }
+            } catch (e) {}
+        }
+        
+        return putRepoFile(owner, repo, filePath, finalContent, 'Clear quote data', null, fileData.sha);
+    })
+    .then(function() {
+        showToast('✅ 云端数据已清空！', 'success');
+        addSyncLog('success', 'Repository数据清空完成');
+    })
+    .catch(function(err) {
+        console.error('清空Repository数据失败:', err);
+        showToast('❌ 清空失败: ' + err.message, 'error');
+    })
+    .then(function() {
+        isSyncing = false;
+    });
+}
+
+// Repository获取远程仓库信息
+function getRepoInfo(owner, repo) {
+    return repoApi('/repos/' + owner + '/' + repo)
+        .then(function(res) {
+            if (!res.ok) throw new Error('获取仓库信息失败: HTTP ' + res.status);
+            return res.json();
+        });
+}
+
+// Repository查看远程仓库信息
+function viewRepoInfo() {
+    var config = getRepoConfig();
+    var owner = config.owner;
+    var repo = config.repo;
+    
+    if (!owner || !repo) {
+        showToast('请先配置Repository信息', 'warning');
+        return;
+    }
+    
+    showToast('🔍 正在获取仓库信息...', 'loading', 10000);
+    
+    getRepoInfo(owner, repo)
+    .then(function(info) {
+        var htmlContent = `
+            <div style="font-size:0.875rem;color:var(--gray-700);line-height:1.8;">
+                <div style="font-weight:600;color:#1e40af;margin-bottom:0.75rem;">📦 ${info.full_name}</div>
+                
+                <div style="margin-bottom:0.5rem;">
+                    <div style="font-size:0.75rem;color:var(--gray-500);">描述</div>
+                    <div>${info.description || '无描述'}</div>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.5rem;">
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--gray-500);">星标数</div>
+                        <div style="font-weight:600;color:#f59e0b;">⭐ ${info.stargazers_count}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--gray-500);">分支数</div>
+                        <div style="font-weight:600;color:#3b82f6;">🌿 ${info.forks_count}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--gray-500);">开放Issues</div>
+                        <div style="font-weight:600;color:#ef4444;">📋 ${info.open_issues_count}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--gray-500);">语言</div>
+                        <div style="font-weight:600;color:#10b981;">💻 ${info.language || '未知'}</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom:0.5rem;">
+                    <div style="font-size:0.75rem;color:var(--gray-500);">创建时间</div>
+                    <div>${new Date(info.created_at).toLocaleString()}</div>
+                </div>
+                
+                <div style="margin-bottom:0.5rem;">
+                    <div style="font-size:0.75rem;color:var(--gray-500);">最新更新</div>
+                    <div>${new Date(info.updated_at).toLocaleString()}</div>
+                </div>
+                
+                <div style="margin-bottom:0.5rem;">
+                    <div style="font-size:0.75rem;color:var(--gray-500);">默认分支</div>
+                    <div style="font-weight:600;">🔸 ${info.default_branch}</div>
+                </div>
+                
+                ${info.private ? '<div style="color:#ef4444;font-size:0.75rem;">🔒 私有仓库</div>' : '<div style="color:#10b981;font-size:0.75rem;">🌐 公开仓库</div>'}
+            </div>`;
+        
+        showModal({
+            title: '📊 仓库信息',
+            message: htmlContent,
+            icon: '📦',
+            type: 'info',
+            confirmText: '关闭',
+            showCancel: false,
+            allowHtml: true,
+            width: '400px'
+        });
+    })
+    .catch(function(err) {
+        console.error('获取仓库信息失败:', err);
+        showToast('❌ 获取失败: ' + err.message, 'error');
+    });
+}
+
+// Repository获取分支列表
+function getRepoBranches(owner, repo) {
+    return repoApi('/repos/' + owner + '/' + repo + '/branches')
+        .then(function(res) {
+            if (!res.ok) throw new Error('获取分支列表失败: HTTP ' + res.status);
+            return res.json();
+        });
+}
+
+// Repository查看分支列表并切换
+function viewRepoBranches() {
+    var config = getRepoConfig();
+    var owner = config.owner;
+    var repo = config.repo;
+    var currentBranch = appData.systemSettings.repoBranch || 'main';
+    
+    if (!owner || !repo) {
+        showToast('请先配置Repository信息', 'warning');
+        return;
+    }
+    
+    showToast('🔍 正在获取分支列表...', 'loading', 10000);
+    
+    getRepoBranches(owner, repo)
+    .then(function(branches) {
+        if (branches.length === 0) {
+            showToast('仓库没有分支', 'info');
+            return;
+        }
+        
+        var htmlContent = `
+            <div style="font-size:0.875rem;color:var(--gray-700);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+                    <div style="font-size:0.75rem;color:var(--gray-500);">当前分支: <span style="color:#1e40af;font-weight:600;">${currentBranch}</span></div>
+                    <button class="btn btn-xs btn-primary" onclick="showCreateBranchDialog()">➕ 创建分支</button>
+                </div>
+                <div style="max-height:350px;overflow-y:auto;">
+                    ${branches.map(function(branch) {
+                        var isCurrent = branch.name === currentBranch;
+                        return `
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem;border-radius:0.25rem;margin-bottom:0.25rem;${isCurrent ? 'background:#dbeafe;' : 'background:#f8fafc;'}">
+                                <div style="flex:1;min-width:0;">
+                                    <div style="${isCurrent ? 'font-weight:600;color:#1e40af;' : 'color:var(--gray-700);'}">
+                                        ${isCurrent ? '✅ ' : ''}${branch.name}
+                                    </div>
+                                    <div style="font-size:0.7rem;color:var(--gray-400);">${branch.commit.sha.substring(0, 7)}...</div>
+                                </div>
+                                <div style="display:flex;gap:0.25rem;flex-shrink:0;">
+                                    ${!isCurrent ? `<button class="btn btn-xs btn-primary" onclick="switchRepoBranch('${branch.name}')">切换</button>` : '<span style="font-size:0.7rem;color:#1e40af;">当前</span>'}
+                                    <button class="btn btn-xs btn-outline" onclick="showMergeBranchDialog('${branch.name}')">合并</button>
+                                    ${!isCurrent ? `<button class="btn btn-xs btn-danger" onclick="confirmDeleteBranch('${branch.name}')">删除</button>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>`;
+        
+        showModal({
+            title: '🌿 分支管理',
+            message: htmlContent,
+            icon: '🌿',
+            type: 'info',
+            confirmText: '关闭',
+            showCancel: false,
+            allowHtml: true,
+            width: '450px'
+        });
+    })
+    .catch(function(err) {
+        console.error('获取分支列表失败:', err);
+        showToast('❌ 获取失败: ' + err.message, 'error');
+    });
+}
+
+// Repository切换分支
+function switchRepoBranch(branchName) {
+    appData.systemSettings.repoBranch = branchName;
+    saveData();
+    
+    var branchInput = document.getElementById('repoBranch');
+    if (branchInput) branchInput.value = branchName;
+    
+    showToast('✅ 已切换到分支: ' + branchName, 'success');
+    addSyncLog('info', '切换Repository分支到: ' + branchName);
+    
+    hideModal();
+    updateCloudSyncStatus();
+}
+
+// Repository创建新分支
+function createRepoBranch(owner, repo, newBranchName, baseBranch) {
+    baseBranch = baseBranch || 'main';
+    
+    return repoApi('/repos/' + owner + '/' + repo + '/git/refs/heads/' + baseBranch)
+        .then(function(res) {
+            if (!res.ok) throw new Error('获取基准分支信息失败: HTTP ' + res.status);
+            return res.json();
+        })
+        .then(function(baseRef) {
+            var body = {
+                ref: 'refs/heads/' + newBranchName,
+                sha: baseRef.object.sha
+            };
+            
+            return repoApi('/repos/' + owner + '/' + repo + '/git/refs', {
+                method: 'POST',
+                body: JSON.stringify(body)
+            });
+        })
+        .then(function(res) {
+            if (!res.ok) throw new Error('创建分支失败: HTTP ' + res.status);
+            return res.json();
+        });
+}
+
+// Repository创建新分支UI
+function showCreateBranchDialog() {
+    var config = getRepoConfig();
+    var owner = config.owner;
+    var repo = config.repo;
+    var currentBranch = appData.systemSettings.repoBranch || 'main';
+    
+    if (!owner || !repo) {
+        showToast('请先配置Repository信息', 'warning');
+        return;
+    }
+    
+    var htmlContent = `
+        <div style="font-size:0.875rem;color:var(--gray-700);">
+            <div style="margin-bottom:0.75rem;">
+                <label style="display:block;font-size:0.75rem;color:var(--gray-500);margin-bottom:0.25rem;">新分支名称</label>
+                <input type="text" id="newBranchName" placeholder="例如: feature/products" style="padding:0.5rem;font-size:0.875rem;width:100%;border:1px solid #cbd5e1;border-radius:0.25rem;">
+            </div>
+            <div style="margin-bottom:0.75rem;">
+                <label style="display:block;font-size:0.75rem;color:var(--gray-500);margin-bottom:0.25rem;">基于分支（默认: ${currentBranch}）</label>
+                <input type="text" id="baseBranchName" value="${currentBranch}" style="padding:0.5rem;font-size:0.875rem;width:100%;border:1px solid #cbd5e1;border-radius:0.25rem;">
+            </div>
+            <div style="font-size:0.7rem;color:#64748b;">
+                💡 提示：分支名建议使用描述性名称，如 feature/xxx、bugfix/xxx、test/xxx
+            </div>
+        </div>`;
+    
+    showModal({
+        title: '🌿 创建新分支',
+        message: htmlContent,
+        icon: '🌿',
+        type: 'info',
+        confirmText: '创建',
+        cancelText: '取消',
+        allowHtml: true,
+        width: '380px',
+        onConfirm: function() {
+            var newBranchName = document.getElementById('newBranchName').value.trim();
+            var baseBranchName = document.getElementById('baseBranchName').value.trim() || currentBranch;
+            
+            if (!newBranchName) {
+                showToast('请输入分支名称', 'warning');
+                return;
+            }
+            
+            if (!/^[a-zA-Z0-9._/-]+$/.test(newBranchName)) {
+                showToast('分支名称包含非法字符', 'error');
+                return;
+            }
+            
+            showToast('🌿 正在创建分支...', 'loading', 10000);
+            
+            createRepoBranch(owner, repo, newBranchName, baseBranchName)
+            .then(function() {
+                showToast('✅ 分支创建成功: ' + newBranchName, 'success');
+                addSyncLog('success', '创建Repository分支: ' + newBranchName);
+                hideModal();
+                viewRepoBranches();
+            })
+            .catch(function(err) {
+                console.error('创建分支失败:', err);
+                showToast('❌ 创建失败: ' + err.message, 'error');
+            });
+        }
+    });
+}
+
+// Repository删除分支
+function deleteRepoBranch(owner, repo, branchName) {
+    return repoApi('/repos/' + owner + '/' + repo + '/git/refs/heads/' + branchName, {
+        method: 'DELETE'
+    }).then(function(res) {
+        if (!res.ok) throw new Error('删除分支失败: HTTP ' + res.status);
+        return res;
+    });
+}
+
+// Repository删除分支确认
+function confirmDeleteBranch(branchName) {
+    var config = getRepoConfig();
+    var owner = config.owner;
+    var repo = config.repo;
+    var currentBranch = appData.systemSettings.repoBranch || 'main';
+    
+    if (branchName === currentBranch) {
+        showToast('不能删除当前正在使用的分支', 'error');
+        return;
+    }
+    
+    if (!confirm('⚠️ 危险操作！\n\n此操作将永久删除远程分支 "' + branchName + '"，且无法恢复！\n\n确定继续吗？')) {
+        return;
+    }
+    
+    showToast('🗑️ 正在删除分支...', 'loading', 10000);
+    
+    deleteRepoBranch(owner, repo, branchName)
+    .then(function() {
+        showToast('✅ 分支已删除: ' + branchName, 'success');
+        addSyncLog('success', '删除Repository分支: ' + branchName);
+        viewRepoBranches();
+    })
+    .catch(function(err) {
+        console.error('删除分支失败:', err);
+        showToast('❌ 删除失败: ' + err.message, 'error');
+    });
+}
+
+// Repository合并分支
+function mergeRepoBranch(owner, repo, baseBranch, headBranch, commitMessage) {
+    var body = {
+        base: baseBranch,
+        head: headBranch,
+        commit_message: commitMessage || 'Merge ' + headBranch + ' into ' + baseBranch
+    };
+    
+    return repoApi('/repos/' + owner + '/' + repo + '/merges', {
+        method: 'POST',
+        body: JSON.stringify(body)
+    }).then(function(res) {
+        if (!res.ok) {
+            return res.json().then(function(errData) {
+                throw new Error(errData.message || '合并失败: HTTP ' + res.status);
+            }).catch(function() {
+                throw new Error('合并失败: HTTP ' + res.status);
+            });
+        }
+        return res.json();
+    });
+}
+
+// Repository合并分支UI
+function showMergeBranchDialog(targetBranch) {
+    var config = getRepoConfig();
+    var owner = config.owner;
+    var repo = config.repo;
+    
+    if (!owner || !repo) {
+        showToast('请先配置Repository信息', 'warning');
+        return;
+    }
+    
+    getRepoBranches(owner, repo)
+    .then(function(branches) {
+        var otherBranches = branches.filter(function(b) {
+            return b.name !== targetBranch;
+        });
+        
+        if (otherBranches.length === 0) {
+            showToast('没有其他分支可以合并', 'info');
+            return;
+        }
+        
+        var branchOptions = otherBranches.map(function(b) {
+            return '<option value="' + b.name + '">' + b.name + '</option>';
+        }).join('');
+        
+        var htmlContent = `
+            <div style="font-size:0.875rem;color:var(--gray-700);">
+                <div style="margin-bottom:0.5rem;">
+                    <div style="font-size:0.75rem;color:var(--gray-500);">目标分支</div>
+                    <div style="font-weight:600;color:#1e40af;">${targetBranch}</div>
+                </div>
+                <div style="margin-bottom:0.75rem;">
+                    <label style="display:block;font-size:0.75rem;color:var(--gray-500);margin-bottom:0.25rem;">来源分支（要合并的分支）</label>
+                    <select id="mergeSourceBranch" style="padding:0.5rem;font-size:0.875rem;width:100%;border:1px solid #cbd5e1;border-radius:0.25rem;">
+                        ${branchOptions}
+                    </select>
+                </div>
+                <div style="margin-bottom:0.75rem;">
+                    <label style="display:block;font-size:0.75rem;color:var(--gray-500);margin-bottom:0.25rem;">合并提交信息</label>
+                    <input type="text" id="mergeCommitMessage" value="Merge into ${targetBranch}" style="padding:0.5rem;font-size:0.875rem;width:100%;border:1px solid #cbd5e1;border-radius:0.25rem;">
+                </div>
+                <div style="font-size:0.7rem;color:#ef4444;">
+                    ⚠️ 注意：如果存在冲突，合并将失败，请先解决冲突
+                </div>
+            </div>`;
+        
+        showModal({
+            title: '🔄 合并分支',
+            message: htmlContent,
+            icon: '🔄',
+            type: 'info',
+            confirmText: '合并',
+            cancelText: '取消',
+            allowHtml: true,
+            width: '380px',
+            onConfirm: function() {
+                var sourceBranch = document.getElementById('mergeSourceBranch').value;
+                var commitMessage = document.getElementById('mergeCommitMessage').value.trim();
+                
+                if (!sourceBranch) {
+                    showToast('请选择来源分支', 'warning');
+                    return;
+                }
+                
+                if (!confirm('确定将 "' + sourceBranch + '" 合并到 "' + targetBranch + '" 吗？')) {
+                    return;
+                }
+                
+                showToast('🔄 正在合并分支...', 'loading', 10000);
+                
+                mergeRepoBranch(owner, repo, targetBranch, sourceBranch, commitMessage)
+                .then(function() {
+                    showToast('✅ 分支合并成功！', 'success');
+                    addSyncLog('success', '合并分支: ' + sourceBranch + ' -> ' + targetBranch);
+                    hideModal();
+                    viewRepoBranches();
+                })
+                .catch(function(err) {
+                    console.error('合并分支失败:', err);
+                    showToast('❌ 合并失败: ' + err.message, 'error');
+                });
+            }
+        });
+    })
+    .catch(function(err) {
+        console.error('获取分支列表失败:', err);
+        showToast('❌ 获取失败: ' + err.message, 'error');
+    });
+}
+
+// Repository获取提交历史
+function getRepoCommits(owner, repo, path) {
+    return repoApi('/repos/' + owner + '/' + repo + '/commits?path=' + (path || '') + '&per_page=20')
+        .then(function(res) {
+            if (!res.ok) throw new Error('获取提交历史失败: HTTP ' + res.status);
+            return res.json();
+        });
+}
+
+// Repository查看提交历史
+function viewRepoCommits() {
+    var config = getRepoConfig();
+    var owner = config.owner;
+    var repo = config.repo;
+    var filePath = config.filePath;
+    
+    if (!owner || !repo) {
+        showToast('请先配置Repository信息', 'warning');
+        return;
+    }
+    
+    showToast('📜 正在获取提交历史...', 'loading', 10000);
+    
+    getRepoCommits(owner, repo, filePath)
+    .then(function(commits) {
+        if (commits.length === 0) {
+            showToast('没有提交记录', 'info');
+            return;
+        }
+        
+        var htmlContent = `
+            <div style="font-size:0.875rem;color:var(--gray-700);">
+                <div style="max-height:350px;overflow-y:auto;">
+                    ${commits.map(function(commit) {
+                        var author = commit.author ? commit.author.login : '未知';
+                        var date = new Date(commit.commit.author.date).toLocaleString();
+                        var message = commit.commit.message;
+                        return `
+                            <div style="padding:0.5rem;border-bottom:1px solid #e2e8f0;last-child{border-bottom:none;}">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem;">
+                                    <div style="font-weight:600;color:#1e40af;">${message}</div>
+                                    <div style="font-size:0.7rem;color:var(--gray-400);">${commit.sha.substring(0, 7)}</div>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--gray-500);">
+                                    <div>👤 ${author}</div>
+                                    <div>📅 ${date}</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>`;
+        
+        showModal({
+            title: '📜 提交历史',
+            message: htmlContent,
+            icon: '📜',
+            type: 'info',
+            confirmText: '关闭',
+            showCancel: false,
+            allowHtml: true,
+            width: '450px'
+        });
+    })
+    .catch(function(err) {
+        console.error('获取提交历史失败:', err);
+        showToast('❌ 获取失败: ' + err.message, 'error');
     });
 }
 
@@ -43033,6 +44386,12 @@ function repoRestoreFromHistory() {
 }
 
 function restoreFromCommit(owner, repo, filePath, commitSha) {
+    if (isSyncing) {
+        showToast('⏳ 正在同步中，请稍候', 'info');
+        return;
+    }
+    
+    isSyncing = true;
     showToast('🔄 正在恢复历史版本...', 'loading', 15000);
     
     repoApi('/repos/' + owner + '/' + repo + '/contents/' + filePath + '?ref=' + commitSha)
@@ -43048,15 +44407,34 @@ function restoreFromCommit(owner, repo, filePath, commitSha) {
             content = fileData.content;
         }
         
+        var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+        if (encryptionEnabled) {
+            try {
+                var decrypted = decryptSyncData(content);
+                if (decrypted) {
+                    if (typeof decrypted === 'object') {
+                        content = JSON.stringify(decrypted);
+                    } else if (typeof decrypted === 'string') {
+                        content = decrypted;
+                    }
+                    addSyncLog('info', '历史版本数据解密成功');
+                }
+            } catch (e) {
+                addSyncLog('info', '历史版本数据解密失败，尝试直接解析');
+            }
+        }
+        
         var currentSha;
         return getRepoFile(owner, repo, filePath).then(function(currentFile) {
             currentSha = currentFile ? currentFile.sha : null;
             
-            var data;
-            try {
-                data = decompressData(content);
-            } catch (e) {
-                data = JSON.parse(content);
+            var data = decompressData(content);
+            if (typeof data === 'string') {
+                try {
+                    data = JSON.parse(data);
+                } catch (parseError) {
+                    throw new Error('历史版本数据解析失败: ' + parseError.message);
+                }
             }
             
             data.uploadTime = new Date().toISOString();
@@ -43069,10 +44447,22 @@ function restoreFromCommit(owner, repo, filePath, commitSha) {
             if (compressionEnabled) {
                 try {
                     var compressed = compressData(data);
-                    if (compressed && compressed !== data) {
+                    if (typeof compressed === 'string') {
                         finalContent = compressed;
                     }
                 } catch (e) {
+                    addSyncLog('warning', '历史版本恢复数据压缩失败');
+                }
+            }
+            
+            if (encryptionEnabled) {
+                try {
+                    var encrypted = encryptSyncData(finalContent);
+                    if (encrypted) {
+                        finalContent = encrypted;
+                    }
+                } catch (e) {
+                    addSyncLog('warning', '历史版本恢复数据加密失败');
                 }
             }
             
@@ -43086,11 +44476,19 @@ function restoreFromCommit(owner, repo, filePath, commitSha) {
     .catch(function(err) {
         console.error('恢复Repository历史版本失败:', err);
         showToast('❌ 恢复失败: ' + err.message, 'error');
+    })
+    .then(function() {
+        isSyncing = false;
     });
 }
 
 // 修复云端重复数据
 function fixCloudData() {
+    if (isSyncing) {
+        showToast('⏳ 正在同步中，请稍候', 'info');
+        return;
+    }
+    
     var token = appData.systemSettings.gistToken;
     var gistId = appData.systemSettings.gistId;
     
@@ -43103,6 +44501,7 @@ function fixCloudData() {
         return;
     }
     
+    isSyncing = true;
     showToast('🔧 正在修复云端数据...', 'loading', 15000);
     
     gistApi('/gists/' + gistId)
@@ -43120,7 +44519,29 @@ function fixCloudData() {
             }
         }
         
-        var data = JSON.parse(file.content);
+        var content = file.content;
+        var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+        
+        if (encryptionEnabled) {
+            try {
+                var decrypted = decryptSyncData(content);
+                if (decrypted) {
+                    if (typeof decrypted === 'object') {
+                        content = JSON.stringify(decrypted);
+                    } else if (typeof decrypted === 'string') {
+                        content = decrypted;
+                    }
+                    addSyncLog('info', 'Gist数据解密成功');
+                }
+            } catch (e) {
+                addSyncLog('info', '数据解密失败，尝试直接解析');
+            }
+        }
+        
+        var data = decompressData(content);
+        if (typeof data === 'string') {
+            data = JSON.parse(data);
+        }
         var cloudData = data.data || data;
         
         // 去重前的数量
@@ -43163,6 +44584,7 @@ function fixCloudData() {
         
         // 更新时间戳
         data.uploadTime = new Date().toISOString();
+        data.deviceId = getDeviceId();
         
         // 去重后的数量
         var afterCounts = {
@@ -43178,12 +44600,39 @@ function fixCloudData() {
             templates: beforeCounts.templates - afterCounts.templates
         };
         
+        // 序列化并应用加密和压缩
+        var syncPayloadString = JSON.stringify(data, null, 2);
+        var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+        var finalContent = syncPayloadString;
+        
+        if (compressionEnabled) {
+            try {
+                var compressed = compressData(data);
+                if (typeof compressed === 'string') {
+                    finalContent = compressed;
+                }
+            } catch (e) {
+                addSyncLog('warning', '数据压缩失败');
+            }
+        }
+        
+        if (encryptionEnabled) {
+            try {
+                var encrypted = encryptSyncData(finalContent);
+                if (encrypted) {
+                    finalContent = encrypted;
+                }
+            } catch (e) {
+                addSyncLog('warning', '数据加密失败');
+            }
+        }
+        
         // 上传修复后的数据
         return gistApi('/gists/' + gistId, {
             method: 'PATCH',
             body: JSON.stringify({
                 files: {
-                    'quote-data.json': { content: JSON.stringify(data, null, 2) }
+                    'quote-data.json': { content: finalContent }
                 }
             })
         })
@@ -43243,11 +44692,19 @@ function fixCloudData() {
     .catch(function(err) {
         console.error('修复云端数据失败:', err);
         showToast('❌ 修复失败: ' + err.message, 'error');
+    })
+    .then(function() {
+        isSyncing = false;
     });
 }
 
 // 清空云端数据
 function clearCloudData() {
+    if (isSyncing) {
+        showToast('⏳ 正在同步中，请稍候', 'info');
+        return;
+    }
+    
     var token = appData.systemSettings.gistToken;
     var gistId = appData.systemSettings.gistId;
     
@@ -43272,26 +44729,73 @@ function clearCloudData() {
         return;
     }
     
+    isSyncing = true;
     showToast('🗑️ 正在清空云端数据...', 'loading', 10000);
     
-    // 清空所有相关文件
-    var filesToClear = {
-        'quote-data.json': { content: JSON.stringify({ 
-            version: '3.4',
-            uploadTime: new Date().toISOString(),
-            deviceId: getDeviceId(),
-            data: {
-                products: [],
-                customers: [],
-                templates: [],
-                quoteHistory: []
+    var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+    var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+    
+    var emptyData = { 
+        version: '3.4',
+        uploadTime: new Date().toISOString(),
+        deviceId: getDeviceId(),
+        data: {
+            products: [],
+            customers: [],
+            templates: [],
+            quoteHistory: []
+        }
+    };
+    
+    var finalContent = JSON.stringify(emptyData, null, 2);
+    
+    if (compressionEnabled) {
+        try {
+            var compressed = compressData(emptyData);
+            if (typeof compressed === 'string') {
+                finalContent = compressed;
             }
-        }, null, 2) },
-        'products-price.json': { content: JSON.stringify({
-            updateTime: new Date().toISOString(),
-            deviceId: getDeviceId(),
-            products: []
-        }, null, 2) },
+        } catch (e) {}
+    }
+    
+    if (encryptionEnabled) {
+        try {
+            var encrypted = encryptSyncData(finalContent);
+            if (encrypted) {
+                finalContent = encrypted;
+            }
+        } catch (e) {}
+    }
+    
+    var emptyPriceData = {
+        updateTime: new Date().toISOString(),
+        deviceId: getDeviceId(),
+        products: []
+    };
+    
+    var priceContent = JSON.stringify(emptyPriceData, null, 2);
+    
+    if (compressionEnabled) {
+        try {
+            var priceCompressed = compressData(emptyPriceData);
+            if (typeof priceCompressed === 'string') {
+                priceContent = priceCompressed;
+            }
+        } catch (e) {}
+    }
+    
+    if (encryptionEnabled) {
+        try {
+            var priceEncrypted = encryptSyncData(priceContent);
+            if (priceEncrypted) {
+                priceContent = priceEncrypted;
+            }
+        } catch (e) {}
+    }
+    
+    var filesToClear = {
+        'quote-data.json': { content: finalContent },
+        'products-price.json': { content: priceContent },
         'version-history.json': { content: JSON.stringify([], null, 2) }
     };
     
@@ -43312,6 +44816,9 @@ function clearCloudData() {
     .catch(function(err) {
         console.error('清空云端数据失败:', err);
         showToast('❌ 清空失败: ' + err.message, 'error');
+    })
+    .then(function() {
+        isSyncing = false;
     });
 }
 
@@ -43415,7 +44922,7 @@ function triggerSyncOnChange() {
     delayedSyncTimer = setTimeout(function() {
         if (!isSyncing) {
             pendingChanges = false;
-            gistUpload();
+            syncNow();
         } else {
             pendingChanges = true;
         }
@@ -43490,7 +44997,7 @@ function setupVisibilityChangeListener() {
         showToast('📶 网络已连接，正在同步数据...', 'info');
         if (appData.systemSettings.cloudSyncEnabled) {
             if (pendingChanges) {
-                gistUpload();
+                syncNow();
             } else {
                 checkCloudUpdate();
             }
@@ -43507,38 +45014,74 @@ function checkCloudUpdate() {
     if (isSyncing) return;
     
     var token = appData.systemSettings.gistToken;
-    var gistId = appData.systemSettings.gistId;
+    if (!token) return;
     
-    if (!token || !gistId) return;
+    var syncTarget = getSyncTarget();
     
-    gistApi('/gists/' + gistId)
-    .then(function(res) {
-        if (!res.ok) throw new Error('检查更新失败');
-        return res.json();
-    })
-    .then(function(gist) {
-        var cloudUpdatedAt = new Date(gist.updated_at);
-        var localUpdatedAt = appData.systemSettings.lastSyncTime ? 
-            new Date(appData.systemSettings.lastSyncTime) : new Date(0);
+    if (syncTarget === 'repo') {
+        var owner = appData.systemSettings.repoOwner;
+        var repo = appData.systemSettings.repoName;
+        var branch = appData.systemSettings.repoBranch || 'main';
+        var filePath = appData.systemSettings.repoFilePath || 'quote-data.json';
         
-        if (cloudUpdatedAt > localUpdatedAt) {
-            // 云端有更新，询问用户是否下载
-            showModal({
-                title: '🔄 检测到云端更新',
-                message: '<p>云端数据有更新，是否立即同步？</p>',
-                type: 'confirm',
-                confirmText: '立即同步',
-                cancelText: '稍后再说'
-            }).then(function(confirmed) {
-                if (confirmed) {
-                    gistDownload();
-                }
-            });
-        }
-    })
-    .catch(function(err) {
-        console.log('检查云端更新失败:', err);
-    });
+        if (!owner || !repo) return;
+        
+        getBranch(owner, repo, branch)
+        .then(function(branchInfo) {
+            if (!branchInfo || !branchInfo.commit) return;
+            var cloudUpdatedAt = new Date(branchInfo.commit.commit.author.date);
+            var localUpdatedAt = appData.systemSettings.lastSyncTime ? 
+                new Date(appData.systemSettings.lastSyncTime) : new Date(0);
+            
+            if (cloudUpdatedAt > localUpdatedAt) {
+                showModal({
+                    title: '🔄 检测到云端更新',
+                    message: '<p>云端数据有更新，是否立即同步？</p>',
+                    type: 'confirm',
+                    confirmText: '立即同步',
+                    cancelText: '稍后再说'
+                }).then(function(confirmed) {
+                    if (confirmed) {
+                        syncNow();
+                    }
+                });
+            }
+        })
+        .catch(function(err) {
+            console.log('检查云端更新失败:', err);
+        });
+    } else {
+        var gistId = appData.systemSettings.gistId;
+        if (!gistId) return;
+        
+        gistApi('/gists/' + gistId)
+        .then(function(res) {
+            if (!res.ok) throw new Error('检查更新失败');
+            return res.json();
+        })
+        .then(function(gist) {
+            var cloudUpdatedAt = new Date(gist.updated_at);
+            var localUpdatedAt = appData.systemSettings.lastSyncTime ? 
+                new Date(appData.systemSettings.lastSyncTime) : new Date(0);
+            
+            if (cloudUpdatedAt > localUpdatedAt) {
+                showModal({
+                    title: '🔄 检测到云端更新',
+                    message: '<p>云端数据有更新，是否立即同步？</p>',
+                    type: 'confirm',
+                    confirmText: '立即同步',
+                    cancelText: '稍后再说'
+                }).then(function(confirmed) {
+                    if (confirmed) {
+                        syncNow();
+                    }
+                });
+            }
+        })
+        .catch(function(err) {
+            console.log('检查云端更新失败:', err);
+        });
+    }
 }
 
 function updateCloudSyncStatus() {
@@ -43595,7 +45138,7 @@ function updateCloudSyncStatus() {
     
     // 设置同步目标选中状态和面板显示
     var syncTargetRadios = document.querySelectorAll('input[name="syncTarget"]');
-    var targetValue = appData.systemSettings.syncTarget || 'gist';
+    var targetValue = appData.systemSettings.syncTarget || 'repo';
     syncTargetRadios.forEach(function(radio) {
         radio.checked = radio.value === targetValue;
     });
@@ -43625,6 +45168,12 @@ function updateCloudSyncStatus() {
     repoOnlyButtons.forEach(function(btn) {
         btn.style.display = isGistMode ? 'none' : 'inline-flex';
     });
+    
+    // Repository模式下隐藏团队功能（团队功能依赖Gist）
+    var teamSettingsArea = document.getElementById('teamSettingsArea');
+    if (teamSettingsArea) {
+        teamSettingsArea.style.display = isGistMode ? 'block' : 'none';
+    }
     
     // 更新高级配置UI
     if (incrementalEl) incrementalEl.checked = appData.systemSettings.incrementalSyncEnabled !== false;
@@ -44744,8 +46293,44 @@ function setupOfflineSupport() {
 function mergeSyncData(serverData) {
     var stats = { updated: 0, added: 0 };
     
-    // 提取实际的数据内容（兼容完整数据结构）
-    var syncData = serverData.data || serverData;
+    if (!serverData || typeof serverData !== 'object') {
+        return stats;
+    }
+    
+    var backup = null;
+    try {
+        backup = JSON.stringify({
+            products: appData.products,
+            templates: appData.templates,
+            customers: appData.customers,
+            quoteHistory: appData.quoteHistory,
+            seals: appData.seals,
+            signatures: appData.signatures,
+            favoriteIds: appData.favoriteIds,
+            categories: appData.categories,
+            charPricingConfig: appData.charPricingConfig,
+            cultureWallConfig: appData.cultureWallConfig
+        });
+    } catch (e) {
+        console.error('备份数据失败:', e);
+    }
+    
+    try {
+        // 提取实际的数据内容（兼容完整数据结构）
+        var syncData = serverData.data || serverData;
+    
+    if (!syncData || typeof syncData !== 'object') {
+        syncData = {};
+    }
+    
+    var serverSchemaVersion = serverData.schemaVersion || 0;
+    var currentSchemaVersion = 4;
+    
+    if (serverSchemaVersion < currentSchemaVersion) {
+        addSyncLog('info', '检测到旧版本数据 (v' + serverSchemaVersion + ')，正在迁移到 v' + currentSchemaVersion);
+        serverData = migrateSyncData(serverData, serverSchemaVersion, currentSchemaVersion);
+        addSyncLog('success', '数据版本迁移完成');
+    }
     
     // 检查是否是团队数据（schemaVersion 4+）
     var isTeamData = serverData.team && serverData.team.enabled;
@@ -44800,10 +46385,12 @@ function mergeSyncData(serverData) {
         serverProducts.forEach(function(sp) {
         var lp = localProducts.get(String(sp.id));
         if (!lp) {
-            // 尝试用宽松比较查找
             lp = appData.products.find(function(p) { return p.id == sp.id; });
         }
         if (!lp) {
+            if (sp.supplierQuotes && !Array.isArray(sp.supplierQuotes)) {
+                sp.supplierQuotes = [];
+            }
             appData.products.push(sp);
             stats.added++;
         } else {
@@ -44812,9 +46399,11 @@ function mergeSyncData(serverData) {
             if (serverUpdated > localUpdated) {
                 var idx = appData.products.findIndex(function(p) { return String(p.id) === String(sp.id); });
                 if (idx >= 0) {
-                    // 记录变更来源（用于UI显示）
                     if (isTeamData && sp.lastModifiedBy) {
                         sp.modifiedBy = sp.lastModifiedBy;
+                    }
+                    if (sp.supplierQuotes && !Array.isArray(sp.supplierQuotes)) {
+                        sp.supplierQuotes = [];
                     }
                     appData.products[idx] = sp;
                     stats.updated++;
@@ -45052,6 +46641,17 @@ function mergeSyncData(serverData) {
         });
     }
     
+    // 合并全局价格配置中心数据
+    if (syncData.globalPriceConfig && Object.keys(syncData.globalPriceConfig).length > 0) {
+        Object.keys(syncData.globalPriceConfig).forEach(key => {
+            localStorage.setItem('globalPrice_' + key, syncData.globalPriceConfig[key]);
+            const input = document.getElementById('globalPrice_' + key);
+            if (input) {
+                input.value = syncData.globalPriceConfig[key];
+            }
+        });
+    }
+    
     // 合并系统设置
     if (serverData.systemSettings) {
         var ss = serverData.systemSettings;
@@ -45099,7 +46699,6 @@ function mergeSyncData(serverData) {
             showToast('✅ 数据同步成功！', 'success');
         } catch (e) {
             console.error('局部刷新失败:', e);
-            // 如果局部刷新失败，降级到整页刷新
             setTimeout(function() {
                 location.reload();
             }, 500);
@@ -45109,6 +46708,137 @@ function mergeSyncData(serverData) {
             location.reload();
         }, 500);
     }
+    
+    return stats;
+    } catch (e) {
+        console.error('数据合并失败，正在回滚:', e);
+        addSyncLog('error', '数据合并失败，正在回滚: ' + e.message);
+        
+        if (backup) {
+            try {
+                var backupData = JSON.parse(backup);
+                appData.products = backupData.products;
+                appData.templates = backupData.templates;
+                appData.customers = backupData.customers;
+                appData.quoteHistory = backupData.quoteHistory;
+                appData.seals = backupData.seals;
+                appData.signatures = backupData.signatures;
+                appData.favoriteIds = backupData.favoriteIds;
+                appData.categories = backupData.categories;
+                appData.charPricingConfig = backupData.charPricingConfig;
+                appData.cultureWallConfig = backupData.cultureWallConfig;
+                saveData();
+                addSyncLog('success', '数据回滚成功');
+                showToast('⚠️ 数据合并失败，已回滚到合并前状态', 'warning');
+            } catch (rollbackError) {
+                console.error('回滚失败:', rollbackError);
+                addSyncLog('error', '回滚失败: ' + rollbackError.message);
+                showToast('❌ 数据合并失败且回滚失败，请手动检查数据', 'error');
+            }
+        }
+        
+        throw e;
+    }
+}
+
+function migrateSyncData(data, fromVersion, toVersion) {
+    var visited = new WeakSet();
+    function clone(obj) {
+        if (obj === null || typeof obj !== 'object') return obj;
+        if (visited.has(obj)) return null;
+        visited.add(obj);
+        if (Array.isArray(obj)) {
+            return obj.map(function(item) { return clone(item); });
+        }
+        var cloned = {};
+        for (var key in obj) {
+            if (key !== '_cid') {
+                cloned[key] = clone(obj[key]);
+            }
+        }
+        return cloned;
+    }
+    var migratedData = clone(data);
+    
+    for (var v = fromVersion; v < toVersion; v++) {
+        switch (v) {
+            case 0:
+                migratedData = migrateFromV0(migratedData);
+                break;
+            case 1:
+                migratedData = migrateFromV1(migratedData);
+                break;
+            case 2:
+                migratedData = migrateFromV2(migratedData);
+                break;
+            case 3:
+                migratedData = migrateFromV3(migratedData);
+                break;
+        }
+        migratedData.schemaVersion = v + 1;
+    }
+    
+    return migratedData;
+}
+
+function migrateFromV0(data) {
+    if (!data.data && data.products) {
+        data = {
+            version: '3.0',
+            uploadTime: data.uploadTime || new Date().toISOString(),
+            deviceId: data.deviceId || getDeviceId(),
+            schemaVersion: 1,
+            data: {
+                products: data.products || [],
+                customers: data.customers || [],
+                templates: data.templates || [],
+                quoteHistory: data.quoteHistory || [],
+                seals: data.seals || [],
+                signatures: data.signatures || [],
+                favoriteIds: data.favoriteIds || [],
+                categories: data.categories || []
+            }
+        };
+    }
+    return data;
+}
+
+function migrateFromV1(data) {
+    if (!data.data.charPricingConfig) {
+        data.data.charPricingConfig = {};
+    }
+    if (!data.data.cultureWallConfig) {
+        data.data.cultureWallConfig = {};
+    }
+    return data;
+}
+
+function migrateFromV2(data) {
+    if (!data.data.globalPriceConfig) {
+        data.data.globalPriceConfig = {};
+    }
+    if (!data.data.customPrices) {
+        data.data.customPrices = {};
+    }
+    return data;
+}
+
+function migrateFromV3(data) {
+    if (!data.team) {
+        data.team = {
+            enabled: false,
+            teamName: '',
+            members: [],
+            userId: data.deviceId || getDeviceId()
+        };
+    }
+    if (!data.activityLog) {
+        data.activityLog = [];
+    }
+    if (!data.images) {
+        data.images = {};
+    }
+    return data;
 }
 
 function getDeviceId() {
@@ -52776,6 +54506,32 @@ navigator.serviceWorker.addEventListener('message', function(event) {
         updateVersionDisplay(event.data.version, event.data.logs);
         return;
     }
+
+    if (event.data.type === 'SW_LOG') {
+        appendSWLog(event.data.log);
+        return;
+    }
+
+    if (event.data.type === 'SW_LOGS_RESPONSE') {
+        renderSWLogs(event.data.logs || []);
+        if (event.data.error) {
+            showToast('获取SW日志失败: ' + event.data.error, 'error');
+        }
+        return;
+    }
+
+    if (event.data.type === 'SW_LOGS_CLEARED') {
+        var container = document.getElementById('swLogContainer');
+        if (container) {
+            container.innerHTML = '<div style="color:#64748b;text-align:center;">日志已清空</div>';
+        }
+        if (event.data.error) {
+            showToast('清空SW日志失败: ' + event.data.error, 'error');
+        } else {
+            showToast('SW日志已清空', 'success');
+        }
+        return;
+    }
 });
 
 // 更新页面上的版本号显示
@@ -52810,6 +54566,103 @@ function updateVersionDisplay(version, logs) {
             if (el) el.textContent = version;
         }, 500);
     }
+}
+
+// SW日志功能
+function refreshSWLogs() {
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'GET_SW_LOGS' });
+    } else {
+        showToast('Service Worker 未激活', 'warning');
+    }
+}
+
+function clearSWLogs() {
+    if (!confirm('确定要清空SW日志吗？')) return;
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_SW_LOGS' });
+    } else {
+        showToast('Service Worker 未激活', 'warning');
+    }
+}
+
+function renderSWLogs(logs) {
+    var container = document.getElementById('swLogContainer');
+    if (!container) return;
+    
+    if (!logs || logs.length === 0) {
+        container.innerHTML = '<div style="color:#64748b;text-align:center;">暂无日志</div>';
+        return;
+    }
+    
+    var html = '';
+    logs.forEach(function(log) {
+        var typeColor = getLogTypeColor(log.type);
+        var timestamp = new Date(log.timestamp).toLocaleString('zh-CN', {
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        var detailsHtml = '';
+        if (log.details && typeof log.details === 'object') {
+            try {
+                detailsHtml = '<br><span style="color:#64748b;">' + JSON.stringify(log.details, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;') + '</span>';
+            } catch(e) {}
+        }
+        html += '<div style="margin-bottom:2px;padding:2px 4px;border-radius:2px;"><span style="color:#94a3b8;">' + timestamp + '</span> <span style="color:' + typeColor + ';">[' + log.type.toUpperCase() + ']</span> <span>' + escapeHtml(log.message) + '</span>' + detailsHtml + '</div>';
+    });
+    container.innerHTML = html;
+    container.scrollTop = 0;
+}
+
+function appendSWLog(log) {
+    var container = document.getElementById('swLogContainer');
+    if (!container) return;
+    
+    var typeColor = getLogTypeColor(log.type);
+    var timestamp = new Date(log.timestamp).toLocaleString('zh-CN', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+    var detailsHtml = '';
+    if (log.details && typeof log.details === 'object') {
+        try {
+            detailsHtml = '<br><span style="color:#64748b;">' + JSON.stringify(log.details, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;') + '</span>';
+        } catch(e) {}
+    }
+    var logHtml = '<div style="margin-bottom:2px;padding:2px 4px;border-radius:2px;"><span style="color:#94a3b8;">' + timestamp + '</span> <span style="color:' + typeColor + ';">[' + log.type.toUpperCase() + ']</span> <span>' + escapeHtml(log.message) + '</span>' + detailsHtml + '</div>';
+    
+    var currentContent = container.innerHTML;
+    if (currentContent.indexOf('暂无同步记录') !== -1 || currentContent.indexOf('点击"刷新"获取SW日志') !== -1 || currentContent.indexOf('暂无日志') !== -1 || currentContent.indexOf('日志已清空') !== -1) {
+        container.innerHTML = logHtml;
+    } else {
+        container.innerHTML = logHtml + currentContent;
+    }
+    container.scrollTop = 0;
+}
+
+function getLogTypeColor(type) {
+    switch(type) {
+        case 'error': return '#ef4444';
+        case 'warning': return '#f59e0b';
+        case 'success': return '#22c55e';
+        case 'debug': return '#8b5cf6';
+        case 'info': default: return '#3b82f6';
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#039;');
 }
 
 // 自动更新模式：显示桌面通知提示
