@@ -9,6 +9,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
     
+    <!-- LZString (数据压缩) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    
     <!-- PWA 相关 -->
     <meta name="theme-color" content="#2563eb">
     <meta name="description" content="图文广告行业快速报价解决方案，支持产品管理、客户管理、报价模板、AI智能助手">
@@ -11226,16 +11229,24 @@ function undoToIndex(index){
     // 移除 index 之后的所有状态，并更新内存使用量
     const removed = undoStack.splice(index + 1);
     removed.forEach(function(item) {
-        if (item && item.state) {
-            undoMemoryUsage -= estimateCompressedSize(item.state);
+        if (item) {
+            if (item.isSnapshot) {
+                undoMemoryUsage -= estimateCompressedSize(item.state);
+            } else if (item.diff) {
+                undoMemoryUsage -= estimateCompressedSize(JSON.stringify(item.diff));
+            }
         }
     });
     lastUndoState = JSON.stringify(appData.currentQuote);
 
     // 恢复到指定位置
     const targetState = undoStack.pop();
-    if (targetState && targetState.state) {
-        undoMemoryUsage -= estimateCompressedSize(targetState.state);
+    if (targetState) {
+        if (targetState.isSnapshot) {
+            undoMemoryUsage -= estimateCompressedSize(targetState.state);
+        } else if (targetState.diff) {
+            undoMemoryUsage -= estimateCompressedSize(JSON.stringify(targetState.diff));
+        }
     }
     try {
         appData.currentQuote = JSON.parse(targetState.state);
@@ -11298,7 +11309,7 @@ function encryptSyncData(data) {
         for (let i = 0; i < inputStr.length; i++) {
             result += String.fromCharCode(inputStr.charCodeAt(i) ^ SYNC_ENCRYPTION_KEY.charCodeAt(i % SYNC_ENCRYPTION_KEY.length));
         }
-        return btoa(result);
+        return btoa(unescape(encodeURIComponent(result)));
     } catch(e) {
         console.error('同步数据加密失败:', e);
         return null;
@@ -11307,7 +11318,7 @@ function encryptSyncData(data) {
 
 function decryptSyncData(encoded) {
     try {
-        let decoded = atob(encoded);
+        let decoded = decodeURIComponent(escape(atob(encoded)));
         let result = '';
         for (let i = 0; i < decoded.length; i++) {
             result += String.fromCharCode(decoded.charCodeAt(i) ^ SYNC_ENCRYPTION_KEY.charCodeAt(i % SYNC_ENCRYPTION_KEY.length));
@@ -14167,6 +14178,7 @@ function numberToChineseUpper(n){
         var intStr = String(intPart);
         var len = intStr.length;
         var zeroFlag = false;
+        var segHasNz = false; // 当前 4 位段内是否出现过非零数字
         for(var i = 0; i < len; i++){
             var d = parseInt(intStr[i]);
             var pos = len - i - 1;
@@ -14174,18 +14186,24 @@ function numberToChineseUpper(n){
             var unitPos = pos % 4;
             if(d === 0){
                 zeroFlag = true;
-                if(unitPos === 0 && bigPos > 0){
-                    result += bigUnits[bigPos];
-                    zeroFlag = false;
-                }
             } else {
                 if(zeroFlag){
                     result += '零';
                     zeroFlag = false;
                 }
                 result += digits[d] + intUnits[unitPos];
-                if(unitPos === 0 && bigPos > 0){
-                    result += bigUnits[bigPos];
+                segHasNz = true;
+            }
+            // 段末尾：只有该段出现过非零数字，才追加段大单位（万/亿）
+            // 否则会把 1亿（100000000）错读成"壹亿万"——万位段全0却强加了"万"
+            // 段全0时不重置 zeroFlag，让下一段开头补"零"（如 10亿零1千 = 1000001000）
+            if(unitPos === 0){
+                if(segHasNz){
+                    if(bigPos > 0){
+                        result += bigUnits[bigPos];
+                    }
+                    zeroFlag = false;
+                    segHasNz = false;
                 }
             }
         }
@@ -15283,6 +15301,8 @@ function saveCurrentQuoteToHistory() {
     if (appData.currentQuote && appData.currentQuote.editingHistoryId) {
         // 更新现有的历史报价
         const existingQuote = appData.quoteHistory.find(q => q.id === appData.currentQuote.editingHistoryId);
+        // 先保存旧金额，用于稍后更新客户统计差额
+        var oldFinalTotal = existingQuote ? (existingQuote.finalTotal || 0) : 0;
         if (existingQuote) {
             // 更新基本信息
             existingQuote.clientName = clientName || '未命名客户';
@@ -15347,8 +15367,17 @@ function saveCurrentQuoteToHistory() {
     if(clientName && clientName !== '未命名客户'){
         const customer = appData.customers && appData.customers.find(c => c.name === clientName);
         if(customer){
-            customer.totalOrders = (customer.totalOrders || 0) + 1;
-            customer.totalAmount = (customer.totalAmount || 0) + total;
+            // 仅新建报价时才增加订单统计，编辑已有报价不重复计算
+            if (!appData.currentQuote.editingHistoryId) {
+                customer.totalOrders = (customer.totalOrders || 0) + 1;
+                customer.totalAmount = (customer.totalAmount || 0) + total;
+            } else {
+                // 编辑已有报价：更新金额为最新版本的差额
+                // oldFinalTotal 在更新历史报价之前已保存，此处为旧金额
+                if (typeof oldFinalTotal === 'number') {
+                    customer.totalAmount = (customer.totalAmount || 0) - oldFinalTotal + total;
+                }
+            }
             customer.lastQuoteDate = new Date().toISOString();
         }
     }
@@ -18426,11 +18455,11 @@ async function exportPDF(showSaveAs){
                             // 计算页面内容高度
                             var pageStartPixel = (i === 1) ? 0 : (i-2)*pageContentPixels + firstPageContentPixels;
                             var pageEndPixel = (i === pageCount) ? imgHeight : (i-1)*pageContentPixels + firstPageContentPixels;
-                            var pageContentPixels = pageEndPixel - pageStartPixel;
-                            var pageContentHeightMM = pageContentPixels / pixelsPerPageMM;
+                            var currentPagePixels = pageEndPixel - pageStartPixel;
+                            var currentPageHeightMM = currentPagePixels / pixelsPerPageMM;
                             
                             // 如果页面内容高度小于3mm，则认为是空白页
-                            if (pageContentHeightMM < 3 && pageCount > 1) {
+                            if (currentPageHeightMM < 3 && pageCount > 1) {
                                 pdf.deletePage(i);
                                 pageCount--;
                             }
@@ -19695,16 +19724,15 @@ function updateTierLabels() {
     const mode = document.getElementById('tierMode')?.value || 'qty';
     const qtyLabel = document.getElementById('tierQtyLabel');
     const priceLabel = document.getElementById('tierPriceLabel');
+    const qtyUnit = mode === 'area' ? '㎡' : '件';
+    const priceUnit = mode === 'area' ? '元/㎡' : '元/件';
     
-    if (mode === 'area') {
-        // 按面积模式：阈值是面积（平方），单价是每平方价格
-        if (qtyLabel) qtyLabel.textContent = '㎡→';
-        if (priceLabel) priceLabel.textContent = '元/㎡';
-    } else {
-        // 按件数模式：阈值是件数，单价是每个的价格
-        if (qtyLabel) qtyLabel.textContent = '件→';
-        if (priceLabel) priceLabel.textContent = '元/件';
-    }
+    if (qtyLabel) qtyLabel.textContent = qtyUnit + '→';
+    if (priceLabel) priceLabel.textContent = priceUnit;
+    
+    // 同步更新已存在的阶梯行标签
+    document.querySelectorAll('.tier-chip .tier-qty-unit').forEach(el => el.textContent = qtyUnit);
+    document.querySelectorAll('.tier-chip .tier-price-unit').forEach(el => el.textContent = priceUnit);
 }
 
 // 根据计费方式更新折扣模式选项
@@ -19759,17 +19787,20 @@ function addTierRow() {
         return;
     }
     
+    const mode = document.getElementById('tierMode')?.value || 'qty';
+    const qtyUnit = mode === 'area' ? '㎡' : '件';
+    const priceUnit = mode === 'area' ? '元/㎡' : '元/件';
     const chip = document.createElement('div');
     chip.className = 'tier-chip';
     chip.style.cssText = 'display:flex;align-items:center;gap:0.3rem;padding:0.45rem 0.55rem;background:#fff;border:1px solid #d1d5db;border-radius:8px;font-size:0.8rem;box-shadow:0 1px 2px rgba(0,0,0,0.05);width:100%;overflow:hidden;';
     chip.innerHTML = `
         <span style="color:#374151;font-weight:500;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">满</span>
         <input type="number" class="tier-qty" min="1" step="1" value="${qtyValue}" style="flex:1;min-width:0;max-width:65px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;text-align:right;">
-        <span style="color:#6b7280;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">件</span>
+        <span class="tier-qty-unit" style="color:#6b7280;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">${qtyUnit}</span>
         <span style="color:#2563eb;font-size:0.85rem;font-weight:600;flex-shrink:0;">→</span>
         <span style="color:#374151;font-weight:500;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">享</span>
         <input type="number" class="tier-price" min="0" step="0.01" value="${priceValue}" style="flex:1;min-width:0;max-width:70px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;text-align:right;">
-        <span style="color:#6b7280;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">元/件</span>
+        <span class="tier-price-unit" style="color:#6b7280;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">${priceUnit}</span>
         <button type="button" class="btn btn-xs btn-danger" onclick="removeTierRow(this)" style="padding:0.2rem 0.45rem;flex-shrink:0;font-size:0.7rem;white-space:nowrap;margin-left:auto;">删除</button>
     `;
     list.appendChild(chip);
@@ -19818,6 +19849,9 @@ function setTierPricesToForm(tierPrices) {
     }
     
     // 添加所有阶梯行
+    const mode = document.getElementById('tierMode')?.value || 'qty';
+    const qtyUnit = mode === 'area' ? '㎡' : '件';
+    const priceUnit = mode === 'area' ? '元/㎡' : '元/件';
     tierPrices.forEach((tier) => {
         const chip = document.createElement('div');
         chip.className = 'tier-chip';
@@ -19825,11 +19859,11 @@ function setTierPricesToForm(tierPrices) {
         chip.innerHTML = `
             <span style="color:#374151;font-weight:500;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">满</span>
             <input type="number" class="tier-qty" min="1" step="1" value="${tier.qty}" style="flex:1;min-width:0;max-width:65px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;text-align:right;">
-            <span style="color:#6b7280;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">件</span>
+            <span class="tier-qty-unit" style="color:#6b7280;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">${qtyUnit}</span>
             <span style="color:#2563eb;font-size:0.85rem;font-weight:600;flex-shrink:0;">→</span>
             <span style="color:#374151;font-weight:500;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">享</span>
             <input type="number" class="tier-price" min="0" step="0.01" value="${tier.price}" style="flex:1;min-width:0;max-width:70px;padding:0.25rem 0.35rem;font-size:0.8rem;border:1px solid #d1d5db;border-radius:4px;text-align:right;">
-            <span style="color:#6b7280;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">元/件</span>
+            <span class="tier-price-unit" style="color:#6b7280;font-size:0.78rem;flex-shrink:0;white-space:nowrap;">${priceUnit}</span>
             <button type="button" class="btn btn-xs btn-danger" onclick="removeTierRow(this)" style="padding:0.2rem 0.45rem;flex-shrink:0;font-size:0.7rem;white-space:nowrap;margin-left:auto;">删除</button>
         `;
         list.appendChild(chip);
@@ -19988,13 +20022,14 @@ function getSupplierQuotesFromForm() {
     
     cards.forEach(card => {
         const inputs = card.querySelectorAll('input');
+        // input 顺序：[0]供应商名称 [1]报价金额 [2]报价日期 [3]首选(checkbox) [4]备注
         const quote = {
             id: parseInt(card.dataset.id),
             supplierName: inputs[0].value.trim(),
             quotePrice: parseFloat(inputs[1].value) || 0,
             quoteDate: inputs[2].value || new Date().toISOString().split('T')[0],
-            note: inputs[3].value.trim(),
-            isPreferred: inputs[4].checked,
+            isPreferred: inputs[3].checked,
+            note: inputs[4].value.trim(),
             createdAt: card.supplierQuoteData && card.supplierQuoteData.createdAt ? card.supplierQuoteData.createdAt : new Date().toISOString()
         };
         
@@ -20106,7 +20141,10 @@ function renderSupplierQuoteList(supplierQuotes) {
     const item = appData.currentQuote.items.find(i => i.id == currentQuoteItemId);
     const selectedSupplier = item ? item.selectedSupplier : null;
     
-    sortedQuotes.forEach((quote, index) => {
+    sortedQuotes.forEach((quote, sortedIndex) => {
+        // 注意：edit/delete/select 函数使用的是原数组 supplierQuotes 的 index，
+        // 而不是排序后的 sortedIndex，否则当排序改变顺序时会误操作到错误的供应商
+        const index = supplierQuotes.indexOf(quote);
         const isBestPrice = quote.quotePrice > 0 && quote.quotePrice === minPrice;
         const isSelected = selectedSupplier === quote.supplierName;
         const card = document.createElement('div');
@@ -36548,27 +36586,68 @@ function viewHistorySupplierQuotes(quoteId) {
     const itemsWithQuotes = quote.items.filter(item => item.supplierQuotes && item.supplierQuotes.length > 0);
     
     let html = '';
-    itemsWithQuotes.forEach(item => {
+    itemsWithQuotes.forEach((item, itemIndex) => {
         const sortedQuotes = [...item.supplierQuotes].sort((a, b) => Number(a.quotePrice) - Number(b.quotePrice));
         const minPrice = sortedQuotes[0] ? sortedQuotes[0].quotePrice : 0;
+        const maxPrice = sortedQuotes[sortedQuotes.length - 1] ? sortedQuotes[sortedQuotes.length - 1].quotePrice : 0;
+        const avgPrice = sortedQuotes.length > 0 ? sortedQuotes.reduce((sum, q) => sum + Number(q.quotePrice), 0) / sortedQuotes.length : 0;
+        
+        const specText = item.spec ? `<span style="font-size:0.78rem;color:var(--gray-500);margin-left:0.4rem;">${escapeHtml(item.spec)}</span>` : '';
+        const qtyText = item.qty ? `<span style="font-size:0.78rem;color:var(--gray-600);margin-left:0.4rem;">× ${item.qty}${escapeHtml(item.unit || '')}</span>` : '';
+        const priceText = (typeof item.price === 'number' && item.price > 0) ? `<span style="font-size:0.78rem;color:#2563eb;margin-left:0.4rem;">¥${item.price.toFixed(2)}</span>` : '';
+        const subtotal = (typeof item.price === 'number' && typeof item.qty === 'number') ? item.price * item.qty : 0;
+        const subtotalText = subtotal > 0 ? `<span style="font-size:0.78rem;color:var(--gray-600);margin-left:0.4rem;">小计 ¥${subtotal.toFixed(2)}</span>` : '';
         
         html += `
-            <div style="margin-bottom:0.75rem;border-bottom:1px dashed #e5e7eb;padding-bottom:0.75rem;">
-                <div style="font-size:0.9rem;font-weight:600;color:var(--gray-800);margin-bottom:0.35rem;">${escapeHtml(item.name || '')}</div>
-                <div style="border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;">
-                    ${sortedQuotes.map(q => `
-                        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.5rem;border-bottom:1px solid #f3f4f6;">
-                            <div>
-                                <div style="font-size:0.8rem;font-weight:500;">${escapeHtml(q.supplierName || '未知供应商')}</div>
-                                ${q.quoteDate ? `<div style="font-size:0.65rem;color:var(--gray-500);">${q.quoteDate}</div>` : ''}
-                            </div>
-                            <div style="text-align:right;">
-                                <div style="font-size:0.85rem;font-weight:600;color:${Number(q.quotePrice) === Number(minPrice) ? '#16a34a' : 'var(--gray-700)'};">¥${Number(q.quotePrice).toFixed(2)}</div>
-                                ${q.isPreferred ? '<span style="font-size:0.6rem;color:#f59e0b;">首选</span>' : ''}
-                            </div>
-                        </div>
-                    `).join('')}
+            <div style="margin-bottom:1rem;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+                <div style="background:#f8fafc;padding:0.5rem 0.6rem;border-bottom:1px solid #e5e7eb;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+                    <div style="font-size:0.9rem;font-weight:600;color:var(--gray-800);display:flex;flex-wrap:wrap;align-items:center;">
+                        <span>${escapeHtml(item.name || '')}</span>
+                        ${specText}
+                        ${qtyText}
+                        ${priceText}
+                        ${subtotalText}
+                    </div>
+                    <div style="display:flex;gap:1rem;font-size:0.72rem;color:var(--gray-500);">
+                        <span>供应商：<strong style="color:#2563eb;">${sortedQuotes.length}</strong></span>
+                        <span>最低：<strong style="color:#16a34a;">¥${Number(minPrice).toFixed(2)}</strong></span>
+                        <span>最高：<strong style="color:#dc2626;">¥${Number(maxPrice).toFixed(2)}</strong></span>
+                        <span>平均：<strong style="color:#7c3aed;">¥${Number(avgPrice).toFixed(2)}</strong></span>
+                    </div>
                 </div>
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#f3f4f6;">
+                            <th style="padding:0.3rem 0.5rem;font-size:0.65rem;font-weight:600;color:var(--gray-600);text-align:left;width:25%;">供应商名称</th>
+                            <th style="padding:0.3rem 0.5rem;font-size:0.65rem;font-weight:600;color:var(--gray-600);text-align:right;width:18%;">报价金额</th>
+                            <th style="padding:0.3rem 0.5rem;font-size:0.65rem;font-weight:600;color:var(--gray-600);text-align:center;width:15%;">报价日期</th>
+                            <th style="padding:0.3rem 0.5rem;font-size:0.65rem;font-weight:600;color:var(--gray-600);text-align:center;width:10%;">首选</th>
+                            <th style="padding:0.3rem 0.5rem;font-size:0.65rem;font-weight:600;color:var(--gray-600);text-align:left;width:32%;">备注</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sortedQuotes.map((q, qIndex) => `
+                            <tr style="border-bottom:${qIndex === sortedQuotes.length - 1 ? 'none' : '1px solid #f3f4f6'};">
+                                <td style="padding:0.4rem 0.5rem;font-size:0.8rem;color:var(--gray-800);font-weight:500;">
+                                    ${escapeHtml(q.supplierName || '未知供应商')}
+                                    ${Number(q.quotePrice) === Number(minPrice) ? '<span style="margin-left:0.3rem;font-size:0.55rem;color:#16a34a;background:#dcfce7;padding:0.1rem 0.25rem;border-radius:3px;">最低价</span>' : ''}
+                                </td>
+                                <td style="padding:0.4rem 0.5rem;font-size:0.85rem;font-weight:600;color:${Number(q.quotePrice) === Number(minPrice) ? '#16a34a' : 'var(--gray-700)'};text-align:right;">
+                                    ¥${Number(q.quotePrice).toFixed(2)}
+                                </td>
+                                <td style="padding:0.4rem 0.5rem;font-size:0.75rem;color:var(--gray-500);text-align:center;">
+                                    ${q.quoteDate || '-'}
+                                </td>
+                                <td style="padding:0.4rem 0.5rem;text-align:center;">
+                                    ${q.isPreferred ? '<span style="font-size:0.7rem;color:#f59e0b;">★</span>' : ''}
+                                </td>
+                                <td style="padding:0.4rem 0.5rem;font-size:0.75rem;color:var(--gray-600);">
+                                    ${q.note || '-'}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
             </div>
         `;
     });
@@ -36577,6 +36656,14 @@ function viewHistorySupplierQuotes(quoteId) {
     document.getElementById('supplierQuoteProductName').textContent = `${escapeHtml(quote.title || '未命名报价')}`;
     document.getElementById('supplierQuoteList').innerHTML = html || '<div style="text-align:center;padding:2rem;font-size:0.85rem;color:var(--gray-500);"><div style="font-size:2rem;margin-bottom:0.5rem;">🏭</div><p>暂无供应商报价</p></div>';
     document.getElementById('supplierQuoteEmpty').style.display = html ? 'none' : 'block';
+    
+    // 隐藏模板里的固定表头和统计栏（历史报价查看时使用卡片内的表头）
+    const summaryBar = document.getElementById('supplierQuoteSummaryBar');
+    const headerRow = document.getElementById('supplierQuoteHeaderRow');
+    const footer = document.querySelector('#supplierQuoteModal .modal-footer');
+    if (summaryBar) summaryBar.style.display = 'none';
+    if (headerRow) headerRow.style.display = 'none';
+    if (footer) footer.style.display = 'none';
     
     openModal('supplierQuoteModal');
 }
@@ -36954,7 +37041,20 @@ function updateQuoteStatus(quoteId, newStatus) {
         versionNumber: (quote.version || 0) + 1,
         createdAt: new Date().toISOString(),
         changes: versionNote,
-        ...JSON.parse(JSON.stringify(quote))
+        clientName: quote.clientName,
+        title: quote.title,
+        quoteNumber: quote.quoteNumber,
+        paymentMethod: quote.paymentMethod,
+        items: JSON.parse(JSON.stringify(quote.items)),
+        mainImages: JSON.parse(JSON.stringify(quote.mainImages || [])),
+        showNotes: quote.showNotes,
+        totalCost: quote.totalCost,
+        totalBeforeDiscount: quote.totalBeforeDiscount,
+        finalTotal: quote.finalTotal,
+        taxRate: quote.taxRate,
+        discountRate: quote.discountRate,
+        priceMode: quote.priceMode,
+        status: newStatus
     };
     quote.versions.push(newVersion);
     quote.version = newVersion.versionNumber;
@@ -38437,7 +38537,7 @@ function saveSystemSettings(){
     appData.systemSettings.companyEmail=document.getElementById('companyEmail').value;
     appData.systemSettings.companyAddress=document.getElementById('companyAddress').value;
     appData.systemSettings.companyNotes=document.getElementById('companyNotes').value;
-    appData.systemSettings.defaultTaxRate=parseFloat(document.getElementById('defaultTaxRate').value||13);
+    appData.systemSettings.defaultTaxRate=parseFloat(document.getElementById('defaultTaxRate').value||1);
     appData.systemSettings.defaultPriceMode=document.getElementById('defaultPriceMode').value;
     appData.systemSettings.defaultDiscountRate=parseFloat(document.getElementById('defaultDiscountRate').value||100);
     appData.systemSettings.quoteValidDays=parseInt(document.getElementById('quoteValidDays').value||7);
@@ -38461,7 +38561,7 @@ function loadSystemSettings(){
     if(document.getElementById('companyEmail')) document.getElementById('companyEmail').value = appData.systemSettings.companyEmail || '';
     if(document.getElementById('companyAddress')) document.getElementById('companyAddress').value = appData.systemSettings.companyAddress || '';
     if(document.getElementById('companyNotes')) document.getElementById('companyNotes').value = appData.systemSettings.companyNotes || '';
-    if(document.getElementById('defaultTaxRate')) document.getElementById('defaultTaxRate').value = appData.systemSettings.defaultTaxRate || 13;
+    if(document.getElementById('defaultTaxRate')) document.getElementById('defaultTaxRate').value = appData.systemSettings.defaultTaxRate || 1;
     if(document.getElementById('defaultPriceMode')) document.getElementById('defaultPriceMode').value = appData.systemSettings.defaultPriceMode || 'in';
     if(document.getElementById('defaultDiscountRate')) document.getElementById('defaultDiscountRate').value = appData.systemSettings.defaultDiscountRate || 100;
     if(document.getElementById('quoteValidDays')) document.getElementById('quoteValidDays').value = appData.systemSettings.quoteValidDays || 7;
@@ -40468,7 +40568,7 @@ function prepareTemplatesForSync(templates) {
             return copy;
         });
         
-        console.log('模板同步数据准备完成，共', result.length, '个模板，图片将以 ID 形式同步');
+        console.log('模板同步数据准备完成，共', result.length, '个模板，图片将以 ID/URL 形式同步');
         resolve(result);
     });
 }
@@ -40793,7 +40893,18 @@ function gistUploadFull() {
                             };
                         }),
                         templates: (syncPayload.data.templates || []).map(function(t) {
-                            return { id: t.id, name: t.name, items: t.items };
+                            return { 
+                                id: t.id, 
+                                name: t.name, 
+                                items: t.items,
+                                photos: t.photos || [],
+                                category: t.category,
+                                description: t.description,
+                                caseInfo: t.caseInfo,
+                                isFavorite: t.isFavorite,
+                                createdAt: t.createdAt,
+                                updatedAt: t.updatedAt
+                            };
                         }),
                         customers: (syncPayload.data.customers || []).map(function(c) {
                             return { id: c.id, name: c.name, phone: c.phone };
@@ -43172,6 +43283,16 @@ function importData() {
                     }
                     if (importData.data.seals) {
                         appData.seals = importData.data.seals;
+                    }
+                    if (importData.data.signatures) {
+                        appData.signatures = importData.data.signatures;
+                    }
+                    if (importData.data.favoriteIds) {
+                        appData.favoriteIds = importData.data.favoriteIds;
+                    }
+                    if (importData.data.systemSettings) {
+                        // 合并系统设置，保留导入数据中的字段，但不覆盖已有的本地敏感配置（API Key 等存储在 secureStorage 中）
+                        appData.systemSettings = Object.assign({}, appData.systemSettings, importData.data.systemSettings);
                     }
                     if (importData.data.categories) {
                         appData.categories = importData.data.categories;
