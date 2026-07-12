@@ -39159,6 +39159,16 @@ function switchSyncTarget() {
         teamSettingsArea.style.display = isGistMode ? 'block' : 'none';
     }
     
+    var teamActivityPanelEl = document.getElementById('teamActivityPanel');
+    if (teamActivityPanelEl) {
+        teamActivityPanelEl.style.display = isGistMode ? (appData.systemSettings.teamEnabled ? 'block' : 'none') : 'none';
+    }
+    
+    var teamMembersPanelEl = document.getElementById('teamMembersPanel');
+    if (teamMembersPanelEl) {
+        teamMembersPanelEl.style.display = isGistMode ? 'block' : 'none';
+    }
+    
     appData.systemSettings.syncTarget = currentSyncTarget;
     saveData();
     updateCloudSyncStatus();
@@ -39276,10 +39286,10 @@ function getRepoFile(owner, repo, path, branch) {
 }
 
 // 创建或更新Repository文件
-function putRepoFile(owner, repo, path, content, message, branch, sha) {
+function putRepoFile(owner, repo, path, content, message, branch, sha, isBase64) {
     var body = {
         message: message || 'Update quote data',
-        content: btoa(unescape(encodeURIComponent(content))),
+        content: isBase64 ? content : btoa(unescape(encodeURIComponent(content))),
         branch: branch || 'main'
     };
     
@@ -40054,44 +40064,53 @@ function syncRepoNow() {
         return;
     }
     
-    showSyncProgress('正在下载Repository数据...', 20);
+    showSyncProgress('正在检测云端数据模式...', 20);
     
-    getRepoFile(owner, repo, filePath, branch)
-    .then(function(fileData) {
-        if (!fileData) {
-            // 文件不存在，上传完整数据
-            showSyncProgress('Repository文件不存在，上传完整数据...', 50);
-            return repoUploadFull();
+    getRepoFile(owner, repo, 'quote-meta.json', branch)
+    .then(function(metaFile) {
+        if (metaFile) {
+            return repoDownload();
         }
-        
-        var content;
-        try {
-            content = decodeURIComponent(escape(atob(fileData.content)));
-        } catch (e) {
-            content = fileData.content;
-        }
-        
-        var cloudData = JSON.parse(content);
-        var serverTime = new Date(cloudData.uploadTime || 0);
-        var localTime = new Date(appData.systemSettings.lastSyncTime || 0);
-        var serverTimeUTC = serverTime.getTime();
-        var localTimeUTC = localTime.getTime();
-        
-        if (serverTimeUTC <= localTimeUTC && !buildIncrementalSyncPayload().hasChanges) {
-            showToast('✅ 数据已是最新，无需同步', 'success');
-            addSyncLog('info', 'Repository数据已是最新');
-            return { skipped: true };
-        }
-        
-        if (serverTimeUTC > localTimeUTC) {
-            showSyncProgress('合并Repository更新...', 60);
-            addSyncLog('info', '发现Repository更新，正在合并...');
-            mergeSyncData(cloudData);
+        return getRepoFile(owner, repo, filePath, branch).then(function(oldFile) {
+            if (!oldFile) {
+                return null;
+            }
+            
+            var content;
+            try {
+                content = decodeURIComponent(escape(atob(oldFile.content)));
+            } catch (e) {
+                content = oldFile.content;
+            }
+            
+            var cloudData = JSON.parse(content);
+            var serverTime = new Date(cloudData.uploadTime || 0);
+            var localTime = new Date(appData.systemSettings.lastSyncTime || 0);
+            var serverTimeUTC = serverTime.getTime();
+            var localTimeUTC = localTime.getTime();
+            
+            if (serverTimeUTC <= localTimeUTC && !buildIncrementalSyncPayload().hasChanges) {
+                showToast('✅ 数据已是最新，无需同步', 'success');
+                addSyncLog('info', 'Repository数据已是最新');
+                return { skipped: true };
+            }
+            
+            if (serverTimeUTC > localTimeUTC) {
+                showSyncProgress('合并Repository更新...', 60);
+                addSyncLog('info', '发现Repository更新，正在合并...');
+                mergeSyncData(cloudData);
+            }
+            
+            return null;
+        });
+    })
+    .then(function(result) {
+        if (result && result.skipped) {
+            return result;
         }
         
         showSyncProgress('上传本地变更...', 80);
         
-        // 根据设置选择增量同步或全量上传
         var incrementalEnabled = appData.systemSettings.incrementalSyncEnabled !== false;
         var lastSyncTime = appData.systemSettings.lastIncrementalSyncTime;
         
@@ -41150,35 +41169,53 @@ function repoUploadFull() {
             var filteredSignatures = (teamEnabled && teamDataSharing.signatures === false) || !syncConfig.signatures ? undefined : (appData.signatures || []);
             var filteredGlobalPriceConfig = !syncConfig.globalPriceConfig ? undefined : getGlobalPriceSyncData();
             
-            var fileConfigs = [
-                { name: 'quote-products.json', data: { products: filteredProducts || [] }, priority: 'high' },
-                { name: 'quote-templates.json', data: { templates: filteredTemplates || [] }, priority: 'high' },
-                { name: 'quote-customers.json', data: { customers: filteredCustomers || [] }, priority: 'high' },
-                { name: 'quote-history.json', data: { quoteHistory: filteredQuoteHistory || [] }, priority: 'medium' },
-                { name: 'quote-images.json', data: { images: imageData.images || {}, total: imageData.total || 0 }, priority: 'high' },
-                { name: 'quote-settings.json', data: {
-                    seals: filteredSeals,
-                    signatures: filteredSignatures,
-                    favoriteIds: appData.favoriteIds || [],
-                    categories: appData.categories || [],
-                    charPricingConfig: appData.charPricingConfig || {},
-                    cultureWallConfig: getCultureWallSyncData(),
-                    customPrices: getGlobalCustomPrices(),
-                    globalPriceConfig: filteredGlobalPriceConfig
-                }, priority: 'medium' },
-                { name: 'quote-meta.json', data: {
-                    version: '3.4',
-                    uploadTime: new Date().toISOString(),
-                    deviceId: getDeviceId(),
-                    schemaVersion: 4,
-                    team: teamEnabled ? {
-                        enabled: true,
-                        userId: appData.systemSettings.teamUserId || getDeviceId(),
-                        userName: appData.systemSettings.teamUserName || '未命名用户'
-                    } : { enabled: false },
-                    activityLog: buildSyncActivityLog()
-                }, priority: 'high' }
-            ];
+            var fileConfigs = [];
+            
+            if (filteredProducts !== undefined) {
+                fileConfigs.push({ name: 'quote-products.json', data: { products: filteredProducts }, priority: 'high' });
+            }
+            if (filteredTemplates !== undefined) {
+                fileConfigs.push({ name: 'quote-templates.json', data: { templates: filteredTemplates }, priority: 'high' });
+            }
+            if (filteredCustomers !== undefined) {
+                fileConfigs.push({ name: 'quote-customers.json', data: { customers: filteredCustomers }, priority: 'high' });
+            }
+            if (filteredQuoteHistory !== undefined) {
+                fileConfigs.push({ name: 'quote-history.json', data: { quoteHistory: filteredQuoteHistory }, priority: 'medium' });
+            }
+            if (imageData && imageData.total > 0) {
+                fileConfigs.push({ name: 'quote-images.json', data: { images: imageData.images || {}, total: imageData.total || 0 }, priority: 'high' });
+            }
+            
+            var settingsData = {
+                seals: filteredSeals,
+                signatures: filteredSignatures,
+                favoriteIds: appData.favoriteIds || [],
+                categories: appData.categories || [],
+                charPricingConfig: appData.charPricingConfig || {},
+                cultureWallConfig: getCultureWallSyncData(),
+                customPrices: getGlobalCustomPrices(),
+                globalPriceConfig: filteredGlobalPriceConfig
+            };
+            var hasSettingsData = filteredSeals !== undefined || filteredSignatures !== undefined || 
+                                 appData.favoriteIds.length > 0 || appData.categories.length > 0 ||
+                                 Object.keys(appData.charPricingConfig).length > 0 || filteredGlobalPriceConfig !== undefined;
+            if (hasSettingsData) {
+                fileConfigs.push({ name: 'quote-settings.json', data: settingsData, priority: 'medium' });
+            }
+            
+            fileConfigs.push({ name: 'quote-meta.json', data: {
+                version: '3.4',
+                uploadTime: new Date().toISOString(),
+                deviceId: getDeviceId(),
+                schemaVersion: 4,
+                team: teamEnabled ? {
+                    enabled: true,
+                    userId: appData.systemSettings.teamUserId || getDeviceId(),
+                    userName: appData.systemSettings.teamUserName || '未命名用户'
+                } : { enabled: false },
+                activityLog: buildSyncActivityLog()
+            }, priority: 'high' });
             
             var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
             var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
@@ -41198,6 +41235,8 @@ function repoUploadFull() {
                     }
                     
                     var finalContent = content;
+                    var isBase64 = false;
+                    
                     if (compressionEnabled) {
                         try {
                             var compressed = compressData(fileConfig.data);
@@ -41212,11 +41251,12 @@ function repoUploadFull() {
                             var encrypted = encryptSyncData(finalContent);
                             if (encrypted) {
                                 finalContent = encrypted;
+                                isBase64 = true;
                             }
                         } catch (e) {}
                     }
                     
-                    resolveFile({ name: fileConfig.name, content: finalContent, size: finalContent.length });
+                    resolveFile({ name: fileConfig.name, content: finalContent, size: finalContent.length, isBase64: isBase64 });
                 });
             });
             
@@ -41234,29 +41274,59 @@ function repoUploadFull() {
                     showSyncProgress('正在上传文件...', 50);
                     
                     var uploadedCount = 0;
-                    var uploadPromises = filesWithSha.map(function(file) {
-                        return putRepoFile(owner, repo, file.name, file.content, 'Full sync: ' + file.name, branch, file.sha)
+                    var failedFiles = [];
+                    
+                    function uploadNext(index) {
+                        if (index >= filesWithSha.length) {
+                            showSyncProgress('正在保存同步状态...', 90);
+                            appData.systemSettings.lastSyncTime = new Date().toISOString();
+                            appData.systemSettings.lastIncrementalSyncTime = appData.systemSettings.lastSyncTime;
+                            appData.systemSettings.syncFileMode = 'multi';
+                            saveDataImmediately();
+                            isSyncing = false;
+                            showSyncProgress('上传完成', 100);
+                            
+                            if (failedFiles.length === 0) {
+                                addSyncLog('success', 'Repository全量同步完成，共上传 ' + filesWithSha.length + ' 个文件');
+                                resolve();
+                            } else {
+                                addSyncLog('warning', 'Repository同步完成，但有 ' + failedFiles.length + ' 个文件上传失败: ' + failedFiles.join(', '));
+                                resolve({ failedFiles: failedFiles });
+                            }
+                            return;
+                        }
+                        
+                        var file = filesWithSha[index];
+                        
+                        function tryUpload(retryCount) {
+                            getRepoFile(owner, repo, file.name, branch).then(function(currentFileData) {
+                                var currentSha = currentFileData ? currentFileData.sha : null;
+                                return putRepoFile(owner, repo, file.name, file.content, 'Full sync: ' + file.name, branch, currentSha, file.isBase64);
+                            })
                             .then(function() {
                                 uploadedCount++;
                                 showSyncProgress('正在上传文件 (' + uploadedCount + '/' + filesWithSha.length + ')...', 50 + uploadedCount * 8);
                                 addSyncLog('success', 'Repository上传成功: ' + owner + '/' + repo + '/' + file.name);
+                                uploadNext(index + 1);
+                            })
+                            .catch(function(err) {
+                                if (err.message && err.message.includes('409') && retryCount < 3) {
+                                    addSyncLog('warning', 'Repository上传冲突，重试第 ' + (retryCount + 1) + ' 次: ' + owner + '/' + repo + '/' + file.name);
+                                    setTimeout(function() {
+                                        tryUpload(retryCount + 1);
+                                    }, 500 * Math.pow(2, retryCount));
+                                } else {
+                                    addSyncLog('error', 'Repository上传失败: ' + owner + '/' + repo + '/' + file.name + ' - ' + err.message);
+                                    failedFiles.push(file.name);
+                                    uploadNext(index + 1);
+                                }
                             });
-                    });
+                        }
+                        
+                        tryUpload(0);
+                    }
                     
-                    Promise.all(uploadPromises).then(function() {
-                        showSyncProgress('正在保存同步状态...', 90);
-                        appData.systemSettings.lastSyncTime = new Date().toISOString();
-                        appData.systemSettings.lastIncrementalSyncTime = appData.systemSettings.lastSyncTime;
-                        appData.systemSettings.syncFileMode = 'multi';
-                        saveDataImmediately();
-                        isSyncing = false;
-                        showSyncProgress('上传完成', 100);
-                        addSyncLog('success', 'Repository全量同步完成，共上传 ' + filesWithSha.length + ' 个文件');
-                        resolve();
-                    }).catch(function(err) {
-                        isSyncing = false;
-                        reject(err);
-                    });
+                    uploadNext(0);
                 }).catch(function(err) {
                     isSyncing = false;
                     reject(err);
@@ -41419,42 +41489,52 @@ function repoUploadIncremental() {
                     content = result.data.content;
                 }
                 
-                var decryptedContent = content;
+                var data = null;
                 if (encryptionEnabled) {
                     try {
                         var decrypted = decryptSyncData(content);
                         if (decrypted) {
                             if (typeof decrypted === 'object') {
-                                decryptedContent = JSON.stringify(decrypted);
+                                data = decrypted;
                             } else if (typeof decrypted === 'string') {
-                                decryptedContent = decrypted;
+                                var decompressed = decompressData(decrypted);
+                                if (typeof decompressed === 'string') {
+                                    try {
+                                        data = JSON.parse(decompressed);
+                                    } catch (parseError) {
+                                        data = null;
+                                    }
+                                } else {
+                                    data = decompressed;
+                                }
                             }
                         }
                     } catch (e) {}
                 }
                 
-                var existingData;
-                try {
-                    existingData = decompressData(decryptedContent);
-                } catch (e) {
+                if (!data) {
                     try {
-                        existingData = JSON.parse(decryptedContent);
-                    } catch (parseError) {
-                        throw new Error('数据解析失败: ' + parseError.message);
+                        data = decompressData(content);
+                    } catch (e) {
+                        try {
+                            data = JSON.parse(content);
+                        } catch (parseError) {
+                            throw new Error('数据解析失败: ' + parseError.message);
+                        }
                     }
                 }
                 
-                if (!existingData.data) existingData.data = {};
-                if (!existingData.data.products) existingData.data.products = [];
-                if (!existingData.data.customers) existingData.data.customers = [];
-                if (!existingData.data.templates) existingData.data.templates = [];
+                if (!data.data) data.data = {};
+                if (!data.data.products) data.data.products = [];
+                if (!data.data.customers) data.data.customers = [];
+                if (!data.data.templates) data.data.templates = [];
                 
-                applyChanges(existingData.data);
+                applyChanges(data.data);
                 
-                existingData.uploadTime = new Date().toISOString();
-                existingData.deviceId = getDeviceId();
+                data.uploadTime = new Date().toISOString();
+                data.deviceId = getDeviceId();
                 
-                var syncPayloadString = JSON.stringify(existingData, null, 2);
+                var syncPayloadString = JSON.stringify(data, null, 2);
                 var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
                 var finalContent = syncPayloadString;
                 
@@ -41517,32 +41597,63 @@ function repoUploadIncremental() {
                         { name: 'quote-customers.json', data: { customers: mergedData.customers }, sha: customersData.sha }
                     ];
                     
-                    var uploadPromises = uploadFiles.map(function(file) {
-                        var content = JSON.stringify(file.data, null, 2);
-                        var finalContent = content;
-                        
-                        if (compressionEnabled) {
-                            try {
-                                var compressed = compressData(file.data);
-                                if (typeof compressed === 'string') {
-                                    finalContent = compressed;
-                                }
-                            } catch (e) {}
-                        }
-                        
-                        if (encryptionEnabled) {
-                            try {
-                                var encrypted = encryptSyncData(finalContent);
-                                if (encrypted) {
-                                    finalContent = encrypted;
-                                }
-                            } catch (e) {}
-                        }
-                        
-                        return putRepoFile(owner, repo, file.name, finalContent, 'Incremental sync: ' + file.name, branch, file.sha);
-                    });
+                    var uploadResults = [];
                     
-                    return Promise.all(uploadPromises);
+                    function uploadIncrementalNext(index) {
+                        if (index >= uploadFiles.length) {
+                            return Promise.resolve(uploadResults);
+                        }
+                        
+                        var file = uploadFiles[index];
+                        
+                        function tryIncrementalUpload(retryCount) {
+                            var content = JSON.stringify(file.data, null, 2);
+                            var finalContent = content;
+                            var isBase64 = false;
+                            
+                            if (compressionEnabled) {
+                                try {
+                                    var compressed = compressData(file.data);
+                                    if (typeof compressed === 'string') {
+                                        finalContent = compressed;
+                                    }
+                                } catch (e) {}
+                            }
+                            
+                            if (encryptionEnabled) {
+                                try {
+                                    var encrypted = encryptSyncData(finalContent);
+                                    if (encrypted) {
+                                        finalContent = encrypted;
+                                        isBase64 = true;
+                                    }
+                                } catch (e) {}
+                            }
+                            
+                            getRepoFile(owner, repo, file.name, branch).then(function(currentFileData) {
+                                var currentSha = currentFileData ? currentFileData.sha : null;
+                                return putRepoFile(owner, repo, file.name, finalContent, 'Incremental sync: ' + file.name, branch, currentSha, isBase64);
+                            })
+                            .then(function() {
+                                uploadResults.push({ name: file.name, success: true });
+                                uploadIncrementalNext(index + 1);
+                            })
+                            .catch(function(err) {
+                                if (err.message && err.message.includes('409') && retryCount < 3) {
+                                    setTimeout(function() {
+                                        tryIncrementalUpload(retryCount + 1);
+                                    }, 500 * Math.pow(2, retryCount));
+                                } else {
+                                    uploadResults.push({ name: file.name, success: false, error: err.message });
+                                    uploadIncrementalNext(index + 1);
+                                }
+                            });
+                        }
+                        
+                        tryIncrementalUpload(0);
+                    }
+                    
+                    uploadIncrementalNext(0);
                 });
             }
         })
@@ -41629,12 +41740,7 @@ function repoDownload() {
         
         function decodeFileContent(fileData) {
             if (!fileData) return null;
-            var content;
-            try {
-                content = decodeURIComponent(escape(atob(fileData.content)));
-            } catch (e) {
-                content = fileData.content;
-            }
+            var content = fileData.content;
             
             if (encryptionEnabled) {
                 try {
@@ -41646,6 +41752,10 @@ function repoDownload() {
                             content = decrypted;
                         }
                     }
+                } catch (e) {}
+            } else {
+                try {
+                    content = decodeURIComponent(escape(atob(content)));
                 } catch (e) {}
             }
             
@@ -41689,29 +41799,40 @@ function repoDownload() {
                     content = result.data.content;
                 }
                 
-                var decryptedContent = content;
+                var data = null;
                 if (encryptionEnabled) {
                     try {
                         var decrypted = decryptSyncData(content);
                         if (decrypted) {
                             if (typeof decrypted === 'object') {
-                                decryptedContent = JSON.stringify(decrypted);
+                                data = decrypted;
                             } else if (typeof decrypted === 'string') {
-                                decryptedContent = decrypted;
+                                var decompressed = decompressData(decrypted);
+                                if (typeof decompressed === 'string') {
+                                    try {
+                                        data = JSON.parse(decompressed);
+                                    } catch (parseError) {
+                                        data = null;
+                                    }
+                                } else {
+                                    data = decompressed;
+                                }
                             }
-                            addSyncLog('info', '数据解密成功');
                         }
+                        addSyncLog('info', '数据解密成功');
                     } catch (e) {
                         addSyncLog('info', '数据解密失败，尝试直接解析');
                     }
                 }
                 
-                var data = decompressData(decryptedContent);
-                if (typeof data === 'string') {
-                    try {
-                        data = JSON.parse(data);
-                    } catch (parseError) {
-                        throw new Error('数据解析失败: ' + parseError.message);
+                if (!data) {
+                    data = decompressData(content);
+                    if (typeof data === 'string') {
+                        try {
+                            data = JSON.parse(data);
+                        } catch (parseError) {
+                            throw new Error('数据解析失败: ' + parseError.message);
+                        }
                     }
                 }
                 
@@ -43702,6 +43823,7 @@ function viewRepoData() {
     var config = getRepoConfig();
     var owner = config.owner;
     var repo = config.repo;
+    var branch = config.branch;
     var filePath = config.filePath;
     
     if (!owner || !repo) {
@@ -43709,23 +43831,14 @@ function viewRepoData() {
         return;
     }
     
-    showToast('📡 正在获取云端数据...', 'loading', 10000);
+    showToast('📡 正在获取云端数据...', 'loading', 15000);
     
-    getRepoFile(owner, repo, filePath)
-    .then(function(fileData) {
-        if (!fileData) {
-            showToast('云端数据为空', 'info');
-            return;
-        }
+    var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+    
+    function decodeFileContent(fileData) {
+        if (!fileData) return null;
+        var content = fileData.content;
         
-        var content;
-        try {
-            content = decodeURIComponent(escape(atob(fileData.content)));
-        } catch (e) {
-            content = fileData.content;
-        }
-        
-        var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
         if (encryptionEnabled) {
             try {
                 var decrypted = decryptSyncData(content);
@@ -43735,33 +43848,96 @@ function viewRepoData() {
                     } else if (typeof decrypted === 'string') {
                         content = decrypted;
                     }
-                    addSyncLog('info', 'Repository数据解密成功');
                 }
-            } catch (e) {
-                addSyncLog('info', '数据解密失败，尝试直接解析');
-            }
+            } catch (e) {}
+        } else {
+            try {
+                content = decodeURIComponent(escape(atob(content)));
+            } catch (e) {}
         }
         
         var data = decompressData(content);
-        
-        // 如果decompressData返回的是字符串（未压缩的数据），需要手动解析
         if (typeof data === 'string') {
             try {
                 data = JSON.parse(data);
-            } catch (e) {
-                data = null;
+            } catch (parseError) {
+                return null;
             }
+        }
+        return data;
+    }
+    
+    getRepoFile(owner, repo, 'quote-meta.json', branch)
+    .then(function(metaFile) {
+        if (metaFile) {
+            var fileNames = ['quote-products.json', 'quote-templates.json', 'quote-customers.json', 'quote-history.json', 'quote-images.json', 'quote-settings.json', 'quote-meta.json'];
+            
+            addSyncLog('info', '检测到多文件模式，正在下载 ' + fileNames.length + ' 个文件');
+            
+            var downloadPromises = fileNames.map(function(fileName) {
+                return getRepoFile(owner, repo, fileName, branch).then(function(fileData) {
+                    return { name: fileName, data: decodeFileContent(fileData) };
+                });
+            });
+            
+            return Promise.all(downloadPromises).then(function(files) {
+                var mergedData = {
+                    data: {
+                        products: [],
+                        templates: [],
+                        customers: [],
+                        quoteHistory: []
+                    },
+                    images: {},
+                    uploadTime: new Date().toISOString(),
+                    deviceId: '未知设备'
+                };
+                
+                files.forEach(function(file) {
+                    if (!file.data) return;
+                    
+                    switch (file.name) {
+                        case 'quote-products.json':
+                            mergedData.data.products = file.data.products || [];
+                            break;
+                        case 'quote-templates.json':
+                            mergedData.data.templates = file.data.templates || [];
+                            break;
+                        case 'quote-customers.json':
+                            mergedData.data.customers = file.data.customers || [];
+                            break;
+                        case 'quote-history.json':
+                            mergedData.data.quoteHistory = file.data.quoteHistory || [];
+                            break;
+                        case 'quote-images.json':
+                            mergedData.images = file.data.images || {};
+                            break;
+                        case 'quote-meta.json':
+                            mergedData.uploadTime = file.data.uploadTime || new Date().toISOString();
+                            mergedData.deviceId = file.data.deviceId || '未知设备';
+                            break;
+                    }
+                });
+                
+                return mergedData;
+            });
         }
         
-        // 如果仍然没有解析成功，尝试直接解析原始内容
-        if (!data || typeof data !== 'object') {
-            try {
-                data = JSON.parse(content);
-            } catch (e) {
-                showToast('❌ 数据解析失败', 'error');
-                return;
+        return getRepoFile(owner, repo, filePath, branch).then(function(fileData) {
+            if (!fileData) {
+                showToast('云端数据为空', 'info');
+                return null;
             }
-        }
+            
+            var data = decodeFileContent(fileData);
+            if (!data) {
+                throw new Error('数据解码失败');
+            }
+            return data;
+        });
+    })
+    .then(function(data) {
+        if (!data) return;
         
         var cloudData;
         if (data.data && typeof data.data === 'object') {
@@ -43780,6 +43956,7 @@ function viewRepoData() {
             products: cloudData.products ? cloudData.products.length : 0,
             customers: cloudData.customers ? cloudData.customers.length : 0,
             templates: cloudData.templates ? cloudData.templates.length : 0,
+            history: cloudData.quoteHistory ? cloudData.quoteHistory.length : 0,
             images: data.images ? Object.keys(data.images).length : 0,
             uploadTime: data.uploadTime ? new Date(data.uploadTime).toLocaleString() : '未知',
             deviceId: data.deviceId || '未知设备'
@@ -43789,7 +43966,7 @@ function viewRepoData() {
         
         var htmlContent = `
             <div style="padding: 0.5rem;">
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 0.75rem;">
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-bottom: 0.75rem;">
                     <div style="background: #eff6ff; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
                         <div style="font-size: 1.25rem; font-weight: 600; color: #1e40af;">${stats.products}</div>
                         <div style="font-size: 0.7rem; color: #64748b;">产品数量</div>
@@ -43801,6 +43978,10 @@ function viewRepoData() {
                     <div style="background: #fef3c7; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
                         <div style="font-size: 1.25rem; font-weight: 600; color: #d97706;">${stats.templates}</div>
                         <div style="font-size: 0.7rem; color: #64748b;">模板数量</div>
+                    </div>
+                    <div style="background: #e0e7ff; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                        <div style="font-size: 1.25rem; font-weight: 600; color: #4338ca;">${stats.history}</div>
+                        <div style="font-size: 0.7rem; color: #64748b;">历史报价</div>
                     </div>
                     <div style="background: #fdf4ff; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
                         <div style="font-size: 1.25rem; font-weight: 600; color: #9333ea;">${stats.images}</div>
@@ -43838,19 +44019,20 @@ function viewRepoData() {
         
         htmlContent += '</div>';
         
-        showModal({
-            title: '☁️ Repository云端数据统计',
-            message: htmlContent,
-            icon: '📊',
-            type: 'info',
-            confirmText: '关闭',
-            showCancel: false,
-            allowHtml: true
-        });
+        console.log('查看云端数据 - 统计信息:', stats);
+        showModalWithContent(htmlContent, '☁️ Repository云端数据统计');
     })
     .catch(function(err) {
         console.error('查看Repository数据失败:', err);
-        showToast('❌ 获取失败: ' + err.message, 'error');
+        var errorHtml = `
+            <div style="padding: 1rem;">
+                <div style="background: #fee2e2; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.75rem;">
+                    <div style="font-size: 0.875rem; font-weight: 600; color: #dc2626; margin-bottom: 0.25rem;">❌ 获取失败</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">${escapeHtml(err.message || '未知错误')}</div>
+                </div>
+                <div style="font-size: 0.7rem; color: #9ca3af;">请检查浏览器控制台获取详细错误信息</div>
+            </div>`;
+        showModalWithContent(errorHtml, '查看云端数据失败');
     });
 }
 
@@ -44148,15 +44330,19 @@ function clearRepoData() {
         if (result.mode === 'multi') {
             var fileNames = ['quote-products.json', 'quote-templates.json', 'quote-customers.json', 'quote-history.json', 'quote-images.json', 'quote-settings.json', 'quote-meta.json'];
             
-            return Promise.all(fileNames.map(function(fileName) {
-                return getRepoFile(owner, repo, fileName, branch);
-            })).then(function(fileDatas) {
-                var clearPromises = [];
+            function clearNext(index) {
+                if (index >= fileNames.length) {
+                    return Promise.resolve();
+                }
                 
-                fileDatas.forEach(function(fileData, index) {
-                    if (!fileData) return;
+                var fileName = fileNames[index];
+                
+                return getRepoFile(owner, repo, fileName, branch)
+                .then(function(fileData) {
+                    if (!fileData) {
+                        return clearNext(index + 1);
+                    }
                     
-                    var fileName = fileNames[index];
                     var emptyContent;
                     
                     switch (fileName) {
@@ -44202,20 +44388,29 @@ function clearRepoData() {
                     }
                     
                     var finalContent = emptyContent;
+                    var isBase64 = false;
                     if (encryptionEnabled) {
                         try {
                             var encrypted = encryptSyncData(emptyContent);
                             if (encrypted) {
                                 finalContent = encrypted;
+                                isBase64 = true;
                             }
                         } catch (e) {}
                     }
                     
-                    clearPromises.push(putRepoFile(owner, repo, fileName, finalContent, 'Clear ' + fileName, branch, fileData.sha));
+                    return putRepoFile(owner, repo, fileName, finalContent, 'Clear ' + fileName, branch, fileData.sha, isBase64);
+                })
+                .then(function() {
+                    return clearNext(index + 1);
+                })
+                .catch(function(err) {
+                    addSyncLog('error', '清空Repository文件失败: ' + fileName + ' - ' + err.message);
+                    return clearNext(index + 1);
                 });
-                
-                return Promise.all(clearPromises);
-            });
+            }
+            
+            return clearNext(0);
         }
     })
     .then(function() {
@@ -44236,36 +44431,59 @@ function viewRepoData() {
     var owner = config.owner;
     var repo = config.repo;
     var branch = config.branch;
+    var filePath = config.filePath;
+    
+    console.log('[viewRepoData] 开始查看云端数据', { owner, repo, branch, filePath });
     
     if (!owner || !repo) {
         showToast('请先配置Repository信息', 'warning');
         return;
     }
     
-    showToast('🔍 正在获取云端数据...', 'loading', 10000);
+    showToast('🔍 正在获取云端数据...', 'loading', 15000);
     
     var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
     
-    function decodeFileContent(fileData) {
-        if (!fileData) return null;
-        var content;
-        try {
-            content = decodeURIComponent(escape(atob(fileData.content)));
-        } catch (e) {
-            content = fileData.content;
+    function decodeFileContent(fileData, fileName) {
+        if (!fileData) {
+            console.log('[decodeFileContent] 文件不存在:', fileName);
+            return null;
         }
         
+        console.log('[decodeFileContent] 处理文件:', fileName, 'content长度:', fileData.content ? fileData.content.length : 0);
+        var content = fileData.content;
+        
         if (encryptionEnabled) {
+            console.log('[decodeFileContent] 加密已启用，尝试解密');
             try {
                 var decrypted = decryptSyncData(content);
+                console.log('[decodeFileContent] 解密结果类型:', typeof decrypted);
                 if (decrypted) {
                     if (typeof decrypted === 'object') {
-                        content = JSON.stringify(decrypted);
+                        return decrypted;
                     } else if (typeof decrypted === 'string') {
-                        content = decrypted;
+                        var data = decompressData(decrypted);
+                        if (typeof data === 'string') {
+                            try {
+                                data = JSON.parse(data);
+                            } catch (parseError) {
+                                console.error('[decodeFileContent] JSON解析失败:', parseError);
+                                return null;
+                            }
+                        }
+                        return data;
                     }
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error('[decodeFileContent] 解密失败:', e);
+            }
+        }
+        
+        console.log('[decodeFileContent] 未加密或解密失败，尝试直接解析');
+        try {
+            content = decodeURIComponent(escape(atob(content)));
+        } catch (e) {
+            console.error('[decodeFileContent] base64解码失败:', e);
         }
         
         var data = decompressData(content);
@@ -44273,6 +44491,7 @@ function viewRepoData() {
             try {
                 data = JSON.parse(data);
             } catch (parseError) {
+                console.error('[decodeFileContent] JSON解析失败:', parseError);
                 return null;
             }
         }
@@ -44298,12 +44517,7 @@ function viewRepoData() {
         }
         
         if (result.mode === 'single') {
-            var content;
-            try {
-                content = decodeURIComponent(escape(atob(result.data.content)));
-            } catch (e) {
-                content = result.data.content;
-            }
+            var content = result.data.content;
             
             if (encryptionEnabled) {
                 try {
@@ -44315,6 +44529,10 @@ function viewRepoData() {
                             content = decrypted;
                         }
                     }
+                } catch (e) {}
+            } else {
+                try {
+                    content = decodeURIComponent(escape(atob(content)));
                 } catch (e) {}
             }
             
@@ -44449,7 +44667,16 @@ function showCloudDataModal(data) {
     
     htmlContent += '</div>';
     
-    showModal('云端数据', htmlContent);
+    console.log('[showCloudDataModal] 显示云端数据统计:', stats);
+    showModal({
+        title: '☁️ 云端数据统计',
+        message: htmlContent,
+        icon: '📊',
+        type: 'info',
+        confirmText: '关闭',
+        showCancel: false,
+        allowHtml: true
+    });
 }
 
 // Repository获取远程仓库信息
@@ -45386,6 +45613,238 @@ function fixCloudData() {
     });
 }
 
+// Repository修复云端重复数据
+function fixRepoCloudData() {
+    if (isSyncing) {
+        showToast('⏳ 正在同步中，请稍候', 'info');
+        return;
+    }
+    
+    var config = getRepoConfig();
+    var owner = config.owner;
+    var repo = config.repo;
+    var branch = config.branch;
+    
+    if (!owner || !repo) {
+        showToast('请先配置Repository信息', 'warning');
+        return;
+    }
+    
+    if (!confirm('⚠️ 确认修复云端重复数据？\n\n此操作将删除云端数据中的重复项，保留首次出现的数据。\n建议先导出数据备份！')) {
+        return;
+    }
+    
+    isSyncing = true;
+    showToast('🔧 正在修复云端数据...', 'loading', 15000);
+    
+    var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+    
+    function decodeFileContent(fileData) {
+        if (!fileData) return null;
+        var content = fileData.content;
+        
+        try {
+            content = atob(content);
+        } catch (e) {}
+        
+        if (encryptionEnabled) {
+            try {
+                var decrypted = decryptSyncData(content);
+                if (decrypted) {
+                    if (typeof decrypted === 'object') {
+                        return decrypted;
+                    } else if (typeof decrypted === 'string') {
+                        var data = decompressData(decrypted);
+                        if (typeof data === 'string') {
+                            try {
+                                data = JSON.parse(data);
+                            } catch (parseError) {
+                                return null;
+                            }
+                        }
+                        return data;
+                    }
+                }
+            } catch (e) {}
+        }
+        
+        try {
+            content = decodeURIComponent(escape(content));
+        } catch (e) {}
+        
+        var data = decompressData(content);
+        if (typeof data === 'string') {
+            try {
+                data = JSON.parse(data);
+            } catch (parseError) {
+                return null;
+            }
+        }
+        return data;
+    }
+    
+    var fileNames = ['quote-products.json', 'quote-templates.json', 'quote-customers.json'];
+    
+    Promise.all(fileNames.map(function(fileName) {
+        return getRepoFile(owner, repo, fileName, branch).then(function(fileData) {
+            return { name: fileName, data: decodeFileContent(fileData), sha: fileData ? fileData.sha : null };
+        });
+    }))
+    .then(function(files) {
+        var removedCounts = { products: 0, customers: 0, templates: 0 };
+        var afterCounts = { products: 0, customers: 0, templates: 0 };
+        
+        files.forEach(function(file) {
+            if (!file.data) return;
+            
+            switch (file.name) {
+                case 'quote-products.json':
+                    if (file.data.products) {
+                        var beforeProducts = file.data.products.length;
+                        var productIdSet = new Set();
+                        file.data.products = file.data.products.filter(p => {
+                            var idStr = String(p.id);
+                            if (productIdSet.has(idStr)) return false;
+                            productIdSet.add(idStr);
+                            return true;
+                        });
+                        removedCounts.products = beforeProducts - file.data.products.length;
+                        afterCounts.products = file.data.products.length;
+                    }
+                    break;
+                case 'quote-customers.json':
+                    if (file.data.customers) {
+                        var beforeCustomers = file.data.customers.length;
+                        var customerIdSet = new Set();
+                        file.data.customers = file.data.customers.filter(c => {
+                            var idStr = String(c.id);
+                            if (customerIdSet.has(idStr)) return false;
+                            customerIdSet.add(idStr);
+                            return true;
+                        });
+                        removedCounts.customers = beforeCustomers - file.data.customers.length;
+                        afterCounts.customers = file.data.customers.length;
+                    }
+                    break;
+                case 'quote-templates.json':
+                    if (file.data.templates) {
+                        var beforeTemplates = file.data.templates.length;
+                        var templateIdSet = new Set();
+                        file.data.templates = file.data.templates.filter(t => {
+                            var idStr = String(t.id);
+                            if (templateIdSet.has(idStr)) return false;
+                            templateIdSet.add(idStr);
+                            return true;
+                        });
+                        removedCounts.templates = beforeTemplates - file.data.templates.length;
+                        afterCounts.templates = file.data.templates.length;
+                    }
+                    break;
+            }
+        });
+        
+        var uploadFiles = files.filter(f => f.data);
+        
+        function uploadNext(index) {
+            if (index >= uploadFiles.length) {
+                return Promise.resolve({ removedCounts, afterCounts });
+            }
+            
+            var file = uploadFiles[index];
+            var content = JSON.stringify(file.data, null, 2);
+            var finalContent = content;
+            
+            var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+            if (compressionEnabled) {
+                try {
+                    var compressed = compressData(file.data);
+                    if (typeof compressed === 'string') {
+                        finalContent = compressed;
+                    }
+                } catch (e) {}
+            }
+            
+            if (encryptionEnabled) {
+                try {
+                    var encrypted = encryptSyncData(finalContent);
+                    if (encrypted) {
+                        finalContent = encrypted;
+                    }
+                } catch (e) {}
+            }
+            
+            return getRepoFile(owner, repo, file.name, branch).then(function(currentFileData) {
+                var currentSha = currentFileData ? currentFileData.sha : null;
+                return putRepoFile(owner, repo, file.name, finalContent, 'Fix duplicates: ' + file.name, branch, currentSha);
+            })
+            .then(function() {
+                return uploadNext(index + 1);
+            })
+            .catch(function(err) {
+                addSyncLog('error', 'Repository修复上传失败: ' + file.name + ' - ' + err.message);
+                return uploadNext(index + 1);
+            });
+        }
+        
+        return uploadNext(0);
+    })
+    .then(function(result) {
+        if (result) {
+            var htmlContent = `
+                <div style="padding: 0.5rem;">
+                    <div style="font-size: 0.8125rem; font-weight: 500; color: #16a34a; margin-bottom: 0.5rem;">✅ 云端数据修复完成</div>
+                    
+                    <div style="margin-bottom: 0.5rem;">
+                        <div style="font-size: 0.75rem; font-weight: 500; color: #dc2626; margin-bottom: 0.25rem;">删除的重复项:</div>
+                        <div style="font-size: 0.75rem; color: #64748b; padding-left: 0.5rem;">`;
+            
+            if (result.removedCounts.products > 0) {
+                htmlContent += `<div>• 产品: ${result.removedCounts.products} 个</div>`;
+            }
+            if (result.removedCounts.customers > 0) {
+                htmlContent += `<div>• 客户: ${result.removedCounts.customers} 个</div>`;
+            }
+            if (result.removedCounts.templates > 0) {
+                htmlContent += `<div>• 模板: ${result.removedCounts.templates} 个</div>`;
+            }
+            if (result.removedCounts.products === 0 && result.removedCounts.customers === 0 && result.removedCounts.templates === 0) {
+                htmlContent += `<div>• 无重复数据需要删除</div>`;
+            }
+            
+            htmlContent += `</div>
+                    </div>
+                    
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 0.5rem;">
+                        <div style="font-size: 0.75rem; font-weight: 500; color: #1e40af; margin-bottom: 0.25rem;">修复后剩余:</div>
+                        <div style="font-size: 0.75rem; color: #64748b; padding-left: 0.5rem;">
+                            <div>• 产品: ${result.afterCounts.products} 个</div>
+                            <div>• 客户: ${result.afterCounts.customers} 个</div>
+                            <div>• 模板: ${result.afterCounts.templates} 个</div>
+                        </div>
+                    </div>
+                </div>`;
+            
+            showModal({
+                title: '🔧 修复结果',
+                message: htmlContent,
+                icon: '✅',
+                type: 'success',
+                confirmText: '关闭',
+                showCancel: false,
+                allowHtml: true
+            });
+            addSyncLog('success', 'Repository修复云端重复数据完成');
+        }
+    })
+    .catch(function(err) {
+        console.error('修复Repository云端数据失败:', err);
+        showToast('❌ 修复失败: ' + err.message, 'error');
+    })
+    .then(function() {
+        isSyncing = false;
+    });
+}
+
 // 清空云端数据
 function clearCloudData() {
     if (isSyncing) {
@@ -45863,6 +46322,16 @@ function updateCloudSyncStatus() {
         teamSettingsArea.style.display = isGistMode ? 'block' : 'none';
     }
     
+    var teamActivityPanelEl = document.getElementById('teamActivityPanel');
+    if (teamActivityPanelEl) {
+        teamActivityPanelEl.style.display = isGistMode ? (appData.systemSettings.teamEnabled ? 'block' : 'none') : 'none';
+    }
+    
+    var teamMembersPanelEl = document.getElementById('teamMembersPanel');
+    if (teamMembersPanelEl) {
+        teamMembersPanelEl.style.display = isGistMode ? 'block' : 'none';
+    }
+    
     // 更新高级配置UI
     if (incrementalEl) incrementalEl.checked = appData.systemSettings.incrementalSyncEnabled !== false;
     if (autoRetryEl) autoRetryEl.checked = appData.systemSettings.autoRetryEnabled !== false;
@@ -45907,10 +46376,11 @@ function loadTeamSettings() {
     var teamEnabled = appData.systemSettings.teamEnabled;
     var teamDataSharing = appData.systemSettings.teamDataSharing || {};
 
+    var isGistMode = getSyncTarget() === 'gist';
     if (teamEnabledEl) teamEnabledEl.checked = teamEnabled;
     if (teamSettingsPanelEl) teamSettingsPanelEl.style.display = teamEnabled ? 'block' : 'none';
-    if (teamActivityPanelEl) teamActivityPanelEl.style.display = teamEnabled ? 'block' : 'none';
-    if (teamMembersPanelEl) teamMembersPanelEl.style.display = teamEnabled ? 'block' : 'none';
+    if (teamActivityPanelEl) teamActivityPanelEl.style.display = (isGistMode && teamEnabled) ? 'block' : 'none';
+    if (teamMembersPanelEl) teamMembersPanelEl.style.display = isGistMode ? 'block' : 'none';
     if (teamNameEl) teamNameEl.value = appData.systemSettings.teamName || '';
     if (teamUserNameEl) teamUserNameEl.value = appData.systemSettings.teamUserName || '';
     if (teamGistIdEl) teamGistIdEl.value = appData.systemSettings.teamGistId || '';
@@ -45936,9 +46406,10 @@ function toggleTeamSettings() {
     appData.systemSettings.teamEnabled = enabled;
     saveData();
 
+    var isGistMode = getSyncTarget() === 'gist';
     if (teamSettingsPanelEl) teamSettingsPanelEl.style.display = enabled ? 'block' : 'none';
-    if (teamActivityPanelEl) teamActivityPanelEl.style.display = enabled ? 'block' : 'none';
-    if (teamMembersPanelEl) teamMembersPanelEl.style.display = enabled ? 'block' : 'none';
+    if (teamActivityPanelEl) teamActivityPanelEl.style.display = (isGistMode && enabled) ? 'block' : 'none';
+    if (teamMembersPanelEl) teamMembersPanelEl.style.display = isGistMode ? 'block' : 'none';
 
     addSyncLog('info', '团队功能' + (enabled ? '已启用' : '已禁用'));
 }

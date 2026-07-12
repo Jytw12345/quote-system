@@ -1,9 +1,14 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'V3.4.178  更新日期：20260712';
+const CACHE_NAME = 'V3.4.194  更新日期：20260712';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
-    'fix 同步配套功能支持多文件模式：查看云端数据、清空云端数据、历史版本恢复均已适配多文件模式',
+    'fix 修复Repository模式下团队活动和团队成员显示问题：修复loadTeamSettings和toggleTeamSettings函数，添加Gist模式检查，确保Repo模式下团队面板始终隐藏',
+    'fix 修复查看云端数据弹窗空白：showCloudDataModal中showModal调用方式错误，应传options对象而非两个参数',
+    'fix 修复查看云端数据空白问题：viewRepoData函数改为先检测quote-meta.json判断多文件模式，支持多文件合并显示',
+    'fix 修复全量上传错误处理：记录失败文件并继续上传，完成后报告失败文件列表',
+    'fix 修复清空云端数据409冲突：改为串行上传，每次获取最新SHA值',
+    'feat 新增Repository修复云端重复数据功能：支持产品/客户/模板去重，串行上传避免冲突',
     'fix 修复报价状态更新时版本记录数据爆炸：使用扩展运算符复制整个报价对象（含versions数组）导致每次状态变更数据量指数级增长',
     'fix 修复编辑报价时客户累计金额不更新：更新历史报价前已覆盖finalTotal，导致计算差额时旧金额等于新金额',
     'fix 修复PDF导出空白页检测变量遮蔽：循环内var pageContentPixels覆盖了外层同名变量，导致后续页面起止像素计算错误',
