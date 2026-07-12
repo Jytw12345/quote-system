@@ -42843,7 +42843,6 @@ function saveSyncSettings() {
     appData.systemSettings.bandwidthAdaptive = bandwidthAdapt;
     
     saveDataImmediately();
-    updateSyncConfigUI();
     showToast('✅ 配置已保存！', 'success');
 }
 
@@ -46403,9 +46402,9 @@ function updateCloudSyncStatus() {
     if (incrementalEl) incrementalEl.checked = appData.systemSettings.incrementalSyncEnabled !== false;
     if (autoRetryEl) autoRetryEl.checked = appData.systemSettings.autoRetryEnabled !== false;
     if (desktopNotifEl) desktopNotifEl.checked = appData.systemSettings.desktopNotificationsEnabled === true;
-    if (compressionEl) compressionEl.checked = appData.systemSettings.dataCompressionEnabled !== false;
+    if (compressionEl) compressionEl.checked = appData.systemSettings.dataCompressionEnabled === true;
     var encryptionEl = document.getElementById('dataEncryptionEnabled');
-    if (encryptionEl) encryptionEl.checked = appData.systemSettings.dataEncryptionEnabled !== false;
+    if (encryptionEl) encryptionEl.checked = appData.systemSettings.dataEncryptionEnabled === true;
     if (batchSyncEl) batchSyncEl.checked = appData.systemSettings.batchSyncEnabled === true;
     if (bandwidthEl) bandwidthEl.checked = appData.systemSettings.bandwidthAdaptive !== false;
     

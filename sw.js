@@ -1,9 +1,9 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'V3.4.200  更新日期：20260712';
+const CACHE_NAME = 'V3.4.201  更新日期：20260712';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
-    'fix 修复高级配置不保存问题：添加「💾 保存配置」按钮，修改高级同步选项后需点击保存才能生效',
+    'fix 修复压缩和加密配置保存无效问题：移除不存在的updateSyncConfigUI调用，修复复选框初始化逻辑',
     'fix 修复查看云端数据弹窗空白：showCloudDataModal中showModal调用方式错误，应传options对象而非两个参数',
     'fix 修复查看云端数据空白问题：viewRepoData函数改为先检测quote-meta.json判断多文件模式，支持多文件合并显示',
     'fix 修复全量上传错误处理：记录失败文件并继续上传，完成后报告失败文件列表',
