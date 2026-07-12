@@ -41108,21 +41108,19 @@ function gistUploadFull() {
     });
 }
 
-// Repository全量上传
+// Repository全量上传（多文件分块）
 function repoUploadFull() {
     return new Promise(function(resolve, reject) {
-        // 注意：isSyncing 由调用方（入口函数）管理，这里不再重复检查
         var startTime = Date.now();
         var strategy = adaptSyncStrategy();
         
         showSyncProgress('正在准备上传数据...', 10);
-        addSyncLog('info', '开始Repository全量上传（压缩: ' + (strategy.compression ? '是' : '否') + ', 批次大小: ' + strategy.batchSize + '）');
+        addSyncLog('info', '开始Repository全量上传（压缩: ' + (strategy.compression ? '是' : '否') + ', 分文件模式）');
         
         var config = getRepoConfig();
         var owner = config.owner;
         var repo = config.repo;
         var branch = config.branch;
-        var filePath = config.filePath;
         
         if (!owner || !repo) {
             isSyncing = false;
@@ -41152,22 +41150,13 @@ function repoUploadFull() {
             var filteredSignatures = (teamEnabled && teamDataSharing.signatures === false) || !syncConfig.signatures ? undefined : (appData.signatures || []);
             var filteredGlobalPriceConfig = !syncConfig.globalPriceConfig ? undefined : getGlobalPriceSyncData();
             
-            var syncPayload = {
-                version: '3.4',
-                uploadTime: new Date().toISOString(),
-                deviceId: getDeviceId(),
-                schemaVersion: 4,
-                team: teamEnabled ? {
-                    enabled: true,
-                    userId: appData.systemSettings.teamUserId || getDeviceId(),
-                    userName: appData.systemSettings.teamUserName || '未命名用户',
-                    syncChangeTracking: appData.systemSettings.syncChangeTracking !== false
-                } : { enabled: false },
-                data: {
-                    products: filteredProducts,
-                    templates: filteredTemplates,
-                    customers: filteredCustomers,
-                    quoteHistory: filteredQuoteHistory,
+            var fileConfigs = [
+                { name: 'quote-products.json', data: { products: filteredProducts || [] }, priority: 'high' },
+                { name: 'quote-templates.json', data: { templates: filteredTemplates || [] }, priority: 'high' },
+                { name: 'quote-customers.json', data: { customers: filteredCustomers || [] }, priority: 'high' },
+                { name: 'quote-history.json', data: { quoteHistory: filteredQuoteHistory || [] }, priority: 'medium' },
+                { name: 'quote-images.json', data: { images: imageData.images || {}, total: imageData.total || 0 }, priority: 'high' },
+                { name: 'quote-settings.json', data: {
                     seals: filteredSeals,
                     signatures: filteredSignatures,
                     favoriteIds: appData.favoriteIds || [],
@@ -41176,104 +41165,106 @@ function repoUploadFull() {
                     cultureWallConfig: getCultureWallSyncData(),
                     customPrices: getGlobalCustomPrices(),
                     globalPriceConfig: filteredGlobalPriceConfig
-                },
-                activityLog: buildSyncActivityLog(),
-                images: imageData.images
-            };
-            
-            var syncPayloadString;
-            try {
-                var visited = new Set();
-                syncPayloadString = JSON.stringify(syncPayload, function(key, value) {
-                    if (typeof value === 'string') {
-                        return value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-                    }
-                    if (typeof value === 'object' && value !== null) {
-                        var id = value._cid || (value._cid = Math.random().toString(36).substr(2, 9));
-                        if (visited.has(id)) {
-                            return undefined;
-                        }
-                        visited.add(id);
-                    }
-                    return value;
-                }, 2);
-                
-                removeCid(syncPayload);
-            } catch (e) {
-                syncPayloadString = JSON.stringify({
+                }, priority: 'medium' },
+                { name: 'quote-meta.json', data: {
                     version: '3.4',
                     uploadTime: new Date().toISOString(),
                     deviceId: getDeviceId(),
-                    data: {
-                        products: [],
-                        templates: [],
-                        customers: []
-                    }
-                }, null, 2);
-            }
+                    schemaVersion: 4,
+                    team: teamEnabled ? {
+                        enabled: true,
+                        userId: appData.systemSettings.teamUserId || getDeviceId(),
+                        userName: appData.systemSettings.teamUserName || '未命名用户'
+                    } : { enabled: false },
+                    activityLog: buildSyncActivityLog()
+                }, priority: 'high' }
+            ];
             
-            // 应用数据压缩
             var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
             var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
-            var finalContent = syncPayloadString;
             
-            if (compressionEnabled) {
-                try {
-                    var compressed = compressData(syncPayload);
-                    if (compressed && compressed !== syncPayload) {
-                        finalContent = compressed;
-                        addSyncLog('info', '数据压缩完成，原始大小: ' + syncPayloadString.length + '，压缩后: ' + finalContent.length);
-                    } else {
-                        addSyncLog('warning', '数据压缩失败或无效，使用原始数据');
+            var processPromises = fileConfigs.map(function(fileConfig) {
+                return new Promise(function(resolveFile) {
+                    var content;
+                    try {
+                        content = JSON.stringify(fileConfig.data, function(key, value) {
+                            if (typeof value === 'string') {
+                                return value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+                            }
+                            return value;
+                        }, 2);
+                    } catch (e) {
+                        content = JSON.stringify({ error: '序列化失败' }, null, 2);
                     }
-                } catch (e) {
-                    addSyncLog('warning', '数据压缩异常，使用原始数据: ' + e.message);
-                }
-            }
-            
-            if (encryptionEnabled) {
-                try {
-                    var encrypted = encryptSyncData(finalContent);
-                    if (encrypted) {
-                        finalContent = encrypted;
-                        addSyncLog('info', '数据加密完成');
-                    } else {
-                        addSyncLog('warning', '数据加密失败，使用原始数据');
+                    
+                    var finalContent = content;
+                    if (compressionEnabled) {
+                        try {
+                            var compressed = compressData(fileConfig.data);
+                            if (compressed && typeof compressed === 'string') {
+                                finalContent = compressed;
+                            }
+                        } catch (e) {}
                     }
-                } catch (e) {
-                    addSyncLog('warning', '数据加密异常，使用原始数据: ' + e.message);
-                }
-            }
-            
-            var totalSize = finalContent.length;
-            var maxSize = 50 * 1024 * 1024;
-            if (totalSize > maxSize) {
-                var sizeMB = (totalSize / 1024 / 1024).toFixed(2);
-                var maxMB = (maxSize / 1024 / 1024).toFixed(0);
-                showToast('⚠️ 数据过大（' + sizeMB + 'MB），超过Repository限制（' + maxMB + 'MB）！建议启用数据压缩或减少同步的数据量', 'warning');
-                addSyncLog('warning', '数据大小超过Repository限制: ' + sizeMB + 'MB');
-                isSyncing = false;
-                reject(new Error('数据过大，超过Repository限制'));
-                return;
-            }
-            
-            showSyncProgress('正在获取文件SHA...', 30);
-            return getRepoFile(owner, repo, filePath, branch)
-                .then(function(fileData) {
-                    var sha = fileData ? fileData.sha : null;
-                    showSyncProgress('正在上传到Repository...', 60);
-                    return putRepoFile(owner, repo, filePath, finalContent, 'Update quote data', branch, sha);
+                    
+                    if (encryptionEnabled) {
+                        try {
+                            var encrypted = encryptSyncData(finalContent);
+                            if (encrypted) {
+                                finalContent = encrypted;
+                            }
+                        } catch (e) {}
+                    }
+                    
+                    resolveFile({ name: fileConfig.name, content: finalContent, size: finalContent.length });
                 });
-        })
-        .then(function(result) {
-            showSyncProgress('正在保存同步状态...', 90);
-            appData.systemSettings.lastSyncTime = new Date().toISOString();
-            appData.systemSettings.lastIncrementalSyncTime = appData.systemSettings.lastSyncTime;
-            saveDataImmediately();
-            isSyncing = false;
-            showSyncProgress('上传完成', 100);
-            addSyncLog('success', 'Repository上传成功: ' + owner + '/' + repo + '/' + filePath);
-            resolve();
+            });
+            
+            Promise.all(processPromises).then(function(filesToUpload) {
+                showSyncProgress('正在获取文件SHA...', 30);
+                
+                var shaPromises = filesToUpload.map(function(file) {
+                    return getRepoFile(owner, repo, file.name, branch).then(function(fileData) {
+                        file.sha = fileData ? fileData.sha : null;
+                        return file;
+                    });
+                });
+                
+                Promise.all(shaPromises).then(function(filesWithSha) {
+                    showSyncProgress('正在上传文件...', 50);
+                    
+                    var uploadedCount = 0;
+                    var uploadPromises = filesWithSha.map(function(file) {
+                        return putRepoFile(owner, repo, file.name, file.content, 'Full sync: ' + file.name, branch, file.sha)
+                            .then(function() {
+                                uploadedCount++;
+                                showSyncProgress('正在上传文件 (' + uploadedCount + '/' + filesWithSha.length + ')...', 50 + uploadedCount * 8);
+                                addSyncLog('success', 'Repository上传成功: ' + owner + '/' + repo + '/' + file.name);
+                            });
+                    });
+                    
+                    Promise.all(uploadPromises).then(function() {
+                        showSyncProgress('正在保存同步状态...', 90);
+                        appData.systemSettings.lastSyncTime = new Date().toISOString();
+                        appData.systemSettings.lastIncrementalSyncTime = appData.systemSettings.lastSyncTime;
+                        appData.systemSettings.syncFileMode = 'multi';
+                        saveDataImmediately();
+                        isSyncing = false;
+                        showSyncProgress('上传完成', 100);
+                        addSyncLog('success', 'Repository全量同步完成，共上传 ' + filesWithSha.length + ' 个文件');
+                        resolve();
+                    }).catch(function(err) {
+                        isSyncing = false;
+                        reject(err);
+                    });
+                }).catch(function(err) {
+                    isSyncing = false;
+                    reject(err);
+                });
+            }).catch(function(err) {
+                isSyncing = false;
+                reject(err);
+            });
         })
         .catch(function(err) {
             isSyncing = false;
@@ -41285,7 +41276,6 @@ function repoUploadFull() {
 // Repository增量上传：只上传变化的数据
 function repoUploadIncremental() {
     return new Promise(function(resolve, reject) {
-        // 注意：isSyncing 由调用方（入口函数）管理，这里不再重复检查
         var lastSync = appData.systemSettings.lastIncrementalSyncTime;
         if (!lastSync) {
             reject(new Error('没有上次同步时间，无法进行增量上传'));
@@ -41368,124 +41358,198 @@ function repoUploadIncremental() {
         showSyncProgress('正在准备增量上传...', 10);
         addSyncLog('info', '开始Repository增量上传');
         
-        getRepoFile(owner, repo, filePath, branch)
-        .then(function(fileData) {
-            var existingContent = '{}';
-            if (fileData) {
-                try {
-                    existingContent = decodeURIComponent(escape(atob(fileData.content)));
-                } catch (e) {
-                    existingContent = fileData.content;
-                }
+        var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+        
+        function decodeFileContent(fileData) {
+            if (!fileData) return { products: [], customers: [], templates: [] };
+            var content;
+            try {
+                content = decodeURIComponent(escape(atob(fileData.content)));
+            } catch (e) {
+                content = fileData.content;
             }
-            
-            // 尝试解密数据
-            var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
-            var decryptedContent = existingContent;
             
             if (encryptionEnabled) {
                 try {
-                    var decrypted = decryptSyncData(existingContent);
+                    var decrypted = decryptSyncData(content);
                     if (decrypted) {
                         if (typeof decrypted === 'object') {
-                            decryptedContent = JSON.stringify(decrypted);
+                            content = JSON.stringify(decrypted);
                         } else if (typeof decrypted === 'string') {
-                            decryptedContent = decrypted;
+                            content = decrypted;
                         }
                     }
-                } catch (e) {
-                    addSyncLog('info', '增量同步数据解密失败，尝试直接解析');
-                }
+                } catch (e) {}
             }
             
-            var existingData;
-            try {
-                existingData = decompressData(decryptedContent);
-            } catch (e) {
+            var data = decompressData(content);
+            if (typeof data === 'string') {
                 try {
-                    existingData = JSON.parse(decryptedContent);
+                    data = JSON.parse(data);
                 } catch (parseError) {
-                    throw new Error('数据解析失败: ' + parseError.message);
+                    return { products: [], customers: [], templates: [] };
                 }
             }
-            
-            if (!existingData.data) existingData.data = {};
-            if (!existingData.data.products) existingData.data.products = [];
-            if (!existingData.data.customers) existingData.data.customers = [];
-            if (!existingData.data.templates) existingData.data.templates = [];
-            
-            var existingProductIds = new Set(existingData.data.products.map(function(item) { return String(item.id); }));
-            var existingCustomerIds = new Set(existingData.data.customers.map(function(item) { return String(item.id); }));
-            var existingTemplateIds = new Set(existingData.data.templates.map(function(item) { return String(item.id); }));
-            
-            changes.added.products.forEach(function(p) {
-                if (!existingProductIds.has(String(p.id))) {
-                    existingData.data.products.push(p);
-                    existingProductIds.add(String(p.id));
+            return data;
+        }
+        
+        getRepoFile(owner, repo, 'quote-meta.json', branch)
+        .then(function(metaFile) {
+            if (metaFile) {
+                return Promise.resolve({ mode: 'multi' });
+            }
+            return getRepoFile(owner, repo, filePath, branch).then(function(oldFile) {
+                if (oldFile) {
+                    return { mode: 'single', data: oldFile };
                 }
+                return { mode: 'none' };
             });
-            changes.added.customers.forEach(function(c) {
-                if (!existingCustomerIds.has(String(c.id))) {
-                    existingData.data.customers.push(c);
-                    existingCustomerIds.add(String(c.id));
-                }
-            });
-            changes.added.templates.forEach(function(t) {
-                if (!existingTemplateIds.has(String(t.id))) {
-                    existingData.data.templates.push(t);
-                    existingTemplateIds.add(String(t.id));
-                }
-            });
+        })
+        .then(function(result) {
+            if (result.mode === 'none') {
+                reject(new Error('云端没有数据，无法进行增量同步'));
+                return;
+            }
             
-            changes.updated.products.forEach(function(p) {
-                var idx = existingData.data.products.findIndex(function(item) { return String(item.id) === String(p.id); });
-                if (idx >= 0) existingData.data.products[idx] = p;
-            });
-            changes.updated.customers.forEach(function(c) {
-                var idx = existingData.data.customers.findIndex(function(item) { return String(item.id) === String(c.id); });
-                if (idx >= 0) existingData.data.customers[idx] = c;
-            });
-            changes.updated.templates.forEach(function(t) {
-                var idx = existingData.data.templates.findIndex(function(item) { return String(item.id) === String(t.id); });
-                if (idx >= 0) existingData.data.templates[idx] = t;
-            });
-            
-            existingData.uploadTime = new Date().toISOString();
-            existingData.deviceId = getDeviceId();
-            
-            var syncPayloadString = JSON.stringify(existingData, null, 2);
-            var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
-            var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
-            var finalContent = syncPayloadString;
-            
-            if (compressionEnabled) {
+            if (result.mode === 'single') {
+                var content;
                 try {
-                    var compressed = compressData(existingData);
-                    if (typeof compressed === 'string') {
-                        finalContent = compressed;
-                    }
+                    content = decodeURIComponent(escape(atob(result.data.content)));
                 } catch (e) {
-                    addSyncLog('warning', '增量同步数据压缩异常，使用原始数据');
+                    content = result.data.content;
                 }
-            }
-            
-            if (encryptionEnabled) {
+                
+                var decryptedContent = content;
+                if (encryptionEnabled) {
+                    try {
+                        var decrypted = decryptSyncData(content);
+                        if (decrypted) {
+                            if (typeof decrypted === 'object') {
+                                decryptedContent = JSON.stringify(decrypted);
+                            } else if (typeof decrypted === 'string') {
+                                decryptedContent = decrypted;
+                            }
+                        }
+                    } catch (e) {}
+                }
+                
+                var existingData;
                 try {
-                    var encrypted = encryptSyncData(finalContent);
-                    if (encrypted) {
-                        finalContent = encrypted;
-                    }
+                    existingData = decompressData(decryptedContent);
                 } catch (e) {
-                    addSyncLog('warning', '增量同步数据加密异常，使用原始数据');
+                    try {
+                        existingData = JSON.parse(decryptedContent);
+                    } catch (parseError) {
+                        throw new Error('数据解析失败: ' + parseError.message);
+                    }
                 }
+                
+                if (!existingData.data) existingData.data = {};
+                if (!existingData.data.products) existingData.data.products = [];
+                if (!existingData.data.customers) existingData.data.customers = [];
+                if (!existingData.data.templates) existingData.data.templates = [];
+                
+                applyChanges(existingData.data);
+                
+                existingData.uploadTime = new Date().toISOString();
+                existingData.deviceId = getDeviceId();
+                
+                var syncPayloadString = JSON.stringify(existingData, null, 2);
+                var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+                var finalContent = syncPayloadString;
+                
+                if (compressionEnabled) {
+                    try {
+                        var compressed = compressData(existingData);
+                        if (typeof compressed === 'string') {
+                            finalContent = compressed;
+                        }
+                    } catch (e) {
+                        addSyncLog('warning', '增量同步数据压缩异常，使用原始数据');
+                    }
+                }
+                
+                if (encryptionEnabled) {
+                    try {
+                        var encrypted = encryptSyncData(finalContent);
+                        if (encrypted) {
+                            finalContent = encrypted;
+                        }
+                    } catch (e) {
+                        addSyncLog('warning', '增量同步数据加密异常，使用原始数据');
+                    }
+                }
+                
+                showSyncProgress('正在上传增量更新...', 60);
+                return putRepoFile(owner, repo, filePath, finalContent, 'Incremental sync update', branch, result.data ? result.data.sha : null);
             }
             
-            showSyncProgress('正在上传增量更新...', 60);
-            return putRepoFile(owner, repo, filePath, finalContent, 'Incremental sync update', branch, fileData ? fileData.sha : null);
+            if (result.mode === 'multi') {
+                showSyncProgress('正在下载现有数据...', 25);
+                
+                var fileNames = ['quote-products.json', 'quote-templates.json', 'quote-customers.json'];
+                var downloadPromises = fileNames.map(function(fileName) {
+                    return getRepoFile(owner, repo, fileName, branch).then(function(fileData) {
+                        return { name: fileName, data: decodeFileContent(fileData), sha: fileData ? fileData.sha : null };
+                    });
+                });
+                
+                Promise.all(downloadPromises).then(function(files) {
+                    showSyncProgress('正在合并变更...', 50);
+                    
+                    var productsData = files.find(function(f) { return f.name === 'quote-products.json'; }) || { data: { products: [] } };
+                    var templatesData = files.find(function(f) { return f.name === 'quote-templates.json'; }) || { data: { templates: [] } };
+                    var customersData = files.find(function(f) { return f.name === 'quote-customers.json'; }) || { data: { customers: [] } };
+                    
+                    var mergedData = {
+                        products: productsData.data.products || [],
+                        templates: templatesData.data.templates || [],
+                        customers: customersData.data.customers || []
+                    };
+                    
+                    applyChanges(mergedData);
+                    
+                    var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+                    
+                    var uploadFiles = [
+                        { name: 'quote-products.json', data: { products: mergedData.products }, sha: productsData.sha },
+                        { name: 'quote-templates.json', data: { templates: mergedData.templates }, sha: templatesData.sha },
+                        { name: 'quote-customers.json', data: { customers: mergedData.customers }, sha: customersData.sha }
+                    ];
+                    
+                    var uploadPromises = uploadFiles.map(function(file) {
+                        var content = JSON.stringify(file.data, null, 2);
+                        var finalContent = content;
+                        
+                        if (compressionEnabled) {
+                            try {
+                                var compressed = compressData(file.data);
+                                if (typeof compressed === 'string') {
+                                    finalContent = compressed;
+                                }
+                            } catch (e) {}
+                        }
+                        
+                        if (encryptionEnabled) {
+                            try {
+                                var encrypted = encryptSyncData(finalContent);
+                                if (encrypted) {
+                                    finalContent = encrypted;
+                                }
+                            } catch (e) {}
+                        }
+                        
+                        return putRepoFile(owner, repo, file.name, finalContent, 'Incremental sync: ' + file.name, branch, file.sha);
+                    });
+                    
+                    return Promise.all(uploadPromises);
+                });
+            }
         })
         .then(function() {
             appData.systemSettings.lastIncrementalSyncTime = new Date().toISOString();
             appData.systemSettings.lastSyncTime = appData.systemSettings.lastIncrementalSyncTime;
+            appData.systemSettings.syncFileMode = 'multi';
             saveData();
             
             var addedCount = changes.added.products.length + changes.added.customers.length + changes.added.templates.length;
@@ -41502,14 +41566,50 @@ function repoUploadIncremental() {
             isSyncing = false;
             reject(err);
         });
+        
+        function applyChanges(targetData) {
+            var existingProductIds = new Set(targetData.products.map(function(item) { return String(item.id); }));
+            var existingCustomerIds = new Set(targetData.customers.map(function(item) { return String(item.id); }));
+            var existingTemplateIds = new Set(targetData.templates.map(function(item) { return String(item.id); }));
+            
+            changes.added.products.forEach(function(p) {
+                if (!existingProductIds.has(String(p.id))) {
+                    targetData.products.push(p);
+                    existingProductIds.add(String(p.id));
+                }
+            });
+            changes.added.customers.forEach(function(c) {
+                if (!existingCustomerIds.has(String(c.id))) {
+                    targetData.customers.push(c);
+                    existingCustomerIds.add(String(c.id));
+                }
+            });
+            changes.added.templates.forEach(function(t) {
+                if (!existingTemplateIds.has(String(t.id))) {
+                    targetData.templates.push(t);
+                    existingTemplateIds.add(String(t.id));
+                }
+            });
+            
+            changes.updated.products.forEach(function(p) {
+                var idx = targetData.products.findIndex(function(item) { return String(item.id) === String(p.id); });
+                if (idx >= 0) targetData.products[idx] = p;
+            });
+            changes.updated.customers.forEach(function(c) {
+                var idx = targetData.customers.findIndex(function(item) { return String(item.id) === String(c.id); });
+                if (idx >= 0) targetData.customers[idx] = c;
+            });
+            changes.updated.templates.forEach(function(t) {
+                var idx = targetData.templates.findIndex(function(item) { return String(item.id) === String(t.id); });
+                if (idx >= 0) targetData.templates[idx] = t;
+            });
+        }
     });
 }
 
 // Repository下载合并
 function repoDownload() {
     return new Promise(function(resolve, reject) {
-        // 注意：isSyncing 由调用方（入口函数）管理，这里不再重复检查
-        
         var config = getRepoConfig();
         var owner = config.owner;
         var repo = config.repo;
@@ -41525,16 +41625,10 @@ function repoDownload() {
         showSyncProgress('正在下载Repository数据...', 20);
         addSyncLog('info', '开始从Repository下载数据: ' + owner + '/' + repo);
         
-        getRepoFile(owner, repo, filePath, branch)
-        .then(function(fileData) {
-            if (!fileData) {
-                isSyncing = false;
-                showToast('ℹ️ Repository中暂无数据', 'info');
-                addSyncLog('info', 'Repository中暂无数据');
-                resolve();
-                return;
-            }
-            
+        var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+        
+        function decodeFileContent(fileData) {
+            if (!fileData) return null;
             var content;
             try {
                 content = decodeURIComponent(escape(atob(fileData.content)));
@@ -41542,44 +41636,181 @@ function repoDownload() {
                 content = fileData.content;
             }
             
-            // 尝试解密数据
-            var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
-            var decryptedContent = content;
-            
             if (encryptionEnabled) {
                 try {
                     var decrypted = decryptSyncData(content);
                     if (decrypted) {
                         if (typeof decrypted === 'object') {
-                            decryptedContent = JSON.stringify(decrypted);
+                            content = JSON.stringify(decrypted);
                         } else if (typeof decrypted === 'string') {
-                            decryptedContent = decrypted;
+                            content = decrypted;
                         }
-                        addSyncLog('info', '数据解密成功');
                     }
-                } catch (e) {
-                    addSyncLog('info', '数据解密失败，尝试直接解析');
-                }
+                } catch (e) {}
             }
             
-            // 尝试解压数据
-            var data = decompressData(decryptedContent);
+            var data = decompressData(content);
             if (typeof data === 'string') {
                 try {
                     data = JSON.parse(data);
                 } catch (parseError) {
-                    throw new Error('数据解析失败: ' + parseError.message);
+                    return null;
                 }
             }
-            
-            if (!data || typeof data !== 'object') {
-                throw new Error('无法识别的数据结构：数据为空或不是对象');
+            return data;
+        }
+        
+        getRepoFile(owner, repo, 'quote-meta.json', branch)
+        .then(function(metaFile) {
+            if (metaFile) {
+                return Promise.resolve({ mode: 'multi' });
+            }
+            return getRepoFile(owner, repo, filePath, branch).then(function(oldFile) {
+                if (oldFile) {
+                    return { mode: 'single', data: oldFile };
+                }
+                return { mode: 'none' };
+            });
+        })
+        .then(function(result) {
+            if (result.mode === 'none') {
+                isSyncing = false;
+                showToast('ℹ️ Repository中暂无数据', 'info');
+                addSyncLog('info', 'Repository中暂无数据');
+                resolve();
+                return;
             }
             
-            var validation = validateSyncData(data);
-            if (!validation.valid) {
-                throw new Error('数据完整性校验失败: ' + validation.error + 
-                    (validation.detectedKeys ? ' 检测到的键: ' + validation.detectedKeys.join(', ') : ''));
+            if (result.mode === 'single') {
+                var content;
+                try {
+                    content = decodeURIComponent(escape(atob(result.data.content)));
+                } catch (e) {
+                    content = result.data.content;
+                }
+                
+                var decryptedContent = content;
+                if (encryptionEnabled) {
+                    try {
+                        var decrypted = decryptSyncData(content);
+                        if (decrypted) {
+                            if (typeof decrypted === 'object') {
+                                decryptedContent = JSON.stringify(decrypted);
+                            } else if (typeof decrypted === 'string') {
+                                decryptedContent = decrypted;
+                            }
+                            addSyncLog('info', '数据解密成功');
+                        }
+                    } catch (e) {
+                        addSyncLog('info', '数据解密失败，尝试直接解析');
+                    }
+                }
+                
+                var data = decompressData(decryptedContent);
+                if (typeof data === 'string') {
+                    try {
+                        data = JSON.parse(data);
+                    } catch (parseError) {
+                        throw new Error('数据解析失败: ' + parseError.message);
+                    }
+                }
+                
+                processDownloadedData(data);
+                return;
+            }
+            
+            if (result.mode === 'multi') {
+                var fileNames = ['quote-products.json', 'quote-templates.json', 'quote-customers.json', 'quote-history.json', 'quote-images.json', 'quote-settings.json', 'quote-meta.json'];
+                
+                showSyncProgress('正在下载多文件数据...', 30);
+                addSyncLog('info', '检测到多文件模式，正在下载 ' + fileNames.length + ' 个文件');
+                
+                var downloadPromises = fileNames.map(function(fileName) {
+                    return getRepoFile(owner, repo, fileName, branch).then(function(fileData) {
+                        return { name: fileName, data: decodeFileContent(fileData) };
+                    });
+                });
+                
+                Promise.all(downloadPromises).then(function(files) {
+                    showSyncProgress('正在合并数据...', 70);
+                    
+                    var mergedData = {
+                        data: {
+                            products: [],
+                            templates: [],
+                            customers: [],
+                            quoteHistory: [],
+                            seals: [],
+                            signatures: [],
+                            favoriteIds: [],
+                            categories: [],
+                            charPricingConfig: {},
+                            cultureWallConfig: {},
+                            customPrices: {},
+                            globalPriceConfig: {}
+                        },
+                        images: {},
+                        team: { enabled: false },
+                        activityLog: []
+                    };
+                    
+                    files.forEach(function(file) {
+                        if (!file.data) return;
+                        
+                        switch (file.name) {
+                            case 'quote-products.json':
+                                mergedData.data.products = file.data.products || [];
+                                break;
+                            case 'quote-templates.json':
+                                mergedData.data.templates = file.data.templates || [];
+                                break;
+                            case 'quote-customers.json':
+                                mergedData.data.customers = file.data.customers || [];
+                                break;
+                            case 'quote-history.json':
+                                mergedData.data.quoteHistory = file.data.quoteHistory || [];
+                                break;
+                            case 'quote-images.json':
+                                mergedData.images = file.data.images || {};
+                                break;
+                            case 'quote-settings.json':
+                                mergedData.data.seals = file.data.seals || [];
+                                mergedData.data.signatures = file.data.signatures || [];
+                                mergedData.data.favoriteIds = file.data.favoriteIds || [];
+                                mergedData.data.categories = file.data.categories || [];
+                                mergedData.data.charPricingConfig = file.data.charPricingConfig || {};
+                                mergedData.data.cultureWallConfig = file.data.cultureWallConfig || {};
+                                mergedData.data.customPrices = file.data.customPrices || {};
+                                mergedData.data.globalPriceConfig = file.data.globalPriceConfig || {};
+                                break;
+                            case 'quote-meta.json':
+                                mergedData.version = file.data.version || '3.4';
+                                mergedData.uploadTime = file.data.uploadTime || new Date().toISOString();
+                                mergedData.deviceId = file.data.deviceId || '未知设备';
+                                mergedData.schemaVersion = file.data.schemaVersion || 4;
+                                mergedData.team = file.data.team || { enabled: false };
+                                mergedData.activityLog = file.data.activityLog || [];
+                                break;
+                        }
+                    });
+                    
+                    processDownloadedData(mergedData);
+                }).catch(function(err) {
+                    isSyncing = false;
+                    reject(err);
+                });
+            }
+        })
+        .catch(function(err) {
+            isSyncing = false;
+            reject(err);
+        });
+        
+        function processDownloadedData(data) {
+            if (!data || typeof data !== 'object') {
+                isSyncing = false;
+                reject(new Error('无法识别的数据结构：数据为空或不是对象'));
+                return;
             }
             
             var serverData;
@@ -41603,7 +41834,9 @@ function repoDownload() {
                     team: data.team || { enabled: false }
                 };
             } else {
-                throw new Error('无法识别的数据结构');
+                isSyncing = false;
+                reject(new Error('无法识别的数据结构'));
+                return;
             }
             
             if (!serverData.data) {
@@ -41612,18 +41845,13 @@ function repoDownload() {
             
             var serverTime = new Date(serverData.uploadTime || 0);
             var localTime = new Date(appData.systemSettings.lastSyncTime || 0);
-            var serverTimeUTC = serverTime.getTime();
-            var localTimeUTC = localTime.getTime();
             
             var serverProducts = serverData.data.products || [];
             var serverTemplates = serverData.data.templates || [];
             var serverCustomers = serverData.data.customers || [];
             
             var serverHasData = serverProducts.length > 0 || serverTemplates.length > 0 || serverCustomers.length > 0;
-            
-            var localHasData = appData.products.length > 0 || 
-                              appData.templates.length > 0 || 
-                              appData.customers.length > 0;
+            var localHasData = appData.products.length > 0 || appData.templates.length > 0 || appData.customers.length > 0;
             
             if (!serverHasData && localHasData) {
                 isSyncing = false;
@@ -41641,17 +41869,24 @@ function repoDownload() {
             }
             
             mergeSyncData(serverData);
+            
+            if (data.images && typeof data.images === 'object') {
+                var saveImagePromises = Object.keys(data.images).map(function(imageId) {
+                    return IDB.saveImage(imageId, data.images[imageId]);
+                });
+                Promise.all(saveImagePromises).then(function() {
+                    addSyncLog('success', '图片数据保存完成');
+                }).catch(function() {});
+            }
+            
             appData.systemSettings.lastSyncTime = new Date().toISOString();
+            appData.systemSettings.syncFileMode = 'multi';
             saveDataImmediately();
             isSyncing = false;
             showToast('✅ Repository数据下载合并成功！', 'success');
             addSyncLog('success', 'Repository数据下载合并成功');
             resolve();
-        })
-        .catch(function(err) {
-            isSyncing = false;
-            reject(err);
-        });
+        }
     });
 }
 
@@ -43829,6 +44064,7 @@ function clearRepoData() {
     var config = getRepoConfig();
     var owner = config.owner;
     var repo = config.repo;
+    var branch = config.branch;
     var filePath = config.filePath;
     
     if (!owner || !repo) {
@@ -43836,7 +44072,7 @@ function clearRepoData() {
         return;
     }
     
-    if (!confirm('⚠️ 危险操作！\n\n此操作将清空云端仓库中的数据文件，且无法恢复！\n\n建议先导出数据备份！\n\n确定继续吗？')) {
+    if (!confirm('⚠️ 危险操作！\n\n此操作将清空云端仓库中的所有数据文件，且无法恢复！\n\n建议先导出数据备份！\n\n确定继续吗？')) {
         return;
     }
     
@@ -43854,57 +44090,366 @@ function clearRepoData() {
     isSyncing = true;
     showToast('🗑️ 正在清空云端数据...', 'loading', 10000);
     
-    getRepoFile(owner, repo, filePath)
-    .then(function(fileData) {
-        if (!fileData) {
+    var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+    
+    getRepoFile(owner, repo, 'quote-meta.json', branch)
+    .then(function(metaFile) {
+        if (metaFile) {
+            return Promise.resolve({ mode: 'multi' });
+        }
+        return getRepoFile(owner, repo, filePath, branch).then(function(oldFile) {
+            if (oldFile) {
+                return { mode: 'single', data: oldFile };
+            }
+            return { mode: 'none' };
+        });
+    })
+    .then(function(result) {
+        if (result.mode === 'none') {
             showToast('✅ 云端数据已为空', 'success');
             addSyncLog('success', 'Repository清空完成（文件不存在）');
+            isSyncing = false;
             return;
         }
         
-        var emptyData = { 
-            version: '3.4',
-            data: { products: [], customers: [], templates: [], quoteHistory: [], seals: [], signatures: [] },
-            uploadTime: new Date().toISOString(),
-            deviceId: getDeviceId()
-        };
-        
-        var syncPayloadString = JSON.stringify(emptyData, null, 2);
-        var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
-        var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
-        var finalContent = syncPayloadString;
-        
-        if (compressionEnabled) {
-            try {
-                var compressed = compressData(emptyData);
-                if (typeof compressed === 'string') {
-                    finalContent = compressed;
-                }
-            } catch (e) {}
+        if (result.mode === 'single') {
+            var emptyData = { 
+                version: '3.4',
+                data: { products: [], customers: [], templates: [], quoteHistory: [], seals: [], signatures: [] },
+                uploadTime: new Date().toISOString(),
+                deviceId: getDeviceId()
+            };
+            
+            var syncPayloadString = JSON.stringify(emptyData, null, 2);
+            var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+            var finalContent = syncPayloadString;
+            
+            if (compressionEnabled) {
+                try {
+                    var compressed = compressData(emptyData);
+                    if (typeof compressed === 'string') {
+                        finalContent = compressed;
+                    }
+                } catch (e) {}
+            }
+            
+            if (encryptionEnabled) {
+                try {
+                    var encrypted = encryptSyncData(finalContent);
+                    if (encrypted) {
+                        finalContent = encrypted;
+                    }
+                } catch (e) {}
+            }
+            
+            return putRepoFile(owner, repo, filePath, finalContent, 'Clear quote data', branch, result.data.sha);
         }
         
-        if (encryptionEnabled) {
-            try {
-                var encrypted = encryptSyncData(finalContent);
-                if (encrypted) {
-                    finalContent = encrypted;
-                }
-            } catch (e) {}
+        if (result.mode === 'multi') {
+            var fileNames = ['quote-products.json', 'quote-templates.json', 'quote-customers.json', 'quote-history.json', 'quote-images.json', 'quote-settings.json', 'quote-meta.json'];
+            
+            return Promise.all(fileNames.map(function(fileName) {
+                return getRepoFile(owner, repo, fileName, branch);
+            })).then(function(fileDatas) {
+                var clearPromises = [];
+                
+                fileDatas.forEach(function(fileData, index) {
+                    if (!fileData) return;
+                    
+                    var fileName = fileNames[index];
+                    var emptyContent;
+                    
+                    switch (fileName) {
+                        case 'quote-products.json':
+                            emptyContent = JSON.stringify({ products: [] }, null, 2);
+                            break;
+                        case 'quote-templates.json':
+                            emptyContent = JSON.stringify({ templates: [] }, null, 2);
+                            break;
+                        case 'quote-customers.json':
+                            emptyContent = JSON.stringify({ customers: [] }, null, 2);
+                            break;
+                        case 'quote-history.json':
+                            emptyContent = JSON.stringify({ quoteHistory: [] }, null, 2);
+                            break;
+                        case 'quote-images.json':
+                            emptyContent = JSON.stringify({ images: {}, total: 0 }, null, 2);
+                            break;
+                        case 'quote-settings.json':
+                            emptyContent = JSON.stringify({
+                                seals: [],
+                                signatures: [],
+                                favoriteIds: [],
+                                categories: [],
+                                charPricingConfig: {},
+                                cultureWallConfig: {},
+                                customPrices: {},
+                                globalPriceConfig: {}
+                            }, null, 2);
+                            break;
+                        case 'quote-meta.json':
+                            emptyContent = JSON.stringify({
+                                version: '3.4',
+                                uploadTime: new Date().toISOString(),
+                                deviceId: getDeviceId(),
+                                schemaVersion: 4,
+                                team: { enabled: false },
+                                activityLog: []
+                            }, null, 2);
+                            break;
+                        default:
+                            emptyContent = '{}';
+                    }
+                    
+                    var finalContent = emptyContent;
+                    if (encryptionEnabled) {
+                        try {
+                            var encrypted = encryptSyncData(emptyContent);
+                            if (encrypted) {
+                                finalContent = encrypted;
+                            }
+                        } catch (e) {}
+                    }
+                    
+                    clearPromises.push(putRepoFile(owner, repo, fileName, finalContent, 'Clear ' + fileName, branch, fileData.sha));
+                });
+                
+                return Promise.all(clearPromises);
+            });
         }
-        
-        return putRepoFile(owner, repo, filePath, finalContent, 'Clear quote data', null, fileData.sha);
     })
     .then(function() {
         showToast('✅ 云端数据已清空！', 'success');
         addSyncLog('success', 'Repository数据清空完成');
+        isSyncing = false;
     })
     .catch(function(err) {
         console.error('清空Repository数据失败:', err);
         showToast('❌ 清空失败: ' + err.message, 'error');
-    })
-    .then(function() {
         isSyncing = false;
     });
+}
+
+// Repository查看云端数据
+function viewRepoData() {
+    var config = getRepoConfig();
+    var owner = config.owner;
+    var repo = config.repo;
+    var branch = config.branch;
+    
+    if (!owner || !repo) {
+        showToast('请先配置Repository信息', 'warning');
+        return;
+    }
+    
+    showToast('🔍 正在获取云端数据...', 'loading', 10000);
+    
+    var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+    
+    function decodeFileContent(fileData) {
+        if (!fileData) return null;
+        var content;
+        try {
+            content = decodeURIComponent(escape(atob(fileData.content)));
+        } catch (e) {
+            content = fileData.content;
+        }
+        
+        if (encryptionEnabled) {
+            try {
+                var decrypted = decryptSyncData(content);
+                if (decrypted) {
+                    if (typeof decrypted === 'object') {
+                        content = JSON.stringify(decrypted);
+                    } else if (typeof decrypted === 'string') {
+                        content = decrypted;
+                    }
+                }
+            } catch (e) {}
+        }
+        
+        var data = decompressData(content);
+        if (typeof data === 'string') {
+            try {
+                data = JSON.parse(data);
+            } catch (parseError) {
+                return null;
+            }
+        }
+        return data;
+    }
+    
+    getRepoFile(owner, repo, 'quote-meta.json', branch)
+    .then(function(metaFile) {
+        if (metaFile) {
+            return Promise.resolve({ mode: 'multi' });
+        }
+        return getRepoFile(owner, repo, config.filePath, branch).then(function(oldFile) {
+            if (oldFile) {
+                return { mode: 'single', data: oldFile };
+            }
+            return { mode: 'none' };
+        });
+    })
+    .then(function(result) {
+        if (result.mode === 'none') {
+            showToast('云端数据为空', 'info');
+            return;
+        }
+        
+        if (result.mode === 'single') {
+            var content;
+            try {
+                content = decodeURIComponent(escape(atob(result.data.content)));
+            } catch (e) {
+                content = result.data.content;
+            }
+            
+            if (encryptionEnabled) {
+                try {
+                    var decrypted = decryptSyncData(content);
+                    if (decrypted) {
+                        if (typeof decrypted === 'object') {
+                            content = JSON.stringify(decrypted);
+                        } else if (typeof decrypted === 'string') {
+                            content = decrypted;
+                        }
+                    }
+                } catch (e) {}
+            }
+            
+            var data = decompressData(content);
+            if (typeof data === 'string') {
+                try {
+                    data = JSON.parse(data);
+                } catch (parseError) {
+                    throw new Error('云端数据解析失败: ' + parseError.message);
+                }
+            }
+            
+            showCloudDataModal(data);
+            return;
+        }
+        
+        if (result.mode === 'multi') {
+            var fileNames = ['quote-products.json', 'quote-templates.json', 'quote-customers.json', 'quote-history.json', 'quote-images.json', 'quote-settings.json', 'quote-meta.json'];
+            
+            Promise.all(fileNames.map(function(fileName) {
+                return getRepoFile(owner, repo, fileName, branch).then(function(fileData) {
+                    return { name: fileName, data: decodeFileContent(fileData) };
+                });
+            })).then(function(files) {
+                var mergedData = {
+                    data: {
+                        products: [],
+                        templates: [],
+                        customers: [],
+                        quoteHistory: [],
+                        seals: [],
+                        signatures: [],
+                        favoriteIds: [],
+                        categories: []
+                    },
+                    images: {},
+                    team: { enabled: false },
+                    activityLog: []
+                };
+                
+                files.forEach(function(file) {
+                    if (!file.data) return;
+                    
+                    switch (file.name) {
+                        case 'quote-products.json':
+                            mergedData.data.products = file.data.products || [];
+                            break;
+                        case 'quote-templates.json':
+                            mergedData.data.templates = file.data.templates || [];
+                            break;
+                        case 'quote-customers.json':
+                            mergedData.data.customers = file.data.customers || [];
+                            break;
+                        case 'quote-history.json':
+                            mergedData.data.quoteHistory = file.data.quoteHistory || [];
+                            break;
+                        case 'quote-images.json':
+                            mergedData.images = file.data.images || {};
+                            break;
+                        case 'quote-settings.json':
+                            mergedData.data.seals = file.data.seals || [];
+                            mergedData.data.signatures = file.data.signatures || [];
+                            mergedData.data.favoriteIds = file.data.favoriteIds || [];
+                            mergedData.data.categories = file.data.categories || [];
+                            break;
+                        case 'quote-meta.json':
+                            mergedData.version = file.data.version || '3.4';
+                            mergedData.uploadTime = file.data.uploadTime || new Date().toISOString();
+                            mergedData.deviceId = file.data.deviceId || '未知设备';
+                            mergedData.team = file.data.team || { enabled: false };
+                            mergedData.activityLog = file.data.activityLog || [];
+                            break;
+                    }
+                });
+                
+                showCloudDataModal(mergedData);
+            });
+        }
+    })
+    .catch(function(err) {
+        showToast('❌ 获取云端数据失败: ' + err.message, 'error');
+    });
+}
+
+function showCloudDataModal(data) {
+    var cloudData;
+    if (data.data && typeof data.data === 'object') {
+        cloudData = data.data;
+    } else if (data.products || data.templates || data.customers) {
+        cloudData = {
+            products: data.products || [],
+            templates: data.templates || [],
+            customers: data.customers || []
+        };
+    } else {
+        cloudData = {};
+    }
+    
+    var stats = {
+        products: cloudData.products ? cloudData.products.length : 0,
+        customers: cloudData.customers ? cloudData.customers.length : 0,
+        templates: cloudData.templates ? cloudData.templates.length : 0,
+        quoteHistory: cloudData.quoteHistory ? cloudData.quoteHistory.length : 0,
+        uploadTime: data.uploadTime ? new Date(data.uploadTime).toLocaleString() : '未知',
+        deviceId: data.deviceId || '未知设备'
+    };
+    
+    var htmlContent = `
+        <div style="padding: 0.5rem;">
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 0.75rem;">
+                <div style="background: #eff6ff; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 600; color: #1e40af;">${stats.products}</div>
+                    <div style="font-size: 0.7rem; color: #64748b;">产品数量</div>
+                </div>
+                <div style="background: #f0fdf4; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 600; color: #16a34a;">${stats.customers}</div>
+                    <div style="font-size: 0.7rem; color: #64748b;">客户数量</div>
+                </div>
+                <div style="background: #fef3c7; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 600; color: #d97706;">${stats.templates}</div>
+                    <div style="font-size: 0.7rem; color: #64748b;">模板数量</div>
+                </div>
+                <div style="background: #fce7f3; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 600; color: #be185d;">${stats.quoteHistory}</div>
+                    <div style="font-size: 0.7rem; color: #64748b;">历史报价</div>
+                </div>
+            </div>
+            <div style="border-top: 1px solid #e2e8f0; padding-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
+                <div style="margin-bottom: 0.25rem;">📅 最后上传时间: ${stats.uploadTime}</div>
+                <div>🖥️ 上传设备: ${stats.deviceId}</div>
+            </div>`;
+    
+    htmlContent += '</div>';
+    
+    showModal('云端数据', htmlContent);
 }
 
 // Repository获取远程仓库信息
@@ -44406,6 +44951,7 @@ function repoRestoreFromHistory() {
     var config = getRepoConfig();
     var owner = config.owner;
     var repo = config.repo;
+    var branch = config.branch;
     var filePath = config.filePath;
     
     if (!owner || !repo) {
@@ -44415,7 +44961,11 @@ function repoRestoreFromHistory() {
     
     showToast('📜 正在获取历史版本...', 'loading', 10000);
     
-    repoApi('/repos/' + owner + '/' + repo + '/commits?path=' + filePath + '&per_page=20')
+    getRepoFile(owner, repo, 'quote-meta.json', branch)
+    .then(function(metaFile) {
+        var targetPath = metaFile ? 'quote-meta.json' : filePath;
+        return repoApi('/repos/' + owner + '/' + repo + '/commits?path=' + targetPath + '&per_page=20');
+    })
     .then(function(res) {
         if (!res.ok) throw new Error('获取历史版本失败: HTTP ' + res.status);
         return res.json();
@@ -44455,7 +45005,7 @@ function repoRestoreFromHistory() {
                     return;
                 }
                 
-                restoreFromCommit(owner, repo, filePath, select.value);
+                restoreFromCommit(owner, repo, branch, filePath, select.value);
             }
         });
     })
@@ -44465,7 +45015,7 @@ function repoRestoreFromHistory() {
     });
 }
 
-function restoreFromCommit(owner, repo, filePath, commitSha) {
+function restoreFromCommit(owner, repo, branch, filePath, commitSha) {
     if (isSyncing) {
         showToast('⏳ 正在同步中，请稍候', 'info');
         return;
@@ -44474,59 +45024,72 @@ function restoreFromCommit(owner, repo, filePath, commitSha) {
     isSyncing = true;
     showToast('🔄 正在恢复历史版本...', 'loading', 15000);
     
-    repoApi('/repos/' + owner + '/' + repo + '/contents/' + filePath + '?ref=' + commitSha)
-    .then(function(res) {
-        if (!res.ok) throw new Error('获取历史版本数据失败: HTTP ' + res.status);
-        return res.json();
-    })
-    .then(function(fileData) {
-        var content;
-        try {
-            content = decodeURIComponent(escape(atob(fileData.content)));
-        } catch (e) {
-            content = fileData.content;
-        }
-        
-        var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
-        if (encryptionEnabled) {
-            try {
-                var decrypted = decryptSyncData(content);
-                if (decrypted) {
-                    if (typeof decrypted === 'object') {
-                        content = JSON.stringify(decrypted);
-                    } else if (typeof decrypted === 'string') {
-                        content = decrypted;
-                    }
-                    addSyncLog('info', '历史版本数据解密成功');
-                }
-            } catch (e) {
-                addSyncLog('info', '历史版本数据解密失败，尝试直接解析');
-            }
-        }
-        
-        var currentSha;
-        return getRepoFile(owner, repo, filePath).then(function(currentFile) {
-            currentSha = currentFile ? currentFile.sha : null;
-            
-            var data = decompressData(content);
-            if (typeof data === 'string') {
+    var encryptionEnabled = appData.systemSettings.dataEncryptionEnabled !== false;
+    
+    function getFileFromCommit(filePath) {
+        return repoApi('/repos/' + owner + '/' + repo + '/contents/' + filePath + '?ref=' + commitSha)
+            .then(function(res) {
+                if (!res.ok) return null;
+                return res.json();
+            })
+            .then(function(fileData) {
+                if (!fileData) return null;
+                var content;
                 try {
-                    data = JSON.parse(data);
-                } catch (parseError) {
-                    throw new Error('历史版本数据解析失败: ' + parseError.message);
+                    content = decodeURIComponent(escape(atob(fileData.content)));
+                } catch (e) {
+                    content = fileData.content;
                 }
+                
+                if (encryptionEnabled) {
+                    try {
+                        var decrypted = decryptSyncData(content);
+                        if (decrypted) {
+                            if (typeof decrypted === 'object') {
+                                content = JSON.stringify(decrypted);
+                            } else if (typeof decrypted === 'string') {
+                                content = decrypted;
+                            }
+                        }
+                    } catch (e) {}
+                }
+                
+                var data = decompressData(content);
+                if (typeof data === 'string') {
+                    try {
+                        data = JSON.parse(data);
+                    } catch (parseError) {
+                        return null;
+                    }
+                }
+                return data;
+            });
+    }
+    
+    getFileFromCommit('quote-meta.json')
+    .then(function(metaData) {
+        if (metaData) {
+            return Promise.resolve({ mode: 'multi' });
+        }
+        return getFileFromCommit(filePath).then(function(singleData) {
+            if (singleData) {
+                return { mode: 'single', data: singleData };
             }
+            throw new Error('无法获取历史版本数据');
+        });
+    })
+    .then(function(result) {
+        if (result.mode === 'single') {
+            result.data.uploadTime = new Date().toISOString();
+            result.data.deviceId = getDeviceId();
             
-            data.uploadTime = new Date().toISOString();
-            data.deviceId = getDeviceId();
-            
-            var syncPayloadString = JSON.stringify(data, null, 2);
+            var syncPayloadString = JSON.stringify(result.data, null, 2);
             var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
             var finalContent = syncPayloadString;
             
             if (compressionEnabled) {
                 try {
-                    var compressed = compressData(data);
+                    var compressed = compressData(result.data);
                     if (typeof compressed === 'string') {
                         finalContent = compressed;
                     }
@@ -44546,18 +45109,63 @@ function restoreFromCommit(owner, repo, filePath, commitSha) {
                 }
             }
             
-            return putRepoFile(owner, repo, filePath, finalContent, 'Restore from history: ' + commitSha.substring(0, 7), null, currentSha);
-        });
+            return getRepoFile(owner, repo, filePath, branch).then(function(currentFile) {
+                var currentSha = currentFile ? currentFile.sha : null;
+                return putRepoFile(owner, repo, filePath, finalContent, 'Restore from history: ' + commitSha.substring(0, 7), branch, currentSha);
+            });
+        }
+        
+        if (result.mode === 'multi') {
+            var fileNames = ['quote-products.json', 'quote-templates.json', 'quote-customers.json', 'quote-history.json', 'quote-images.json', 'quote-settings.json', 'quote-meta.json'];
+            
+            return Promise.all(fileNames.map(function(fileName) {
+                return getFileFromCommit(fileName);
+            })).then(function(historicalDatas) {
+                return Promise.all(fileNames.map(function(fileName, index) {
+                    var historicalData = historicalDatas[index];
+                    if (!historicalData) return Promise.resolve();
+                    
+                    historicalData.uploadTime = new Date().toISOString();
+                    historicalData.deviceId = getDeviceId();
+                    
+                    var content = JSON.stringify(historicalData, null, 2);
+                    var finalContent = content;
+                    var compressionEnabled = appData.systemSettings.dataCompressionEnabled;
+                    
+                    if (compressionEnabled) {
+                        try {
+                            var compressed = compressData(historicalData);
+                            if (typeof compressed === 'string') {
+                                finalContent = compressed;
+                            }
+                        } catch (e) {}
+                    }
+                    
+                    if (encryptionEnabled) {
+                        try {
+                            var encrypted = encryptSyncData(finalContent);
+                            if (encrypted) {
+                                finalContent = encrypted;
+                            }
+                        } catch (e) {}
+                    }
+                    
+                    return getRepoFile(owner, repo, fileName, branch).then(function(currentFile) {
+                        var currentSha = currentFile ? currentFile.sha : null;
+                        return putRepoFile(owner, repo, fileName, finalContent, 'Restore from history: ' + commitSha.substring(0, 7), branch, currentSha);
+                    });
+                }));
+            });
+        }
     })
     .then(function() {
         showToast('✅ 历史版本恢复完成！', 'success');
         addSyncLog('success', 'Repository从历史版本恢复完成');
+        isSyncing = false;
     })
     .catch(function(err) {
         console.error('恢复Repository历史版本失败:', err);
         showToast('❌ 恢复失败: ' + err.message, 'error');
-    })
-    .then(function() {
         isSyncing = false;
     });
 }
