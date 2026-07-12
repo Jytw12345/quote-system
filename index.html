@@ -9261,8 +9261,12 @@ function safeExecuteAsync(fn, defaultVal) {
                             <span>失败重试</span>
                         </label>
                         <label style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.6875rem; cursor: pointer;">
-                            <input type="checkbox" id="dataCompressionEnabled" checked style="width: 0.75rem; height: 0.75rem;">
+                            <input type="checkbox" id="dataCompressionEnabled" style="width: 0.75rem; height: 0.75rem;">
                             <span>数据压缩</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.6875rem; cursor: pointer;">
+                            <input type="checkbox" id="dataEncryptionEnabled" style="width: 0.75rem; height: 0.75rem;">
+                            <span>数据加密</span>
                         </label>
                         <label style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.6875rem; cursor: pointer;">
                             <input type="checkbox" id="bandwidthAdaptive" checked style="width: 0.75rem; height: 0.75rem;">
@@ -9385,6 +9389,7 @@ function safeExecuteAsync(fn, defaultVal) {
                     <button class="btn btn-outline btn-sm" onclick="gistDownload()">⬇️ 下载并合并</button>
                     <button class="btn btn-outline btn-sm" onclick="gistTest()">🔍 测试连接</button>
                     <button class="btn btn-outline btn-sm" onclick="showSelectiveSync()">📋 选择性同步</button>
+                    <button class="btn btn-outline btn-sm" onclick="saveSyncSettings()">💾 保存配置</button>
                     
                     <!-- Gist专属功能 -->
                     <button class="btn btn-outline btn-sm gist-only" onclick="gistPullProducts()">📦 更新产品价格</button>
@@ -10821,7 +10826,7 @@ let appData = {
         lastIncrementalSyncTime: null,
         autoRetryEnabled: true,
         desktopNotificationsEnabled: false,
-        dataCompressionEnabled: true,
+        dataCompressionEnabled: false,
         batchSyncEnabled: false,
         bandwidthAdaptive: true,
         retryCount: 0,
@@ -13104,7 +13109,7 @@ function fixAppDataCompat() {
         printStyle:'classic', quoteStyle:'modern', defaultTaxRate:1, defaultPriceMode:'in', defaultDiscountRate:100, quoteValidDays:7, selectedSealId:null,
         cloudSyncEnabled: false, gistToken: '', gistId: '', cloudSyncInterval: 0, lastSyncTime: null,
         incrementalSyncEnabled: true, lastIncrementalSyncTime: null,
-        autoRetryEnabled: true, desktopNotificationsEnabled: false, dataCompressionEnabled: true,
+        autoRetryEnabled: true, desktopNotificationsEnabled: false, dataCompressionEnabled: false,
         batchSyncEnabled: false, bandwidthAdaptive: true, retryCount: 0, maxRetries: 3,
         // 同步目标设置
         syncTarget: 'repo',
@@ -13133,7 +13138,8 @@ function fixAppDataCompat() {
     if(appData.systemSettings.incrementalSyncEnabled === undefined) appData.systemSettings.incrementalSyncEnabled = true;
     if(appData.systemSettings.autoRetryEnabled === undefined) appData.systemSettings.autoRetryEnabled = true;
     if(appData.systemSettings.desktopNotificationsEnabled === undefined) appData.systemSettings.desktopNotificationsEnabled = false;
-    if(appData.systemSettings.dataCompressionEnabled === undefined) appData.systemSettings.dataCompressionEnabled = true;
+    if(appData.systemSettings.dataCompressionEnabled === undefined) appData.systemSettings.dataCompressionEnabled = false;
+    if(appData.systemSettings.dataEncryptionEnabled === undefined) appData.systemSettings.dataEncryptionEnabled = false;
     if(appData.systemSettings.batchSyncEnabled === undefined) appData.systemSettings.batchSyncEnabled = false;
     if(appData.systemSettings.bandwidthAdaptive === undefined) appData.systemSettings.bandwidthAdaptive = true;
     if(appData.systemSettings.maxRetries === undefined) appData.systemSettings.maxRetries = 3;
@@ -41310,11 +41316,11 @@ function repoUploadFull() {
                                 uploadNext(index + 1);
                             })
                             .catch(function(err) {
-                                if (err.message && err.message.includes('409') && retryCount < 3) {
+                                if (err.message && err.message.includes('409') && retryCount < 5) {
                                     addSyncLog('warning', 'Repository上传冲突，重试第 ' + (retryCount + 1) + ' 次: ' + owner + '/' + repo + '/' + file.name);
                                     setTimeout(function() {
                                         tryUpload(retryCount + 1);
-                                    }, 500 * Math.pow(2, retryCount));
+                                    }, 1000 * Math.pow(2, retryCount));
                                 } else {
                                     addSyncLog('error', 'Repository上传失败: ' + owner + '/' + repo + '/' + file.name + ' - ' + err.message);
                                     failedFiles.push(file.name);
@@ -42794,6 +42800,53 @@ function gistPullProducts() {
     });
 }
 
+function saveSyncSettings() {
+    var token = document.getElementById('gistToken').value.trim();
+    var gistId = document.getElementById('gistIdInput').value.trim();
+    var interval = parseInt(document.getElementById('cloudSyncInterval').value);
+    var syncMode = document.getElementById('syncMode').value;
+    
+    var syncTarget = document.querySelector('input[name="syncTarget"]:checked').value;
+    
+    var repoOwner = document.getElementById('repoOwner')?.value.trim() || '';
+    var repoName = document.getElementById('repoName')?.value.trim() || '';
+    var repoBranch = document.getElementById('repoBranch')?.value.trim() || 'main';
+    var repoFilePath = document.getElementById('repoFilePath')?.value.trim() || 'quote-data.json';
+    
+    var incrementalEnabled = document.getElementById('incrementalSyncEnabled').checked;
+    var autoRetry = document.getElementById('autoRetryEnabled').checked;
+    var desktopNotif = document.getElementById('desktopNotificationsEnabled').checked;
+    var compression = document.getElementById('dataCompressionEnabled').checked;
+    var encryption = document.getElementById('dataEncryptionEnabled').checked;
+    var batchSync = document.getElementById('batchSyncEnabled').checked;
+    var bandwidthAdapt = document.getElementById('bandwidthAdaptive').checked;
+    
+    appData.systemSettings.gistToken = token;
+    if (gistId) {
+        appData.systemSettings.gistId = gistId;
+    }
+    appData.systemSettings.cloudSyncInterval = interval;
+    appData.systemSettings.syncMode = syncMode;
+    appData.systemSettings.syncTarget = syncTarget;
+    
+    appData.systemSettings.repoOwner = repoOwner;
+    appData.systemSettings.repoName = repoName;
+    appData.systemSettings.repoBranch = repoBranch;
+    appData.systemSettings.repoFilePath = repoFilePath;
+    
+    appData.systemSettings.incrementalSyncEnabled = incrementalEnabled;
+    appData.systemSettings.autoRetryEnabled = autoRetry;
+    appData.systemSettings.desktopNotificationsEnabled = desktopNotif;
+    appData.systemSettings.dataCompressionEnabled = compression;
+    appData.systemSettings.dataEncryptionEnabled = encryption;
+    appData.systemSettings.batchSyncEnabled = batchSync;
+    appData.systemSettings.bandwidthAdaptive = bandwidthAdapt;
+    
+    saveDataImmediately();
+    updateSyncConfigUI();
+    showToast('✅ 配置已保存！', 'success');
+}
+
 function gistSaveAndToggle() {
     var token = document.getElementById('gistToken').value.trim();
     var gistId = document.getElementById('gistIdInput').value.trim();
@@ -42814,6 +42867,7 @@ function gistSaveAndToggle() {
     var autoRetry = document.getElementById('autoRetryEnabled').checked;
     var desktopNotif = document.getElementById('desktopNotificationsEnabled').checked;
     var compression = document.getElementById('dataCompressionEnabled').checked;
+    var encryption = document.getElementById('dataEncryptionEnabled').checked;
     var batchSync = document.getElementById('batchSyncEnabled').checked;
     var bandwidthAdapt = document.getElementById('bandwidthAdaptive').checked;
     
@@ -42841,6 +42895,7 @@ function gistSaveAndToggle() {
     appData.systemSettings.autoRetryEnabled = autoRetry;
     appData.systemSettings.desktopNotificationsEnabled = desktopNotif;
     appData.systemSettings.dataCompressionEnabled = compression;
+    appData.systemSettings.dataEncryptionEnabled = encryption;
     appData.systemSettings.batchSyncEnabled = batchSync;
     appData.systemSettings.bandwidthAdaptive = bandwidthAdapt;
     
@@ -44631,10 +44686,18 @@ function showCloudDataModal(data) {
         cloudData = {};
     }
     
+    var imageCount = 0;
+    if (data.images && typeof data.images === 'object') {
+        imageCount = data.total || Object.keys(data.images).length;
+    } else if (cloudData.images && typeof cloudData.images === 'object') {
+        imageCount = cloudData.images.total || Object.keys(cloudData.images).length;
+    }
+    
     var stats = {
         products: cloudData.products ? cloudData.products.length : 0,
         customers: cloudData.customers ? cloudData.customers.length : 0,
         templates: cloudData.templates ? cloudData.templates.length : 0,
+        images: imageCount,
         quoteHistory: cloudData.quoteHistory ? cloudData.quoteHistory.length : 0,
         uploadTime: data.uploadTime ? new Date(data.uploadTime).toLocaleString() : '未知',
         deviceId: data.deviceId || '未知设备'
@@ -44642,7 +44705,7 @@ function showCloudDataModal(data) {
     
     var htmlContent = `
         <div style="padding: 0.5rem;">
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 0.75rem;">
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-bottom: 0.75rem;">
                 <div style="background: #eff6ff; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
                     <div style="font-size: 1.25rem; font-weight: 600; color: #1e40af;">${stats.products}</div>
                     <div style="font-size: 0.7rem; color: #64748b;">产品数量</div>
@@ -44654,6 +44717,10 @@ function showCloudDataModal(data) {
                 <div style="background: #fef3c7; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
                     <div style="font-size: 1.25rem; font-weight: 600; color: #d97706;">${stats.templates}</div>
                     <div style="font-size: 0.7rem; color: #64748b;">模板数量</div>
+                </div>
+                <div style="background: #e0e7ff; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 600; color: #4338ca;">${stats.images}</div>
+                    <div style="font-size: 0.7rem; color: #64748b;">图片数量</div>
                 </div>
                 <div style="background: #fce7f3; border-radius: 0.375rem; padding: 0.5rem; text-align: center;">
                     <div style="font-size: 1.25rem; font-weight: 600; color: #be185d;">${stats.quoteHistory}</div>
@@ -46337,6 +46404,8 @@ function updateCloudSyncStatus() {
     if (autoRetryEl) autoRetryEl.checked = appData.systemSettings.autoRetryEnabled !== false;
     if (desktopNotifEl) desktopNotifEl.checked = appData.systemSettings.desktopNotificationsEnabled === true;
     if (compressionEl) compressionEl.checked = appData.systemSettings.dataCompressionEnabled !== false;
+    var encryptionEl = document.getElementById('dataEncryptionEnabled');
+    if (encryptionEl) encryptionEl.checked = appData.systemSettings.dataEncryptionEnabled !== false;
     if (batchSyncEl) batchSyncEl.checked = appData.systemSettings.batchSyncEnabled === true;
     if (bandwidthEl) bandwidthEl.checked = appData.systemSettings.bandwidthAdaptive !== false;
     
