@@ -2018,8 +2018,97 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
     padding: 1rem 1.5rem;
     border-top: 1px solid var(--gray-200);
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.5rem;
+}
+
+/* 报价预览图片点击放大 lightbox */
+#quotePreview img:not(.product-thumb):not(.no-lightbox) { cursor: zoom-in; }
+.quote-image-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.quote-image-lightbox .qil-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.82);
+    backdrop-filter: blur(2px);
+}
+.quote-image-lightbox .qil-toolbar {
+    position: absolute;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 92vw;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 999px;
+    padding: 0.4rem 0.6rem;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
+}
+.quote-image-lightbox .qil-counter {
+    min-width: 3.2rem;
+    text-align: center;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+.quote-image-lightbox .qil-btn {
+    border: none;
+    background: #1e293b;
+    color: #fff;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 50%;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+.quote-image-lightbox .qil-btn:hover { background: #0f172a; }
+.quote-image-lightbox .qil-close { background: #dc2626; }
+.quote-image-lightbox .qil-close:hover { background: #b91c1c; }
+.quote-image-lightbox .qil-zoom {
+    min-width: 3.2rem;
+    text-align: center;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+.quote-image-lightbox .qil-stage {
+    position: relative;
+    z-index: 1;
+    width: 92vw;
+    height: 86vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.quote-image-lightbox .qil-stage.grabbing { cursor: grabbing; }
+.quote-image-lightbox .qil-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transform-origin: center center;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+    background: #fff;
+    cursor: default;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 @media (max-width: 576px) {
     .custom-modal-content {
@@ -5367,7 +5456,7 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
                 <span class="custom-modal-icon" id="customModalIcon" role="img" aria-hidden="true">📋</span>
                 <span id="customModalTitle">提示</span>
             </div>
-            <button class="custom-modal-close" onclick="closeModal()" aria-label="关闭弹窗" aria-describedby="customModalTitle">&times;</button>
+            <button class="custom-modal-close" onclick="cancelDialogModal()" aria-label="关闭弹窗" aria-describedby="customModalTitle">&times;</button>
         </div>
         <div class="custom-modal-body">
             <div class="custom-modal-message" id="customModalMessage"></div>
@@ -6067,6 +6156,7 @@ var safeStorage = {
     // ===== 统一对话框组件（替代原生 alert/confirm/prompt）=====
     var dialogCallback = null;
     var dialogInputValue = '';
+    var dialogType = null;
     
     // 对话框主函数
     function showDialogModal(options) {
@@ -6103,6 +6193,7 @@ var safeStorage = {
         }
 
         dialogCallback = opts.callback;
+        dialogType = opts.type;
         modalIcon.textContent = opts.icon;
         modalTitle.textContent = opts.title;
         modalMessage.innerHTML = '';
@@ -6121,36 +6212,61 @@ var safeStorage = {
 
         modalFooter.innerHTML = '';
 
-        if (opts.showCancel) {
-            var cancelBtn = document.createElement('button');
-            cancelBtn.className = 'btn btn-outline';
-            cancelBtn.textContent = opts.cancelText;
-            cancelBtn.onclick = function() {
-                if (opts.type === 'prompt') {
+        if (opts.type === 'choice' && Array.isArray(opts.choices)) {
+            // 多选按钮模式
+            opts.choices.forEach(function(choice) {
+                var b = document.createElement('button');
+                b.className = choice.primary ? 'btn btn-primary' : (choice.danger ? 'btn btn-danger' : 'btn btn-outline');
+                b.textContent = choice.label;
+                if (choice.description) b.title = choice.description;
+                b.onclick = function() {
+                    if (dialogCallback) dialogCallback(choice.value);
+                    closeDialogModal();
+                };
+                modalFooter.appendChild(b);
+            });
+            if (opts.showCancel) {
+                var cancelBtn = document.createElement('button');
+                cancelBtn.className = 'btn btn-outline';
+                cancelBtn.textContent = opts.cancelText;
+                cancelBtn.onclick = function() {
                     if (dialogCallback) dialogCallback(null);
+                    closeDialogModal();
+                };
+                modalFooter.appendChild(cancelBtn);
+            }
+        } else {
+            if (opts.showCancel) {
+                var cancelBtn = document.createElement('button');
+                cancelBtn.className = 'btn btn-outline';
+                cancelBtn.textContent = opts.cancelText;
+                cancelBtn.onclick = function() {
+                    if (opts.type === 'prompt') {
+                        if (dialogCallback) dialogCallback(null);
+                    } else {
+                        if (dialogCallback) dialogCallback(false);
+                    }
+                    closeDialogModal();
+                };
+                modalFooter.appendChild(cancelBtn);
+            }
+
+            var confirmBtn = document.createElement('button');
+            confirmBtn.className = 'btn btn-primary';
+            confirmBtn.textContent = opts.confirmText;
+            confirmBtn.id = 'dialogConfirmBtn';
+            confirmBtn.onclick = function() {
+                if (opts.type === 'prompt') {
+                    var inputEl = document.getElementById('dialogPromptInput');
+                    var val = inputEl ? inputEl.value : '';
+                    if (dialogCallback) dialogCallback(val);
                 } else {
-                    if (dialogCallback) dialogCallback(false);
+                    if (dialogCallback) dialogCallback(true);
                 }
                 closeDialogModal();
             };
-            modalFooter.appendChild(cancelBtn);
+            modalFooter.appendChild(confirmBtn);
         }
-
-        var confirmBtn = document.createElement('button');
-        confirmBtn.className = 'btn btn-primary';
-        confirmBtn.textContent = opts.confirmText;
-        confirmBtn.id = 'dialogConfirmBtn';
-        confirmBtn.onclick = function() {
-            if (opts.type === 'prompt') {
-                var inputEl = document.getElementById('dialogPromptInput');
-                var val = inputEl ? inputEl.value : '';
-                if (dialogCallback) dialogCallback(val);
-            } else {
-                if (dialogCallback) dialogCallback(true);
-            }
-            closeDialogModal();
-        };
-        modalFooter.appendChild(confirmBtn);
 
         modal.classList.add('active');
         document.addEventListener('keydown', handleDialogKeydown);
@@ -6173,6 +6289,9 @@ var safeStorage = {
     
     function handleDialogKeydown(e) {
         if (e.key === 'Escape') {
+            if (dialogCallback) {
+                dialogCallback(dialogType === 'confirm' ? false : null);
+            }
             closeDialogModal();
         }
     }
@@ -6250,11 +6369,55 @@ var safeStorage = {
                     if (callback) callback(result);
                 }
             });
+        },
+
+        // 多选按钮对话框（替代「prompt 数字选项」），返回 Promise：选中 resolve value，取消/关闭 resolve null
+        choose: function(message, choices, title, icon) {
+            title = title || '请选择';
+            icon = icon || '📋';
+            return new Promise(function(resolve) {
+                showDialogModal({
+                    title: title,
+                    message: message,
+                    icon: icon,
+                    type: 'choice',
+                    choices: choices,
+                    showCancel: true,
+                    cancelText: '取消',
+                    callback: function(result) { resolve(result); }
+                });
+            });
+        },
+
+        // 确认对话框（Promise 版，替代原生 confirm），返回 Promise<boolean>
+        confirmP: function(message, title, icon) {
+            title = title || '确认';
+            icon = icon || '⚠️';
+            return new Promise(function(resolve) {
+                showDialogModal({
+                    title: title,
+                    message: message,
+                    icon: icon,
+                    type: 'confirm',
+                    showCancel: true,
+                    confirmText: '确定',
+                    cancelText: '取消',
+                    callback: function(result) { resolve(!!result); }
+                });
+            });
         }
     };
     
     // 暴露 closeDialogModal 到 window
     window.closeDialogModal = closeDialogModal;
+
+    // 取消并关闭对话框（通知回调以取消值，避免 Promise 挂起）
+    window.cancelDialogModal = function() {
+        if (dialogCallback) {
+            dialogCallback(dialogType === 'confirm' ? false : null);
+        }
+        closeDialogModal();
+    };
     
     // ===== Toast 通知组件 =====
     var toastContainer = null;
@@ -6486,6 +6649,107 @@ var safeStorage = {
         // 不使用 crossOrigin，避免 CORS 限制
         return '<img' + classAttr + ' src="' + safeSrc + '" alt="' + safeAlt + '" loading="lazy" style="' + finalStyle + '"' + titleAttr + ' onerror="this.style.opacity=0">';
     };
+
+    // 点击报价预览中的图片 → 弹出大图查看（lightbox，支持上一张/下一张）
+    window.openImageLightbox = function(src, alt, list, index) {
+        if (!src) return;
+        const items = (Array.isArray(list) && list.length) ? list : [{ src: src, alt: alt || '' }];
+        let idx = (typeof index === 'number' && index >= 0) ? index : 0;
+        if (idx >= items.length) idx = 0;
+        const multi = items.length > 1;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'quote-image-lightbox';
+        const esc = function(s) { return String(s || '').replace(/"/g, '&quot;'); };
+        overlay.innerHTML =
+            '<div class="qil-backdrop"></div>' +
+            '<div class="qil-toolbar">' +
+                (multi ? '<button class="qil-btn" data-act="prev" title="上一张 (←)">‹</button>' : '') +
+                '<button class="qil-btn" data-act="zoom-out" title="缩小">－</button>' +
+                '<span class="qil-zoom">100%</span>' +
+                '<button class="qil-btn" data-act="zoom-in" title="放大">＋</button>' +
+                '<button class="qil-btn" data-act="reset" title="复位">复位</button>' +
+                (multi ? '<span class="qil-counter">' + (idx + 1) + '/' + items.length + '</span>' : '') +
+                (multi ? '<button class="qil-btn" data-act="next" title="下一张 (→)">›</button>' : '') +
+                '<button class="qil-btn qil-close" data-act="close" title="关闭 (Esc)">✕</button>' +
+            '</div>' +
+            '<div class="qil-stage"><img class="qil-img" src="' + esc(items[idx].src) + '" alt="' + esc(items[idx].alt) + '"></div>';
+        document.body.appendChild(overlay);
+
+        const img = overlay.querySelector('.qil-img');
+        const stage = overlay.querySelector('.qil-stage');
+        const zoomLabel = overlay.querySelector('.qil-zoom');
+        const counter = overlay.querySelector('.qil-counter');
+        let scale = 1, tx = 0, ty = 0, panning = false, sx = 0, sy = 0;
+
+        function applyZoom() {
+            if (scale <= 1) { tx = 0; ty = 0; }
+            img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+            zoomLabel.textContent = Math.round(scale * 100) + '%';
+        }
+        function show(i) {
+            idx = (i + items.length) % items.length;
+            img.src = items[idx].src;
+            img.alt = items[idx].alt || '';
+            scale = 1; tx = 0; ty = 0; applyZoom();
+            if (counter) counter.textContent = (idx + 1) + '/' + items.length;
+        }
+
+        stage.addEventListener('mousedown', function(e) {
+            if (scale <= 1) return;
+            panning = true; sx = e.clientX - tx; sy = e.clientY - ty;
+            stage.classList.add('grabbing');
+        });
+        window.addEventListener('mousemove', function(e) {
+            if (!panning) return;
+            tx = e.clientX - sx; ty = e.clientY - sy;
+            img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+        });
+        window.addEventListener('mouseup', function() {
+            if (!panning) return;
+            panning = false; stage.classList.remove('grabbing');
+        });
+        stage.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            scale = Math.max(0.2, Math.min(5, scale + (e.deltaY < 0 ? 0.15 : -0.15)));
+            applyZoom();
+        }, { passive: false });
+
+        overlay.querySelector('.qil-toolbar').addEventListener('click', function(e) {
+            const act = e.target.getAttribute('data-act');
+            if (act === 'close') { closeLb(); return; }
+            if (act === 'prev') { show(idx - 1); return; }
+            if (act === 'next') { show(idx + 1); return; }
+            if (act === 'zoom-in') scale = Math.min(5, scale + 0.2);
+            else if (act === 'zoom-out') scale = Math.max(0.2, scale - 0.2);
+            else if (act === 'reset') { scale = 1; tx = 0; ty = 0; }
+            applyZoom();
+        });
+        overlay.querySelector('.qil-backdrop').addEventListener('click', closeLb);
+
+        function onKey(ev) {
+            if (ev.key === 'Escape') closeLb();
+            else if (ev.key === 'ArrowLeft' && multi) show(idx - 1);
+            else if (ev.key === 'ArrowRight' && multi) show(idx + 1);
+        }
+        document.addEventListener('keydown', onKey);
+
+        function closeLb() {
+            document.removeEventListener('keydown', onKey);
+            overlay.remove();
+        }
+    };
+
+    // 事件委托：点击预览内的图片（非产品缩略图）放大查看；多图时收集全部可切换
+    document.addEventListener('click', function(e) {
+        const img = e.target.closest('#quotePreview img:not(.product-thumb):not(.no-lightbox)');
+        if (img && img.tagName === 'IMG') {
+            const all = Array.prototype.slice.call(document.querySelectorAll('#quotePreview img:not(.product-thumb):not(.no-lightbox)'));
+            const index = all.indexOf(img);
+            const list = all.map(function(im) { return { src: im.getAttribute('src'), alt: im.getAttribute('alt') }; });
+            openImageLightbox(img.getAttribute('src'), img.getAttribute('alt'), list, index);
+        }
+    });
     
     // 表单验证工具
     var FormValidator = {
@@ -7293,6 +7557,27 @@ function safeExecuteAsync(fn, defaultVal) {
                                 <div style="display:flex;align-items:center;gap:0.5rem;">
                                     <input type="range" id="cw-image" min="30" max="120" value="60" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('image',this.value)">
                                     <input type="number" id="cw-image-num" value="60" min="30" max="120" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('image',this.value)">
+                                </div>
+                            </div>
+                            <div class="col-width-item">
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">图片最大宽</div>
+                                <div style="display:flex;align-items:center;gap:0.5rem;">
+                                    <input type="range" id="cw-imageMaxWidth" min="40" max="300" value="120" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('imageMaxWidth',this.value)">
+                                    <input type="number" id="cw-imageMaxWidth-num" value="120" min="40" max="300" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('imageMaxWidth',this.value)">
+                                </div>
+                            </div>
+                            <div class="col-width-item">
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">图片最大高</div>
+                                <div style="display:flex;align-items:center;gap:0.5rem;">
+                                    <input type="range" id="cw-imageMaxHeight" min="40" max="300" value="100" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('imageMaxHeight',this.value)">
+                                    <input type="number" id="cw-imageMaxHeight-num" value="100" min="40" max="300" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('imageMaxHeight',this.value)">
+                                </div>
+                            </div>
+                            <div class="col-width-item">
+                                <div style="font-size:0.75rem;color:#6b7280;margin-bottom:0.25rem;">图片行高</div>
+                                <div style="display:flex;align-items:center;gap:0.5rem;">
+                                    <input type="range" id="cw-imageRowHeight" min="60" max="320" value="100" style="flex:1;cursor:pointer;" oninput="updateColumnWidth('imageRowHeight',this.value)">
+                                    <input type="number" id="cw-imageRowHeight-num" value="100" min="60" max="320" style="width:45px;padding:0.2rem;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;text-align:center;" onchange="updateColumnWidth('imageRowHeight',this.value)">
                                 </div>
                             </div>
                             <div class="col-width-item">
@@ -9732,7 +10017,7 @@ function safeExecuteAsync(fn, defaultVal) {
                         <span style="padding:0.125rem 0.5rem;background:#d1fae5;border-radius:9999px;font-size:0.6875rem;color:#065f46;">🧮 智能计算</span>
                         <span style="padding:0.125rem 0.5rem;background:#fef3c7;border-radius:9999px;font-size:0.6875rem;color:#92400e;">☁️ 云同步</span>
                     </div>
-                    <div style="font-size:0.8125rem;color:var(--gray-600);">当前版本：<span id="currentSoftwareVersion" style="font-weight:600;color:var(--primary);">V3.4.236</span></div>
+                    <div style="font-size:0.8125rem;color:var(--gray-600);">当前版本：<span id="currentSoftwareVersion" style="font-weight:600;color:var(--primary);">V3.4.243</span></div>
                     <div id="currentVersionLogs" style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed var(--gray-300);display:none;">
                         <div style="font-size:0.7rem;font-weight:500;color:var(--gray-500);margin-bottom:0.25rem;">📝 更新日志</div>
                         <ul id="currentVersionLogsList" style="margin:0;padding-left:1rem;font-size:0.65rem;color:var(--gray-400);"></ul>
@@ -16620,7 +16905,7 @@ function updatePreviewButton(showClose){
         btn.classList.add('btn-primary');
     }
 }
-let columnWidthSettings = {index:45,image:70,name:180,spec:120,unit:60,note:90,qty:55,price:90,subtotal:95,marginTop:10,marginSides:15,lineHeight:18};
+let columnWidthSettings = {index:45,image:70,name:180,spec:120,unit:60,note:90,qty:55,price:90,subtotal:95,marginTop:10,marginSides:15,lineHeight:18,imageMaxWidth:120,imageMaxHeight:100,imageRowHeight:100};
 function toggleColumnWidthPanel(){
     const panel = document.getElementById('columnWidthPanel');
     if(panel){
@@ -16632,13 +16917,13 @@ function toggleColumnWidthPanel(){
 }
 function loadColumnWidthSettings(){
     const saved = appData.systemSettings.columnWidthSettings;
-    const defaults = {index:45,image:70,name:180,spec:120,unit:60,note:90,qty:55,price:90,subtotal:95,marginTop:10,marginSides:15,lineHeight:18,headerFontSize:14,contentFontSize:12};
+    const defaults = {index:45,image:70,name:180,spec:120,unit:60,note:90,qty:55,price:90,subtotal:95,marginTop:10,marginSides:15,lineHeight:18,headerFontSize:14,contentFontSize:12,imageMaxWidth:120,imageMaxHeight:100,imageRowHeight:100};
     if(saved){
         columnWidthSettings = {...defaults, ...saved};
     } else {
         columnWidthSettings = {...defaults};
     }
-    const cols = ['index','image','name','spec','unit','note','qty','price','subtotal','marginTop','marginSides','lineHeight','headerFontSize','contentFontSize'];
+    const cols = ['index','image','name','spec','unit','note','qty','price','subtotal','marginTop','marginSides','lineHeight','headerFontSize','contentFontSize','imageMaxWidth','imageMaxHeight','imageRowHeight'];
     cols.forEach(col => {
         const slider = document.getElementById('cw-' + col);
         const numInput = document.getElementById('cw-' + col + '-num');
@@ -16837,7 +17122,7 @@ function applyColumnWidth(){
     showToast('列宽已应用到预览！', 'success');
 }
 function resetColumnWidth(){
-    columnWidthSettings = {index:50,image:60,name:150,spec:150,note:100,qty:60,price:100,subtotal:100,marginTop:10,marginSides:15,lineHeight:20,headerFontSize:14,contentFontSize:12};
+    columnWidthSettings = {index:50,image:60,name:150,spec:150,note:100,qty:60,price:100,subtotal:100,marginTop:10,marginSides:15,lineHeight:20,headerFontSize:14,contentFontSize:12,imageMaxWidth:120,imageMaxHeight:100,imageRowHeight:100};
     columnOrder = ['index','image','name','spec','unit','note','qty','price','subtotal'];
     loadColumnWidthSettings();
     appData.systemSettings.columnWidthSettings = null;
@@ -16876,7 +17161,10 @@ function getColumnWidths(){
         marginSides: saved?.marginSides ?? defaults.marginSides,
         lineHeight: saved?.lineHeight ?? defaults.lineHeight,
         headerFontSize: saved?.headerFontSize ?? defaults.headerFontSize,
-        contentFontSize: saved?.contentFontSize ?? defaults.contentFontSize
+        contentFontSize: saved?.contentFontSize ?? defaults.contentFontSize,
+        imageMaxWidth: saved?.imageMaxWidth ?? defaults.imageMaxWidth,
+        imageMaxHeight: saved?.imageMaxHeight ?? defaults.imageMaxHeight,
+        imageRowHeight: saved?.imageRowHeight ?? defaults.imageRowHeight
     };
 }
 function calculateAutoColumnWidths(){
@@ -16997,7 +17285,7 @@ function generateQuotePreview(isManualChange){
         const it = (qty * price * (dr / 100)).toFixed(2);
         let row = `<tr><td style="text-align:center;padding:0.75rem;border-bottom:1px solid #eee;font-weight:600;width:50px;">${idx+1}</td>`;
         if(colVis.image !== false) {
-            const ic = item.image ? `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;min-width:80px;">${renderProductImage(item.image, item.name || '', { style: 'max-width:120px !important;max-height:100px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #eee;background:#f5f5f5;cursor:pointer;' })}</td>` : `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;min-width:80px;cursor:pointer;color:var(--gray-400);" data-preview-img-id="${item.id}" title="点击添加图片">点击添加</td>`;
+            const ic = item.image ? `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;">${renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #eee;background:#f5f5f5;cursor:pointer;` })}</td>` : `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;cursor:pointer;color:var(--gray-400);" data-preview-img-id="${item.id}" title="点击添加图片">点击添加</td>`;
             row += ic;
         }
         row += `<td style="text-align:left;padding:0.75rem;border-bottom:1px solid #eee;width:150px;"><div><strong>${item.name}</strong></div></td>`;
@@ -17029,6 +17317,7 @@ function generateQuotePreview(isManualChange){
     let headerHtml='', bodyHtml='', footerHtml='', saveBtnHtml='';
     if(quoteStyle === 'gallery'){
         saveBtnHtml=`<button class="btn btn-sm" style="background:#1e40af;color:white;border:none;margin-left:1rem;" onclick="savePreviewEdits()">💾 保存修改</button>`;
+        let cw = getColumnWidths();
         
         let galleryItems=appData.currentQuote.items.map((item,idx)=>{
             const itemQty = item.qty || 1;
@@ -17036,7 +17325,7 @@ function generateQuotePreview(isManualChange){
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
             const bgColor = idx%2===0 ? '#ffffff' : '#f8fafc';
             const productImage = item.image 
-                ? `<img src="${item.image}" style="max-width:140px;max-height:200px;width:auto;height:auto;object-fit:contain;background:#f5f5f5;border:1px solid #ddd;" onload="fitQuoteProductImage(this,140,200)" onerror="this.style.opacity=0.5;this.title='图片加载失败'">`
+                ? `<img src="${item.image}" style="max-width:${cw.imageMaxWidth}px;max-height:${cw.imageMaxHeight}px;width:auto;height:auto;object-fit:contain;background:#f5f5f5;border:1px solid #ddd;" onload="fitQuoteProductImage(this,${cw.imageMaxWidth},${cw.imageMaxHeight})" onerror="this.style.opacity=0.5;this.title='图片加载失败'">`
                 : `<div style="width:140px;height:105px;background:#f5f5f5;border:1px solid #ddd;display:flex;align-items:center;justify-content:center;color:#999;font-size:1.5rem;">暂无图片</div>`;
             
             return `
@@ -17186,7 +17475,7 @@ function generateQuotePreview(isManualChange){
             const itemPrice = item.price || 0;
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
             const productImage = item.image 
-                ? `<img src="${item.image}" style="width:100% !important;height:auto !important;max-height:400px;object-fit:contain;background:#f5f5f5;border-radius:6px;" onerror="this.style.opacity=0.5;this.title='图片加载失败'">`
+                ? `<img src="${item.image}" style="width:100% !important;height:auto !important;max-height:${cw.imageMaxHeight}px;object-fit:contain;background:#f5f5f5;border-radius:6px;" onerror="this.style.opacity=0.5;this.title='图片加载失败'">`
                 : `<div style="width:100%;height:220px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:3rem;">暂无图片</div>`;
             
             return `
@@ -17319,6 +17608,7 @@ function generateQuotePreview(isManualChange){
         preview.innerHTML=`<div style="background:#ffffff;width:100%;max-width:210mm;min-height:297mm;margin:0 auto;font-family:'Microsoft YaHei','PingFang SC',Arial,sans-serif;overflow:hidden;${innerPadding};position:relative;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">${headerHtml}${bodyHtml}${footerHtml}${sh}${sigHtml}</div>${saveBtnHtml}`;
     } else if(quoteStyle === 'mainImage'){
         saveBtnHtml=`<button class="btn btn-sm" style="background:#dc2626;color:white;border:none;margin-left:1rem;" onclick="savePreviewEdits()">💾 保存修改</button>`;
+        let cw = getColumnWidths();
         
         const mainImages = appData.currentQuote.mainImages || [];
         let mainImagesHtml = '';
@@ -17352,8 +17642,8 @@ function generateQuotePreview(isManualChange){
                 switch(col){
                     case 'index': row += `<td style="padding:0.75rem 1rem;text-align:center;font-size:${cw.contentFontSize}px;color:#666;">${idx+1}</td>`; break;
                     case 'image': if(colVis.image !== false) {
-                        const productImage = item.image ? renderProductImage(item.image, item.name || '', { style: 'max-width:120px !important;max-height:100px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #ddd;background:#f5f5f5;' }) : '<span style="color:#999;">-</span>';
-                        row += `<td style="padding:0.75rem 1rem;text-align:center;min-width:80px;">${productImage}</td>`;
+                        const productImage = item.image ? renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #ddd;background:#f5f5f5;` }) : '<span style="color:#999;">-</span>';
+                        row += `<td style="padding:0.75rem 1rem;text-align:center;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;">${productImage}</td>`;
                     } break;
                     case 'name': row += `<td style="padding:0.75rem 1rem;text-align:left;font-size:${cw.contentFontSize+2}px;color:#1f2937;font-weight:500;">${item.name}</td>`; break;
                     case 'spec': if(colVis.spec !== false) row += `<td style="padding:0.75rem 1rem;text-align:left;font-size:${cw.contentFontSize}px;color:#666;white-space:pre-wrap;">${item.spec || '-'}</td>`; break;
@@ -17545,8 +17835,8 @@ function generateQuotePreview(isManualChange){
                 switch(col){
                     case 'index': row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:${cw.contentFontSize}px;">${idx+1}</td>`; break;
                     case 'image': if(colVis.image !== false) {
-                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: 'max-width:120px !important;max-height:100px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;background:#f5f5f5;' }) : '-';
-                        row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;min-width:80px;">${ic}</td>`;
+                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;background:#f5f5f5;` }) : '-';
+                        row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;">${ic}</td>`;
                     } break;
                     case 'name': row += `<td style="padding:0.6rem 0.5rem;text-align:left;border-bottom:1px solid #e2e8f0;font-size:${cw.contentFontSize+2}px;font-weight:500;">${item.name}</td>`; break;
                     case 'spec': if(colVis.spec !== false) row += `<td style="padding:0.6rem 0.5rem;text-align:left;border-bottom:1px solid #e2e8f0;font-size:${cw.contentFontSize}px;color:#666;">${item.spec||'-'}</td>`; break;
@@ -17666,8 +17956,8 @@ function generateQuotePreview(isManualChange){
                 switch(col){
                     case 'index': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:${cw.contentFontSize}px;">${idx+1}</td>`; break;
                     case 'image': if(colVis.image !== false) {
-                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: 'max-width:120px !important;max-height:100px !important;width:auto !important;height:auto !important;object-fit:contain !important;border:1px solid #ddd;background:#f5f5f5;' }) : '';
-                        row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;min-width:80px;">${ic}</td>`;
+                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border:1px solid #ddd;background:#f5f5f5;` }) : '';
+                        row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;">${ic}</td>`;
                     } break;
                     case 'name': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:${cw.contentFontSize+2}px;word-break:break-all;">${item.name}</td>`; break;
                     case 'spec': if(colVis.spec !== false) row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:${cw.contentFontSize}px;word-break:break-all;">${item.spec||''}</td>`; break;
@@ -17763,8 +18053,8 @@ function generateQuotePreview(isManualChange){
                         <span style="display:inline-flex;width:22px;height:22px;background:${hg};color:white;border-radius:50%;font-size:${cw.contentFontSize-2}px;font-weight:600;align-items:center;justify-content:center;">${idx+1}</span>
                     </td>`; break;
                     case 'image': if(colVis.image !== false) {
-                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: 'max-width:120px !important;max-height:100px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #e5e7eb;background:#f5f5f5;' }) : `<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
-                        row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;min-width:80px;">${ic}</td>`;
+                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #e5e7eb;background:#f5f5f5;` }) : `<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
+                        row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;">${ic}</td>`;
                     } break;
                     case 'name': row += `<td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;">
                         <div style="font-weight:600;color:#1f2937;font-size:${cw.contentFontSize+2}px;line-height:1.3;">${item.name}</div>
@@ -17923,8 +18213,8 @@ function generateQuotePreview(isManualChange){
                         <span style="display:inline-flex;width:22px;height:22px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border-radius:50%;font-size:${cw.contentFontSize-2}px;font-weight:600;align-items:center;justify-content:center;">${idx+1}</span>
                     </td>`; break;
                     case 'image': if(colVis.image !== false) {
-                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: 'max-width:120px !important;max-height:100px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #e5e7eb;background:#f5f5f5;' }) : `<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
-                        row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;min-width:80px;">${ic}</td>`;
+                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #e5e7eb;background:#f5f5f5;` }) : `<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
+                        row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;">${ic}</td>`;
                     } break;
                     case 'name': row += `<td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;">
                         <div style="font-weight:600;color:#1f2937;font-size:${cw.contentFontSize+2}px;line-height:1.3;">${item.name}</div>
@@ -21451,9 +21741,11 @@ function saveProduct(){
         }
         var saveHint = document.getElementById('imageUrlHint');
         if (saveHint) { saveHint.style.display = 'none'; saveHint.textContent = ''; }
-        // 添加团队活动记录
+        // 添加团队活动记录（个人私有产品不写团队活动，避免产品信息泄露给团队成员）
         var isNew = !id;
-        addTeamActivity(isNew ? 'create' : 'update', 'product', p.name, isNew ? 'added' : 'modified', p.id);
+        if (p.scope !== 'personal') {
+            addTeamActivity(isNew ? 'create' : 'update', 'product', p.name, isNew ? 'added' : 'modified', p.id);
+        }
         // 清除产品缓存
         clearProductCache();
         saveDataImmediately(); // 使用立即保存确保数据持久化
@@ -21484,9 +21776,11 @@ function deleteProduct(pid){
             appData.recycleBin.deletedAt = new Date().toISOString();
             appData.products = filterById(appData.products, pid);
             appData.favoriteIds = appData.favoriteIds.filter(id => !isSameId(id, pid));
-            markTeamItemDeleted('product', pid);
-            // 添加团队活动记录
-            addTeamActivity('delete', 'product', productName, 'removed', pid);
+            // 个人私有产品：不标记团队删除、不写团队活动，避免影响团队数据并泄露隐私给成员
+            if (product.scope !== 'personal') {
+                markTeamItemDeleted('product', pid);
+                addTeamActivity('delete', 'product', productName, 'removed', pid);
+            }
             productCache.clear();
             saveDataImmediately();
             renderProducts();
@@ -41470,6 +41764,16 @@ function uploadPersonalImagesToStorage(imageIds) {
 
 // 下载后把 Storage 上的图片拉回本地 IndexedDB（已存在则跳过）
 // 桶现已设为私有，统一用带鉴权的 download(path) 拉取（team/ 与个人 <userId>/ 同桶不同路径）
+
+// 会话内已确认「云端不存在」的图片 id，避免每次自动下载都重复打 400 噪声
+var _missingTeamImageIds = {};
+function _isStorageObjectNotFound(err) {
+    if (!err) return false;
+    var m = (err.message || (err.error && err.error.message) || '').toLowerCase();
+    var st = err.statusCode || (err.error && err.error.statusCode);
+    return /not found|does not exist|404|400/.test(m) || st === 404 || st === 400 || st === '404' || st === '400';
+}
+
 function buildImageStorageMap(prefix) {
     var map = {};
     if (prefix === 'team') {
@@ -41503,12 +41807,23 @@ function hydrateTeamImages(storageMap, prefix) {
     var tasks = ids.map(function(imageId) {
         return IDB.getImage(imageId).then(function(local) {
             if (local) { return; }
+            // 本次会话已确认云端不存在，跳过重复拉取（避免每次自动下载都刷 400）
+            if (_missingTeamImageIds[imageId]) { return; }
             var entry = storageMap[imageId] || {};
             var path = entry.path;
             if (!path || !sbClient) return;
             // 私有桶：用带会话鉴权的 download 拉取，再转 dataURL 存入 IndexedDB
             return sbClient.storage.from(SB_BUCKET).download(path).then(function(res) {
-                if (res.error || !res.data) { console.warn('图片拉取失败', imageId, res.error); return; }
+                if (res.error || !res.data) {
+                    // 「对象不存在」属常见情况（图片为本地 dataURL 但带旧 imageId、或从未上传），降级为 debug 不再刷屏
+                    if (_isStorageObjectNotFound(res.error)) {
+                        _missingTeamImageIds[imageId] = true;
+                        console.debug('图片云端不存在，已跳过', imageId);
+                    } else {
+                        console.warn('图片拉取失败', imageId, res.error);
+                    }
+                    return;
+                }
                 return new Promise(function(res2) {
                     var rd = new FileReader();
                     rd.onloadend = function() {
@@ -41517,7 +41832,14 @@ function hydrateTeamImages(storageMap, prefix) {
                     };
                     rd.readAsDataURL(res.data);
                 });
-            }).catch(function(e) { console.warn('图片拉取失败', imageId, e); });
+            }).catch(function(e) {
+                if (_isStorageObjectNotFound(e)) {
+                    _missingTeamImageIds[imageId] = true;
+                    console.debug('图片云端不存在，已跳过', imageId);
+                } else {
+                    console.warn('图片拉取失败', imageId, e);
+                }
+            });
         });
     });
     return Promise.all(tasks);
@@ -42999,30 +43321,41 @@ function dataURLtoBlob(dataurl) {
 function importProducts(event){ 
     const file=event.target.files[0]; if(!file) return; 
     const r=new FileReader(); 
-    r.onload=function(e){ 
+    r.onload=async function(e){ 
         try{ 
             const p=JSON.parse(e.target.result); 
             if(Array.isArray(p)){ 
                 let imported=0, skipped=0, updated=0;
                 
-                // 直接提示用户选择导入方式，不再预检查图片（避免卡住）
-                const mode = prompt(`请选择导入方式：\n1. 替换（清空现有数据）\n2. 合并（保留现有，添加新数据）\n3. 更新（按名称匹配更新）\n\n请输入数字 1/2/3`, '2');
+                // 选择导入方式（自定义对话框，替代原生 prompt）
+                const mode = await dialog.choose('请选择导入方式：', [
+                    { label: '替换（清空现有数据）', value: '1' },
+                    { label: '合并（保留现有，添加新数据）', value: '2', primary: true },
+                    { label: '更新（按名称匹配更新）', value: '3' }
+                ], '导入方式', '📥');
                 if(!mode) {
                     showToast('导入已取消', 'info');
                     return;
                 }
+
+                // 选择导入归属：团队共享 or 个人私有（仅同步到本人账号）
+                // 若 JSON 项本身已带有效 scope，优先保留；本选择仅作用于未指定归属的项
+                const importScope = (await dialog.choose('请选择默认导入归属（文件中已写归属的项会保持原归属）：', [
+                    { label: '团队共享（同步给所有成员）', value: 'team', primary: true },
+                    { label: '个人私有（仅同步到本人账号）', value: 'personal' }
+                ], '导入归属', '📥')) || 'team';
                     
                     // 处理产品导入
                     const processProducts = () => {
                         if(mode === '1'){
                             const validProducts = p.filter(validateProductImport);
-                            appData.products = validProducts.map(normalizeProduct);
+                            appData.products = validProducts.map(function(x){ var np = normalizeProduct(x); ensureScope(np, importScope); return np; });
                             imported = validProducts.length;
                             skipped = p.length - validProducts.length;
                         } else if(mode === '2'){
                             p.forEach(x => {
                                 if(!validateProductImport(x)){ skipped++; return; }
-                                const normalized = normalizeProduct(x);
+                                const normalized = normalizeProduct(x); ensureScope(normalized, importScope);
                                 const existing = appData.products.find(e => String(e.id) === String(normalized.id) || e.name === normalized.name);
                                 if(!existing){
                                     normalized.id = Date.now() + Math.random();
@@ -43037,7 +43370,7 @@ function importProducts(event){
                         } else if(mode === '3'){
                             p.forEach(x => {
                                 if(!validateProductImport(x)){ skipped++; return; }
-                                const normalized = normalizeProduct(x);
+                                const normalized = normalizeProduct(x); ensureScope(normalized, importScope);
                                 const idx = appData.products.findIndex(e => e.name === normalized.name);
                                 if(idx >= 0){
                                     // 自动链接图片
@@ -43061,7 +43394,7 @@ function importProducts(event){
                     
                     // 自动创建缺失的分类
                     if (!appData.categories) appData.categories = [];
-                    newProducts.forEach(p => {
+                    appData.products.forEach(function(p){
                         if (p.category) {
                             const catName = p.category.split('/')[0].trim();
                             if (catName && !appData.categories.some(c => c.name === catName)) {
@@ -43148,14 +43481,24 @@ function normalizeProduct(p){
         updatedAt: p.updatedAt || new Date().toISOString()
     };
 }
+// 辅助：若对象未指定有效 scope，则写入默认值（用于导入时保留备份内已有 scope）
+function ensureScope(x, fallback) {
+    if (x && x.scope !== 'team' && x.scope !== 'personal') x.scope = fallback;
+    return x;
+}
 function importTemplates(event){ 
     const file=event.target.files[0]; if(!file) return; 
     const r=new FileReader(); 
-    r.onload=function(e){ 
+    r.onload=async function(e){ 
         try{ 
             const t=JSON.parse(e.target.result); 
             if(Array.isArray(t)){ 
-                if(confirm('是否替换现有模板库？取消则合并导入')) appData.templates=t; 
+                const importScope = (await dialog.choose('请选择默认导入归属（文件中已写归属的项会保持原归属）：', [
+                    { label: '团队共享（同步给所有成员）', value: 'team', primary: true },
+                    { label: '个人私有（仅同步到本人账号）', value: 'personal' }
+                ], '导入归属', '📥')) || 'team';
+                t.forEach(x => ensureScope(x, importScope));
+                if(await dialog.confirmP('是否替换现有模板库？取消则合并导入', '导入方式')) appData.templates=t; 
                 else t.forEach(x=>{ 
                     if(!appData.templates.find(e=>e.id==x.id || String(e.id)===String(x.id))) appData.templates.push(x); 
                 }); 
@@ -43174,11 +43517,16 @@ function importTemplates(event){
 function importCustomers(event){ 
     const file=event.target.files[0]; if(!file) return; 
     const r=new FileReader(); 
-    r.onload=function(e){ 
+    r.onload=async function(e){ 
         try{ 
             const c=JSON.parse(e.target.result); 
             if(Array.isArray(c)){ 
-                if(confirm('是否替换现有客户库？取消则合并导入')) appData.customers=c; 
+                const importScope = (await dialog.choose('请选择默认导入归属（文件中已写归属的项会保持原归属）：', [
+                    { label: '团队共享（同步给所有成员）', value: 'team', primary: true },
+                    { label: '个人私有（仅同步到本人账号）', value: 'personal' }
+                ], '导入归属', '📥')) || 'team';
+                c.forEach(x => ensureScope(x, importScope));
+                if(await dialog.confirmP('是否替换现有客户库？取消则合并导入', '导入方式')) appData.customers=c; 
                 else c.forEach(x=>{ 
                     if(!appData.customers.find(e=>e.id==x.id || String(e.id)===String(x.id))) appData.customers.push(x); 
                 }); 
@@ -43193,7 +43541,7 @@ function importCustomers(event){
     r.readAsText(file); 
     event.target.value=''; 
 }
-function importAllData(event){
+async function importAllData(event){
     const file=event.target.files[0];
     if(!file) return;
 
@@ -43202,6 +43550,15 @@ function importAllData(event){
         dialog.alert('无导入权限（需管理员/店长/前台或导出授权）', '权限不足', '⚠️');
         event.target.value = '';
         return;
+    }
+
+    // 云模式下全量导入危险确认：会覆盖本地全部数据，且外来备份中的团队数据可能污染当前团队
+    if (sbCurrentUser) {
+        var confirmed = await dialog.confirmP('⚠️ 危险操作：当前已登录云端账号。\n\n导入全量备份会覆盖本地所有数据（产品/模板/客户/报价历史/设置等）。\n如果该备份来自其他账号，其中的「团队」数据会在你下次同步时上传到当前团队，造成数据污染。\n\n确定要继续吗？', '危险操作', '⚠️');
+        if (!confirmed) {
+            event.target.value = '';
+            return;
+        }
     }
 
     showToast('正在导入数据...', 'loading', 30000);
@@ -43540,7 +43897,8 @@ function exportProductsXLSX() {
         { key: 'tierPrices', label: '阶梯价格配置', width: 40 },
         { key: 'imageLocation', label: '图片存储位置', width: 18 },
         { key: 'imageRef', label: '图片引用ID', width: 30 },
-        { key: 'imageUrl', label: '在线图片URL', width: 50 }
+        { key: 'imageUrl', label: '在线图片URL', width: 50 },
+        { key: 'scope', label: '归属(team/personal)', width: 18 }
     ];
 
     // 准备带图片引用信息的产品数据
@@ -43620,14 +43978,22 @@ function importProductsXLSX(event) {
         { key: 'tierPrices', label: '阶梯价格配置' },
         { key: 'imageLocation', label: '图片存储位置' },
         { key: 'imageRef', label: '图片引用ID' },
-        { key: 'imageUrl', label: '在线图片URL' }
+        { key: 'imageUrl', label: '在线图片URL' },
+        { key: 'scope', label: '归属(team/personal)' }
     ];
-    importFromXLSX(file, headers, function(importedData) { 
+    importFromXLSX(file, headers, async function(importedData) { 
         if (!importedData.length) { 
             dialog.alert('导入的数据为空！', '提示', 'ℹ️'); 
             event.target.value = ''; 
             return; 
         } 
+        
+        // 选择导入归属：团队共享 or 个人私有（仅同步到本人账号）
+        // 若 XLSX 行本身已带 scope，则优先保留；否则用本次选择作为默认
+        var importScope = (await dialog.choose('请选择默认导入归属（文件中已写归属的列会保持原归属）：', [
+            { label: '团队共享（同步给所有成员）', value: 'team', primary: true },
+            { label: '个人私有（仅同步到本人账号）', value: 'personal' }
+        ], '导入归属', '📥')) || 'team';
         
         // 预检查可链接的图片
         var linkedImages = 0;
@@ -43670,7 +44036,8 @@ function importProductsXLSX(event) {
                 imageId: null,
                 supplierQuotes: [],
                 createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
+                updatedAt: new Date().toISOString(),
+                scope: (row.scope === 'team' || row.scope === 'personal') ? row.scope : importScope
             };
 
             // 添加图片引用信息以便自动链接
@@ -43709,7 +44076,7 @@ function importProductsXLSX(event) {
         if (linkedImages > 0) {
             msg += '，其中 ' + linkedImages + ' 个产品可自动链接图片';
         }
-        if (confirm(msg + '。\n\n是否替换现有产品库？取消则合并导入')) { 
+        if (await dialog.confirmP(msg + '。\n\n是否替换现有产品库？取消则合并导入', '导入方式')) { 
             appData.products = newProducts; 
         } else { 
             newProducts.forEach(function(p) { 
@@ -43748,11 +44115,11 @@ function exportTemplatesXLSX() {
         return; 
     } 
     var wb = XLSX.utils.book_new(); 
-    var overviewHeaders = ['模板名称', '描述', '项目数量', '总价', '案例信息']; 
+    var overviewHeaders = ['模板名称', '描述', '项目数量', '总价', '案例信息', '归属(scope)']; 
     var overviewData = [overviewHeaders]; 
     appData.templates.forEach(function(t) { 
         var total = t.items.reduce(function(s, i) { return s + (i.qty * i.price); }, 0); 
-        overviewData.push([ t.name, t.description || '', t.items.length, total, t.caseInfo || '' ]); 
+        overviewData.push([ t.name, t.description || '', t.items.length, total, t.caseInfo || '', t.scope || 'team' ]); 
     }); 
     var ws1 = XLSX.utils.aoa_to_sheet(overviewData); 
     ws1['!cols'] = [{ wch: 25 }, { wch: 30 }, { wch: 10 }, { wch: 12 }, { wch: 40 }]; 
@@ -43784,16 +44151,21 @@ function importTemplatesXLSX(event) {
         return; 
     } 
     var reader = new FileReader(); 
-    reader.onload = function(e) { 
+    reader.onload = async function(e) { 
         try { 
             var data = new Uint8Array(e.target.result); 
             var workbook = XLSX.read(data, { type: 'array' }); 
             var overviewSheet = workbook.Sheets[workbook.SheetNames[0]]; 
             var overviewData = XLSX.utils.sheet_to_json(overviewSheet, { defval: '' }); 
+            var importScope = (await dialog.choose('请选择默认导入归属（文件中已写归属的项会保持原归属）：', [
+                { label: '团队共享（同步给所有成员）', value: 'team', primary: true },
+                { label: '个人私有（仅同步到本人账号）', value: 'personal' }
+            ], '导入归属', '📥')) || 'team';
             var newTemplates = []; 
             overviewData.forEach(function(row, idx) { 
                 var templateName = String(row['模板名称'] || '').trim(); 
                 if (!templateName) return; 
+                var scopeVal = String(row['归属(scope)'] || row['scope'] || '').trim();
                 var detailSheetName = null; 
                 for (var i = 1; i < workbook.SheetNames.length; i++) { 
                     if (workbook.SheetNames[i].indexOf(templateName.substring(0, 10)) >= 0) { 
@@ -43824,7 +44196,8 @@ function importTemplatesXLSX(event) {
                     caseInfo: String(row['案例信息'] || '').trim(), 
                     items: items.length ? items : [{ name: '示例项目', spec: '', note: '', cost: 0, qty: 1, price: 0, unit: '项' }], 
                     createdAt: new Date().toISOString(), 
-                    updatedAt: new Date().toISOString() 
+                    updatedAt: new Date().toISOString(),
+                    scope: (scopeVal === 'team' || scopeVal === 'personal') ? scopeVal : importScope
                 }); 
             }); 
             if (!newTemplates.length) { 
@@ -43832,7 +44205,7 @@ function importTemplatesXLSX(event) {
                 event.target.value = ''; 
                 return; 
             } 
-            if (confirm('是否替换现有模板库？取消则合并导入')) { 
+            if (await dialog.confirmP('是否替换现有模板库？取消则合并导入', '导入方式')) { 
                 appData.templates = newTemplates; 
             } else { 
                 newTemplates.forEach(function(t) { 
@@ -43860,7 +44233,8 @@ function exportCustomersXLSX() {
         { key: 'phone', label: '电话', width: 15 }, 
         { key: 'email', label: '邮箱', width: 28 }, 
         { key: 'address', label: '地址', width: 35 }, 
-        { key: 'notes', label: '备注', width: 30 }
+        { key: 'notes', label: '备注', width: 30 },
+        { key: 'scope', label: '归属(team/personal)', width: 18 }
     ]; 
     exportToXLSX(appData.customers, headers, '客户数据_' + new Date().toISOString().slice(0,10) + '.xlsx', '客户管理'); 
 }
@@ -43873,14 +44247,19 @@ function importCustomersXLSX(event) {
         { key: 'phone', label: '电话' }, 
         { key: 'email', label: '邮箱' }, 
         { key: 'address', label: '地址' }, 
-        { key: 'notes', label: '备注' }
+        { key: 'notes', label: '备注' },
+        { key: 'scope', label: '归属(team/personal)' }
     ]; 
-    importFromXLSX(file, headers, function(importedData) { 
+    importFromXLSX(file, headers, async function(importedData) { 
         if (!importedData.length) { 
             dialog.alert('导入的数据为空！', '提示', 'ℹ️'); 
             event.target.value = ''; 
             return; 
         } 
+        var importScope = (await dialog.choose('请选择默认导入归属（文件中已写归属的项会保持原归属）：', [
+            { label: '团队共享（同步给所有成员）', value: 'team', primary: true },
+            { label: '个人私有（仅同步到本人账号）', value: 'personal' }
+        ], '导入归属', '📥')) || 'team';
         var newCustomers = importedData.map(function(row, idx) {
             return {
                 id: Date.now() * 1000 + idx, 
@@ -43891,7 +44270,8 @@ function importCustomersXLSX(event) {
                 address: String(row.address || '').trim(), 
                 notes: String(row.notes || '').trim(), 
                 createdAt: new Date().toISOString(), 
-                updatedAt: new Date().toISOString() 
+                updatedAt: new Date().toISOString(),
+                scope: (row.scope === 'team' || row.scope === 'personal') ? row.scope : importScope
             }; 
         }).filter(function(c) { return c.name; }); 
         if (!newCustomers.length) { 
@@ -43899,7 +44279,7 @@ function importCustomersXLSX(event) {
             event.target.value = ''; 
             return; 
         } 
-        if (confirm('是否替换现有客户库？取消则合并导入')) { 
+        if (await dialog.confirmP('是否替换现有客户库？取消则合并导入', '导入方式')) { 
             appData.customers = newCustomers; 
         } else { 
             newCustomers.forEach(function(c) { 
@@ -44186,7 +44566,54 @@ function autoSmartFill() {
     }
 }
 
+// A) 产品库优先匹配：智能计算器的价格以产品库为「唯一真相源」，命中即用之，未命中才回退 smartTemplates
+function matchProductInLibrary(name) {
+    if (!name || !appData.products || !appData.products.length) return null;
+    var q = String(name).trim();
+    if (!q) return null;
+    var list = appData.products;
+    // 1. 精确名称匹配
+    var exact = list.find(function(p){ return p && p.name && String(p.name).trim() === q; });
+    if (exact) return exact;
+    // 2. 包含匹配（双向），仅当查询≥2字符，避免单字误命中
+    if (q.length >= 2) {
+        var inc = list.find(function(p){ return p && p.name && (String(p.name).includes(q) || q.includes(String(p.name))); });
+        if (inc) return inc;
+        // 3. 模糊相似度匹配（复用 getSimilarity）
+        var best = null, bestScore = 0.6;
+        list.forEach(function(p){
+            if (!p || !p.name) return;
+            var s = getSimilarity(q, String(p.name));
+            if (s > bestScore) { bestScore = s; best = p; }
+        });
+        if (best) return best;
+    }
+    return null;
+}
+// 将产品库产品转换为计算器匹配项（与 smartTemplates 同形状，供 fillItemData 复用）
+function productToCalcItem(p) {
+    var calcTypeMap = { area: 'square', cubic: 'cubic', fixed: 'square' };
+    var ctype = calcTypeMap[p.calcType] || 'square';
+    var isFixed = p.calcType === 'fixed';
+    return {
+        type: ctype,
+        // 固定价产品：单价即总价，尺寸置 1×1 使「面积×单价=总价」成立
+        length: isFixed ? 1 : (parseFloat(p.width) || 0),
+        width: isFixed ? 1 : (parseFloat(p.height) || 0),
+        height: (ctype === 'cubic') ? (parseFloat(p.height) || parseFloat(p.width) || 1) : undefined,
+        unitPrice: parseFloat(p.sellingPrice) || 0,
+        costPrice: parseFloat(p.costPrice) || 0,
+        waste: 0,
+        _fromProduct: true,
+        _productName: p.name
+    };
+}
 function smartMatchByName(name) {
+    // A) 优先查产品库（统一价格真相源），未命中再回退智能预设
+    var prod = matchProductInLibrary(name);
+    if (prod) {
+        return productToCalcItem(prod);
+    }
     const itemMap = getSmartItemMap();
     
     // 精确匹配
@@ -44296,7 +44723,7 @@ function fillItemData(item) {
     document.getElementById('calcWaste').value = item.waste;
     updateCalcInputs();
     calculatePrice();
-    showToast('✨ 智能匹配成功！已自动填充规格和价格', 'success');
+    showToast(item && item._fromProduct ? '✨ 已匹配产品库「' + (item._productName || '') + '」的价格与规格' : '✨ 智能匹配成功！已自动填充规格和价格', 'success');
 }
 
 // 自然语言解析器配置

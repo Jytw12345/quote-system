@@ -1,8 +1,15 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'V3.4.236 更新日期：20260820';
+const CACHE_NAME = 'V3.4.243 更新日期：20260821';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
+    'feat 报价预览图片 lightbox 增加「上一张/下一张」切换：收集预览内全部可点图片，工具栏显示 ‹ › 与 当前/总数 计数，支持 ←/→ 方向键循环切换；同时修复 Supabase 图片 400 噪声——hydrateTeamImages 对「云端对象不存在(Object not found/400)」降级为 console.debug 并记入会话级 _missingTeamImageIds 跳过重复拉取，真实错误仍 warn',
+    'feat 报价预览图片点击放大查看(lightbox)：预览内图片(非产品缩略图)可点击弹出全屏大图，支持 放大/缩小/复位 按钮、滚轮缩放、拖拽平移、点击背景或 Esc 关闭；预览图片新增 zoom-in 光标提示，与现有模板/列宽尺寸设置并存互不冲突',
+    'feat 报价预览图片大小自由调节：列宽面板新增「图片最大宽/高/行高」三个独立滑块，现代风格/标准商务/经典列表/门头工程/自定义等模板的产品图片统一读取设置，不再硬编码 120×100；行高同步作用于图片单元格高度，调大后图片纵向空间自动扩展',
+    'feat 导入/导出面板的原生 prompt/confirm 全部替换为自定义对话框：新增 dialog.choose(多选按钮返回Promise) 与 dialog.confirmP(Promise确认)，导入方式/团队个人归属用美观按钮选择，替换/合并与全量危险确认用自定义确认框；顺带修复 JSON 产品导入中引用未定义变量 newProducts 的既有崩溃 bug',
+    'feat 导入导出面板全面对齐云端团队/个人隔离：产品/模板/客户 JSON 与 XLSX 导入均支持「团队/个人」归属选择，XLSX 导出增加归属列实现往返不丢 scope；云模式下全量数据导入增加危险确认，防止外来备份中的团队数据污染当前团队',
+    'feat 导入加「导入为团队/个人」归属选择(JSON与XLSX产品导入均支持)：导入时弹窗选团队共享或个人私有，逐条写入 scope，个人导入仅同步到本人账号；fix 个人产品保存/删除不再写团队活动日志，删除也不再 markTeamItemDeleted，避免个人产品信息泄露给团队成员',
+    'feat 智能计算器「智能匹配」优先查产品库(appData.products)：按名称精确/包含/相似度匹配，命中即用产品库售价(sellingPrice)填单价、成本价(costPrice)填成本，尺寸按 area→square / cubic→cubic 映射（固定价产品置 1×1 使面积×单价=总价成立）；未命中产品库才回退 smartTemplates 预设，实现计算器与产品库价格统一',
     'fix 同步/登录审查修复6项：①登出清 cloudDirty/待上传快照，换账号登录时清空本地个人集合（印章/签名/公司信息/个人产品模板/个人报价）防串号；②团队报价历史上传后 bump 团队标记 + 新增 team_quote_history Realtime 订阅，队友实时收到更新提示；③设置面板登录/注册补 saveLoginRemembered，统一两套登录入口（无复选框默认记住邮箱）；④删除另一项目残留的 app.js/styles.css；⑤清理死代码 autoSyncPaused/autoSyncFails、合并双 DOMContentLoaded 冗余初始化；⑥清空云端/移除成员时顺带清理 Storage 图片与个人数据残留',
     'feat 启动过渡态显示个性化欢迎语：showSessionRestoring 读取 localStorage 的 sbRememberedName（afterAuth 登录成功时持久化），显示「👋 欢迎回来，{名字}！正在恢复登录...」；sbRememberedName 缺失时回退读 sbRememberedEmail 取 @ 前部分；登出时清除',
     'feat 云同步区域移动端适配(≤640px)：地址+Key+保存 3列→1列堆叠；登录/注册 5列→2列；三组备份(自动下载/本地备份/云备份)横排→纵向堆叠；syncStatusInline 允许换行防溢出；成员管理权限 grid minmax 120px→100px；子卡片 padding 缩减；纯 CSS 媒体查询零 JS 改动',
