@@ -1076,6 +1076,16 @@
         .empty-state-action { margin-top: 1rem; }
         .import-export { background: var(--gray-50); border-radius: var(--radius-lg); padding: 0.875rem; margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
 
+        /* 产品库桌面端：搜索框限宽，避免 flex:3 把搜索框拉得过长，导致识别/收藏/视图与归属筛选被挤到下方或过于靠边 */
+        #products .import-export {
+            flex-wrap: nowrap !important;
+        }
+        #products .import-export .search-box-container {
+            flex: 0 1 420px !important;
+            max-width: 420px !important;
+            min-width: 180px !important;
+        }
+
         /* ===== 报价历史移动端优化 ===== */
         @media (max-width: 640px) {
             body { max-width: 100vw; overflow-x: hidden; }
@@ -3072,6 +3082,37 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
     }
 }
 
+/* 产品库归属筛选默认样式 */
+.scope-filter {
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+    align-items: center;
+}
+.scope-filter .scope-filter-label {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+}
+.scope-filter .btn {
+    padding: 0.2rem 0.5rem;
+}
+
+/* 产品库顶部工具栏：功能按钮组 + 归属筛选合并到同一行。
+   桌面端 wrapper 本身作为 flex 子项，与搜索框同排；
+   手机端在媒体查询里改 width:100% 独占第二行，并内部横向滚动兜底。 */
+.mobile-filter-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    flex: 0 0 auto !important;
+}
+
+/* 手机端专用识别按钮，桌面端隐藏 */
+.mobile-recognize-btn {
+    display: none;
+}
+
 /* 移动端顶部导航隐藏 */
 @media (max-width: 576px) {
     .top-nav {
@@ -3203,7 +3244,7 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
             justify-content: unset !important;
             align-items: unset !important;
         }
-    
+
     @media (max-width: 576px) {
         #mobileBtnGrid {
             display: grid !important;
@@ -3360,15 +3401,45 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
             flex-wrap: wrap !important;
         }
 
-        #products .import-export .search-box-container,
+        #products .import-export .search-box-container {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            max-width: none !important;
+        }
+
         #templates .template-search-input {
             flex: 1 1 100% !important;
             min-width: 100% !important;
             max-width: none !important;
         }
 
+        /* 手机端识别按钮显示在搜索框右侧同一行 */
+        #products .import-export .mobile-recognize-btn {
+            display: flex !important;
+            flex: 0 0 auto !important;
+            align-items: center !important;
+        }
+
+        #products .import-export .mobile-recognize-btn .btn {
+            white-space: nowrap !important;
+            min-width: 58px !important;
+            width: auto !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 0.2rem 0.4rem !important;
+            font-size: 0.7rem !important;
+            min-height: 28px !important;
+            line-height: 1 !important;
+        }
+
+        /* 手机端 action-buttons 里的识别按钮隐藏，避免重复 */
+        #products .import-export .action-buttons .recognize-btn {
+            display: none !important;
+        }
+
         #products .import-export .action-buttons {
-            width: 100% !important;
+            width: auto !important;
             justify-content: flex-start !important;
             overflow-x: auto !important;
             -webkit-overflow-scrolling: touch !important;
@@ -3379,6 +3450,34 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
             flex-shrink: 0 !important;
             font-size: 0.7rem !important;
             padding: 0.35rem 0.5rem !important;
+        }
+
+        /* 功能按钮组 + 归属筛选 合并到同一行，单行横向滚动兜底 */
+        #products .import-export .mobile-filter-row {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding-bottom: 0.25rem !important;
+        }
+
+        /* 取消两组的「各占整行」，让它们在同一行内并排 */
+        #products .import-export .mobile-filter-row .action-buttons,
+        #products .import-export .mobile-filter-row .scope-filter {
+            width: auto !important;
+            flex: 0 0 auto !important;
+            overflow-x: visible !important;
+        }
+
+        #products .import-export .mobile-filter-row .action-buttons {
+            gap: 0.2rem !important;
+        }
+
+        #products .import-export .mobile-filter-row .scope-filter {
+            gap: 0.2rem !important;
         }
     }
 
@@ -5355,22 +5454,6 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
     flex-basis: 100%;
 }
 
-/* 归属筛选默认样式 */
-.scope-filter {
-    display: flex;
-    gap: 0.25rem;
-    flex-shrink: 0;
-    align-items: center;
-}
-
-.scope-filter .scope-filter-label {
-    font-size: 0.7rem;
-    color: var(--gray-500);
-}
-
-.scope-filter .btn {
-    padding: 0.2rem 0.5rem;
-}
 </style>
 </head>
 <body>
@@ -6627,14 +6710,18 @@ var safeStorage = {
         // 简单转义 HTML 特殊字符
         const safeAlt = (altText || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         
+        // 预览/列表优化：自动用已生成的缩略图替代原图（原图仅留给 lightbox 放大）
+        const thumb = getImageThumb(imageUrl);
+        const displaySrc = thumb || imageUrl;
+        
         // 对于 base64 图片，不需要转义 data: URL
         // 对于普通 URL，只需要确保引号正确
-        let safeSrc = imageUrl;
-        if (!isUrl && imageUrl.indexOf('data:') === 0) {
+        let safeSrc = displaySrc;
+        if (!isUrl && displaySrc.indexOf('data:') === 0) {
             // data: URL 是安全的，不需要处理
         } else if (!isUrl) {
             // 其他非 URL，需要转义引号
-            safeSrc = imageUrl.replace(/"/g, '&quot;');
+            safeSrc = displaySrc.replace(/"/g, '&quot;');
         }
         
         // 构建 class 属性
@@ -6646,8 +6733,21 @@ var safeStorage = {
         // 如果是报价单中的图片，添加提示
         const titleAttr = className === 'product-thumb' ? ' title="点击替换图片"' : '';
         
-        // 不使用 crossOrigin，避免 CORS 限制
-        return '<img' + classAttr + ' src="' + safeSrc + '" alt="' + safeAlt + '" loading="lazy" style="' + finalStyle + '"' + titleAttr + ' onerror="this.style.opacity=0">';
+        // 缩略图存在时，保留原图供 lightbox（点击放大看清楚）
+        let fullAttr = '';
+        if (thumb) {
+            const safeFull = imageUrl.indexOf('"') >= 0 ? imageUrl.replace(/"/g, '&quot;') : imageUrl;
+            fullAttr = ' data-full="' + safeFull + '"';
+        }
+        
+        // 占位尺寸：消除图片加载时的布局抖动（CLS）。boxW/boxH 为显示框尺寸
+        let sizeAttr = '';
+        if (options.boxW && options.boxH) {
+            sizeAttr = ' width="' + options.boxW + '" height="' + options.boxH + '"';
+        }
+        
+        // 不使用 crossOrigin，避免 CORS 限制；decoding=async 避免解码阻塞首屏 paint
+        return '<img' + classAttr + sizeAttr + ' src="' + safeSrc + '" alt="' + safeAlt + '" loading="lazy" decoding="async"' + fullAttr + ' style="' + finalStyle + '"' + titleAttr + ' onerror="this.style.opacity=0">';
     };
 
     // 点击报价预览中的图片 → 弹出大图查看（lightbox，支持上一张/下一张）
@@ -6746,8 +6846,8 @@ var safeStorage = {
         if (img && img.tagName === 'IMG') {
             const all = Array.prototype.slice.call(document.querySelectorAll('#quotePreview img:not(.product-thumb):not(.no-lightbox)'));
             const index = all.indexOf(img);
-            const list = all.map(function(im) { return { src: im.getAttribute('src'), alt: im.getAttribute('alt') }; });
-            openImageLightbox(img.getAttribute('src'), img.getAttribute('alt'), list, index);
+            const list = all.map(function(im) { return { src: im.getAttribute('data-full') || im.getAttribute('src'), alt: im.getAttribute('alt') }; });
+            openImageLightbox(img.getAttribute('data-full') || img.getAttribute('src'), img.getAttribute('alt'), list, index);
         }
     });
     
@@ -7704,9 +7804,15 @@ function safeExecuteAsync(fn, defaultVal) {
                     <button class="btn btn-outline btn-xs clear-search-btn" onclick="clearSmartSearch()" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);height:26px !important;min-height:26px !important;max-height:26px !important;padding:0 8px !important;margin:0 !important;font-size:0.65rem !important;line-height:26px !important;box-sizing:border-box !important;border:1px solid #d1d5db !important;background:#f9fafb !important;min-width:36px !important;width:auto !important;color:#374151 !important;">清除</button>
                 </div>
                 
-                <!-- 功能按钮组 -->
-                <div style="display:flex;gap:0.25rem;flex-shrink:0;" class="action-buttons">
+                <!-- 手机端专用识别按钮（桌面端隐藏）：放在搜索框右侧，与搜索框同行 -->
+                <div class="mobile-recognize-btn">
                     <button class="btn btn-success btn-sm" onclick="openImageRecognitionModal()" title="上传图片识别产品">📷识别</button>
+                </div>
+
+                <!-- 功能按钮组 + 归属筛选：手机端合并到同一行（移动端 .mobile-filter-row 单列横向滚动） -->
+                <div class="mobile-filter-row">
+                <div style="display:flex;gap:0.25rem;flex-shrink:0;" class="action-buttons">
+                    <button class="btn btn-success btn-sm recognize-btn" onclick="openImageRecognitionModal()" title="上传图片识别产品">📷识别</button>
                     <button class="btn btn-outline btn-sm" id="favoritesFilterBtn" onclick="toggleFavoritesFilter()" title="只看收藏">⭐收藏</button>
                     <button class="btn btn-outline btn-sm" id="productViewToggleBtn" onclick="toggleProductView()" title="切换视图">🔄视图</button>
                 </div>
@@ -7716,6 +7822,7 @@ function safeExecuteAsync(fn, defaultVal) {
                     <button class="btn btn-outline btn-sm" id="prodScopeAll" onclick="setProductScopeFilter('all')">全部</button>
                     <button class="btn btn-outline btn-sm" id="prodScopeTeam" onclick="setProductScopeFilter('team')">🏢团队</button>
                     <button class="btn btn-outline btn-sm" id="prodScopePersonal" onclick="setProductScopeFilter('personal')">🔒个人</button>
+                </div>
                 </div>
             </div>
             <!-- 分类卡片区域 -->
@@ -10017,7 +10124,7 @@ function safeExecuteAsync(fn, defaultVal) {
                         <span style="padding:0.125rem 0.5rem;background:#d1fae5;border-radius:9999px;font-size:0.6875rem;color:#065f46;">🧮 智能计算</span>
                         <span style="padding:0.125rem 0.5rem;background:#fef3c7;border-radius:9999px;font-size:0.6875rem;color:#92400e;">☁️ 云同步</span>
                     </div>
-                    <div style="font-size:0.8125rem;color:var(--gray-600);">当前版本：<span id="currentSoftwareVersion" style="font-weight:600;color:var(--primary);">V3.4.243</span></div>
+                    <div style="font-size:0.8125rem;color:var(--gray-600);">当前版本：<span id="currentSoftwareVersion" style="font-weight:600;color:var(--primary);">V3.4.251</span></div>
                     <div id="currentVersionLogs" style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed var(--gray-300);display:none;">
                         <div style="font-size:0.7rem;font-weight:500;color:var(--gray-500);margin-bottom:0.25rem;">📝 更新日志</div>
                         <ul id="currentVersionLogsList" style="margin:0;padding-left:1rem;font-size:0.65rem;color:var(--gray-400);"></ul>
@@ -10733,28 +10840,7 @@ function safeExecuteAsync(fn, defaultVal) {
     </div>
 </div></div>
 
-<!-- 产品图片URL输入弹窗 -->
-<div id="productImageUrlModal" class="modal"><div class="modal-content">
-    <div class="modal-header"><h3 class="modal-title">🔗 设置产品图片URL</h3><button class="modal-close" onclick="closeModal('productImageUrlModal')">&times;</button></div>
-    <div class="modal-body">
-        <form id="productImageUrlForm" class="form-grid">
-            <div class="form-group full-width">
-                <label>图片URL地址</label>
-                <input type="url" id="productImageUrlInput" required placeholder="请输入 http:// 或 https:// 开头的图片链接" style="width:100%;padding:0.625rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.875rem;outline:none;transition:border-color 0.2s;" oninput="checkProductImageUrl()">
-            </div>
-            <div class="form-group full-width" style="margin:0;">
-                <div id="productImageUrlPreview" style="min-height:120px;background:var(--gray-100);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--gray-500);padding:0.5rem;overflow:hidden;">
-                    输入URL后这里会显示预览
-                </div>
-                <p id="productImageUrlHint" style="margin-top:0.5rem;font-size:0.75rem;color:var(--gray-600);">支持格式：jpg、jpeg、png、gif、webp、svg、bmp、ico、avif</p>
-            </div>
-        </form>
-    </div>
-    <div class="modal-footer">
-        <button class="btn btn-outline" onclick="closeModal('productImageUrlModal')">取消</button>
-        <button class="btn btn-primary" id="productImageUrlConfirmBtn" onclick="confirmProductImageUrl()" disabled>确定</button>
-    </div>
-</div></div>
+<!-- 产品图片URL弹窗已移除（改用内联 productImageUrlField + applyProductImageUrl） -->
 <!-- 模板 Modal -->
 <div id="templateDetailModal" class="modal"><div class="modal-content" style="max-width:800px;max-height:90vh;overflow-y:auto;">
     <div class="modal-header"><h3 class="modal-title" id="templateDetailTitle">模板详情</h3><button class="modal-close" onclick="closeModal('templateDetailModal')">&times;</button></div>
@@ -14416,6 +14502,26 @@ function compressBase64Image(base64Str, maxWidth, quality, callback) {
     };
     img.src = base64Str;
 }
+
+// ===== 产品图缩略图（预览/列表优化）=====
+// 注册表：原图内容指纹 -> 缩略图 base64。渲染预览/列表时自动用缩略图替代原图，
+// 原图仅留给 lightbox 放大查看。键用 hashImageContent(FNV-1a) 短串，避免以原图长串作 Map key 撑爆内存。
+var __imageThumbRegistry = {};
+function registerImageThumb(original, thumb) {
+    if (!original || !thumb || original === thumb) return;
+    try { __imageThumbRegistry[hashImageContent(original)] = thumb; } catch (e) {}
+}
+function getImageThumb(original) {
+    if (!original) return null;
+    try { return __imageThumbRegistry[hashImageContent(original)] || null; } catch (e) { return null; }
+}
+// 异步生成报价项目产品图缩略图（长边 360px / JPEG 0.72），复用 compressBase64Image
+function generateItemImageThumb(original, cb) {
+    if (!original || !/^data:/.test(original)) { cb(null); return; }
+    compressBase64Image(original, 360, 0.72, function (thumb) {
+        cb(thumb && thumb !== original ? thumb : null);
+    });
+}
 // ===== 导航 =====
 function switchTab(tabName){
     document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
@@ -16412,7 +16518,26 @@ function updateQuoteItem(iid,field,value){
         if(item){
             const oldValue = item[field];
             if(field==='qty'||field==='price'||field==='cost') item[field]=parseFloat(value)||0;
-            else if(field==='image') item[field]=value;
+            else if(field==='image'){
+                item[field]=value;
+                // 预览/列表优化（方案A）：上传产品图时并存缩略图 imageThumb，原图留给 lightbox
+                delete item.imageThumb;
+                if(value && /^data:/.test(value)){
+                    generateItemImageThumb(value, function(thumb){
+                        if(thumb){
+                            item.imageThumb = thumb;
+                            registerImageThumb(value, thumb);
+                            saveDraftQuote();
+                            // 缩略图就绪后，若预览/列表正在显示则静默刷新以生效（避免首屏仍嵌原图）
+                            try {
+                                const pv = document.getElementById('quotePreview');
+                                if(pv && !pv.classList.contains('hidden')) generateQuotePreview();
+                                else renderQuoteItems();
+                            } catch(e){}
+                        }
+                    });
+                }
+            }
             else item[field]=value;
             
             // 如果数量变化且产品有阶梯价格配置，自动更新单价
@@ -17285,7 +17410,7 @@ function generateQuotePreview(isManualChange){
         const it = (qty * price * (dr / 100)).toFixed(2);
         let row = `<tr><td style="text-align:center;padding:0.75rem;border-bottom:1px solid #eee;font-weight:600;width:50px;">${idx+1}</td>`;
         if(colVis.image !== false) {
-            const ic = item.image ? `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;">${renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #eee;background:#f5f5f5;cursor:pointer;` })}</td>` : `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;cursor:pointer;color:var(--gray-400);" data-preview-img-id="${item.id}" title="点击添加图片">点击添加</td>`;
+            const ic = item.image ? `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;">${renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #eee;background:#f5f5f5;cursor:pointer;`, boxW: cw.imageMaxWidth, boxH: cw.imageMaxHeight })}</td>` : `<td style="text-align:center;padding:0.5rem;border-bottom:1px solid #eee;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;cursor:pointer;color:var(--gray-400);" data-preview-img-id="${item.id}" title="点击添加图片">点击添加</td>`;
             row += ic;
         }
         row += `<td style="text-align:left;padding:0.75rem;border-bottom:1px solid #eee;width:150px;"><div><strong>${item.name}</strong></div></td>`;
@@ -17325,7 +17450,7 @@ function generateQuotePreview(isManualChange){
             let it=(itemQty*itemPrice*(dr/100)).toFixed(2);
             const bgColor = idx%2===0 ? '#ffffff' : '#f8fafc';
             const productImage = item.image 
-                ? `<img src="${item.image}" style="max-width:${cw.imageMaxWidth}px;max-height:${cw.imageMaxHeight}px;width:auto;height:auto;object-fit:contain;background:#f5f5f5;border:1px solid #ddd;" onload="fitQuoteProductImage(this,${cw.imageMaxWidth},${cw.imageMaxHeight})" onerror="this.style.opacity=0.5;this.title='图片加载失败'">`
+                ? `<img src="${item.imageThumb || item.image}" data-full="${item.image}" style="max-width:${cw.imageMaxWidth}px;max-height:${cw.imageMaxHeight}px;width:${cw.imageMaxWidth}px;height:${cw.imageMaxHeight}px;object-fit:contain;background:#f5f5f5;border:1px solid #ddd;" loading="lazy" decoding="async" onload="fitQuoteProductImage(this,${cw.imageMaxWidth},${cw.imageMaxHeight})" onerror="this.style.opacity=0.5;this.title='图片加载失败'">`
                 : `<div style="width:140px;height:105px;background:#f5f5f5;border:1px solid #ddd;display:flex;align-items:center;justify-content:center;color:#999;font-size:1.5rem;">暂无图片</div>`;
             
             return `
@@ -17642,7 +17767,7 @@ function generateQuotePreview(isManualChange){
                 switch(col){
                     case 'index': row += `<td style="padding:0.75rem 1rem;text-align:center;font-size:${cw.contentFontSize}px;color:#666;">${idx+1}</td>`; break;
                     case 'image': if(colVis.image !== false) {
-                        const productImage = item.image ? renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #ddd;background:#f5f5f5;` }) : '<span style="color:#999;">-</span>';
+                        const productImage = item.image ? renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #ddd;background:#f5f5f5;`, boxW: cw.imageMaxWidth, boxH: cw.imageMaxHeight }) : '<span style="color:#999;">-</span>';
                         row += `<td style="padding:0.75rem 1rem;text-align:center;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;">${productImage}</td>`;
                     } break;
                     case 'name': row += `<td style="padding:0.75rem 1rem;text-align:left;font-size:${cw.contentFontSize+2}px;color:#1f2937;font-weight:500;">${item.name}</td>`; break;
@@ -17835,7 +17960,7 @@ function generateQuotePreview(isManualChange){
                 switch(col){
                     case 'index': row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;font-size:${cw.contentFontSize}px;">${idx+1}</td>`; break;
                     case 'image': if(colVis.image !== false) {
-                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;background:#f5f5f5;` }) : '-';
+                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;background:#f5f5f5;`, boxW: cw.imageMaxWidth, boxH: cw.imageMaxHeight }) : '-';
                         row += `<td style="padding:0.6rem 0.5rem;text-align:center;border-bottom:1px solid #e2e8f0;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;">${ic}</td>`;
                     } break;
                     case 'name': row += `<td style="padding:0.6rem 0.5rem;text-align:left;border-bottom:1px solid #e2e8f0;font-size:${cw.contentFontSize+2}px;font-weight:500;">${item.name}</td>`; break;
@@ -17956,7 +18081,7 @@ function generateQuotePreview(isManualChange){
                 switch(col){
                     case 'index': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:${cw.contentFontSize}px;">${idx+1}</td>`; break;
                     case 'image': if(colVis.image !== false) {
-                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border:1px solid #ddd;background:#f5f5f5;` }) : '';
+                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border:1px solid #ddd;background:#f5f5f5;`, boxW: cw.imageMaxWidth, boxH: cw.imageMaxHeight }) : '';
                         row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;">${ic}</td>`;
                     } break;
                     case 'name': row += `<td style="padding:0.5rem;border:1px solid #333;text-align:center;font-size:${cw.contentFontSize+2}px;word-break:break-all;">${item.name}</td>`; break;
@@ -18053,7 +18178,7 @@ function generateQuotePreview(isManualChange){
                         <span style="display:inline-flex;width:22px;height:22px;background:${hg};color:white;border-radius:50%;font-size:${cw.contentFontSize-2}px;font-weight:600;align-items:center;justify-content:center;">${idx+1}</span>
                     </td>`; break;
                     case 'image': if(colVis.image !== false) {
-                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #e5e7eb;background:#f5f5f5;` }) : `<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
+                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #e5e7eb;background:#f5f5f5;`, boxW: cw.imageMaxWidth, boxH: cw.imageMaxHeight }) : `<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
                         row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;">${ic}</td>`;
                     } break;
                     case 'name': row += `<td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;">
@@ -18213,7 +18338,7 @@ function generateQuotePreview(isManualChange){
                         <span style="display:inline-flex;width:22px;height:22px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border-radius:50%;font-size:${cw.contentFontSize-2}px;font-weight:600;align-items:center;justify-content:center;">${idx+1}</span>
                     </td>`; break;
                     case 'image': if(colVis.image !== false) {
-                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #e5e7eb;background:#f5f5f5;` }) : `<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
+                        let ic = item.image ? renderProductImage(item.image, item.name || '', { style: `max-width:${cw.imageMaxWidth}px !important;max-height:${cw.imageMaxHeight}px !important;width:auto !important;height:auto !important;object-fit:contain !important;border-radius:4px;border:1px solid #e5e7eb;background:#f5f5f5;`, boxW: cw.imageMaxWidth, boxH: cw.imageMaxHeight }) : `<div style="width:40px;height:40px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:1rem;">📦</div>`;
                         row += `<td style="padding:0.6rem 0.4rem;text-align:center;border-bottom:1px solid #e5e7eb;min-width:80px;height:${cw.imageRowHeight}px;vertical-align:middle;">${ic}</td>`;
                     } break;
                     case 'name': row += `<td style="padding:0.6rem 0.4rem;text-align:left;border-bottom:1px solid #e5e7eb;">
@@ -21367,7 +21492,7 @@ function applyProductImageUrl(input) {
     // 显示URL提示
     var hint = document.getElementById('imageUrlHint');
     if (hint) {
-        hint.textContent = '🔗 在线图片：' + url;
+        hint.textContent = '🔗 在线图片（离线/打印/导出可能受限，建议上传本地图片）：' + url;
         hint.style.display = 'block';
     }
 
@@ -21376,97 +21501,8 @@ function applyProductImageUrl(input) {
     if (aiBtn) aiBtn.disabled = true;
 }
 
-// 打开产品图片URL输入弹窗
-function setProductImageFromUrl() {
-    var currentUrl = '';
-    var preview = document.getElementById('imagePreview');
-    if (preview && preview.dataset && preview.dataset.isUrl === 'true' && preview.src) {
-        currentUrl = preview.src;
-    }
-    document.getElementById('productImageUrlInput').value = currentUrl;
-    checkProductImageUrl();
-    openModal('productImageUrlModal');
-    setTimeout(function(){document.getElementById('productImageUrlInput').focus();}, 100);
-}
-
-// 校验产品图片URL并显示预览
-function checkProductImageUrl() {
-    var urlInput = document.getElementById('productImageUrlInput');
-    var previewContainer = document.getElementById('productImageUrlPreview');
-    var confirmBtn = document.getElementById('productImageUrlConfirmBtn');
-    var url = urlInput.value.trim();
-
-    // 重置预览和按钮
-    previewContainer.innerHTML = '输入URL后这里会显示预览';
-    previewContainer.style.alignItems = 'center';
-    confirmBtn.disabled = true;
-
-    if (!url) return;
-    if (!/^https?:\/\//i.test(url)) {
-        previewContainer.innerHTML = '❌ URL必须以 http:// 或 https:// 开头';
-        return;
-    }
-
-    var looksLikeImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg|ico|avif)(\?.*)?$|^data:image\//i.test(url.toLowerCase());
-    if (!looksLikeImage) {
-        previewContainer.innerHTML = '⚠️ 该URL看起来不是常见的图片格式，仍可尝试';
-    }
-
-    // 尝试加载图片预览
-    var img = new Image();
-    img.onload = function() {
-        previewContainer.innerHTML = '';
-        previewContainer.style.alignItems = 'stretch';
-        img.style.width = '100%';
-        img.style.height = 'auto';
-        img.style.maxHeight = '300px';
-        img.style.objectFit = 'contain';
-        previewContainer.appendChild(img);
-        confirmBtn.disabled = false;
-    };
-    img.onerror = function() {
-        previewContainer.innerHTML = '⚠️ 图片加载失败，可能存在跨域限制或链接已失效（仍可尝试使用）';
-        confirmBtn.disabled = false; // 即使预览失败，允许用户尝试使用
-    };
-    img.src = url;
-}
-
-// 确认使用产品图片URL
-function confirmProductImageUrl() {
-    var urlInput = document.getElementById('productImageUrlInput');
-    var url = urlInput.value.trim();
-    if (!url || !/^https?:\/\//i.test(url)) {
-        showToast('请输入有效的 http/https URL', 'warning');
-        return;
-    }
-
-    var preview = document.getElementById('imagePreview');
-    // 清除文件上传与已移除标志
-    var fileInput = document.getElementById('productImage');
-    if (fileInput) fileInput.value = '';
-    preview.dataset.imageRemoved = 'false';
-    preview.dataset.isUrl = 'true';
-    preview.dataset.errorShown = 'false';
-
-    // 设置预览
-    preview.src = url;
-    preview.classList.remove('hidden');
-    document.getElementById('removeImageBtn').style.display = 'inline-flex';
-
-    // 显示URL提示
-    var hint = document.getElementById('imageUrlHint');
-    if (hint) {
-        hint.textContent = '🔗 在线图片：' + url;
-        hint.style.display = 'block';
-    }
-
-    // URL图片不进行本地AI材质识别（避免CORS）
-    var aiBtn = document.getElementById('aiMaterialBtn');
-    if (aiBtn) aiBtn.disabled = true;
-
-    closeModal('productImageUrlModal');
-    showToast('已设置在线图片URL', 'success');
-}
+// 产品图片URL弹窗相关函数（setProductImageFromUrl/checkProductImageUrl/confirmProductImageUrl）已移除：
+// 实际入口为内联 productImageUrlField + applyProductImageUrl
 
 // 图片预览加载失败时的处理
 function handleImagePreviewError(img) {
@@ -21555,6 +21591,26 @@ function removeImageFromProduct(productId){
         showToast('已移除图片', 'success');
     }
 }
+// 尝试将远端图片内嵌为 base64（便于离线/打印/导出）；跨域或失败时返回 null
+function embedRemoteImageAsDataURL(url) {
+    return new Promise(function(resolve) {
+        try {
+            fetch(url, { mode: 'cors' }).then(function(resp) {
+                if (!resp || !resp.ok) return resolve(null);
+                const ct = (resp.headers && resp.headers.get && resp.headers.get('content-type')) || '';
+                if (ct.indexOf('image/') !== 0) return resolve(null);
+                return resp.blob();
+            }).then(function(blob) {
+                if (!blob) return resolve(null);
+                const reader = new FileReader();
+                reader.onload = function() { resolve(reader.result); };
+                reader.onerror = function() { resolve(null); };
+                reader.readAsDataURL(blob);
+            }).catch(function() { resolve(null); });
+        } catch (e) { resolve(null); }
+    });
+}
+
 function saveProduct(){
     console.log('saveProduct 函数被调用');
     
@@ -21701,10 +21757,17 @@ function saveProduct(){
     // 处理图片 - 等待 IDB 初始化完成
     const finalizeSave = function() {
         if(imagePreviewSrc && /^https?:\/\//i.test(imagePreviewSrc)) {
-            // 在线URL图片：直接保存URL字符串，不写入IDB
-            p.image = imagePreviewSrc;
-            p.imageId = null;
-            completeSave();
+            // 在线URL图片：尝试内嵌为 base64，便于离线/打印/导出；CORS 不可用则保留原 URL
+            embedRemoteImageAsDataURL(imagePreviewSrc).then(function(embedded) {
+                p.image = embedded || imagePreviewSrc;
+                p.imageId = null;
+                completeSave();
+            }).catch(function() {
+                p.image = imagePreviewSrc;
+                p.imageId = null;
+                completeSave();
+            });
+            return;
         } else if(imagePreviewSrc && imagePreviewSrc.startsWith('data:')) {
             var finalImageSrc = imagePreviewSrc;
             // 如果base64超过60KB（约80KB字符），进行二次压缩以确保同步数据不会过大
@@ -46742,6 +46805,7 @@ function showImageEditor(imageSrc, callback) {
         </div>
     `;
     document.body.appendChild(modal);
+    document.addEventListener('keydown', editorEscHandler);
 
     editor.canvas = document.getElementById('imageEditorCanvas');
     editor.ctx = editor.canvas.getContext('2d');
@@ -47271,171 +47335,179 @@ function showImageEditor(imageSrc, callback) {
     }
 
     function applyEdit() {
-        let resultCanvas, resultCtx;
-        
-        if (editor.cropArea && editor.cropArea.w > 0 && editor.cropArea.h > 0) {
-            const srcX = editor.cropArea.x / editor.scale;
-            const srcY = editor.cropArea.y / editor.scale;
-            const srcW = editor.cropArea.w / editor.scale;
-            const srcH = editor.cropArea.h / editor.scale;
-            
-            resultCanvas = document.createElement('canvas');
-            resultCanvas.width = srcW;
-            resultCanvas.height = srcH;
-            resultCtx = resultCanvas.getContext('2d');
-            
-            applyTransformations(resultCtx, resultCanvas, srcX, srcY, srcW, srcH, srcW, srcH);
-        } else {
-            resultCanvas = document.createElement('canvas');
-            resultCanvas.width = editor.originalImg.width;
-            resultCanvas.height = editor.originalImg.height;
-            resultCtx = resultCanvas.getContext('2d');
-            
-            applyTransformations(resultCtx, resultCanvas, 0, 0, editor.originalImg.width, editor.originalImg.height, editor.originalImg.width, editor.originalImg.height);
+        const isRotated = (editor.rotation % 180) !== 0;
+        const srcW = editor.originalImg.width;
+        const srcH = editor.originalImg.height;
+        // 输出全图尺寸（旋转 90/270° 时宽高交换，修复导出被裁切）
+        const fullW = isRotated ? srcH : srcW;
+        const fullH = isRotated ? srcW : srcH;
+
+        // 1) 仅绘制变换后的原图（旋转/翻转/亮度/对比度），不含标注
+        const fullCanvas = document.createElement('canvas');
+        fullCanvas.width = fullW;
+        fullCanvas.height = fullH;
+        const fctx = fullCanvas.getContext('2d');
+        fctx.save();
+        fctx.translate(fullW / 2, fullH / 2);
+        fctx.rotate(editor.rotation * Math.PI / 180);
+        if (editor.flipH) fctx.scale(-1, 1);
+        if (editor.flipV) fctx.scale(1, -1);
+        fctx.filter = `brightness(${100 + editor.brightness}%) contrast(${editor.contrast * 100}%)`;
+        fctx.drawImage(editor.originalImg, -srcW / 2, -srcH / 2, srcW, srcH);
+        fctx.restore();
+
+        // 2) 预览坐标 → 全图坐标（预览比例 = scale，系数 = 1/scale）
+        const k = 1 / editor.scale;
+        let cx = 0, cy = 0, cw = fullW, ch = fullH;
+        if (editor.cropArea && editor.cropArea.w > 5 && editor.cropArea.h > 5) {
+            cx = editor.cropArea.x * k;
+            cy = editor.cropArea.y * k;
+            cw = editor.cropArea.w * k;
+            ch = editor.cropArea.h * k;
+            cx = Math.max(0, Math.min(cx, fullW));
+            cy = Math.max(0, Math.min(cy, fullH));
+            cw = Math.max(1, Math.min(cw, fullW - cx));
+            ch = Math.max(1, Math.min(ch, fullH - cy));
         }
-        
-        let result = resultCanvas.toDataURL('image/jpeg', 0.8);
-        
-        const maxSize = 400;
-        let w = resultCanvas.width;
-        let h = resultCanvas.height;
+
+        // 3) 生成输出画布（裁切后的子区域）
+        const outCanvas = document.createElement('canvas');
+        outCanvas.width = Math.round(cw);
+        outCanvas.height = Math.round(ch);
+        const octx = outCanvas.getContext('2d');
+        octx.drawImage(fullCanvas, cx, cy, cw, ch, 0, 0, outCanvas.width, outCanvas.height);
+
+        const mapX = px => px * k - cx;
+        const mapY = py => py * k - cy;
+        const mapSize = s => s * k;
+
+        // 4) 马赛克（作用于图像像素，先于标注绘制）
+        if (editor.mosaicItems.length > 0) {
+            applyEditorMosaic(octx, mapX, mapY, mapSize);
+        }
+
+        // 5) 标注 / 文字（坐标已映射到输出画布，无需再处理旋转/裁切）
+        editor.annotationItems.forEach(item => {
+            octx.save();
+            octx.strokeStyle = item.color;
+            octx.lineWidth = Math.max(1, mapSize(item.size));
+            octx.lineCap = 'round';
+            octx.lineJoin = 'round';
+            const x1 = mapX(item.x1), y1 = mapY(item.y1), x2 = mapX(item.x2), y2 = mapY(item.y2);
+            if (item.type === 'line') {
+                octx.beginPath(); octx.moveTo(x1, y1); octx.lineTo(x2, y2); octx.stroke();
+            } else if (item.type === 'circle') {
+                octx.beginPath();
+                const radius = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                octx.arc(x1, y1, radius, 0, Math.PI * 2); octx.stroke();
+            } else if (item.type === 'arrow') {
+                octx.beginPath(); octx.moveTo(x1, y1); octx.lineTo(x2, y2); octx.stroke();
+                const angle = Math.atan2(y2 - y1, x2 - x1);
+                const arrowSize = 10 * k;
+                octx.beginPath();
+                octx.moveTo(x2, y2);
+                octx.lineTo(x2 - arrowSize * Math.cos(angle - Math.PI / 6), y2 - arrowSize * Math.sin(angle - Math.PI / 6));
+                octx.moveTo(x2, y2);
+                octx.lineTo(x2 - arrowSize * Math.cos(angle + Math.PI / 6), y2 - arrowSize * Math.sin(angle + Math.PI / 6));
+                octx.stroke();
+            }
+            octx.restore();
+        });
+
+        editor.textItems.forEach(item => {
+            octx.save();
+            octx.font = Math.max(1, mapSize(item.size)) + 'px ' + item.font;
+            octx.fillStyle = item.color;
+            octx.strokeStyle = '#ffffff';
+            octx.lineWidth = Math.max(1, 2 * k);
+            const tx = mapX(item.x), ty = mapY(item.y);
+            octx.strokeText(item.text, tx, ty);
+            octx.fillText(item.text, tx, ty);
+            octx.restore();
+        });
+
+        // 6) 输出：含透明通道则保留 PNG，否则 JPEG（降低二次压缩损耗）
+        const hasAlpha = editorImageHasAlpha(editor.originalImg);
+        const mime = hasAlpha ? 'image/png' : 'image/jpeg';
+        const quality = hasAlpha ? undefined : 0.9;
+        let result = outCanvas.toDataURL(mime, quality);
+
+        // 超限缩放（保持比例，透明仍保留 PNG）
+        const maxSize = 800;
+        let w = outCanvas.width, h = outCanvas.height;
         if (w > maxSize) { h = h * (maxSize / w); w = maxSize; }
-        
-        if (w !== resultCanvas.width) {
+        if (w !== outCanvas.width) {
             const resizeCanvas = document.createElement('canvas');
             resizeCanvas.width = w;
             resizeCanvas.height = h;
-            const resizeCtx = resizeCanvas.getContext('2d');
-            resizeCtx.drawImage(resultCanvas, 0, 0, w, h);
-            result = resizeCanvas.toDataURL('image/jpeg', 0.5);
+            resizeCanvas.getContext('2d').drawImage(outCanvas, 0, 0, w, h);
+            result = resizeCanvas.toDataURL(mime, quality);
         }
-        
+
         closeEditor();
         callback(result);
     }
 
-    function applyTransformations(ctx, canvas, srcX, srcY, srcW, srcH, dstW, dstH) {
-        ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate(editor.rotation * Math.PI / 180);
-        if (editor.flipH) ctx.scale(-1, 1);
-        if (editor.flipV) ctx.scale(1, -1);
-        ctx.filter = `brightness(${100 + editor.brightness}%) contrast(${editor.contrast * 100}%)`;
-        ctx.drawImage(editor.originalImg, srcX, srcY, srcW, srcH, -dstW / 2, -dstH / 2, dstW, dstH);
-        ctx.restore();
-        
-        editor.annotationItems.forEach(item => {
-            ctx.save();
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate(editor.rotation * Math.PI / 180);
-            if (editor.flipH) ctx.scale(-1, 1);
-            if (editor.flipV) ctx.scale(1, -1);
-            
-            ctx.strokeStyle = item.color;
-            ctx.lineWidth = item.size;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            
-            const ax1 = (item.x1 / editor.scale - srcX - srcW / 2) * (dstW / srcW);
-            const ay1 = (item.y1 / editor.scale - srcY - srcH / 2) * (dstH / srcH);
-            const ax2 = (item.x2 / editor.scale - srcX - srcW / 2) * (dstW / srcW);
-            const ay2 = (item.y2 / editor.scale - srcY - srcH / 2) * (dstH / srcH);
-            
-            if (item.type === 'line') {
-                ctx.beginPath();
-                ctx.moveTo(ax1, ay1);
-                ctx.lineTo(ax2, ay2);
-                ctx.stroke();
-            } else if (item.type === 'circle') {
-                ctx.beginPath();
-                const radius = Math.sqrt(Math.pow(ax2 - ax1, 2) + Math.pow(ay2 - ay1, 2));
-                ctx.arc(ax1, ay1, radius, 0, Math.PI * 2);
-                ctx.stroke();
-            } else if (item.type === 'arrow') {
-                ctx.beginPath();
-                ctx.moveTo(ax1, ay1);
-                ctx.lineTo(ax2, ay2);
-                ctx.stroke();
-                
-                const angle = Math.atan2(ay2 - ay1, ax2 - ax1);
-                const arrowSize = 10 * (dstW / srcW);
-                ctx.beginPath();
-                ctx.moveTo(ax2, ay2);
-                ctx.lineTo(ax2 - arrowSize * Math.cos(angle - Math.PI / 6), ay2 - arrowSize * Math.sin(angle - Math.PI / 6));
-                ctx.moveTo(ax2, ay2);
-                ctx.lineTo(ax2 - arrowSize * Math.cos(angle + Math.PI / 6), ay2 - arrowSize * Math.sin(angle + Math.PI / 6));
-                ctx.stroke();
-            }
-            
-            ctx.restore();
-        });
-        
-        editor.textItems.forEach(item => {
-            ctx.save();
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate(editor.rotation * Math.PI / 180);
-            if (editor.flipH) ctx.scale(-1, 1);
-            if (editor.flipV) ctx.scale(1, -1);
-            const textX = (item.x / editor.scale - srcX - srcW / 2) * (dstW / srcW);
-            const textY = (item.y / editor.scale - srcY - srcH / 2) * (dstH / srcH);
-            ctx.font = (item.size / editor.scale * dstW / srcW) + 'px ' + item.font;
-            ctx.fillStyle = item.color;
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.strokeText(item.text, textX, textY);
-            ctx.fillText(item.text, textX, textY);
-            ctx.restore();
-        });
-        
-        if (editor.mosaicItems.length > 0) {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            const mosaicSize = editor.brushSize * 3 * (dstW / srcW);
-            
-            editor.mosaicItems.forEach(item => {
-                const mx = (item.x / editor.scale - srcX - srcW / 2) * (dstW / srcW) + canvas.width / 2;
-                const my = (item.y / editor.scale - srcY - srcH / 2) * (dstH / srcH) + canvas.height / 2;
-                const size = item.size * (dstW / srcW);
-                
-                const xStart = Math.max(0, Math.floor(mx - size));
-                const xEnd = Math.min(canvas.width, Math.floor(mx + size));
-                const yStart = Math.max(0, Math.floor(my - size));
-                const yEnd = Math.min(canvas.height, Math.floor(my + size));
-                
-                for (let y = yStart; y < yEnd; y += mosaicSize) {
-                    for (let x = xStart; x < xEnd; x += mosaicSize) {
-                        let r = 0, g = 0, b = 0, count = 0;
-                        for (let dy = 0; dy < mosaicSize && y + dy < yEnd; dy++) {
-                            for (let dx = 0; dx < mosaicSize && x + dx < xEnd; dx++) {
-                                const idx = ((y + dy) * canvas.width + (x + dx)) * 4;
-                                r += data[idx];
-                                g += data[idx + 1];
-                                b += data[idx + 2];
-                                count++;
-                            }
+    // applyTransformations 已弃用：导出逻辑改由 applyEdit 内联处理（含旋转/裁切正确映射）
+
+    function applyEditorMosaic(ctx, mapX, mapY, mapSize) {
+        const cw = ctx.canvas.width, ch = ctx.canvas.height;
+        const imageData = ctx.getImageData(0, 0, cw, ch);
+        const data = imageData.data;
+        editor.mosaicItems.forEach(item => {
+            const mx = mapX(item.x), my = mapY(item.y);
+            const size = Math.max(2, mapSize(item.size));
+            const xStart = Math.max(0, Math.floor(mx - size));
+            const xEnd = Math.min(cw, Math.floor(mx + size));
+            const yStart = Math.max(0, Math.floor(my - size));
+            const yEnd = Math.min(ch, Math.floor(my + size));
+            for (let y = yStart; y < yEnd; y += size) {
+                for (let x = xStart; x < xEnd; x += size) {
+                    let r = 0, g = 0, b = 0, count = 0;
+                    for (let dy = 0; dy < size && y + dy < yEnd; dy++) {
+                        for (let dx = 0; dx < size && x + dx < xEnd; dx++) {
+                            const idx = ((y + dy) * cw + (x + dx)) * 4;
+                            r += data[idx]; g += data[idx + 1]; b += data[idx + 2]; count++;
                         }
-                        if (count > 0) {
-                            r = Math.floor(r / count);
-                            g = Math.floor(g / count);
-                            b = Math.floor(b / count);
-                            for (let dy = 0; dy < mosaicSize && y + dy < yEnd; dy++) {
-                                for (let dx = 0; dx < mosaicSize && x + dx < xEnd; dx++) {
-                                    const idx = ((y + dy) * canvas.width + (x + dx)) * 4;
-                                    data[idx] = r;
-                                    data[idx + 1] = g;
-                                    data[idx + 2] = b;
-                                }
+                    }
+                    if (count > 0) {
+                        r = Math.floor(r / count); g = Math.floor(g / count); b = Math.floor(b / count);
+                        for (let dy = 0; dy < size && y + dy < yEnd; dy++) {
+                            for (let dx = 0; dx < size && x + dx < xEnd; dx++) {
+                                const idx = ((y + dy) * cw + (x + dx)) * 4;
+                                data[idx] = r; data[idx + 1] = g; data[idx + 2] = b;
                             }
                         }
                     }
                 }
-            });
-            
-            ctx.putImageData(imageData, 0, 0);
+            }
+        });
+        ctx.putImageData(imageData, 0, 0);
+    }
+
+    function editorImageHasAlpha(img) {
+        try {
+            const c = document.createElement('canvas');
+            c.width = 32; c.height = 32;
+            const x = c.getContext('2d');
+            x.drawImage(img, 0, 0, 32, 32);
+            const d = x.getImageData(0, 0, 32, 32).data;
+            for (let i = 3; i < d.length; i += 4) {
+                if (d[i] < 255) return true;
+            }
+            return false;
+        } catch (e) { return false; }
+    }
+
+    function editorEscHandler(e) {
+        if (e.key === 'Escape') {
+            if (document.activeElement === textInputField) return; // 让文字输入框自行处理 Esc
+            closeEditor();
         }
     }
 
     function closeEditor() {
+        document.removeEventListener('keydown', editorEscHandler);
         const modal = document.getElementById('imageEditorModal');
         if (modal) modal.remove();
     }
