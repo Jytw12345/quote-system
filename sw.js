@@ -1,8 +1,9 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'V3.4.251 更新日期：20260821';
+const CACHE_NAME = 'V3.4.252 更新日期：20260929';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
+    'feat 切换 Supabase 项目至 rojtbkndzpzvngbheclo.supabase.co（新增项目、迁移旧数据）',
     'fix 产品库手机端识别按钮尺寸调小：padding 0.2rem 0.4rem、font-size 0.7rem、min-height 28px、min-width 58px，与第二行收藏/卡片/归属筛选按钮更协调，避免绿色识别按钮显得过大',
     'fix 产品库手机端顶部工具栏重新布局：第一行「搜索框 + 📷识别」，第二行「收藏/卡片/归属筛选」合并横向滚动；新增 .mobile-recognize-btn 仅手机端显示，桌面端仍由 action-buttons 内识别按钮承载，保证两端体验一致',
     'fix 产品库桌面端顶部工具栏彻底修复为同一行：根因是主样式表里存在一处未闭合的 @media (max-width:576px)（约第 3086 行开始），把后面大量基础规则吞进媒体查询，导致桌面端 .scope-filter/.mobile-filter-row 等基础 flex 规则全部失效。把产品库归属筛选与 .mobile-filter-row 基础规则移到该未闭合媒体查询之前，并补 !important；桌面端搜索框限宽 420px，按钮组与归属筛选在同一 flex 行内并排；手机端规则仍留在媒体查询内，搜索框独占一行、按钮组+归属筛选合并后单行横向滚动兜底',
