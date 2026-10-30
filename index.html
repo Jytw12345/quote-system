@@ -461,6 +461,42 @@
             transform: translateY(-1px);
         }
         .login-secondary-btn:active { transform: translateY(0); }
+
+        /* 登录模式切换标签（云端 / 本地） */
+        .login-mode-tabs {
+            display: flex;
+            gap: 0.25rem;
+            background: #eef2ff;
+            border-radius: 0.75rem;
+            padding: 0.25rem;
+            margin-bottom: 1.1rem;
+        }
+        .login-mode-tab {
+            flex: 1;
+            padding: 0.55rem 0.5rem;
+            border: none;
+            border-radius: 0.6rem;
+            background: transparent;
+            color: #6366f1;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+        .login-mode-tab.active {
+            background: white;
+            color: #4f46e5;
+            box-shadow: 0 1px 4px rgba(79, 70, 229, 0.18);
+        }
+        .login-mode-hint {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            text-align: center;
+            margin-top: 0.6rem;
+            line-height: 1.5;
+        }
         
         .pwa-install-btn {
             width: 100%;
@@ -5466,6 +5502,11 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
             <p id="login-desc" class="login-logo-subtitle">多用户云端版</p>
         </div>
 
+        <div class="login-mode-tabs" id="loginModeTabs" role="tablist" aria-label="登录模式">
+            <button type="button" id="loginTabCloud" class="login-mode-tab active" role="tab" aria-selected="true" onclick="switchLoginMode('cloud')">☁️ 云端登录</button>
+            <button type="button" id="loginTabLocal" class="login-mode-tab" role="tab" aria-selected="false" onclick="switchLoginMode('local')">🔓 本地登录</button>
+        </div>
+
         <form class="login-form" id="sbLoginForm" onsubmit="return false;" aria-describedby="login-error">
             <div>
                 <label for="sbLoginEmail">账号</label>
@@ -5497,11 +5538,12 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
             </button>
         </div>
 
-        <div style="margin-top:0.9rem;padding-top:0.9rem;border-top:1px dashed #e2e8f0;">
+        <div id="localLoginForm" style="display:none;">
             <div style="display:flex;gap:0.5rem;align-items:stretch;">
                 <input type="password" id="localLoginPwd" placeholder="本地密码" autocomplete="off" aria-label="本地密码" style="flex:1;min-width:0;padding:0.85rem 1rem;border:1px solid #d1d5db;border-radius:0.75rem;font-size:1rem;box-sizing:border-box;background:#fff;outline:none;transition:all 0.2s ease;" onfocus="this.style.borderColor='#6366f1';this.style.boxShadow='0 0 0 4px rgba(99,102,241,0.12)';" onblur="this.style.borderColor='#d1d5db';this.style.boxShadow='none';" onkeydown="if(event.key==='Enter'){event.preventDefault();localAdminUnlockUI();}">
                 <button type="button" style="flex-shrink:0;padding:0.85rem 1.1rem;background:white;color:#4f46e5;border:1.5px solid #e0e7ff;border-radius:0.75rem;font-size:1rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s ease;" onclick="localAdminUnlockUI()" aria-label="本地登录">🔓 本地登录</button>
             </div>
+            <div class="login-mode-hint">本地模式不依赖云端，数据保存在本机；<br>需多设备同步时请使用云端登录。</div>
         </div>
 
         <div id="pwaInstallArea" style="display:none;margin-top:1rem;">
@@ -10135,7 +10177,7 @@ function safeExecuteAsync(fn, defaultVal) {
                         <span style="padding:0.125rem 0.5rem;background:#d1fae5;border-radius:9999px;font-size:0.6875rem;color:#065f46;">🧮 智能计算</span>
                         <span style="padding:0.125rem 0.5rem;background:#fef3c7;border-radius:9999px;font-size:0.6875rem;color:#92400e;">☁️ 云同步</span>
                     </div>
-                    <div style="font-size:0.8125rem;color:var(--gray-600);">当前版本：<span id="currentSoftwareVersion" style="font-weight:600;color:var(--primary);">V3.4.254</span></div>
+                    <div style="font-size:0.8125rem;color:var(--gray-600);">当前版本：<span id="currentSoftwareVersion" style="font-weight:600;color:var(--primary);">V3.4.255</span></div>
                     <div id="currentVersionLogs" style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed var(--gray-300);display:none;">
                         <div style="font-size:0.7rem;font-weight:500;color:var(--gray-500);margin-bottom:0.25rem;">📝 更新日志</div>
                         <ul id="currentVersionLogsList" style="margin:0;padding-left:1rem;font-size:0.65rem;color:var(--gray-400);"></ul>
@@ -13212,14 +13254,36 @@ function hideLoginOverlay() {
     var overlay = document.getElementById('login-overlay');
     if (overlay) { overlay.style.opacity = '0'; setTimeout(function() { overlay.style.display = 'none'; }, 300); }
 }
+// 登录模式切换（云端 / 本地）：互斥显示两套表单，并记忆上次选择
+function switchLoginMode(mode) {
+    var cloud = mode !== 'local';
+    var form = document.getElementById('sbLoginForm');
+    var toggle = document.getElementById('sbLoginToggleBtn');
+    var local = document.getElementById('localLoginForm');
+    var tCloud = document.getElementById('loginTabCloud');
+    var tLocal = document.getElementById('loginTabLocal');
+    if (form) form.style.display = cloud ? '' : 'none';
+    if (toggle) toggle.style.display = cloud ? '' : 'none';
+    if (local) local.style.display = cloud ? 'none' : 'block';
+    if (tCloud) { tCloud.classList.toggle('active', cloud); tCloud.setAttribute('aria-selected', cloud ? 'true' : 'false'); }
+    if (tLocal) { tLocal.classList.toggle('active', !cloud); tLocal.setAttribute('aria-selected', cloud ? 'false' : 'true'); }
+    var errEl = document.getElementById('login-error'); if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+    try { localStorage.setItem('quote_login_tab', cloud ? 'cloud' : 'local'); } catch (e) {}
+    if (!cloud) { var lp = document.getElementById('localLoginPwd'); if (lp) setTimeout(function() { try { lp.focus(); } catch (e) {} }, 60); }
+}
 function showLoginOverlay() {
     var overlay = document.getElementById('login-overlay');
     if (overlay) { overlay.style.display = 'flex'; overlay.style.opacity = '1'; }
+    var tabs = document.getElementById('loginModeTabs'); if (tabs) tabs.style.display = 'flex';
     var form = document.getElementById('sbLoginForm'); if (form) form.style.display = '';
     var toggle = document.getElementById('sbLoginToggleBtn'); if (toggle) toggle.style.display = '';
     var pwa = document.getElementById('pwaInstallArea'); if (pwa) pwa.style.display = '';
     var errEl = document.getElementById('login-error'); if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
     var status = document.getElementById('sbLoginStatus'); if (status) status.style.display = 'none';
+    // 恢复上次使用的登录模式（云端/本地）
+    var savedTab = 'cloud';
+    try { savedTab = localStorage.getItem('quote_login_tab') || 'cloud'; } catch (e) {}
+    switchLoginMode(savedTab);
     // 恢复记住的账号密码
     fillLoginRemembered();
     // 刷新 PWA 安装按钮状态
@@ -13231,7 +13295,9 @@ function showLoginOverlay() {
 function showSessionRestoring() {
     var overlay = document.getElementById('login-overlay');
     if (overlay) { overlay.style.display = 'flex'; overlay.style.opacity = '1'; }
+    var tabs = document.getElementById('loginModeTabs'); if (tabs) tabs.style.display = 'none';
     var form = document.getElementById('sbLoginForm'); if (form) form.style.display = 'none';
+    var localForm = document.getElementById('localLoginForm'); if (localForm) localForm.style.display = 'none';
     var toggle = document.getElementById('sbLoginToggleBtn'); if (toggle) toggle.style.display = 'none';
     var pwa = document.getElementById('pwaInstallArea'); if (pwa) pwa.style.display = 'none';
     var errEl = document.getElementById('login-error'); if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
