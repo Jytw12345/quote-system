@@ -5497,6 +5497,13 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
             </button>
         </div>
 
+        <div style="margin-top:0.9rem;padding-top:0.9rem;border-top:1px dashed #e2e8f0;">
+            <div style="display:flex;gap:0.5rem;align-items:stretch;">
+                <input type="password" id="localLoginPwd" placeholder="本地密码" autocomplete="off" aria-label="本地密码" style="flex:1;min-width:0;padding:0.85rem 1rem;border:1px solid #d1d5db;border-radius:0.75rem;font-size:1rem;box-sizing:border-box;background:#fff;outline:none;transition:all 0.2s ease;" onfocus="this.style.borderColor='#6366f1';this.style.boxShadow='0 0 0 4px rgba(99,102,241,0.12)';" onblur="this.style.borderColor='#d1d5db';this.style.boxShadow='none';" onkeydown="if(event.key==='Enter'){event.preventDefault();localAdminUnlockUI();}">
+                <button type="button" style="flex-shrink:0;padding:0.85rem 1.1rem;background:white;color:#4f46e5;border:1.5px solid #e0e7ff;border-radius:0.75rem;font-size:1rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s ease;" onclick="localAdminUnlockUI()" aria-label="本地登录">🔓 本地登录</button>
+            </div>
+        </div>
+
         <div id="pwaInstallArea" style="display:none;margin-top:1rem;">
             <button type="button" id="pwaInstallBtn" class="pwa-install-btn" onclick="triggerPWAInstall()" aria-label="安装到主屏幕">
                 📱 安装到主屏幕
@@ -5508,6 +5515,10 @@ body:not(.admin-mode):not(.cost-visible) .sensitive-data.cost-price-column {
         <div id="sbLoginStatus" style="display:none;text-align:center;margin-top:0.5rem;color:#0369a1;font-size:0.8125rem;">正在初始化云端连接...</div>
     </div>
 </div>
+<script>
+// 本地模式已解锁过：立即隐藏登录遮罩，避免启动闪烁（完整逻辑见 Supabase 区 localAdmin 段）
+try { if (localStorage.getItem('quote_local_admin') === '1') { var __lo = document.getElementById('login-overlay'); if (__lo) __lo.style.display = 'none'; } } catch (e) {}
+</script>
 
 <!-- 待授权遮罩：账号已登录但角色为 pending，禁止进入软件主界面 -->
 <div id="approvalPendingOverlay" role="dialog" aria-modal="true" aria-labelledby="approvalPendingTitle" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#f59e0b 0%,#ea580c 100%);z-index:10000;justify-content:center;align-items:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
@@ -10124,7 +10135,7 @@ function safeExecuteAsync(fn, defaultVal) {
                         <span style="padding:0.125rem 0.5rem;background:#d1fae5;border-radius:9999px;font-size:0.6875rem;color:#065f46;">🧮 智能计算</span>
                         <span style="padding:0.125rem 0.5rem;background:#fef3c7;border-radius:9999px;font-size:0.6875rem;color:#92400e;">☁️ 云同步</span>
                     </div>
-                    <div style="font-size:0.8125rem;color:var(--gray-600);">当前版本：<span id="currentSoftwareVersion" style="font-weight:600;color:var(--primary);">V3.4.252</span></div>
+                    <div style="font-size:0.8125rem;color:var(--gray-600);">当前版本：<span id="currentSoftwareVersion" style="font-weight:600;color:var(--primary);">V3.4.254</span></div>
                     <div id="currentVersionLogs" style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed var(--gray-300);display:none;">
                         <div style="font-size:0.7rem;font-weight:500;color:var(--gray-500);margin-bottom:0.25rem;">📝 更新日志</div>
                         <ul id="currentVersionLogsList" style="margin:0;padding-left:1rem;font-size:0.65rem;color:var(--gray-400);"></ul>
@@ -39274,7 +39285,8 @@ function updateSensitiveDataVisibility(show) {
 }
 
 function isAdminMode() {
-    // 高级身份（查看成本/利润等敏感数据）由云端角色 / 权限决定，不再依赖本地密码
+    // 高级身份（查看成本/利润等敏感数据）由云端角色 / 权限决定；本地模式下本机全权
+    if (localAdmin) return true;
     if (!sbCurrentUser) return false;
     var p = sbCurrentUser.permissions || {};
     if (typeof p.viewSensitive === 'boolean') return p.viewSensitive;
@@ -40334,6 +40346,66 @@ function initSupabaseClient() {
     return sbClient;
 }
 
+// ---- 本地管理模式（不依赖 Supabase：本地密码解锁，数据存本机，云同步仍可选）----
+var LOCAL_ADMIN_PASSWORD = 'jiayin123'; // 本地模式密码（纯前端门禁，改密需改此处代码）
+var localAdmin = false; // 本机已用本地密码解锁
+var sbAuthListenerBound = false; // onAuthStateChange 只绑一次，避免重复注册
+try { localAdmin = localStorage.getItem('quote_local_admin') === '1'; } catch (e) {}
+
+// 登录遮罩上的「本地登录」入口
+function localAdminUnlockUI() {
+    var el = document.getElementById('localLoginPwd');
+    var pwd = el ? (el.value || '') : '';
+    if (!pwd) { showToast('请输入本地密码', 'warning'); return; }
+    if (pwd !== LOCAL_ADMIN_PASSWORD) { showToast('❌ 本地密码错误', 'error'); return; }
+    if (el) el.value = '';
+    localAdmin = true;
+    try { localStorage.setItem('quote_local_admin', '1'); } catch (e) {}
+    hideLoginOverlay();
+    updateSensitiveDataVisibility(true);
+    applyPricingGuard();
+    renderSupabaseAccountArea();
+    renderUserBar();
+    quietRestoreSupabase(); // 若之前登录过云端，静默恢复会话（可选增强，不阻塞）
+    showToast('🔓 本地模式已解锁（数据保存在本机；需云同步时再登录 Supabase）', 'success');
+}
+
+// 锁定本地模式（清除本机记忆，回到登录遮罩）
+function localAdminLock() {
+    localAdmin = false;
+    try { localStorage.removeItem('quote_local_admin'); } catch (e) {}
+    showLoginOverlay();
+    renderUserBar();
+    showToast('🔒 已锁定，输入本地密码或登录云端账号可再次进入', 'info');
+}
+
+// 本地模式下的云端会话静默恢复：不弹遮罩、不阻塞，恢复成功则云同步继续可用
+function quietRestoreSupabase() {
+    var cfg = getSupabaseConfig();
+    if (!cfg.url || !cfg.anonKey) return;
+    if (!initSupabaseClient()) return;
+    if (!sbAuthListenerBound) {
+        sbAuthListenerBound = true;
+        if (sbClient.auth && sbClient.auth.onAuthStateChange) {
+            sbClient.auth.onAuthStateChange(function(event, session) {
+                if (event === 'SIGNED_OUT') {
+                    sbCurrentUser = null;
+                    renderSupabaseAccountArea();
+                    unbindRealtime();
+                    renderUserBar();
+                } else if (session && (!sbCurrentUser || sbCurrentUser.id !== session.user.id)) {
+                    afterAuth(session).catch(function() {});
+                }
+            });
+        }
+    }
+    if (sbClient.auth && sbClient.auth.getSession) {
+        sbClient.auth.getSession().then(function(res) {
+            if (res.data && res.data.session) afterAuth(res.data.session).catch(function() {});
+        }).catch(function() {});
+    }
+}
+
 // ---- 角色与权限辅助 ----
 function sbRole() { return sbCurrentUser ? sbCurrentUser.role : null; }
 function sbIsAdmin() { return sbRole() === 'admin'; }
@@ -40341,17 +40413,21 @@ function sbIsAdmin() { return sbRole() === 'admin'; }
 function perms() { return (sbCurrentUser && sbCurrentUser.permissions) || {}; }
 function canEdit() {
     // 编辑团队目录：admin/manager/member 默认可编辑，或显式授权 editTeam 的 viewer 也可
+    if (localAdmin) return true; // 本地模式：本机全权
     return sbRole() === 'admin' || sbRole() === 'manager' || sbRole() === 'member' || perms().editTeam === true;
 }
 function canDelete() {
+    if (localAdmin) return true; // 本地模式：本机全权
     // 删除与清空团队数据：管理员默认可，或显式授权 deleteData
     return sbIsAdmin() || perms().deleteData === true;
 }
 function canExport() {
+    if (localAdmin) return true; // 本地模式：本机全权
     // 导出/打印：admin/manager/member 默认可，或显式授权 exportPrint
     return sbRole() === 'admin' || sbRole() === 'manager' || sbRole() === 'member' || perms().exportPrint === true;
 }
 function canManagePricing() {
+    if (localAdmin) return true; // 本地模式：本机全权
     // 价格与折扣配置：admin/manager 默认可，或显式授权 managePricing
     return sbRole() === 'admin' || sbRole() === 'manager' || perms().managePricing === true;
 }
@@ -40475,6 +40551,8 @@ function afterAuth(session) {
         try { if (sbCurrentUser && sbCurrentUser.displayName) localStorage.setItem('sbRememberedName', sbCurrentUser.displayName); } catch (e) {}
         // 待分配身份（pending）或未知角色：禁止进入软件，等待管理员分配
         if (!sbCurrentUser || !sbCurrentUser.role || sbCurrentUser.role === 'pending') {
+            // 本地模式：云端会话恢复失败（profile 加载失败置 null，如 Supabase 暂停）→ 放弃云会话，继续本地使用
+            if (localAdmin && !sbCurrentUser) return Promise.resolve();
             showApprovalPending(sbCurrentUser);
             return Promise.resolve();
         }
@@ -40607,6 +40685,8 @@ function loadCurrentProfile(uid) {
         });
     }).catch(function(e) {
         console.error('加载 profile 失败', e);
+        // 本地模式：云端不可达（如项目暂停）时放弃云会话，继续纯本地使用，不进入待授权流程
+        if (localAdmin) return null;
         sbCurrentUser = { id: uid, email: '', displayName: '', role: 'pending', permissions: {} };
         return sbCurrentUser;
     });
@@ -42523,7 +42603,14 @@ function sbSyncSensitive() {
 function renderUserBar() {
     var bar = document.getElementById('sbUserBar');
     if (!bar) return;
-    if (!sbCurrentUser) { bar.innerHTML = ''; return; }
+    if (!sbCurrentUser) {
+        if (localAdmin) {
+            bar.innerHTML = '<span style="display:inline-flex;align-items:center;gap:0.35rem;background:#fffbeb;border:1px solid #fcd34d;border-radius:1rem;padding:0.2rem 0.7rem;font-size:0.75rem;color:#92400e;">🔓 本地模式 <a href="javascript:void(0)" onclick="localAdminLock()" style="color:#92400e;text-decoration:underline;">锁定</a></span>';
+        } else {
+            bar.innerHTML = '';
+        }
+        return;
+    }
     bar.innerHTML = '<span style="display:inline-flex;align-items:center;gap:0.4rem;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:1rem;padding:0.2rem 0.7rem;font-size:0.75rem;color:#065f46;">'
         + '<span style="width:1.4rem;height:1.4rem;border-radius:50%;background:#047857;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:0.7rem;">' + escapeHtml((sbCurrentUser.displayName || sbCurrentUser.email || '?').slice(0, 1).toUpperCase()) + '</span>'
         + escapeHtml(sbCurrentUser.displayName || sbCurrentUser.email || '用户') + ' · ' + roleLabel(sbRole())
@@ -42546,6 +42633,8 @@ function renderSyncStatusMini() {
     var dot, label, color;
     if (!cfg.url || !cfg.anonKey) {
         dot = '🟡'; label = '未配置'; color = '#92400e';
+    } else if (localAdmin) {
+        dot = '🔓'; label = '本地模式（未连云端）'; color = '#92400e';
     } else if (!sbCurrentUser) {
         dot = '⚪'; label = '未登录'; color = '#64748b';
     } else {
@@ -42559,6 +42648,17 @@ function renderSyncStatusMini() {
 
 // ---- 启动：恢复会话 ----
 function initSupabaseOnLoad() {
+    renderSyncStatusMini();
+    if (localAdmin) {
+        // 本地模式：已用本地密码解锁 → 不弹登录遮罩直接进入；云端会话静默恢复（可选增强）
+        hideLoginOverlay();
+        renderSupabaseAccountArea();
+        renderUserBar();
+        updateSensitiveDataVisibility(true);
+        applyPricingGuard();
+        quietRestoreSupabase();
+        return;
+    }
     // 启动先用过渡态：仅显示遮罩与"正在连接云端"，不弹完整登录表单，
     // 避免已登录用户每次启动都先看到输入框（会话恢复成功后由 afterAuth 淡出）。
     showSessionRestoring();

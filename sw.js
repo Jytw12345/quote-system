@@ -1,8 +1,10 @@
 // 缓存版本号（每次上传前修改此版本号，或使用日期格式如：quote-app-20240612）
-const CACHE_NAME = 'V3.4.252 更新日期：20260929';
+const CACHE_NAME = 'V3.4.254 更新日期：20261030';
 
 // 更新日志（每次发布新版本时更新）
 const UPDATE_LOGS = [
+    'fix 登录页「本地密码」输入框样式修复：按钮原复用 .login-secondary-btn 自带 width:100% 把输入框挤压变形，改为独立行内样式并与登录表单输入框统一（padding/圆角/聚焦光圈），placeholder 缩短为「本地密码」',
+    'feat 新增本地密码登录模式：登录页新增「本地密码」入口（不依赖 Supabase），输入正确密码即解锁全部功能（编辑/导出/价格配置/成本利润可见），数据保存在本机；解锁状态本机记忆，用户栏可一键锁定；云端会话恢复改为静默进行，Supabase 项目暂停时软件照常可用',
     'feat 切换 Supabase 项目至 rojtbkndzpzvngbheclo.supabase.co（新增项目、迁移旧数据）',
     'fix 产品库手机端识别按钮尺寸调小：padding 0.2rem 0.4rem、font-size 0.7rem、min-height 28px、min-width 58px，与第二行收藏/卡片/归属筛选按钮更协调，避免绿色识别按钮显得过大',
     'fix 产品库手机端顶部工具栏重新布局：第一行「搜索框 + 📷识别」，第二行「收藏/卡片/归属筛选」合并横向滚动；新增 .mobile-recognize-btn 仅手机端显示，桌面端仍由 action-buttons 内识别按钮承载，保证两端体验一致',
